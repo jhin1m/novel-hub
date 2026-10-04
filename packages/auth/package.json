@@ -1,0 +1,29 @@
+{
+  "name": "@novel-hub/auth",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "db:seed": "tsx src/scripts/seed.ts"
+  },
+  "dependencies": {
+    "@novel-hub/core": "workspace:*",
+    "@novel-hub/db": "workspace:*",
+    "@novel-hub/shared": "workspace:*",
+    "better-auth": "1.7.7",
+    "drizzle-orm": "0.45.3",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@novel-hub/api": "workspace:*",
+    "@types/node": "catalog:",
+    "tsx": "^4.23.15",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

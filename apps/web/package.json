@@ -1,0 +1,39 @@
+{
+  "name": "@novel-hub/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "start": "node .output/server/index.mjs",
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@novel-hub/api": "workspace:*",
+    "@novel-hub/auth": "workspace:*",
+    "@novel-hub/core": "workspace:*",
+    "@novel-hub/db": "workspace:*",
+    "@novel-hub/shared": "workspace:*",
+    "@tanstack/react-query": "5.104.1",
+    "@tanstack/react-router": "1.170.41",
+    "@tanstack/react-start": "1.168.60",
+    "better-auth": "1.7.7",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "catalog:",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "nitro": "3.0.260903-beta",
+    "tailwindcss": "^4.3.3",
+    "typescript": "catalog:",
+    "vite": "^8.3.2"
+  }
+}

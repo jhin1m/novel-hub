@@ -1,0 +1,16 @@
+packages:
+  - apps/*
+  - packages/*
+
+catalog:
+  '@types/node': ^24
+  typescript: ~6.0.3
+  vitest: ^5.0.3
+  zod: ^4.6.5
+
+# esbuild (qua tsx, drizzle-kit) và msgpackr-extract (qua bullmq) có binary sẵn trong
+# optional deps nên không cần chạy script cài đặt; từ chối tường minh để `pnpm install`
+# không báo lỗi.
+allowBuilds:
+  esbuild: false
+  msgpackr-extract: false

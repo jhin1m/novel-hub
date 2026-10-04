@@ -1,0 +1,41 @@
+{
+  "name": "novel-hub",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.9.1",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @novel-hub/web --filter @novel-hub/worker dev",
+    "infra:up": "docker compose up -d --wait",
+    "infra:down": "docker compose down",
+    "infra:logs": "docker compose logs -f",
+    "db:generate": "pnpm --filter @novel-hub/db db:generate",
+    "db:migrate": "pnpm --filter @novel-hub/db db:migrate",
+    "db:seed": "pnpm --filter @novel-hub/auth db:seed",
+    "typecheck": "pnpm -r --parallel typecheck",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run --project unit",
+    "test:int": "vitest run --project integration",
+    "postinstall": "pnpm i18n:compile",
+    "i18n:compile": "pnpm --filter @novel-hub/shared i18n:compile",
+    "test:e2e": "pnpm --filter @novel-hub/web test:e2e"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "catalog:",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.9",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.71.0",
+    "vitest": "catalog:"
+  }
+}

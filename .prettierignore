@@ -1,0 +1,15 @@
+pnpm-lock.yaml
+node_modules
+.output
+dist
+.tanstack
+.nitro
+**/routeTree.gen.ts
+**/src/paraglide
+packages/db/drizzle
+test-results
+playwright-report
+plans
+docs
+CLAUDE.md
+.claude

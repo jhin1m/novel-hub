@@ -1,0 +1,14 @@
+node_modules
+.env
+.env.*
+!.env.example
+.output
+dist
+.tanstack
+.nitro
+.vinxi
+packages/shared/src/paraglide
+test-results
+playwright-report
+*.log
+.DS_Store

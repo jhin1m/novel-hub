@@ -1,0 +1,26 @@
+{
+  "name": "@novel-hub/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./env": "./src/env.ts",
+    "./messages": "./src/paraglide/messages.js"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "i18n:compile": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide --strategy baseLocale --emit-ts-declarations --no-emit-readme"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@inlang/paraglide-js": "2.25.4",
+    "@inlang/plugin-message-format": "4.4.4",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

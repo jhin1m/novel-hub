@@ -24,6 +24,11 @@ export function coverPaletteIndex(tagSlug: string): number {
   return fnv1a32(tagSlug) % COVER_PALETTE_SIZE;
 }
 
+/** CSS colour of a main tag's palette slot, for covers, tag chips and heroes. */
+export function coverColorVar(tagSlug: string): string {
+  return `var(--cover-${coverPaletteIndex(tagSlug)})`;
+}
+
 /**
  * Title size steps by length. The `rem` size is the fallback; where container query units are
  * supported the title scales with the cover width (`cqw`), so one component fits a 150px card

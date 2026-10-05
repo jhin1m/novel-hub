@@ -22,13 +22,7 @@ import {
   useMyChapters,
 } from '@/lib/chapters';
 import { FormMessage } from './auth-ui';
-
-export const CHAPTER_STATUS_LABELS: Record<AuthorChapterView['status'], () => string> = {
-  draft: m.chapter_status_draft,
-  scheduled: m.chapter_status_scheduled,
-  published: m.chapter_status_published,
-  hidden_by_mod: m.chapter_status_hidden_by_mod,
-};
+import { CHAPTER_STATUS_LABELS } from './story/story-labels';
 
 const dateFormat = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' });
 

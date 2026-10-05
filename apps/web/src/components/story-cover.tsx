@@ -1,7 +1,7 @@
 import { coverImageUrl } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { useEffect, useRef, useState } from 'react';
-import { coverPaletteIndex, coverTitleClass } from '../lib/cover-palette';
+import { coverColorVar, coverTitleClass } from '../lib/cover-palette';
 import { cn } from '../lib/utils';
 
 export interface StoryCoverProps {
@@ -47,20 +47,28 @@ export function StoryCover({
     const small = coverImageUrl(coverUrl, 300);
     const large = coverImageUrl(coverUrl, 600);
     return (
-      <img
-        ref={imgRef}
-        src={large}
-        srcSet={`${small} 300w, ${large} 600w`}
-        sizes={sizes}
-        width={600}
-        height={900}
-        alt={label}
-        loading={priority ? 'eager' : 'lazy'}
-        fetchPriority={priority ? 'high' : undefined}
-        decoding="async"
-        onError={() => setFailedUrl(coverUrl)}
-        className={cn('aspect-[2/3] w-full rounded-md bg-muted object-cover', className)}
-      />
+      <div
+        className={cn(
+          'relative aspect-[2/3] w-full overflow-hidden rounded-md bg-muted',
+          className,
+        )}
+      >
+        <img
+          ref={imgRef}
+          src={large}
+          srcSet={`${small} 300w, ${large} 600w`}
+          sizes={sizes}
+          width={600}
+          height={900}
+          alt={label}
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : undefined}
+          decoding="async"
+          onError={() => setFailedUrl(coverUrl)}
+          className="size-full object-cover"
+        />
+        <CoverSpine />
+      </div>
     );
   }
 
@@ -69,20 +77,28 @@ export function StoryCover({
       role="img"
       aria-label={label}
       className={cn(
-        '@container aspect-[2/3] w-full overflow-hidden rounded-md text-(--cover-fg)',
+        '@container relative aspect-[2/3] w-full overflow-hidden rounded-md text-(--cover-fg)',
         className,
       )}
       // Only a numeric palette slot reaches `style`, never user text.
-      style={{ backgroundColor: `var(--cover-${coverPaletteIndex(mainTagSlug)})` }}
+      style={{ backgroundColor: coverColorVar(mainTagSlug) }}
     >
+      {/* Large faded initial bleeding off the bottom-right corner, clipped by the cover. */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-[0.12em] -bottom-[0.3em] text-8xl leading-none font-extrabold text-white/11 select-none supports-[width:1cqw]:text-[length:105cqw]"
+      >
+        {coverInitial(title)}
+      </span>
+      <CoverSpine />
       <div
         aria-hidden="true"
-        className="flex size-full flex-col p-3 supports-[width:1cqw]:p-[9cqw]"
+        className="relative flex size-full flex-col p-3 pl-[calc(0.75rem+5%)] supports-[width:1cqw]:p-[9cqw] supports-[width:1cqw]:pl-[14cqw]"
       >
         <div className="flex min-h-0 flex-1 items-center">
           <p
             className={cn(
-              'line-clamp-6 font-serif leading-tight font-medium text-balance wrap-anywhere',
+              'line-clamp-6 leading-tight font-extrabold tracking-tight text-balance wrap-anywhere',
               coverTitleClass(title),
             )}
           >
@@ -90,10 +106,26 @@ export function StoryCover({
           </p>
         </div>
         <hr className="w-1/4 border-current/60" />
-        <p className="mt-2 truncate font-sans text-xs supports-[width:1cqw]:mt-[5cqw] supports-[width:1cqw]:text-[length:6.5cqw]">
+        <p className="mt-2 truncate text-xs font-semibold supports-[width:1cqw]:mt-[5cqw] supports-[width:1cqw]:text-[length:6.5cqw]">
           {authorName}
         </p>
       </div>
     </div>
   );
+}
+
+/** Book spine on the left edge: a dark strip about 5% of the cover width with a light seam. */
+function CoverSpine() {
+  return (
+    <span
+      aria-hidden="true"
+      data-slot="cover-spine"
+      className="pointer-events-none absolute inset-y-0 left-0 w-[5%] min-w-[3px] border-r border-white/15 bg-black/20"
+    />
+  );
+}
+
+/** First character of the title, by code point so a surrogate pair is never split. */
+function coverInitial(title: string): string {
+  return (Array.from(title.trim())[0] ?? '').toUpperCase();
 }

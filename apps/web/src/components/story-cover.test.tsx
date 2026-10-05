@@ -16,6 +16,13 @@ describe('StoryCover', () => {
     expect(html).not.toContain('<img');
   });
 
+  it('draws a book spine and a large faded initial, both hidden from assistive tech', () => {
+    const html = renderToStaticMarkup(<StoryCover {...base} coverUrl={null} />);
+    expect(html).toMatch(/<span aria-hidden="true" data-slot="cover-spine"/);
+    expect(html).toMatch(/<span aria-hidden="true"[^>]*>K<\/span>/);
+    expect(html).not.toContain('font-serif');
+  });
+
   it('renders a responsive image with both sizes and fixed dimensions when there is a cover', () => {
     const html = renderToStaticMarkup(
       <StoryCover {...base} coverUrl="https://cdn.example/covers/abc-600.webp" />,
@@ -29,6 +36,7 @@ describe('StoryCover', () => {
     expect(html).toContain('loading="lazy"');
     expect(html).toContain('alt="Bìa truyện Kiếm Đạo Độc Tôn"');
     expect(html).not.toContain('role="img"');
+    expect(html).toContain('data-slot="cover-spine"');
   });
 
   it('loads eagerly with high priority above the fold', () => {

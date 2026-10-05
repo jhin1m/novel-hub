@@ -36,23 +36,34 @@ function SheetOverlay({
   );
 }
 
+/*
+ * `adaptive-*` sides are a bottom sheet below `lg` and a side panel from `lg` up, using CSS only so
+ * one dialog node serves both layouts (server-rendered routes cannot branch on matchMedia). Each
+ * edge pins its own side at `lg`: two `auto` insets would pin the panel to the left edge.
+ */
+const ADAPTIVE_BASE =
+  'inset-x-0 bottom-0 max-h-[90dvh] rounded-t-[28px] border-t max-lg:data-[state=closed]:slide-out-to-bottom max-lg:data-[state=open]:slide-in-from-bottom lg:inset-y-0 lg:bottom-auto lg:h-full lg:max-h-none lg:w-full lg:max-w-sm lg:rounded-none lg:border-t-0';
+
 function SheetContent({
   className,
+  overlayClassName,
   children,
   side = 'right',
   showCloseButton = true,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
-  side?: 'top' | 'right' | 'bottom' | 'left';
+  side?: 'top' | 'right' | 'bottom' | 'left' | 'adaptive-right' | 'adaptive-left';
+  overlayClassName?: string;
   showCloseButton?: boolean;
 }) {
+  const adaptive = side === 'adaptive-right' || side === 'adaptive-left';
   return (
     <SheetPortal>
-      <SheetOverlay />
+      <SheetOverlay className={overlayClassName} />
       <SheetPrimitive.Content
         data-slot="sheet-content"
         className={cn(
-          'fixed z-50 flex flex-col gap-4 bg-background transition ease-in-out data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:animate-in data-[state=open]:duration-500',
+          'fixed z-50 flex flex-col gap-4 bg-card transition ease-in-out data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:animate-in data-[state=open]:duration-500',
           side === 'right' &&
             'inset-y-0 right-0 h-full w-3/4 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm',
           side === 'left' &&
@@ -61,13 +72,24 @@ function SheetContent({
             'inset-x-0 top-0 h-auto border-b data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top',
           side === 'bottom' &&
             'inset-x-0 bottom-0 h-auto border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom',
+          adaptive && ADAPTIVE_BASE,
+          side === 'adaptive-right' &&
+            'lg:right-0 lg:left-auto lg:border-l lg:data-[state=closed]:slide-out-to-right lg:data-[state=open]:slide-in-from-right',
+          side === 'adaptive-left' &&
+            'lg:right-auto lg:left-0 lg:border-r lg:data-[state=closed]:slide-out-to-left lg:data-[state=open]:slide-in-from-left',
           className,
         )}
         {...props}
       >
+        {adaptive ? (
+          <div
+            aria-hidden
+            className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border lg:hidden"
+          />
+        ) : null}
         {children}
         {showCloseButton && (
-          <SheetPrimitive.Close className="absolute top-4 right-4 rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none data-[state=open]:bg-secondary">
+          <SheetPrimitive.Close className="absolute top-4 right-4 rounded-xs opacity-70 ring-offset-card transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none data-[state=open]:bg-secondary">
             <XIcon className="size-4" />
             <span className="sr-only">{m.layout_close()}</span>
           </SheetPrimitive.Close>

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { COVER_PALETTE_SIZE, coverPaletteIndex, coverTitleClass, fnv1a32 } from './cover-palette';
+import {
+  COVER_PALETTE_SIZE,
+  coverColorVar,
+  coverPaletteIndex,
+  coverTitleClass,
+  fnv1a32,
+} from './cover-palette';
 
 describe('fnv1a32', () => {
   it('matches the published FNV-1a 32-bit test vectors', () => {
@@ -29,6 +35,13 @@ describe('coverPaletteIndex', () => {
       expect(index).toBeLessThan(COVER_PALETTE_SIZE);
       expect(coverPaletteIndex(slug)).toBe(index);
     }
+  });
+});
+
+describe('coverColorVar', () => {
+  it('points at the palette slot of the tag', () => {
+    expect(coverColorVar('tien-hiep')).toBe('var(--cover-2)');
+    expect(coverColorVar('ngon-tinh')).toBe('var(--cover-3)');
   });
 });
 

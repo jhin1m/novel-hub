@@ -52,7 +52,7 @@ function SiteHeader() {
         <div className="flex min-w-0 items-center gap-1">
           <HeaderSearch />
           {/* Signed-in users also reach it from the account menu; guests only find a sign-in invite there. */}
-          <Button asChild variant="ghost" className="hidden lg:inline-flex">
+          <Button asChild variant="ghost" size="sm" className="hidden lg:inline-flex">
             <Link to="/settings">
               <SettingsIcon aria-hidden />
               {m.layout_settings()}
@@ -82,7 +82,7 @@ function HeaderSearch() {
           className="h-9 w-48 lg:w-64"
         />
       </form>
-      <Button asChild variant="ghost" size="icon" className="md:hidden">
+      <Button asChild variant="ghost" size="icon-sm" className="md:hidden">
         <a href="/search" aria-label={m.layout_search()}>
           <SearchIcon aria-hidden />
         </a>
@@ -107,10 +107,10 @@ function AccountMenu() {
   if (!user) {
     return (
       <nav className="flex items-center gap-1">
-        <Button asChild variant="ghost">
+        <Button asChild variant="ghost" size="sm">
           <Link to="/sign-in">{m.layout_sign_in()}</Link>
         </Button>
-        <Button asChild>
+        <Button asChild size="sm">
           <Link to="/sign-up">{m.layout_sign_up()}</Link>
         </Button>
       </nav>
@@ -119,18 +119,18 @@ function AccountMenu() {
 
   return (
     <>
-      <Button asChild variant="ghost" className="hidden sm:inline-flex">
+      <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
         <Link to="/library" search={{ shelf: 'reading', page: 1 }}>
           <LibraryBigIcon aria-hidden />
           {m.layout_library()}
         </Link>
       </Button>
-      <Button asChild variant="ghost" className="hidden sm:inline-flex">
+      <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
         <Link to="/write">{m.layout_write()}</Link>
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="max-w-40 sm:max-w-48">
+          <Button variant="ghost" size="sm" className="max-w-40 sm:max-w-48">
             {/* Prefix instead of aria-label so the accessible name still contains the visible name. */}
             <span className="sr-only">{m.layout_account_menu()}: </span>
             <span className="truncate">{user.displayName}</span>

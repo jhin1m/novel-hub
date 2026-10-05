@@ -6,21 +6,16 @@ import { FormMessage } from '../../components/auth-ui';
 import { SiteLayout } from '../../components/site-layout';
 import { StoryCover } from '../../components/story-cover';
 import { STATUS_LABELS } from '../../components/story-form';
+import { VISIBILITY_LABELS } from '../../components/story/story-labels';
 import { WriterGate } from '../../components/writer-gate';
 import { useMe } from '../../lib/me';
-import { type AuthorStoryView, useMyStories } from '../../lib/stories';
+import { useMyStories } from '../../lib/stories';
 import { seo } from '../../lib/seo';
 
 export const Route = createFileRoute('/write/')({
   head: () => seo({ title: m.writer_title(), noindex: true }),
   component: WriterHomePage,
 });
-
-export const VISIBILITY_LABELS: Record<AuthorStoryView['visibility'], () => string> = {
-  draft: m.story_visibility_draft,
-  published: m.story_visibility_published,
-  hidden_by_mod: m.story_visibility_hidden_by_mod,
-};
 
 const dateFormat = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium' });
 

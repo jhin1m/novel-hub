@@ -1,12 +1,13 @@
 # Overnight 261006: đang chạy
-Cập nhật: 2026-10-06 03:09
-Đang làm: Q5 / phase-02
+Cập nhật: 2026-10-06 03:37
+Đang làm: Q5 / phase-03
 ## Đã xong
 - Q1 canvas /write + editor (artboard F-* trên https://claude.ai/artifact/X7w7oUBxruy6Y47oQ4HdAo), đặc tả ở plans/reports/design-261006-write-editor-screens-report.md
 - Q2 report brainstorm cuối: plans/reports/brainstorm-261006-ui-redesign-b-plus-final-report.md
 - Q3 plan redesign: plans/261006-0116-ui-redesign-b-plus (12 phase, red-team 33/34 finding)
 - Q4 validate redesign (Session 2: 15 lệch đã sửa)
 - Q5 phase-01 tokens và font (gate xanh sau 1 lần sửa: .prettierignore bỏ file inlang tự sinh)
+- Q5 phase-02 component dùng chung
 
 ## Quyết định [auto] (sáng cần duyệt)
 - Q1: 8 quyết định [auto] trong design-261006-write-editor-screens-report.md
@@ -17,6 +18,7 @@ Cập nhật: 2026-10-06 03:09
 - Q3: người đọc đã lưu font literata giữ Literata; 12 phase thay vì 9; còn lại xem Quyết định đã chốt + Validation Log trong plan.md
 - Q4: 6 câu [auto] ở Validation Log Session 2 plan redesign; đáng xem: thứ tự cuối chương (lời nhắn → Chương tiếp → Chương trước) sửa spec §8 ở phase 12
 - Q5 p01: đặt font-weight 400 cho vùng chữ truyện/editor/preview (code-review Medium); gỡ dep @fontsource-variable/inter và @fontsource/be-vietnam-pro
+- Q5 p02: thẻ lưới thêm bút danh + dòng 'Cập nhật {ngày}' (spec §8), dày hơn canvas; lưới mobile giữ 2 cột ở 360px
 
 ## Chặn / lỗi
 - Q3 (nhẹ): 'ck plan add-phase --after' lỗi afterId.toLowerCase; worker đổi tên phase bằng tay, 'ck plan validate' xác nhận

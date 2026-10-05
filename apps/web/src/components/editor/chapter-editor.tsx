@@ -7,7 +7,7 @@ import { EditorContent, useEditor } from '@tiptap/react';
 import { ArrowLeft } from 'lucide-react';
 import { type FocusEvent, useEffect, useId, useRef, useState } from 'react';
 import { FormMessage } from '@/components/auth-ui';
-import { CHAPTER_STATUS_LABELS } from '@/components/chapter-list';
+import { CHAPTER_STATUS_LABELS } from '@/components/story/story-labels';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

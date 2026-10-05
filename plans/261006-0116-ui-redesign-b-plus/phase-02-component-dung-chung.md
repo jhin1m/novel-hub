@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Component dùng chung"
-status: pending
+status: completed
 priority: P1
 effort: "0.75d"
 dependencies: [1]
@@ -111,14 +111,14 @@ StoryGrid / StoryRowList ── StoryCard(layout) ── StoryCover + StoryStatu
 
 ## Function/interface checklist
 
-- [ ] `buttonVariants` (variant/size mới), `badgeVariants` (+`muted`, `warning`)
-- [ ] `SheetContent` props: `side?: 'top' | 'right' | 'bottom' | 'left' | 'adaptive-right' | 'adaptive-left'`, `overlayClassName?: string`
-- [ ] `coverColorVar(tagSlug: string): string`
-- [ ] `StoryCard({ story, layout?, priority? })`, `StoryGrid({ stories, priorityCount?, scroll? })`, `StoryRowList({ stories, priorityCount? })`
-- [ ] `SectionHeading({ id, icon, title, subtitle?, onBand? })`
-- [ ] `TagChip({ slug, name })`
-- [ ] `StoryStatusBadge`, `StoryVisibilityBadge`, `ChapterStatusBadge`, `StoryFlagBadges`
-- [ ] `VISIBILITY_LABELS`, `CHAPTER_STATUS_LABELS` trong `story-labels.ts`
+- [x] `buttonVariants` (variant/size mới), `badgeVariants` (+`muted`, `warning`)
+- [x] `SheetContent` props: `side?: 'top' | 'right' | 'bottom' | 'left' | 'adaptive-right' | 'adaptive-left'`, `overlayClassName?: string`
+- [x] `coverColorVar(tagSlug: string): string`
+- [x] `StoryCard({ story, layout?, priority? })`, `StoryGrid({ stories, priorityCount?, scroll? })`, `StoryRowList({ stories, priorityCount? })`
+- [x] `SectionHeading({ id, icon, title, subtitle?, onBand? })`
+- [x] `TagChip({ slug, name })`
+- [x] `StoryStatusBadge`, `StoryVisibilityBadge`, `ChapterStatusBadge`, `StoryFlagBadges`
+- [x] `VISIBILITY_LABELS`, `CHAPTER_STATUS_LABELS` trong `story-labels.ts`
 
 ## Dependency map
 
@@ -147,12 +147,12 @@ Không key mới (dùng lại `story_status_*`, `story_visibility_*`, `chapter_s
 
 ## Success Criteria
 
-- [ ] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
-- [ ] `rg -l 'ring-ring/70|outline-ring/70' apps/web/src` chỉ còn `components/reader/reader-settings-sheet.tsx` (phase 7 đổi)
-- [ ] `rg -n 'font-serif' apps/web/src/components/story-cover.tsx apps/web/src/components/story` rỗng
-- [ ] Không còn `bg-background` trong `ui/dialog.tsx`, `ui/sheet.tsx`; không còn `text-white` trong `ui/`; `ui/sheet.tsx` có `lg:right-0` và `lg:left-0` cho hai side adaptive
-- [ ] Không route file nào export hằng label (`rg -n 'export const .*LABELS' apps/web/src/routes` rỗng)
-- [ ] File mới/sửa ≤ 200 dòng (trừ `chapter-editor.tsx` 553 chỉ đổi import, tách ở phase 9; `dropdown-menu.tsx` 225 vendor)
+- [x] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
+- [x] `rg -l 'ring-ring/70|outline-ring/70' apps/web/src` chỉ còn `components/reader/reader-settings-sheet.tsx` (phase 7 đổi)
+- [x] `rg -n 'font-serif' apps/web/src/components/story-cover.tsx apps/web/src/components/story` rỗng
+- [x] Không còn `bg-background` trong `ui/dialog.tsx`, `ui/sheet.tsx`; không còn `text-white` trong `ui/`; `ui/sheet.tsx` có `lg:right-0` và `lg:left-0` cho hai side adaptive
+- [x] Không route file nào export hằng label (`rg -n 'export const .*LABELS' apps/web/src/routes` rỗng)
+- [x] File mới/sửa ≤ 200 dòng (trừ `chapter-editor.tsx` 553 chỉ đổi import, tách ở phase 9; `dropdown-menu.tsx` 225 vendor)
 
 ## Risk Assessment
 
@@ -166,6 +166,16 @@ Không key mới (dùng lại `story_status_*`, `story_visibility_*`, `chapter_s
 | Tiêu đề trang còn serif tới phase sở hữu | H × L | chấp nhận (bảng phân công trên) |
 
 **Rollback:** revert theo file; không có thay đổi dữ liệu.
+
+## Ghi chú khi cook (2026-10-06)
+
+- [auto] Thẻ lưới thêm bút danh, dòng "Cập nhật {ngày}" và `StoryFlagBadges` ngoài mô tả "1 dòng meta + nhãn trạng thái". Lý do: spec §8 bắt buộc thẻ có lần cập nhật gần nhất và nhãn AI; spec thắng plan; bút danh vốn có, bìa chữ `aria-hidden` nên không thì trình đọc màn hình mất bút danh.
+- [auto] `StoryGrid` dưới `sm` giữ `grid-cols-2` (chỉ từ `sm` mới `auto-fill minmax(160px,1fr)`). Lý do: 360px còn 328px nội dung, auto-fill 160 ra 1 cột.
+- [auto] Gáy sách `w-[5%] min-w-[3px]` thay `w-[5cqw]`. Lý do: tương đương (phần trăm theo bề rộng bìa), chạy cả ở khung ảnh không phải `@container`.
+- [auto] Sheet `adaptive-*`: animation trượt đáy chỉ `max-lg:`, trượt ngang `lg:`, để hai biến `--tw-enter-translate-*` không cộng thành trượt chéo. Chưa thêm `overflow-y-auto`/`gap-0` (phase 7, 10 tự đặt ở nơi gọi).
+- [auto] Bước 8 đã áp: nút header trong `site-layout.tsx` dùng `size="sm"`/`icon-sm` (header 360px tràn 372 > 360). Phase 3 làm lại header.
+- File được unit test import (`ui/badge.tsx`, `status-badges`, `section-heading`, `tag-chip`, `story-card`, `story-grid`) dùng import tương đối: vitest gốc không resolve alias `@/`.
+- Gate: typecheck, lint, format:check, test (640), test:int (301), test:e2e (72) xanh.
 
 ## Ngoài phạm vi phase
 

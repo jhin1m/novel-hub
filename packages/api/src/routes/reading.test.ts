@@ -56,10 +56,12 @@ describe('/api/v1/reading (no database)', () => {
     }
   });
 
-  it('bodies over 4 KB are refused', async () => {
-    const res = await appAs(reader).request('/api/v1/reading/progress', post('x'.repeat(5000)));
-    expect(res.status).toBe(413);
-    expect(await res.json()).toMatchObject({ error: { code: 'PAYLOAD_TOO_LARGE' } });
+  it('bodies over 4 KB are refused on every route that takes one', async () => {
+    for (const path of ['/api/v1/reading/progress', '/api/v1/reading/view']) {
+      const res = await appAs(reader).request(path, post('x'.repeat(5000)));
+      expect(res.status, path).toBe(413);
+      expect(await res.json()).toMatchObject({ error: { code: 'PAYLOAD_TOO_LARGE' } });
+    }
   });
 
   it('a cross-site text/plain beacon is blocked by the CSRF check', async () => {

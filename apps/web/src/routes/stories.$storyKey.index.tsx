@@ -2,7 +2,8 @@ import { canonicalPath, parseStoryKey } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { createFileRoute } from '@tanstack/react-router';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { ContinueReadingButton } from '../components/library/continue-reading-button';
+import { LibraryButton } from '../components/library/library-button';
 import { NotFoundPage } from '../components/not-found';
 import { MatureGate, useMatureAllowed } from '../components/reader/mature-gate';
 import { SiteLayout } from '../components/site-layout';
@@ -104,13 +105,12 @@ function StoryPage() {
                   chaptersPerWeek={chaptersPerWeek}
                   lastChapterAt={story.lastChapterAt}
                 />
-                {first ? (
-                  <Button asChild className="self-start">
-                    <a href={canonicalPath({ kind: 'chapter', ...story, number: first.number })}>
-                      {m.story_page_start()}
-                    </a>
-                  </Button>
-                ) : null}
+                <div className="flex flex-wrap gap-2">
+                  {first ? (
+                    <ContinueReadingButton story={story} firstChapterNumber={first.number} />
+                  ) : null}
+                  <LibraryButton publicId={story.publicId} />
+                </div>
               </div>
             </header>
 

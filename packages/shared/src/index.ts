@@ -119,3 +119,19 @@ export {
   searchQuerySchema,
   searchSyncPayload,
 } from './schemas/search';
+export {
+  HISTORY_PAGE_SIZE,
+  LIBRARY_PAGE_SIZE,
+  LIBRARY_TABS,
+  type LibraryListQuery,
+  type LibraryTab,
+  SHELVES,
+  type Shelf,
+  historyCursorSchema,
+  historyQuery,
+  libraryListQuery,
+  libraryTabSchema,
+  publicIdParamSchema,
+  setShelfInput,
+  shelfSchema,
+} from './schemas/library';

@@ -1,7 +1,7 @@
 ---
 phase: 12
 title: "Phase 12: Tủ truyện và lịch sử đọc"
-status: pending
+status: completed
 priority: P1
 effort: "1.5d"
 dependencies: [11]
@@ -169,12 +169,12 @@ Cursor lịch sử dùng `publicId` thay `story_id`: so `(rp.updated_at, s.publi
 
 ## Function / Interface Checklist
 
-- [ ] `SHELVES`, `shelfSchema`, `libraryListQuery`, `historyCursorSchema`
-- [ ] `setShelf`, `removeFromLibrary`, `getShelf`, `listLibrary`
-- [ ] `listHistory`, `removeFromHistory`, `getContinueReading`, `resolveReadableChapter`
-- [ ] `createLibraryRoutes(deps)`; 3 route mới trong `createReadingRoutes` (phase 9)
-- [ ] `pctToScrollY`, `setResumeHandoff`, `takeResumeHandoff`
-- [ ] `LibraryButton`, `ContinueReadingButton`, `LibraryItem`, `HistoryList`; route `/library`
+- [x] `SHELVES`, `shelfSchema`, `libraryListQuery`, `historyCursorSchema`
+- [x] `setShelf`, `removeFromLibrary`, `getShelf`, `listLibrary`
+- [x] `listHistory`, `removeFromHistory`, `getContinueReading`, `resolveReadableChapter`
+- [x] `createLibraryRoutes(deps)`; 3 route mới trong `createReadingRoutes` (phase 9)
+- [x] `pctToScrollY`, `setResumeHandoff`, `takeResumeHandoff`
+- [x] `LibraryButton`, `ContinueReadingButton`, `LibraryItem`, `HistoryList`; route `/library`
 
 ## Test Scenario Matrix
 
@@ -208,11 +208,11 @@ Cursor lịch sử dùng `publicId` thay `story_id`: so `(rp.updated_at, s.publi
 
 ## Success Criteria
 
-- [ ] Thêm/đổi kệ/bỏ khỏi tủ chạy ở trang truyện và `/library`
-- [ ] Lịch sử đọc mới nhất trước, có xoá mục và tải thêm
-- [ ] "Đọc tiếp" mở đúng chương và khôi phục vị trí cuộn, URL chương không có query
-- [ ] Trang truyện vẫn cache công khai, không cookie
-- [ ] Gate 5 lệnh xanh; checkbox spec = `[x]`
+- [x] Thêm/đổi kệ/bỏ khỏi tủ chạy ở trang truyện và `/library`
+- [x] Lịch sử đọc mới nhất trước, có xoá mục và tải thêm
+- [x] "Đọc tiếp" mở đúng chương và khôi phục vị trí cuộn, URL chương không có query
+- [x] Trang truyện vẫn cache công khai, không cookie
+- [x] Gate 5 lệnh xanh; checkbox spec = `[x]`
 
 ## Risk Assessment
 
@@ -241,3 +241,13 @@ Rollback: không migration; gỡ route `library`, 3 route mới của `reading`,
 ## Next Steps
 
 Phase 13: rate limit Redis (đăng ký, đăng nhập, quên mật khẩu, tạo truyện, đăng chương, báo cáo, bình luận khai báo sẵn).
+
+## Kết quả (2026-10-05)
+
+- Gate 5 lệnh xanh (unit 471, int 242, e2e 57). Review `../reports/code-reviewer-261005-1536-phase-12-library-history-review-report.md` (8/10, đã sửa M1–M3 và test 413 `/view`). Report: `../reports/cook-261005-1602-phase-12-library-history-report.md`.
+- Lệch plan:
+  - Cursor lịch sử theo micro giây (`${micros}_${publicId}`): Postgres lưu µs, cursor ms sẽ sót dòng cách nhau dưới 1 ms.
+  - Không có `resolveReadableChapter` riêng: subquery LATERAL `resumeChapter()` (hai lookup `LIMIT 1` theo index `(story_id, status, number)`) dùng chung cho tủ, lịch sử, đọc tiếp, không N+1.
+  - `use-reading-progress.ts` giữ nguyên; trang chương tắt ghi tiến độ khi `useResumeScroll` đang khôi phục.
+  - `bodyLimit` của `routes/reading.ts` chỉ áp cho `/progress`, `/view` (DELETE không body làm hono `bodyLimit` lỗi dưới dev server srvx).
+  - Trang quá số trang của kệ trả trang cuối.

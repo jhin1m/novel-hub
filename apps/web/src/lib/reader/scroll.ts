@@ -29,3 +29,23 @@ export function scrollPctOf(element: Element): number {
     height: rect.height,
   });
 }
+
+/**
+ * The inverse of `computeScrollPct`: the `scrollY` at which the text reads `pct`. Never below 0,
+ * since positions near the top of the text are already on the first screen.
+ */
+export function scrollYForPct(
+  { viewportHeight, top, height }: Omit<ScrollGeometry, 'scrollY'>,
+  pct: number,
+): number {
+  return Math.max(0, top + (height * pct) / 100 - viewportHeight);
+}
+
+/** `scrollYForPct` for an element on the current page. */
+export function pctToScrollY(element: Element, pct: number): number {
+  const rect = element.getBoundingClientRect();
+  return scrollYForPct(
+    { viewportHeight: window.innerHeight, top: rect.top + window.scrollY, height: rect.height },
+    pct,
+  );
+}

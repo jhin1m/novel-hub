@@ -159,7 +159,7 @@ Làm tuần tự; mỗi mục chỉ coi là xong khi đạt tiêu chí và có t
 - [x] Trang đọc chương theo mục 6 và mục 8.
 - [x] Trang truyện, trang tác giả, trang tag, trang chủ (mới cập nhật, truyện mới đáng chú ý).
 - [x] Tìm kiếm Meilisearch: truyện và tác giả, lọc theo tag, trạng thái, số chữ.
-- [ ] Tủ truyện và lịch sử đọc, nút đọc tiếp.
+- [x] Tủ truyện và lịch sử đọc, nút đọc tiếp.
 - [ ] Rate limit Redis theo user và IP: đăng ký, đăng nhập, quên mật khẩu, tạo truyện, đăng chương, bình luận, báo cáo (mục 7).
 - [ ] Kiểm tra trùng lặp khi đăng chương, báo cáo vi phạm, trang hàng chờ cho mod (mục 7).
 - [ ] SEO: metadata, Open Graph, sitemap, canonical URL.

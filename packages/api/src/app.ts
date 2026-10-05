@@ -4,6 +4,7 @@ import { handleError, handleNotFound } from './lib/errors';
 import { csrf } from './middleware/csrf';
 import { noStore } from './middleware/no-store';
 import { createHealthRoutes } from './routes/health';
+import { createLibraryRoutes } from './routes/library';
 import { createMeRoutes } from './routes/me';
 import { createReadingRoutes } from './routes/reading';
 import { createSearchRoutes } from './routes/search';
@@ -15,6 +16,7 @@ function createV1Routes(deps: ApiDeps) {
   return new Hono()
     .use(csrf(deps.appUrl))
     .route('/health', createHealthRoutes(deps))
+    .route('/library', createLibraryRoutes(deps))
     .route('/me', createMeRoutes(deps))
     .route('/reading', createReadingRoutes(deps))
     .route('/search', createSearchRoutes(deps))

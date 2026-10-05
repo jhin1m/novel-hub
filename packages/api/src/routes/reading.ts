@@ -1,5 +1,16 @@
-import { recordChapterView, saveReadingProgress } from '@novel-hub/core';
-import { chapterViewInput, readingProgressInput } from '@novel-hub/shared';
+import {
+  getContinueReading,
+  listHistory,
+  recordChapterView,
+  removeFromHistory,
+  saveReadingProgress,
+} from '@novel-hub/core';
+import {
+  chapterViewInput,
+  historyQuery,
+  publicIdParamSchema,
+  readingProgressInput,
+} from '@novel-hub/shared';
 import { type Context, Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { getCookie, setCookie } from 'hono/cookie';
@@ -18,7 +29,10 @@ const VIEWER_COOKIE_PATH = '/api/v1/reading';
 const VIEWER_COOKIE_MAX_AGE = 365 * 24 * 60 * 60;
 const VIEWER_ID = /^[A-Za-z0-9_-]{22}$/;
 
-/** Reading activity: progress of signed-in readers and counted reads. Always 204, never cached. */
+/**
+ * Reading activity: progress and history of signed-in readers (their own rows only) and counted
+ * reads. Never cached.
+ */
 export function createReadingRoutes(deps: Pick<ApiDeps, 'auth' | 'db' | 'appUrl' | 'viewCounter'>) {
   const secureCookie = new URL(deps.appUrl).protocol === 'https:';
 
@@ -34,15 +48,46 @@ export function createReadingRoutes(deps: Pick<ApiDeps, 'auth' | 'db' | 'appUrl'
     return { viewer: `a:${fresh}`, newId: fresh };
   };
 
+  // Only on the routes that take a body (a new one must be added here): on a bodiless request
+  // without `content-length` (a browser DELETE), the limiter rebuilds the request and that fails
+  // under the dev server.
+  const limitBody = bodyLimit({
+    maxSize: BODY_LIMIT_BYTES,
+    onError: (c) => c.json(errorBody('PAYLOAD_TOO_LARGE', 'Request body is too large'), 413),
+  });
+
   return (
     new Hono()
-      .use(
-        bodyLimit({
-          maxSize: BODY_LIMIT_BYTES,
-          onError: (c) => c.json(errorBody('PAYLOAD_TOO_LARGE', 'Request body is too large'), 413),
-        }),
-      )
+      .use('/progress', limitBody)
+      .use('/view', limitBody)
       .use(sessionMiddleware(deps.auth))
+      // Where "continue reading" takes the reader in a story, already moved to a readable chapter.
+      .get(
+        '/progress/:publicId',
+        requireAuth,
+        validate('param', publicIdParamSchema),
+        async (c) => {
+          const progress = await getContinueReading(
+            deps.db,
+            c.var.authUser.id,
+            c.req.valid('param').publicId,
+          );
+          return c.json({ progress }, 200);
+        },
+      )
+      .get('/history', requireAuth, validate('query', historyQuery), async (c) => {
+        const page = await listHistory(deps.db, c.var.authUser.id, c.req.valid('query').cursor);
+        return c.json(page, 200);
+      })
+      .delete(
+        '/history/:publicId',
+        requireAuth,
+        validate('param', publicIdParamSchema),
+        async (c) => {
+          await removeFromHistory(deps.db, c.var.authUser.id, c.req.valid('param').publicId);
+          return c.body(null, 204);
+        },
+      )
       // Debounced saves while reading (typed `hc` call).
       .put('/progress', requireAuth, validate('json', readingProgressInput), async (c) => {
         const result = await saveReadingProgress(deps.db, c.var.authUser.id, c.req.valid('json'));

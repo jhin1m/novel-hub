@@ -13,6 +13,7 @@ import { throwNotFound } from '../lib/route-signals';
 import { useArrowKeys } from '../lib/reader/use-arrow-keys';
 import { useNavVisibility } from '../lib/reader/use-nav-visibility';
 import { useReadingProgress } from '../lib/reader/use-reading-progress';
+import { useResumeScroll } from '../lib/reader/use-resume-scroll';
 import { useViewBeacon } from '../lib/reader/use-view-beacon';
 import { useMe } from '../lib/me';
 import { getChapterPage } from '../server-fns/reader';
@@ -68,8 +69,10 @@ function ReaderPage() {
   const me = useMe();
   const contentRef = useRef<HTMLDivElement>(null);
   const chapterRef = { publicId: story.publicId, number: chapter.number };
-  // Nothing is recorded while the 18+ screen hides the text.
-  useReadingProgress(contentRef, chapterRef, !!me.data && !gated);
+  // Opened from "continue reading": back to where the reader was.
+  const resuming = useResumeScroll(contentRef, chapterRef);
+  // Nothing is recorded while the 18+ screen hides the text, nor before the position is restored.
+  useReadingProgress(contentRef, chapterRef, !!me.data && !gated && !resuming);
   useViewBeacon(chapterRef, !gated);
 
   return (

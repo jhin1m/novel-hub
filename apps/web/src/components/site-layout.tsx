@@ -1,7 +1,7 @@
 import { SEARCH_QUERY_MAX_LENGTH, canonicalPath } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { Link } from '@tanstack/react-router';
-import { ChevronDownIcon, SearchIcon, SettingsIcon } from 'lucide-react';
+import { ChevronDownIcon, LibraryBigIcon, SearchIcon, SettingsIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -104,6 +104,12 @@ function AccountMenu() {
 
   return (
     <>
+      <Button asChild variant="ghost">
+        <Link to="/library" search={{ shelf: 'reading', page: 1 }}>
+          <LibraryBigIcon aria-hidden />
+          <span className="sr-only sm:not-sr-only">{m.layout_library()}</span>
+        </Link>
+      </Button>
       <Button asChild variant="ghost">
         <Link to="/write">{m.layout_write()}</Link>
       </Button>

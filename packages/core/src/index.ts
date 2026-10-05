@@ -184,3 +184,17 @@ export {
 } from './search/sync';
 export { type AuthorHit, type SearchResult, buildStoryFilter, searchCatalog } from './search/query';
 export { type ReindexResult, reindexAll } from './search/reindex';
+export {
+  type LibraryItemDto,
+  getShelf,
+  listLibrary,
+  removeFromLibrary,
+  setShelf,
+} from './library/library';
+export { type ContinueDto, getContinueReading } from './reading/continue';
+export {
+  type HistoryItemDto,
+  type HistoryPage,
+  listHistory,
+  removeFromHistory,
+} from './reading/history';

@@ -33,7 +33,8 @@ function SignUpPage() {
       throwIfAuthError(error);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: meQueryKey });
+      // Reset rather than invalidate: data cached for a previous account must not show at all.
+      await queryClient.resetQueries({ queryKey: meQueryKey });
       await navigate({ to: '/' });
     },
   });

@@ -13,10 +13,12 @@
   "dependencies": {
     "@novel-hub/db": "workspace:*",
     "@novel-hub/shared": "workspace:*",
+    "aws4fetch": "^1.0.20",
     "bullmq": "^6.3.11",
     "drizzle-orm": "0.45.3",
     "ioredis": "^5.11.1",
-    "nodemailer": "^8.0.11"
+    "nodemailer": "^8.0.11",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@types/node": "catalog:",

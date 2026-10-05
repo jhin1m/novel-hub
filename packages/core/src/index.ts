@@ -37,3 +37,22 @@ export type { CurrentUser } from './users/current-user';
 export { markEmailVerified } from './users/mark-email-verified';
 export { revokeUnprovenAccess } from './users/revoke-unproven-access';
 export { generateUsername, isUsernameTaken } from './users/username';
+export type { Db } from '@novel-hub/db';
+export {
+  COVER_MAX_PIXELS,
+  type CoverImageError,
+  type CoverVariants,
+  processCoverImage,
+} from './images/cover';
+export { type Result, err, ok } from './lib/result';
+export { SemaphoreFullError, createSemaphore } from './lib/semaphore';
+export { type StoryActor, canEditStory } from './policies/story';
+export { type S3Config, createS3Storage, s3ConfigFromEnv } from './storage/s3-storage';
+export type { StoragePort } from './storage/storage';
+export { type CoverDeps, removeStoryCover, setStoryCover } from './stories/cover';
+export { createStory } from './stories/create-story';
+export { type OwnedStoryError, loadOwnedStory } from './stories/load-owned-story';
+export { getAuthorStory, listAuthorStories, listTags } from './stories/read-stories';
+export { type ResolvedTags, type TagError, resolveTags } from './stories/resolve-tags';
+export { type AuthorStoryView, type TagView } from './stories/story-view';
+export { type UpdatedStory, updateStory } from './stories/update-story';

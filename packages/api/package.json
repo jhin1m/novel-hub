@@ -6,17 +6,24 @@
   "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
-    "./client": "./src/client.ts"
+    "./client": "./src/client.ts",
+    "./testing": "./src/testing.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@hono/zod-validator": "^0.9.1",
     "@novel-hub/core": "workspace:*",
-    "hono": "^4.13.12"
+    "@novel-hub/shared": "workspace:*",
+    "hono": "^4.13.12",
+    "zod": "catalog:"
   },
   "devDependencies": {
+    "@novel-hub/db": "workspace:*",
     "@types/node": "catalog:",
+    "drizzle-orm": "0.45.3",
+    "sharp": "^0.35.5",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

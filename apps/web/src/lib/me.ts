@@ -36,6 +36,10 @@ export function useSignOut() {
       const { error } = await authClient.signOut();
       throwIfAuthError(error);
     },
-    onSuccess: () => queryClient.setQueryData(meQueryKey, null),
+    onSuccess: () => {
+      // Drop every per-account cache (my stories...) so the next account never sees them.
+      queryClient.removeQueries({ queryKey: meQueryKey });
+      queryClient.setQueryData(meQueryKey, null);
+    },
   });
 }

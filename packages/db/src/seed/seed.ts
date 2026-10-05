@@ -1,19 +1,19 @@
 import { createHash } from 'node:crypto';
-import { generatePublicId, slugify } from '@novel-hub/shared';
+import { slugify } from '@novel-hub/shared';
+import { inArray } from 'drizzle-orm';
 import type { Db } from '../client';
 import { accounts, users } from '../schema/auth';
 import { chapterContents, chapterDrafts, chapters } from '../schema/chapters';
-import { stories, storyTags, tags } from '../schema/stories';
+import { storyTags, tags } from '../schema/stories';
+import { type Tx, insertStoryWithPublicId } from '../stories';
 import { type ChapterFixture, type StoryFixture, STORIES, TAGS, USERS } from './fixtures';
 
-type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
-
 export interface SeedOptions {
-  /** Hàm hash của Better Auth (phase 5 truyền vào). Đi cùng `password`. */
+  /** Better Auth's hash function (passed in by phase 5). Goes together with `password`. */
   hashPassword?: (password: string) => Promise<string>;
-  /** Mật khẩu chung cho mọi tài khoản mẫu. Đi cùng `hashPassword`. */
+  /** Shared password for every sample account. Goes together with `hashPassword`. */
   password?: string;
-  /** Mốc thời gian gốc để tính ngày đăng/hẹn giờ. Mặc định thời điểm chạy. */
+  /** Base timestamp for computing publish/schedule dates. Defaults to the run time. */
   now?: Date;
 }
 
@@ -26,7 +26,6 @@ export interface SeedSummary {
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const PUBLIC_ID_ATTEMPTS = 5;
 
 export function countWords(text: string): number {
   return text.split(/\s+/).filter(Boolean).length;
@@ -41,8 +40,8 @@ function escapeHtml(text: string): string {
 }
 
 /**
- * Dựng nội dung chương đã đăng dạng đơn giản: doc kiểu Tiptap và HTML `<p data-pid>`.
- * Pipeline sanitize thật có ở Giai đoạn 1.
+ * Builds simple published chapter content: a Tiptap-style doc and `<p data-pid>` HTML.
+ * The real sanitize pipeline arrives in Stage 1.
  */
 function buildContent(paragraphs: string[]) {
   const paragraphIds = paragraphs.map((_, i) => `p${i + 1}`);
@@ -61,29 +60,13 @@ function buildContent(paragraphs: string[]) {
   return { docJson, html, paragraphIds, contentHash };
 }
 
-/** Sinh `public_id`; trùng (unique `stories_public_id_key`) thì sinh lại, tối đa 5 lần. */
-async function insertStory(
-  tx: Tx,
-  values: Omit<typeof stories.$inferInsert, 'publicId'>,
-): Promise<string> {
-  for (let attempt = 0; attempt < PUBLIC_ID_ATTEMPTS; attempt++) {
-    const [row] = await tx
-      .insert(stories)
-      .values({ ...values, publicId: generatePublicId() })
-      .onConflictDoNothing({ target: stories.publicId })
-      .returning({ id: stories.id });
-    if (row) return row.id;
-  }
-  throw new Error(`Không sinh được public_id duy nhất sau ${PUBLIC_ID_ATTEMPTS} lần`);
-}
-
 function lookup(map: Map<string, string>, key: string, kind: string): string {
   const id = map.get(key);
   if (id === undefined) throw new Error(`Fixture tham chiếu ${kind} không tồn tại: ${key}`);
   return id;
 }
 
-/** Ngày đăng của chương published thứ `index` trong `total` chương: cách nhau 1 ngày, mới nhất là hôm qua. */
+/** Publish date of the `index`-th published chapter out of `total`: one day apart, the newest is yesterday. */
 function publishedAtFor(now: Date, index: number, total: number): Date {
   return new Date(now.getTime() - (total - index) * DAY_MS);
 }
@@ -101,8 +84,8 @@ async function seedStory(
   const words = new Map(fixture.chapters.map((c) => [c, countWords(c.paragraphs.join(' '))]));
   const lastPublished = published.at(-1);
 
-  // Bộ đếm chỉ tính chương đã đăng và chưa xoá mềm (seed không có chương xoá).
-  const storyId = await insertStory(tx, {
+  // Counters only count published, non-soft-deleted chapters (the seed has no deleted chapters).
+  const { id: storyId } = await insertStoryWithPublicId(tx, {
     slug: slugify(fixture.title),
     authorId: lookup(ids.users, fixture.authorUsername, 'user'),
     title: fixture.title,
@@ -143,7 +126,7 @@ async function seedStory(
         .insert(chapterDrafts)
         .values({ chapterId: row.id, docJson: buildContent(chapter.paragraphs).docJson });
     } else {
-      // Chương hẹn giờ đã dựng sẵn HTML lúc hẹn, chỉ chờ tới giờ đăng.
+      // Scheduled chapters get their HTML built at scheduling time and just wait for the publish time.
       await tx
         .insert(chapterContents)
         .values({ chapterId: row.id, ...buildContent(chapter.paragraphs) });
@@ -153,8 +136,42 @@ async function seedStory(
 }
 
 /**
- * Nạp dữ liệu mẫu trong một transaction. Từ chối khi `users` đã có dữ liệu; muốn nạp lại
- * thì TRUNCATE trước (CLI `--reset`). Không tự kiểm tra môi trường: gọi `assertSeedAllowed` trước.
+ * Inserts the starting tag list (canonical tags first, then merged ones pointing at them). Safe to
+ * run repeatedly and in production: existing slugs are left untouched. Returns slug → id for every
+ * fixture tag.
+ */
+export async function seedTags(db: Db | Tx): Promise<Map<string, string>> {
+  const tagIds = new Map<string, string>();
+  for (const merged of [false, true]) {
+    const batch = TAGS.filter((t) => (t.canonicalSlug !== undefined) === merged);
+    await db
+      .insert(tags)
+      .values(
+        batch.map((t) => ({
+          slug: t.slug,
+          name: t.name,
+          kind: t.kind,
+          canonicalId: t.canonicalSlug ? lookup(tagIds, t.canonicalSlug, 'tag') : null,
+        })),
+      )
+      .onConflictDoNothing({ target: tags.slug });
+    const rows = await db
+      .select({ id: tags.id, slug: tags.slug })
+      .from(tags)
+      .where(
+        inArray(
+          tags.slug,
+          batch.map((t) => t.slug),
+        ),
+      );
+    for (const r of rows) tagIds.set(r.slug, r.id);
+  }
+  return tagIds;
+}
+
+/**
+ * Loads sample data in a single transaction. Refuses when `users` already has data; to reload,
+ * TRUNCATE first (CLI `--reset`). Does not check the environment itself: call `assertSeedAllowed` first.
  */
 export async function seedDatabase(db: Db, opts: SeedOptions = {}): Promise<SeedSummary> {
   if ((opts.hashPassword === undefined) !== (opts.password === undefined)) {
@@ -170,23 +187,7 @@ export async function seedDatabase(db: Db, opts: SeedOptions = {}): Promise<Seed
       throw new Error('Từ chối seed: bảng users đã có dữ liệu (dùng --reset để nạp lại)');
     }
 
-    const tagIds = new Map<string, string>();
-    // Tag chuẩn trước, tag trùng sau để có `canonical_id`.
-    for (const pass of [false, true]) {
-      const batch = TAGS.filter((t) => (t.canonicalSlug !== undefined) === pass);
-      const rows = await tx
-        .insert(tags)
-        .values(
-          batch.map((t) => ({
-            slug: t.slug,
-            name: t.name,
-            kind: t.kind,
-            canonicalId: t.canonicalSlug ? lookup(tagIds, t.canonicalSlug, 'tag') : null,
-          })),
-        )
-        .returning({ id: tags.id, slug: tags.slug });
-      for (const r of rows) tagIds.set(r.slug, r.id);
-    }
+    const tagIds = await seedTags(tx);
 
     const userRows = await tx
       .insert(users)

@@ -14,6 +14,7 @@
     "db:generate": "pnpm --filter @novel-hub/db db:generate",
     "db:migrate": "pnpm --filter @novel-hub/db db:migrate",
     "db:seed": "pnpm --filter @novel-hub/auth db:seed",
+    "db:seed-tags": "pnpm --filter @novel-hub/auth db:seed-tags",
     "typecheck": "pnpm -r --parallel typecheck",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

@@ -1,4 +1,5 @@
 import { createApp } from '@novel-hub/api';
+import { makeTestApiDeps } from '@novel-hub/api/testing';
 import type { AuthMailMessage, AuthMailPort } from '@novel-hub/core';
 import { accounts, sessions, users } from '@novel-hub/db';
 import { seedDatabase } from '@novel-hub/db/seed';
@@ -28,11 +29,13 @@ function buildApp(env: { GOOGLE_CLIENT_ID?: string; GOOGLE_CLIENT_SECRET?: strin
     sendAuthEmail: (msg) => sendImpl(msg),
     mailTimeoutMs: 200,
   });
-  return createApp({
-    checkHealth: () => Promise.resolve({ status: 'ok', checks: { postgres: 'up', redis: 'up' } }),
-    appUrl: APP_URL,
-    auth: { handler: auth.handler, lookupSession: (headers) => lookupSession(auth, headers) },
-  });
+  return createApp(
+    makeTestApiDeps({
+      appUrl: APP_URL,
+      db,
+      auth: { handler: auth.handler, lookupSession: (headers) => lookupSession(auth, headers) },
+    }),
+  );
 }
 
 const app = buildApp();
@@ -108,8 +111,8 @@ beforeEach(async () => {
   };
 });
 
-describe('đăng ký', () => {
-  it('tạo user reader/active, chưa xác thực, id v7, gửi mail xác thực', async () => {
+describe('sign-up', () => {
+  it('creates a reader/active user, unverified, v7 id, sends verification mail', async () => {
     const { res, cookie } = await signUp({ username: 'lam_phong' });
     expect(res.status).toBe(200);
     expect(cookie).toContain('session_token');
@@ -130,7 +133,7 @@ describe('đăng ký', () => {
     expect(mail.url).toMatch(/^http:\/\/localhost:3000\/api\/auth\/verify-email\?token=/);
   });
 
-  it('bỏ qua role, status, image do client gửi', async () => {
+  it('ignores role, status and image sent by the client', async () => {
     const { res } = await signUp({
       username: 'lam_phong',
       role: 'admin',
@@ -145,7 +148,7 @@ describe('đăng ký', () => {
     });
   });
 
-  it('username sai định dạng → 400 USERNAME_INVALID', async () => {
+  it('malformed username → 400 USERNAME_INVALID', async () => {
     for (const username of ['AB', 'có dấu', 'admin', '']) {
       const { res } = await signUp({ username });
       expect(res.status, username).toBe(400);
@@ -154,14 +157,14 @@ describe('đăng ký', () => {
     expect(await db.select().from(users)).toHaveLength(0);
   });
 
-  it('username trùng → 400 USERNAME_TAKEN', async () => {
+  it('duplicate username → 400 USERNAME_TAKEN', async () => {
     await signUp({ username: 'lam_phong' });
     const { res } = await signUp({ username: 'lam_phong', email: 'khac@example.com' });
     expect(res.status).toBe(400);
     expect(await codeOf(res)).toBe('USERNAME_TAKEN');
   });
 
-  it('tên hiển thị rỗng hoặc quá dài → 400 DISPLAY_NAME_INVALID', async () => {
+  it('empty or too long display name → 400 DISPLAY_NAME_INVALID', async () => {
     for (const name of ['', '   ', 'a'.repeat(200)]) {
       const { res } = await signUp({ username: 'lam_phong', name });
       expect(res.status).toBe(400);
@@ -169,12 +172,12 @@ describe('đăng ký', () => {
     }
   });
 
-  it('tên hiển thị được bỏ khoảng trắng hai đầu', async () => {
+  it('display name is trimmed', async () => {
     await signUp({ username: 'lam_phong', name: '  Lâm Phong  ' });
     expect((await userByEmail('lp@example.com')).displayName).toBe('Lâm Phong');
   });
 
-  it('không gửi username → tự sinh từ email, có hậu tố, khớp schema', async () => {
+  it('no username sent → generated from email, with suffix, matches schema', async () => {
     const { res } = await signUp({ email: 'duc.anh@example.com' });
     expect(res.status).toBe(200);
     const { username } = await userByEmail('duc.anh@example.com');
@@ -182,25 +185,25 @@ describe('đăng ký', () => {
     expect(usernameSchema.safeParse(username).success).toBe(true);
   });
 
-  it('email đã tồn tại → 422', async () => {
+  it('existing email → 422', async () => {
     await signUp({ username: 'lam_phong' });
     const { res } = await signUp({ username: 'nguoi_khac' });
     expect(res.status).toBe(422);
   });
 
-  it('cổng mail treo → đăng ký vẫn trả về dưới 1.5 giây', async () => {
+  it('hanging mail gateway → sign-up still returns within 1.5 seconds', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     sendImpl = () => new Promise(() => {});
     const started = Date.now();
     const { res } = await signUp({ username: 'lam_phong' });
     expect(res.status).toBe(200);
     expect(Date.now() - started).toBeLessThan(1500);
-    // Quá `mailTimeoutMs` thì ghi log lỗi.
+    // Past `mailTimeoutMs` the error is logged.
     await vi.waitFor(() => expect(error).toHaveBeenCalled());
     error.mockRestore();
   });
 
-  it('cổng mail ném lỗi → đăng ký vẫn thành công', async () => {
+  it('mail gateway throws → sign-up still succeeds', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     sendImpl = () => Promise.reject(new Error('smtp down'));
     const { res } = await signUp({ username: 'lam_phong' });
@@ -209,7 +212,7 @@ describe('đăng ký', () => {
     error.mockRestore();
   });
 
-  it('Origin lạ → 403', async () => {
+  it('foreign Origin → 403', async () => {
     const res = await call('/auth/sign-up/email', {
       body: { name: 'X', username: 'xxx', email: 'x@example.com', password: PASSWORD },
       headers: { origin: 'http://evil.example' },
@@ -219,8 +222,8 @@ describe('đăng ký', () => {
   });
 });
 
-describe('cập nhật user', () => {
-  it('gửi username hoặc image → bị từ chối, DB không đổi; name hợp lệ → đổi được', async () => {
+describe('user update', () => {
+  it('sending username or image → rejected, DB unchanged; valid name → updated', async () => {
     const { cookie } = await signUp({ username: 'lam_phong' });
 
     let res = await call('/auth/update-user', { body: { username: 'ten_moi' }, cookie });
@@ -246,7 +249,7 @@ describe('cập nhật user', () => {
     expect((await userByEmail('lp@example.com')).displayName).toBe('Phong Mới');
   });
 
-  it('role/status không tự đặt được', async () => {
+  it('role/status cannot be set by the user', async () => {
     const { cookie } = await signUp({ username: 'lam_phong' });
     for (const body of [{ role: 'admin' }, { status: 'active' }]) {
       const res = await call('/auth/update-user', { body, cookie });
@@ -255,27 +258,27 @@ describe('cập nhật user', () => {
     expect(await userByEmail('lp@example.com')).toMatchObject({ role: 'reader', status: 'active' });
   });
 
-  it('image: null cũng bị từ chối (chỉ đổi avatar qua route upload)', async () => {
+  it('image: null is also rejected (avatar changes only via the upload route)', async () => {
     const { cookie } = await signUp({ username: 'lam_phong' });
     const res = await call('/auth/update-user', { body: { image: null }, cookie });
     expect(res.status).toBe(400);
   });
 });
 
-describe('đăng nhập và /api/v1/me', () => {
-  it('chưa xác thực email vẫn đăng nhập được', async () => {
+describe('sign-in and /api/v1/me', () => {
+  it('can sign in without verifying email', async () => {
     await signUp({ username: 'lam_phong' });
     const { res, cookie } = await signIn('lp@example.com');
     expect(res.status).toBe(200);
     expect(cookie).toContain('session_token');
   });
 
-  it('sai mật khẩu → 401', async () => {
+  it('wrong password → 401', async () => {
     await signUp({ username: 'lam_phong' });
     expect((await signIn('lp@example.com', 'sai-mat-khau')).res.status).toBe(401);
   });
 
-  it('/api/v1/me: không cookie → 401; có cookie → 200, không có id', async () => {
+  it('/api/v1/me: no cookie → 401; with cookie → 200, no id', async () => {
     expect((await call('/v1/me', { method: 'GET' })).status).toBe(401);
 
     const { cookie } = await signUp({ username: 'lam_phong' });
@@ -295,13 +298,13 @@ describe('đăng nhập và /api/v1/me', () => {
     expect(text).not.toContain((await userByEmail('lp@example.com')).id);
   });
 
-  it('đăng xuất → cookie cũ hết hiệu lực', async () => {
+  it('sign-out → old cookie is invalidated', async () => {
     const { cookie } = await signUp({ username: 'lam_phong' });
     expect((await call('/auth/sign-out', { body: {}, cookie })).status).toBe(200);
     expect((await call('/v1/me', { method: 'GET', cookie })).status).toBe(401);
   });
 
-  it('user seed đăng nhập được bằng mật khẩu seed', async () => {
+  it('seeded user can sign in with the seed password', async () => {
     await seedDatabase(db, { hashPassword, password: PASSWORD });
     const [seeded] = await db.select().from(users).where(eq(users.status, 'active')).limit(1);
     if (!seeded) throw new Error('seed không có user active');
@@ -309,8 +312,8 @@ describe('đăng nhập và /api/v1/me', () => {
   });
 });
 
-describe('user bị mute', () => {
-  it('vẫn đăng nhập và dùng phiên được (mute chỉ chặn bình luận, ở Giai đoạn 2)', async () => {
+describe('muted user', () => {
+  it('can still sign in and use the session (mute only blocks comments, in Stage 2)', async () => {
     const { cookie } = await signUp({ username: 'lam_phong' });
     await db.update(users).set({ status: 'muted' }).where(eq(users.email, 'lp@example.com'));
     expect((await signIn('lp@example.com')).res.status).toBe(200);
@@ -320,8 +323,8 @@ describe('user bị mute', () => {
   });
 });
 
-describe('user bị ban', () => {
-  it('không đăng nhập được; session cũ bị chặn ở /api/auth/* và /api/v1/*', async () => {
+describe('banned user', () => {
+  it('cannot sign in; old session is blocked at /api/auth/* and /api/v1/*', async () => {
     const { cookie } = await signUp({ username: 'lam_phong' });
     await db.update(users).set({ status: 'banned' }).where(eq(users.email, 'lp@example.com'));
 
@@ -334,13 +337,13 @@ describe('user bị ban', () => {
     expect(await codeOf(update)).toBe('ACCOUNT_BANNED');
 
     expect((await call('/v1/me', { method: 'GET', cookie })).status).toBe(401);
-    // Đăng xuất vẫn được phép để dọn cookie.
+    // Sign-out is still allowed so the cookie can be cleared.
     expect((await call('/auth/sign-out', { body: {}, cookie })).status).toBe(200);
   });
 });
 
-describe('gia hạn phiên', () => {
-  /** Đẩy phiên về trạng thái "cũ hơn updateAge" để Better Auth gia hạn ở lần dùng tới. */
+describe('session renewal', () => {
+  /** Push the session to an "older than updateAge" state so Better Auth renews it on next use. */
   async function ageSessions(email: string) {
     const user = await userByEmail(email);
     const soon = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
@@ -355,7 +358,7 @@ describe('gia hạn phiên', () => {
   }
 
   for (const path of ['/v1/me', '/auth/get-session']) {
-    it(`GET ${path} gia hạn session trong DB và gửi cookie mới về browser`, async () => {
+    it(`GET ${path} renews the session in the DB and sends a new cookie to the browser`, async () => {
       const { cookie } = await signUp({ username: 'lam_phong' });
       const userId = await ageSessions('lp@example.com');
       const before = await sessionExpiry(userId);
@@ -368,8 +371,8 @@ describe('gia hạn phiên', () => {
   }
 });
 
-describe('xác thực email', () => {
-  it('mở link trong mail → emailVerified = true, chuyển về callbackURL', async () => {
+describe('email verification', () => {
+  it('opening the mail link → emailVerified = true, redirects to callbackURL', async () => {
     await signUp({ username: 'lam_phong', callbackURL: '/' });
     const mail = await waitForMail('verify', 'lp@example.com');
     const res = await call(mail.url, { method: 'GET' });
@@ -378,11 +381,11 @@ describe('xác thực email', () => {
     expect((await userByEmail('lp@example.com')).emailVerified).toBe(true);
   });
 
-  it('email bị đăng ký trước: chủ email bấm link xác thực → kẻ chiếm mất session và mật khẩu', async () => {
+  it('email registered first by someone else: owner clicks verification link → squatter loses session and password', async () => {
     const squatter = await signUp({ username: 'ke_chiem', email: 'victim@example.com' });
     const mail = await waitForMail('verify', 'victim@example.com');
 
-    // Chủ email bấm link từ trình duyệt khác (không có cookie của kẻ chiếm).
+    // The email owner clicks the link from another browser (without the squatter's cookie).
     const res = await call(mail.url, { method: 'GET' });
     expect(res.status).toBe(302);
     const ownerCookie = cookieOf(res);
@@ -394,7 +397,7 @@ describe('xác thực email', () => {
     expect((await userByEmail('victim@example.com')).emailVerified).toBe(true);
   });
 
-  it('bấm link lần hai (đã xác thực) → không xoá gì thêm', async () => {
+  it('clicking the link a second time (already verified) → nothing more is deleted', async () => {
     await signUp({ username: 'lam_phong' });
     const mail = await waitForMail('verify', 'lp@example.com');
     const first = await call(mail.url, { method: 'GET' });
@@ -403,7 +406,7 @@ describe('xác thực email', () => {
     expect((await call('/v1/me', { method: 'GET', cookie })).status).toBe(200);
   });
 
-  it('gửi lại mail xác thực', async () => {
+  it('resends the verification mail', async () => {
     const { cookie } = await signUp({ username: 'lam_phong' });
     await waitForMail('verify', 'lp@example.com');
     mails.length = 0;
@@ -416,7 +419,7 @@ describe('xác thực email', () => {
   });
 });
 
-describe('đặt lại mật khẩu', () => {
+describe('password reset', () => {
   async function requestReset(email: string): Promise<string> {
     const res = await call('/auth/request-password-reset', {
       body: { email, redirectTo: '/reset-password' },
@@ -428,7 +431,7 @@ describe('đặt lại mật khẩu', () => {
     return token;
   }
 
-  it('thu hồi session cũ, mật khẩu mới dùng được, email thành đã xác thực', async () => {
+  it('revokes old sessions, new password works, email becomes verified', async () => {
     const { cookie } = await signUp({ username: 'lam_phong' });
     const token = await requestReset('lp@example.com');
 
@@ -445,7 +448,7 @@ describe('đặt lại mật khẩu', () => {
     expect((await signIn('lp@example.com', 'mat-khau-moi-456')).res.status).toBe(200);
   });
 
-  it('token dùng lần hai → 400', async () => {
+  it('token used a second time → 400', async () => {
     await signUp({ username: 'lam_phong' });
     const token = await requestReset('lp@example.com');
     await call('/auth/reset-password', { body: { token, newPassword: 'mat-khau-moi-456' } });
@@ -453,8 +456,8 @@ describe('đặt lại mật khẩu', () => {
     expect(again.status).toBe(400);
   });
 
-  it('email bị người khác đăng ký trước: chủ email reset → kẻ chiếm mất quyền truy cập', async () => {
-    // Kẻ chiếm đăng ký bằng email của nạn nhân, không xác thực được.
+  it('email registered first by someone else: owner resets → squatter loses access', async () => {
+    // The squatter signs up with the victim's email and cannot verify it.
     const squatter = await signUp({ username: 'ke_chiem', email: 'victim@example.com' });
     const token = await requestReset('victim@example.com');
     await call('/auth/reset-password', { body: { token, newPassword: 'cua-chu-that-1' } });
@@ -464,7 +467,7 @@ describe('đặt lại mật khẩu', () => {
     expect((await signIn('victim@example.com', 'cua-chu-that-1')).res.status).toBe(200);
   });
 
-  it('email không tồn tại → vẫn 200, không gửi mail', async () => {
+  it('unknown email → still 200, no mail sent', async () => {
     const res = await call('/auth/request-password-reset', {
       body: { email: 'khong-co@example.com', redirectTo: '/reset-password' },
     });
@@ -473,8 +476,8 @@ describe('đặt lại mật khẩu', () => {
   });
 });
 
-describe('Google OAuth (cấu hình)', () => {
-  it('có cặp GOOGLE_* → sign-in/social trả URL Google', async () => {
+describe('Google OAuth (config)', () => {
+  it('with GOOGLE_* pair → sign-in/social returns a Google URL', async () => {
     const googleApp = buildApp({ GOOGLE_CLIENT_ID: 'id', GOOGLE_CLIENT_SECRET: 'secret' });
     const res = await googleApp.request(`${APP_URL}/api/auth/sign-in/social`, {
       method: 'POST',
@@ -488,12 +491,12 @@ describe('Google OAuth (cấu hình)', () => {
     expect(url.searchParams.get('redirect_uri')).toBe(`${APP_URL}/api/auth/callback/google`);
   });
 
-  it('không có GOOGLE_* → provider google không tồn tại', async () => {
+  it('without GOOGLE_* → google provider does not exist', async () => {
     const res = await call('/auth/sign-in/social', { body: { provider: 'google' } });
     expect(res.status).toBeGreaterThanOrEqual(400);
   });
 
-  it('hook tạo user từ hồ sơ OAuth: bỏ ảnh, chuẩn hoá tên, tự sinh username', async () => {
+  it('hook creating a user from an OAuth profile: drops image, normalizes name, generates username', async () => {
     const before = createUserCreateBefore(db);
     const now = new Date();
     const base = {
@@ -512,15 +515,15 @@ describe('Google OAuth (cấu hình)', () => {
       expect(result.data).toMatchObject({ name: expected, image: null });
       expect(String(result.data.username)).toMatch(/^g_user_[a-z0-9]{4}$/);
     }
-    // Tên rỗng → lấy username làm tên hiển thị.
+    // Empty name → use the username as the display name.
     const empty = await before({ ...base, name: '', image: null }, null);
     if (!empty || typeof empty !== 'object') throw new Error('hook phải trả data');
     expect(empty.data.name).toBe(empty.data.username);
   });
 });
 
-describe('dữ liệu bảng', () => {
-  it('account credential được tạo khi đăng ký', async () => {
+describe('table data', () => {
+  it('credential account is created on sign-up', async () => {
     await signUp({ username: 'lam_phong' });
     const user = await userByEmail('lp@example.com');
     const rows = await db.select().from(accounts).where(eq(accounts.userId, user.id));

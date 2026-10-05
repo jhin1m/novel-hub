@@ -1,10 +1,10 @@
 /**
- * Env phía server, tách thành từng mảnh Zod. Mỗi consumer chỉ ghép mảnh mình cần,
- * ví dụ `appEnvSchema.extend(dbEnvSchema.shape)`, để `drizzle.config.ts` không đòi
- * biến auth và worker không đòi biến của web.
+ * Server-side env, split into Zod pieces. Each consumer composes only the pieces it needs,
+ * e.g. `appEnvSchema.extend(dbEnvSchema.shape)`, so `drizzle.config.ts` does not require
+ * auth variables and the worker does not require web variables.
  *
- * Chỉ import từ subpath `@novel-hub/shared/env` (dùng `node:fs`), không re-export ở
- * entry chính để không lọt vào bundle client.
+ * Import only from the `@novel-hub/shared/env` subpath (uses `node:fs`); not re-exported in
+ * the main entry so it does not leak into the client bundle.
  */
 import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -14,7 +14,7 @@ const httpUrl = z.url({ protocol: /^https?$/ });
 const postgresUrl = z.url({ protocol: /^postgres(ql)?$/ });
 const redisUrl = z.url({ protocol: /^rediss?$/ });
 
-// `NODE_ENV` không có default: guard seed/truncate dựa vào giá trị tường minh.
+// `NODE_ENV` has no default: the seed/truncate guard relies on an explicit value.
 export const appEnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']),
   APP_URL: httpUrl,
@@ -28,7 +28,7 @@ export const redisEnvSchema = z.object({
   REDIS_URL: redisUrl,
 });
 
-/** Tiền tố key của BullMQ; test và e2e đặt tiền tố riêng để không lẫn job của dev. */
+/** BullMQ key prefix; tests and e2e use their own prefix so they do not mix with dev jobs. */
 export const queueEnvSchema = z.object({
   QUEUE_PREFIX: z.string().default('novelhub'),
 });
@@ -38,7 +38,7 @@ export const testEnvSchema = z.object({
   TEST_REDIS_URL: redisUrl,
 });
 
-/** Ghép bằng `.extend(authEnvSchema.shape)` rồi bọc `requireGooglePair`. */
+/** Compose with `.extend(authEnvSchema.shape)`, then wrap with `requireGooglePair`. */
 export const authEnvSchema = z.object({
   BETTER_AUTH_SECRET: z.string().min(32),
   BETTER_AUTH_URL: httpUrl,
@@ -46,7 +46,7 @@ export const authEnvSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().optional(),
 });
 
-/** SMTP để trống `SMTP_HOST` = chế độ dev in link ra log. Ghép rồi bọc `requireSmtpInProduction`. */
+/** Empty `SMTP_HOST` = dev mode that prints links to the log. Compose, then wrap with `requireSmtpInProduction`. */
 export const smtpEnvSchema = z.object({
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().int().min(1).max(65_535).default(587),
@@ -55,15 +55,35 @@ export const smtpEnvSchema = z.object({
   SMTP_FROM: z.string().optional(),
 });
 
-// Refine viết dạng hàm bọc schema đã ghép: Zod 4 không cho `.extend()` schema đã có
-// refine, và `.shape` của nó thì bỏ mất refine.
+/**
+ * S3-compatible storage (self-hosted MinIO) for covers. The five variables without a default form
+ * the "complete set"; parse it with `loadOptionalEnv` so a missing set only disables uploads.
+ */
+export const s3EnvSchema = z.object({
+  S3_ENDPOINT: httpUrl,
+  S3_BUCKET: z.string().min(1),
+  S3_ACCESS_KEY_ID: z.string().min(1),
+  S3_SECRET_ACCESS_KEY: z.string().min(1),
+  S3_PUBLIC_URL: httpUrl,
+  S3_REGION: z.string().min(1).default('us-east-1'),
+  // Not `z.coerce.boolean()`: it turns the string "false" into `true`.
+  S3_FORCE_PATH_STYLE: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((value) => value === 'true'),
+});
+
+export type S3Env = z.infer<typeof s3EnvSchema>;
+
+// Refines are written as functions wrapping the composed schema: Zod 4 does not allow `.extend()` on a schema that already has
+// a refine, and its `.shape` drops the refine.
 
 interface GooglePairEnv {
   GOOGLE_CLIENT_ID?: string | undefined;
   GOOGLE_CLIENT_SECRET?: string | undefined;
 }
 
-/** `GOOGLE_CLIENT_ID` và `GOOGLE_CLIENT_SECRET` phải có cả hai hoặc không có cái nào. */
+/** `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` must be both present or both absent. */
 export function requireGooglePair<S extends z.ZodType<GooglePairEnv>>(schema: S): S {
   return schema.superRefine((env, ctx) => {
     if ((env.GOOGLE_CLIENT_ID === undefined) === (env.GOOGLE_CLIENT_SECRET === undefined)) return;
@@ -80,8 +100,8 @@ interface SmtpProductionEnv {
 }
 
 /**
- * Production bắt buộc có `SMTP_HOST` và `SMTP_FROM`: thiếu thì khởi động thất bại, thay
- * vì rơi về chế độ log và ghi link chứa token ra log.
+ * Production requires `SMTP_HOST` and `SMTP_FROM`: if missing, startup fails instead
+ * of falling back to log mode and writing token-bearing links to the log.
  */
 export function requireSmtpInProduction<S extends z.ZodType<SmtpProductionEnv>>(schema: S): S {
   return schema.superRefine((env, ctx) => {
@@ -95,12 +115,12 @@ export function requireSmtpInProduction<S extends z.ZodType<SmtpProductionEnv>>(
 }
 
 export interface LoadServerEnvOptions {
-  /** Nguồn biến để parse. Mặc định `process.env`. */
+  /** Variable source to parse. Defaults to `process.env`. */
   env?: NodeJS.ProcessEnv;
   /**
-   * Nạp `.env` ở gốc repo vào `process.env` trước khi parse (không ghi đè biến đã có).
-   * Mặc định `true`. Bị bỏ qua khi truyền `env`, hoặc khi không có gốc repo (production
-   * chỉ ship bản build, biến lấy từ Docker/host).
+   * Load the repo-root `.env` into `process.env` before parsing (does not override existing variables).
+   * Defaults to `true`. Ignored when `env` is passed, or when there is no repo root (production
+   * ships only the build; variables come from Docker/host).
    */
   loadFile?: boolean;
 }
@@ -115,7 +135,7 @@ function locateRepoRoot(start: string): string | undefined {
   }
 }
 
-/** Đi ngược từ `start` tới thư mục chứa `pnpm-workspace.yaml`; không thấy thì throw. */
+/** Walk up from `start` to the directory containing `pnpm-workspace.yaml`; throws if not found. */
 export function findRepoRoot(start: string = process.cwd()): string {
   const root = locateRepoRoot(start);
   if (root === undefined) throw new Error('Không tìm thấy gốc repo (thiếu pnpm-workspace.yaml)');
@@ -123,9 +143,9 @@ export function findRepoRoot(start: string = process.cwd()): string {
 }
 
 /**
- * Parse env bằng `schema`. Biến rỗng (`KEY=`) được coi như chưa đặt.
- * Lỗi thì throw `Error` chỉ liệt kê tên biến (kèm message của refine nếu có), không bao
- * giờ in giá trị; việc thoát process do entry CLI tự quyết.
+ * Parse env with `schema`. An empty variable (`KEY=`) is treated as unset.
+ * On failure throws an `Error` listing only variable names (plus the refine message if any), never
+ * printing values; exiting the process is up to the CLI entry.
  */
 export function loadServerEnv<S extends z.ZodType>(
   schema: S,
@@ -150,8 +170,8 @@ export function loadServerEnv<S extends z.ZodType>(
   for (const issue of result.error.issues) {
     const key = issue.path.map(String).join('.') || '(gốc)';
     if (problems.has(key)) continue;
-    // Message của refine do code tự viết (không chứa input) nên in được; message của
-    // Zod thì bỏ qua để chắc chắn không lộ giá trị.
+    // Refine messages are written by our code (they contain no input) so they are safe to print; Zod's
+    // messages are skipped to make sure no value leaks.
     const reason =
       issue.code === 'custom'
         ? issue.message
@@ -162,4 +182,25 @@ export function loadServerEnv<S extends z.ZodType>(
   }
   const list = [...problems].map(([key, reason]) => `${key} (${reason})`).join(', ');
   throw new Error(`Biến môi trường không hợp lệ: ${list}`);
+}
+
+/**
+ * Parses the env of an optional subsystem (storage, CDN purge, search) separately from the shared
+ * env, so a missing or half-filled set never takes down the pool, Redis or auth. In production a
+ * bad set is a startup error; elsewhere it logs a warning (variable names only) and returns
+ * `null`, and the subsystem's endpoints answer 503.
+ */
+export function loadOptionalEnv<S extends z.ZodType>(
+  schema: S,
+  env: NodeJS.ProcessEnv,
+  name: string,
+): z.infer<S> | null {
+  try {
+    return loadServerEnv(schema, { env });
+  } catch (err) {
+    if (env.NODE_ENV === 'production') throw err;
+    const reason = err instanceof Error ? err.message : String(err);
+    console.warn(`[env] ${name} disabled: ${reason}`);
+    return null;
+  }
 }

@@ -12,7 +12,7 @@ import {
   users,
 } from '../schema/index';
 import { createTestDb, truncateAll } from '../testing/index';
-import { countWords, seedDatabase } from './seed';
+import { countWords, seedDatabase, seedTags } from './seed';
 
 const { db, pool } = createTestDb();
 const NOW = new Date('2026-10-04T12:00:00Z');
@@ -26,7 +26,7 @@ beforeEach(async () => {
 });
 
 describe('seedDatabase', () => {
-  it('nạp được vào DB trống', async () => {
+  it('loads into an empty DB', async () => {
     const summary = await seedDatabase(db, { now: NOW });
     expect(summary).toEqual({ users: 5, accounts: 0, tags: 13, stories: 3, chapters: 8 });
     expect(await db.select().from(accounts)).toHaveLength(0);
@@ -36,7 +36,7 @@ describe('seedDatabase', () => {
     expect(all.every((u) => u.emailVerified)).toBe(true);
   });
 
-  it('bộ đếm story khớp chương đã đăng chưa xoá', async () => {
+  it('story counters match published, non-deleted chapters', async () => {
     await seedDatabase(db, { now: NOW });
     const { rows } = await db.execute<{ title: string; ok: boolean }>(sql`
       select s.title,
@@ -56,7 +56,7 @@ describe('seedDatabase', () => {
     expect(first?.lastChapterAt?.getTime()).toBe(NOW.getTime() - 24 * 60 * 60 * 1000);
   });
 
-  it('story có public_id hợp lệ, slug sinh từ tiêu đề', async () => {
+  it('stories have a valid public_id and a slug generated from the title', async () => {
     await seedDatabase(db, { now: NOW });
     const rows = await db.select().from(stories);
     for (const story of rows) {
@@ -65,7 +65,7 @@ describe('seedDatabase', () => {
     }
   });
 
-  it('chương đã đăng/hẹn giờ có nội dung ≥ 300 chữ, chương nháp có bản nháp', async () => {
+  it('published/scheduled chapters have content of at least 300 words, draft chapters have a draft', async () => {
     await seedDatabase(db, { now: NOW });
     const rows = await db
       .select({
@@ -96,7 +96,7 @@ describe('seedDatabase', () => {
     }
   });
 
-  it('truyện 18+ gắn tag warning; tag trùng trỏ về tag chuẩn', async () => {
+  it('18+ stories carry the warning tag; duplicate tags point to the canonical tag', async () => {
     await seedDatabase(db, { now: NOW });
     const warningTags = await db
       .select({ slug: tags.slug })
@@ -113,20 +113,20 @@ describe('seedDatabase', () => {
     expect(rows[0]?.canonical).toBe('tien-hiep');
   });
 
-  it('chạy lần 2 khi users có dữ liệu → từ chối, không ghi thêm gì', async () => {
+  it('second run when users has data → refused, nothing more is written', async () => {
     await seedDatabase(db, { now: NOW });
     await expect(seedDatabase(db, { now: NOW })).rejects.toThrow(/users đã có dữ liệu/);
     expect(await db.select().from(stories)).toHaveLength(3);
   });
 
-  it('truncate rồi seed lại chạy được', async () => {
+  it('truncate then re-seed works', async () => {
     await seedDatabase(db, { now: NOW });
     await truncateAll(db);
     const summary = await seedDatabase(db, { now: NOW });
     expect(summary.users).toBe(5);
   });
 
-  it('có hashPassword + password → tạo account credential cho mọi user', async () => {
+  it('with hashPassword + password → creates a credential account for every user', async () => {
     const summary = await seedDatabase(db, {
       now: NOW,
       password: 'mat-khau-mau',
@@ -140,14 +140,25 @@ describe('seedDatabase', () => {
     }
   });
 
-  it('chỉ truyền một trong hashPassword/password → lỗi, không ghi gì', async () => {
+  it('passing only one of hashPassword/password → error, nothing written', async () => {
     await expect(seedDatabase(db, { password: 'x' })).rejects.toThrow(/cùng nhau/);
     expect(await db.select().from(users)).toHaveLength(0);
   });
 });
 
+describe('seedTags', () => {
+  it('is idempotent and links merged tags to their canonical tag', async () => {
+    const first = await seedTags(db);
+    const second = await seedTags(db);
+    expect(second).toEqual(first);
+    expect(await db.select().from(tags)).toHaveLength(13);
+    const merged = await db.select().from(tags).where(eq(tags.slug, 'tu-tien'));
+    expect(merged[0]?.canonicalId).toBe(first.get('tien-hiep'));
+  });
+});
+
 describe('countWords', () => {
-  it('đếm theo khoảng trắng, bỏ khoảng trắng thừa', () => {
+  it('counts by whitespace, ignoring extra whitespace', () => {
     expect(countWords('  Lâm   Phong\nngồi xếp bằng ')).toBe(5);
     expect(countWords('')).toBe(0);
   });

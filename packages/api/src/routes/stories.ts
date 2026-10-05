@@ -1,0 +1,75 @@
+import { createStory, removeStoryCover, setStoryCover, updateStory } from '@novel-hub/core';
+import { LIMITS, storyCreateSchema, storyUpdateSchema } from '@novel-hub/shared';
+import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
+import type { ApiDeps } from '../deps';
+import { coreError } from '../lib/core-errors';
+import { errorBody } from '../lib/errors';
+import { validate } from '../lib/validate';
+import { requireVerifiedEmail } from '../middleware/require-auth';
+import { sessionMiddleware } from '../middleware/session';
+
+/** Multipart overhead on top of the 5 MB file; the exact file size is checked afterwards. */
+const COVER_BODY_LIMIT = Math.round(LIMITS.cover.maxBytes * 1.1);
+
+/** Writing stories. Every route needs a verified email; ownership is checked in `core`. */
+export function createStoryRoutes(deps: Pick<ApiDeps, 'auth' | 'db' | 'storage'>) {
+  return new Hono()
+    .use(sessionMiddleware(deps.auth))
+    .post('/', requireVerifiedEmail, validate('json', storyCreateSchema), async (c) => {
+      const result = await createStory(deps.db, c.var.authUser, c.req.valid('json'));
+      if (!result.ok) return coreError(c, result.error);
+      return c.json({ story: result.value }, 201);
+    })
+    .patch('/:publicId', requireVerifiedEmail, validate('json', storyUpdateSchema), async (c) => {
+      const result = await updateStory(
+        deps.db,
+        c.var.authUser,
+        c.req.param('publicId'),
+        c.req.valid('json'),
+      );
+      if (!result.ok) return coreError(c, result.error);
+      return c.json({ story: result.value.story }, 200);
+    })
+    .put(
+      '/:publicId/cover',
+      requireVerifiedEmail,
+      bodyLimit({
+        maxSize: COVER_BODY_LIMIT,
+        onError: (c) => c.json(errorBody('FILE_TOO_LARGE', 'File is larger than 5 MB'), 413),
+      }),
+      async (c) => {
+        const { storage } = deps;
+        if (!storage) {
+          return c.json(errorBody('STORAGE_UNAVAILABLE', 'Image storage is not configured'), 503);
+        }
+        let file: unknown;
+        try {
+          file = (await c.req.parseBody()).file;
+        } catch {
+          file = undefined;
+        }
+        if (!(file instanceof File)) {
+          return c.json(errorBody('VALIDATION_ERROR', 'Expected a multipart field "file"'), 400);
+        }
+        if (file.size > LIMITS.cover.maxBytes) return coreError(c, 'FILE_TOO_LARGE');
+        const result = await setStoryCover(
+          { db: deps.db, storage },
+          c.var.authUser,
+          c.req.param('publicId'),
+          new Uint8Array(await file.arrayBuffer()),
+        );
+        if (!result.ok) return coreError(c, result.error);
+        return c.json({ story: result.value }, 200);
+      },
+    )
+    .delete('/:publicId/cover', requireVerifiedEmail, async (c) => {
+      const result = await removeStoryCover(
+        { db: deps.db },
+        c.var.authUser,
+        c.req.param('publicId'),
+      );
+      if (!result.ok) return coreError(c, result.error);
+      return c.json({ story: result.value }, 200);
+    });
+}

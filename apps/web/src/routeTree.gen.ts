@@ -15,6 +15,9 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
+import { Route as WriteIndexRouteImport } from './routes/write/index'
+import { Route as WriteStoriesNewRouteImport } from './routes/write/stories/new'
+import { Route as WriteStoriesPublicIdIndexRouteImport } from './routes/write/stories/$publicId/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,6 +49,22 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WriteIndexRoute = WriteIndexRouteImport.update({
+  id: '/write/',
+  path: '/write/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WriteStoriesNewRoute = WriteStoriesNewRouteImport.update({
+  id: '/write/stories/new',
+  path: '/write/stories/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WriteStoriesPublicIdIndexRoute =
+  WriteStoriesPublicIdIndexRouteImport.update({
+    id: '/write/stories/$publicId/',
+    path: '/write/stories/$publicId/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +73,9 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/api/$': typeof ApiSplatRoute
+  '/write/': typeof WriteIndexRoute
+  '/write/stories/new': typeof WriteStoriesNewRoute
+  '/write/stories/$publicId/': typeof WriteStoriesPublicIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +84,9 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/api/$': typeof ApiSplatRoute
+  '/write': typeof WriteIndexRoute
+  '/write/stories/new': typeof WriteStoriesNewRoute
+  '/write/stories/$publicId': typeof WriteStoriesPublicIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +96,9 @@ export interface FileRoutesById {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/api/$': typeof ApiSplatRoute
+  '/write/': typeof WriteIndexRoute
+  '/write/stories/new': typeof WriteStoriesNewRoute
+  '/write/stories/$publicId/': typeof WriteStoriesPublicIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +109,9 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/api/$'
+    | '/write/'
+    | '/write/stories/new'
+    | '/write/stories/$publicId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +120,9 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/api/$'
+    | '/write'
+    | '/write/stories/new'
+    | '/write/stories/$publicId'
   id:
     | '__root__'
     | '/'
@@ -97,6 +131,9 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/api/$'
+    | '/write/'
+    | '/write/stories/new'
+    | '/write/stories/$publicId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +143,9 @@ export interface RootRouteChildren {
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
   ApiSplatRoute: typeof ApiSplatRoute
+  WriteIndexRoute: typeof WriteIndexRoute
+  WriteStoriesNewRoute: typeof WriteStoriesNewRoute
+  WriteStoriesPublicIdIndexRoute: typeof WriteStoriesPublicIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -152,6 +192,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/write/': {
+      id: '/write/'
+      path: '/write'
+      fullPath: '/write/'
+      preLoaderRoute: typeof WriteIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/write/stories/new': {
+      id: '/write/stories/new'
+      path: '/write/stories/new'
+      fullPath: '/write/stories/new'
+      preLoaderRoute: typeof WriteStoriesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/write/stories/$publicId/': {
+      id: '/write/stories/$publicId/'
+      path: '/write/stories/$publicId'
+      fullPath: '/write/stories/$publicId/'
+      preLoaderRoute: typeof WriteStoriesPublicIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -162,6 +223,9 @@ const rootRouteChildren: RootRouteChildren = {
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
   ApiSplatRoute: ApiSplatRoute,
+  WriteIndexRoute: WriteIndexRoute,
+  WriteStoriesNewRoute: WriteStoriesNewRoute,
+  WriteStoriesPublicIdIndexRoute: WriteStoriesPublicIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

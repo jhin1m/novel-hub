@@ -41,13 +41,14 @@ export default defineConfig(
     languageOptions: { globals: globals.browser },
   },
   {
-    // Code web có thể vào bundle browser: chỉ được dùng entry client của API, không kéo
-    // theo code server (`core`, `db`, env, `src/server/*`, và qua đó `pg`, `ioredis`).
-    // `import type` vẫn được phép vì bị xoá khi build. Code chỉ chạy ở server và test
-    // được miễn.
+    // Web code can end up in the browser bundle: it may only use the API client entry, and must not pull in
+    // server code (`core`, `db`, env, `src/server/*`, and through them `pg`, `ioredis`).
+    // `import type` is still allowed because it is erased at build time. Server-only code and tests
+    // are exempt.
     files: ['apps/web/src/**/*.{ts,tsx}'],
     ignores: [
       'apps/web/src/server/**',
+      'apps/web/src/server-fns/**',
       'apps/web/src/routes/api/**',
       'apps/web/src/**/*.test.{ts,tsx}',
     ],
@@ -58,28 +59,29 @@ export default defineConfig(
           paths: [
             {
               name: '@novel-hub/api',
-              message: 'Phía browser chỉ import `@novel-hub/api/client`.',
+              message: 'Browser code may only import `@novel-hub/api/client`.',
               allowTypeImports: true,
             },
             {
               name: '@novel-hub/auth',
-              message: 'Code server; browser dùng `lib/auth-client.ts`.',
+              message: 'Server code; browsers use `lib/auth-client.ts`.',
               allowTypeImports: true,
             },
             {
               name: '@novel-hub/shared/env',
-              message: 'Env chỉ đọc ở server (dùng `node:fs`).',
+              message: 'Env is read on the server only (uses `node:fs`).',
             },
           ],
           patterns: [
             {
               group: ['@novel-hub/core', '@novel-hub/core/*', '@novel-hub/db', '@novel-hub/db/*'],
-              message: 'Code server; gọi qua `createServerFn` hoặc API, không import từ web.',
+              message:
+                'Server code; call it via `createServerFn` or the API, do not import it from web.',
               allowTypeImports: true,
             },
             {
               group: ['**/server/*', '!@tanstack/**'],
-              message: 'Module trong `src/server/` chỉ dùng ở server route hoặc server function.',
+              message: 'Modules in `src/server/` are for server routes or server functions only.',
             },
           ],
         },
@@ -87,7 +89,7 @@ export default defineConfig(
     },
   },
   {
-    // File cấu hình thường không thuộc tsconfig nào nên tắt lint có type.
+    // Config files usually belong to no tsconfig, so typed linting is turned off.
     files: ['**/*.{js,mjs,cjs}', '**/*.config.ts'],
     extends: [tseslint.configs.disableTypeChecked],
   },

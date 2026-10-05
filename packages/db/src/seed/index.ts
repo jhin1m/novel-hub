@@ -1,5 +1,5 @@
-// Dùng cho CLI seed (packages/auth): seed cần `hashPassword` của Better Auth nên CLI nằm ở đó.
+// Used by the seed CLI (packages/auth): seeding needs Better Auth's `hashPassword`, so the CLI lives there.
 export { describeDbError } from '../errors';
 export { truncatePublicTables } from '../truncate';
 export { assertSeedAllowed } from './guard';
-export { type SeedOptions, type SeedSummary, seedDatabase } from './seed';
+export { type SeedOptions, type SeedSummary, seedDatabase, seedTags } from './seed';

@@ -1,0 +1,36 @@
+import type { Context } from 'hono';
+import { errorBody } from './errors';
+
+/** Expected business errors from `core` and their HTTP status. Literal types let `hc` infer them. */
+const CORE_ERROR_STATUS = {
+  NOT_FOUND: 404,
+  FORBIDDEN: 403,
+  UNKNOWN_TAG: 422,
+  MAIN_TAG_NOT_GENRE: 422,
+  TOO_MANY_TAGS: 422,
+  IMAGE_TOO_SMALL: 422,
+  IMAGE_TOO_LARGE: 422,
+  FILE_TOO_LARGE: 413,
+  UNSUPPORTED_IMAGE: 415,
+  UPLOAD_BUSY: 503,
+} as const;
+
+export type CoreErrorCode = keyof typeof CORE_ERROR_STATUS;
+
+/** Developer-facing; the UI shows its own message for each code. */
+const CORE_ERROR_MESSAGES: Record<CoreErrorCode, string> = {
+  NOT_FOUND: 'Resource not found',
+  FORBIDDEN: 'Not allowed',
+  UNKNOWN_TAG: 'Unknown tag',
+  MAIN_TAG_NOT_GENRE: 'The main tag must be a genre',
+  TOO_MANY_TAGS: 'Too many tags',
+  IMAGE_TOO_SMALL: 'Image is smaller than 600×900',
+  IMAGE_TOO_LARGE: 'Image has too many pixels',
+  FILE_TOO_LARGE: 'File is larger than 5 MB',
+  UNSUPPORTED_IMAGE: 'Only JPEG, PNG and WebP images are accepted',
+  UPLOAD_BUSY: 'Too many uploads in progress, try again shortly',
+};
+
+export function coreError<C extends CoreErrorCode>(c: Context, code: C) {
+  return c.json(errorBody(code, CORE_ERROR_MESSAGES[code]), CORE_ERROR_STATUS[code]);
+}

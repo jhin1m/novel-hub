@@ -34,7 +34,12 @@ function SiteHeader() {
         <Link to="/" reloadDocument className="font-serif text-lg font-semibold">
           {m.app_name()}
         </Link>
-        <AccountMenu />
+        <div className="flex items-center gap-1">
+          <Button asChild variant="ghost">
+            <Link to="/write">{m.layout_write()}</Link>
+          </Button>
+          <AccountMenu />
+        </div>
       </div>
     </header>
   );

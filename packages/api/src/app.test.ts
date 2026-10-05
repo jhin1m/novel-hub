@@ -3,13 +3,14 @@ import { testClient } from 'hono/testing';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from './app';
 import type { ApiDeps } from './deps';
+import { TEST_APP_URL, makeTestApiDeps } from './testing';
 
-// `expect.any` trả `any`; gán qua `unknown` để giữ lint có type.
+// `expect.any` returns `any`; assign through `unknown` to keep typed lint happy.
 const anyString: unknown = expect.any(String);
 const okReport: HealthReport = { status: 'ok', checks: { postgres: 'up', redis: 'up' } };
 const downReport: HealthReport = { status: 'unhealthy', checks: { postgres: 'up', redis: 'down' } };
 
-const APP_URL = 'http://localhost:3000';
+const APP_URL = TEST_APP_URL;
 
 const user: CurrentUser = {
   id: '01a107a5-0000-7000-8000-000000000000',
@@ -23,15 +24,14 @@ const user: CurrentUser = {
 };
 
 function deps(overrides: Partial<ApiDeps> = {}): ApiDeps {
-  return {
+  return makeTestApiDeps({
     checkHealth: () => Promise.resolve(okReport),
-    appUrl: APP_URL,
     auth: {
       handler: () => Promise.resolve(Response.json({ from: 'better-auth' })),
       lookupSession: () => Promise.resolve({ user: null, setCookies: [] }),
     },
     ...overrides,
-  };
+  });
 }
 
 function appWith(report: HealthReport) {
@@ -39,14 +39,14 @@ function appWith(report: HealthReport) {
 }
 
 describe('GET /api/v1/health', () => {
-  it('phụ thuộc ok → 200 + no-store', async () => {
+  it('dependencies ok → 200 + no-store', async () => {
     const res = await testClient(appWith(okReport)).api.v1.health.$get();
     expect(res.status).toBe(200);
     expect(res.headers.get('cache-control')).toBe('no-store');
     expect(await res.json()).toEqual(okReport);
   });
 
-  it('phụ thuộc down → 503 với error UNHEALTHY và checks', async () => {
+  it('dependency down → 503 with error UNHEALTHY and checks', async () => {
     const res = await testClient(appWith(downReport)).api.v1.health.$get();
     expect(res.status).toBe(503);
     expect(res.headers.get('cache-control')).toBe('no-store');
@@ -56,19 +56,19 @@ describe('GET /api/v1/health', () => {
     });
   });
 
-  it('HEAD được Hono trả lời', async () => {
+  it('HEAD is answered by Hono', async () => {
     const res = await appWith(okReport).request('/api/v1/health', { method: 'HEAD' });
     expect(res.status).toBe(200);
     expect(await res.text()).toBe('');
   });
 });
 
-describe('lỗi', () => {
+describe('errors', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('route không tồn tại → 404 NOT_FOUND', async () => {
+  it('unknown route → 404 NOT_FOUND', async () => {
     const app = appWith(okReport);
     for (const path of ['/api/khong-ton-tai', '/api/v1/khong-ton-tai']) {
       const res = await app.request(path);
@@ -81,7 +81,7 @@ describe('lỗi', () => {
     expect(res.headers.get('cache-control')).toBe('no-store');
   });
 
-  it('handler throw → 500 INTERNAL_ERROR, không lộ stack hay message gốc', async () => {
+  it('handler throws → 500 INTERNAL_ERROR, no stack or original message leaked', async () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => {});
     const app = createApp(
       deps({ checkHealth: () => Promise.reject(new Error('mật-khẩu-db-bí-mật')) }),
@@ -100,7 +100,7 @@ describe('lỗi', () => {
 });
 
 describe('/api/auth/*', () => {
-  it('chuyển nguyên request cho Better Auth', async () => {
+  it('forwards the request unchanged to Better Auth', async () => {
     const seen: string[] = [];
     const app = createApp(
       deps({
@@ -120,13 +120,13 @@ describe('/api/auth/*', () => {
 });
 
 describe('GET /api/v1/me', () => {
-  it('khách → 401 UNAUTHENTICATED', async () => {
+  it('guest → 401 UNAUTHENTICATED', async () => {
     const res = await testClient(createApp(deps())).api.v1.me.$get();
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ error: { code: 'UNAUTHENTICATED', message: anyString } });
   });
 
-  it('đã đăng nhập → 200, không có id hay email', async () => {
+  it('signed in → 200, no id or email', async () => {
     const app = createApp(
       deps({
         auth: { ...deps().auth, lookupSession: () => Promise.resolve({ user, setCookies: [] }) },
@@ -149,7 +149,7 @@ describe('GET /api/v1/me', () => {
     expect(text).not.toContain(user.email);
   });
 
-  it('header cookie được chuyển cho lookupSession; Set-Cookie gia hạn được gửi về', async () => {
+  it('cookie header is passed to lookupSession; renewal Set-Cookie is sent back', async () => {
     let cookie: string | null = null;
     const renewed = ['phien=moi; Path=/; HttpOnly', 'phien_data=; Max-Age=0'];
     const app = createApp(
@@ -168,7 +168,7 @@ describe('GET /api/v1/me', () => {
     expect(res.headers.getSetCookie()).toEqual(renewed);
   });
 
-  it('health không tra phiên: lookupSession lỗi (DB sập) vẫn trả health bình thường', async () => {
+  it('health does not look up the session: lookupSession failing (DB down) still returns health normally', async () => {
     const app = createApp(
       deps({
         auth: { ...deps().auth, lookupSession: () => Promise.reject(new Error('db down')) },
@@ -186,14 +186,24 @@ describe('CSRF /api/v1/*', () => {
     body: 'a=1',
   });
 
-  it('POST form từ origin lạ → 403', async () => {
+  it('form POST from a foreign origin → 403', async () => {
     const res = await createApp(deps()).request('/api/v1/me', form('http://evil.example'));
     expect(res.status).toBe(403);
     expect(await res.json()).toEqual({ error: { code: 'FORBIDDEN', message: anyString } });
   });
 
-  it('POST form cùng origin → đi tiếp (route không có POST → 404)', async () => {
+  it('form POST from the same origin → passes through (route has no POST → 404)', async () => {
     const res = await createApp(deps()).request('/api/v1/me', form(APP_URL));
     expect(res.status).toBe(404);
+  });
+});
+
+describe('makeTestApiDeps', () => {
+  it('builds an app; a route that needs db fails with a clear message when db is not passed', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const res = await createApp(makeTestApiDeps()).request('/api/v1/tags');
+    expect(res.status).toBe(500);
+    expect(String(log.mock.calls[0]?.[1])).toContain('db is not used in this test');
+    log.mockRestore();
   });
 });

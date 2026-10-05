@@ -9,7 +9,8 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "db:seed": "tsx src/scripts/seed.ts"
+    "db:seed": "tsx src/scripts/seed.ts",
+    "db:seed-tags": "tsx src/scripts/seed-tags.ts"
   },
   "dependencies": {
     "@novel-hub/core": "workspace:*",

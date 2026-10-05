@@ -8,11 +8,13 @@ import {
   authEnvSchema,
   dbEnvSchema,
   findRepoRoot,
+  loadOptionalEnv,
   loadServerEnv,
   queueEnvSchema,
   redisEnvSchema,
   requireGooglePair,
   requireSmtpInProduction,
+  s3EnvSchema,
   smtpEnvSchema,
   testEnvSchema,
 } from './env';
@@ -40,19 +42,19 @@ afterEach(() => {
 });
 
 describe('loadServerEnv', () => {
-  it('trả object đã parse khi đủ biến', () => {
+  it('returns the parsed object when all variables are present', () => {
     expect(load(appDb, { ...validApp, DATABASE_URL: SECRET_URL, OTHER: 'x' })).toEqual({
       ...validApp,
       DATABASE_URL: SECRET_URL,
     });
   });
 
-  it('thiếu DATABASE_URL → throw, message có tên biến', () => {
+  it('missing DATABASE_URL → throws, message has the variable name', () => {
     const err = errorOf(() => load(appDb, validApp));
     expect(err.message).toContain('DATABASE_URL (thiếu)');
   });
 
-  it('message lỗi không chứa giá trị của biến nào', () => {
+  it('error message contains no variable values', () => {
     const err = errorOf(() =>
       load(appDb.extend(redisEnvSchema.shape), {
         NODE_ENV: 'staging-secret-value',
@@ -74,45 +76,45 @@ describe('loadServerEnv', () => {
     }
   });
 
-  it('thiếu NODE_ENV → lỗi, không tự lấy mặc định', () => {
+  it('missing NODE_ENV → error, no default applied', () => {
     const err = errorOf(() => load(appEnvSchema, { APP_URL: validApp.APP_URL }));
     expect(err.message).toContain('NODE_ENV (thiếu)');
   });
 
-  it('biến rỗng được coi như thiếu', () => {
+  it('an empty variable is treated as missing', () => {
     const err = errorOf(() => load(dbEnvSchema, { DATABASE_URL: '' }));
     expect(err.message).toContain('DATABASE_URL (thiếu)');
   });
 
-  it('schema ghép: thiếu một biến của mảnh nào cũng lỗi', () => {
+  it('composed schema: a missing variable in any piece is an error', () => {
     expect(errorOf(() => load(appDb, { ...validApp })).message).toContain('DATABASE_URL');
     expect(
       errorOf(() => load(appDb, { NODE_ENV: 'test', DATABASE_URL: SECRET_URL })).message,
     ).toContain('APP_URL');
   });
 
-  it('dbEnvSchema riêng chỉ cần DATABASE_URL', () => {
+  it('dbEnvSchema alone only needs DATABASE_URL', () => {
     expect(load(dbEnvSchema, { DATABASE_URL: SECRET_URL })).toEqual({ DATABASE_URL: SECRET_URL });
   });
 
-  it('testEnvSchema cần cả DB và Redis test', () => {
+  it('testEnvSchema needs both the test DB and Redis', () => {
     const err = errorOf(() => load(testEnvSchema, { TEST_DATABASE_URL: SECRET_URL }));
     expect(err.message).toContain('TEST_REDIS_URL (thiếu)');
   });
 
-  it('loadFile: false → không đọc file .env', () => {
+  it('loadFile: false → does not read the .env file', () => {
     const spy = vi.spyOn(process, 'loadEnvFile');
     load(dbEnvSchema, { DATABASE_URL: SECRET_URL });
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it('truyền env → không đọc file .env dù không đặt loadFile', () => {
+  it('passing env → does not read the .env file even without loadFile', () => {
     const spy = vi.spyOn(process, 'loadEnvFile');
     loadServerEnv(dbEnvSchema, { env: { DATABASE_URL: SECRET_URL } });
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it('URL sai giao thức → không hợp lệ', () => {
+  it('URL with the wrong protocol → invalid', () => {
     expect(
       errorOf(() => load(dbEnvSchema, { DATABASE_URL: 'javascript:alert(1)' })).message,
     ).toContain('DATABASE_URL (không hợp lệ)');
@@ -124,7 +126,7 @@ describe('loadServerEnv', () => {
     });
   });
 
-  it('lỗi refine giữ message do code viết, có hoặc không có path', () => {
+  it('refine errors keep the code-written message, with or without a path', () => {
     const withPath = dbEnvSchema.superRefine((_, ctx) => {
       ctx.addIssue({ code: 'custom', path: ['SMTP_HOST'], message: 'bắt buộc khi production' });
     });
@@ -143,27 +145,27 @@ describe('authEnvSchema + requireGooglePair', () => {
   const schema = requireGooglePair(authEnvSchema);
   const base = { BETTER_AUTH_SECRET: 's'.repeat(32), BETTER_AUTH_URL: 'http://localhost:3000' };
 
-  it('không có Google → hợp lệ', () => {
+  it('no Google → valid', () => {
     expect(load(schema, base)).toEqual(base);
   });
 
-  it('đủ cặp Google → hợp lệ', () => {
+  it('full Google pair → valid', () => {
     const env = { ...base, GOOGLE_CLIENT_ID: 'id', GOOGLE_CLIENT_SECRET: 'secret' };
     expect(load(schema, env)).toEqual(env);
   });
 
-  it('chỉ có GOOGLE_CLIENT_ID → lỗi, không in giá trị', () => {
+  it('only GOOGLE_CLIENT_ID → error, value not printed', () => {
     const err = errorOf(() => load(schema, { ...base, GOOGLE_CLIENT_ID: 'id-bi-mat' }));
     expect(err.message).toContain('GOOGLE_CLIENT_SECRET (cần đủ cặp GOOGLE_*)');
     expect(err.message).not.toContain('id-bi-mat');
   });
 
-  it('chỉ có GOOGLE_CLIENT_SECRET → lỗi', () => {
+  it('only GOOGLE_CLIENT_SECRET → error', () => {
     const err = errorOf(() => load(schema, { ...base, GOOGLE_CLIENT_SECRET: 'x' }));
     expect(err.message).toContain('GOOGLE_CLIENT_ID (cần đủ cặp GOOGLE_*)');
   });
 
-  it('secret ngắn hơn 32 ký tự → lỗi', () => {
+  it('secret shorter than 32 characters → error', () => {
     const err = errorOf(() => load(schema, { ...base, BETTER_AUTH_SECRET: 'ngan' }));
     expect(err.message).toContain('BETTER_AUTH_SECRET (không hợp lệ)');
   });
@@ -172,40 +174,40 @@ describe('authEnvSchema + requireGooglePair', () => {
 describe('smtpEnvSchema + requireSmtpInProduction', () => {
   const schema = requireSmtpInProduction(appEnvSchema.extend(smtpEnvSchema.shape));
 
-  it('dev không có SMTP → hợp lệ, cổng mặc định 587', () => {
+  it('dev without SMTP → valid, default port 587', () => {
     expect(load(schema, validApp)).toEqual({ ...validApp, SMTP_PORT: 587 });
   });
 
-  it('production thiếu SMTP_HOST/SMTP_FROM → lỗi', () => {
+  it('production missing SMTP_HOST/SMTP_FROM → error', () => {
     const err = errorOf(() => load(schema, { ...validApp, NODE_ENV: 'production' }));
     expect(err.message).toContain('SMTP_HOST (bắt buộc khi production)');
     expect(err.message).toContain('SMTP_FROM (bắt buộc khi production)');
   });
 
-  it('production đủ SMTP → hợp lệ, SMTP_PORT ép kiểu số', () => {
+  it('production with full SMTP → valid, SMTP_PORT coerced to a number', () => {
     const env = { ...validApp, NODE_ENV: 'production', SMTP_HOST: 'smtp.x', SMTP_FROM: 'a@x' };
     expect(load(schema, { ...env, SMTP_PORT: '465' })).toEqual({ ...env, SMTP_PORT: 465 });
   });
 });
 
 describe('queueEnvSchema', () => {
-  it('thiếu QUEUE_PREFIX → mặc định novelhub; có thì giữ nguyên', () => {
+  it('missing QUEUE_PREFIX → defaults to novelhub; when set it is kept', () => {
     expect(load(queueEnvSchema, {})).toEqual({ QUEUE_PREFIX: 'novelhub' });
     expect(load(queueEnvSchema, { QUEUE_PREFIX: 'e2e' })).toEqual({ QUEUE_PREFIX: 'e2e' });
   });
 });
 
-describe('loadServerEnv nạp file .env', () => {
+describe('loadServerEnv loads the .env file', () => {
   const FROM_FILE = 'NOVEL_HUB_TEST_FROM_FILE';
   const PRESET = 'NOVEL_HUB_TEST_PRESET';
   const schema = z.object({ [FROM_FILE]: z.string(), [PRESET]: z.string() });
 
   afterEach(() => {
-    // `process.loadEnvFile` ghi thẳng vào process.env nên phải dọn tay.
+    // `process.loadEnvFile` writes straight into process.env, so clean up manually.
     for (const key of [FROM_FILE, PRESET]) delete process.env[key];
   });
 
-  it('đọc .env ở gốc repo, không ghi đè biến đã đặt', () => {
+  it('reads .env at the repo root, does not override variables already set', () => {
     const root = mkdtempSync(join(tmpdir(), 'novel-hub-envfile-'));
     writeFileSync(join(root, 'pnpm-workspace.yaml'), 'packages: []\n');
     writeFileSync(join(root, '.env'), `${FROM_FILE}=from-file\n${PRESET}=from-file\n`);
@@ -217,7 +219,7 @@ describe('loadServerEnv nạp file .env', () => {
     expect(loadServerEnv(schema)).toEqual({ [FROM_FILE]: 'from-file', [PRESET]: 'preset' });
   });
 
-  it('không có gốc repo → bỏ qua file, parse process.env bình thường', () => {
+  it('no repo root → skips the file, parses process.env as usual', () => {
     vi.spyOn(process, 'cwd').mockReturnValue(mkdtempSync(join(tmpdir(), 'novel-hub-noroot-')));
     const spy = vi.spyOn(process, 'loadEnvFile');
     process.env[FROM_FILE] = 'a';
@@ -229,7 +231,7 @@ describe('loadServerEnv nạp file .env', () => {
 });
 
 describe('findRepoRoot', () => {
-  it('đi ngược lên tới thư mục chứa pnpm-workspace.yaml', () => {
+  it('walks up to the directory containing pnpm-workspace.yaml', () => {
     const root = mkdtempSync(join(tmpdir(), 'novel-hub-root-'));
     writeFileSync(join(root, 'pnpm-workspace.yaml'), 'packages: []\n');
     const nested = join(root, 'packages', 'a', 'src');
@@ -237,8 +239,77 @@ describe('findRepoRoot', () => {
     expect(findRepoRoot(nested)).toBe(root);
   });
 
-  it('không tìm thấy thì throw', () => {
+  it('throws when not found', () => {
     const lonely = mkdtempSync(join(tmpdir(), 'novel-hub-none-'));
     expect(() => findRepoRoot(lonely)).toThrow(/pnpm-workspace\.yaml/);
+  });
+});
+
+describe('s3EnvSchema', () => {
+  const full = {
+    S3_ENDPOINT: 'https://s3.example.com',
+    S3_BUCKET: 'novel-hub-dev',
+    S3_ACCESS_KEY_ID: 'key',
+    S3_SECRET_ACCESS_KEY: 'secret-value',
+    S3_PUBLIC_URL: 'https://s3.example.com/novel-hub-dev',
+  };
+
+  it('applies the region and path-style defaults', () => {
+    expect(load(s3EnvSchema, full)).toEqual({
+      ...full,
+      S3_REGION: 'us-east-1',
+      S3_FORCE_PATH_STYLE: true,
+    });
+  });
+
+  it('parses S3_FORCE_PATH_STYLE=false as false', () => {
+    expect(load(s3EnvSchema, { ...full, S3_FORCE_PATH_STYLE: 'false' }).S3_FORCE_PATH_STYLE).toBe(
+      false,
+    );
+    expect(
+      errorOf(() => load(s3EnvSchema, { ...full, S3_FORCE_PATH_STYLE: 'yes' })).message,
+    ).toContain('S3_FORCE_PATH_STYLE');
+  });
+
+  it('fails when any of the five required variables is missing', () => {
+    for (const key of Object.keys(full)) {
+      const env: Record<string, string> = { ...full };
+      delete env[key];
+      expect(errorOf(() => load(s3EnvSchema, env)).message).toContain(`${key} (thiếu)`);
+    }
+  });
+});
+
+describe('loadOptionalEnv', () => {
+  const half = { NODE_ENV: 'development', S3_ENDPOINT: 'https://s3.example.com' };
+
+  it('returns null and warns in development when the set is incomplete', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(loadOptionalEnv(s3EnvSchema, half, 's3')).toBeNull();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('S3_BUCKET'));
+  });
+
+  it('throws in production when the set is incomplete', () => {
+    expect(() => loadOptionalEnv(s3EnvSchema, { ...half, NODE_ENV: 'production' }, 's3')).toThrow(
+      /S3_BUCKET/,
+    );
+  });
+
+  it('returns the parsed config when the set is complete', () => {
+    const env = {
+      NODE_ENV: 'production',
+      S3_ENDPOINT: 'https://s3.example.com',
+      S3_BUCKET: 'b',
+      S3_ACCESS_KEY_ID: 'k',
+      S3_SECRET_ACCESS_KEY: 's',
+      S3_PUBLIC_URL: 'https://cdn.example.com',
+    };
+    expect(loadOptionalEnv(s3EnvSchema, env, 's3')).toMatchObject({ S3_BUCKET: 'b' });
+  });
+
+  it('never prints secret values in the warning', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    loadOptionalEnv(s3EnvSchema, { ...half, S3_SECRET_ACCESS_KEY: 'very-secret' }, 's3');
+    expect(String(warn.mock.calls[0]?.[0])).not.toContain('very-secret');
   });
 });

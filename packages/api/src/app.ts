@@ -5,13 +5,17 @@ import { csrf } from './middleware/csrf';
 import { noStore } from './middleware/no-store';
 import { createHealthRoutes } from './routes/health';
 import { createMeRoutes } from './routes/me';
+import { createStoryRoutes } from './routes/stories';
+import { createTagRoutes } from './routes/tags';
 
-/** Contract ổn định `/api/v1/*`. Viết dạng chain để `hc` suy ra type. */
+/** Stable `/api/v1/*` contract. Written as a chain so `hc` can infer types. */
 function createV1Routes(deps: ApiDeps) {
   return new Hono()
     .use(csrf(deps.appUrl))
     .route('/health', createHealthRoutes(deps))
-    .route('/me', createMeRoutes(deps.auth));
+    .route('/me', createMeRoutes(deps))
+    .route('/stories', createStoryRoutes(deps))
+    .route('/tags', createTagRoutes(deps));
 }
 
 export function createApp(deps: ApiDeps) {
@@ -19,8 +23,8 @@ export function createApp(deps: ApiDeps) {
     new Hono()
       .basePath('/api')
       .use(noStore)
-      // Better Auth: đăng ký, đăng nhập, OAuth, phiên. Lỗi theo dạng của Better Auth
-      // (`{ code, message }`), nằm ngoài contract `/api/v1`.
+      // Better Auth: sign-up, sign-in, OAuth, sessions. Errors use Better Auth's shape
+      // (`{ code, message }`), outside the `/api/v1` contract.
       .on(['GET', 'POST'], '/auth/*', (c) => deps.auth.handler(c.req.raw))
       .route('/v1', createV1Routes(deps))
       .onError(handleError)

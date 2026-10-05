@@ -7,5 +7,14 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   server: { port: 3000 },
   resolve: { tsconfigPaths: true },
-  plugins: [tailwindcss(), tanstackStart({ srcDirectory: 'src' }), viteReact(), nitro()],
+  // sharp loads a native binary at runtime, so the server bundle must import it from
+  // node_modules instead of inlining it.
+  ssr: { external: ['sharp'] },
+  plugins: [
+    tailwindcss(),
+    tanstackStart({ srcDirectory: 'src' }),
+    viteReact(),
+    // Copy the external sharp (with its `@img/*` platform package) into `.output`.
+    nitro({ traceDeps: ['sharp'] }),
+  ],
 });

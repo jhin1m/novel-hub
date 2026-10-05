@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Phase 2: Tạo và sửa truyện"
-status: pending
+status: done-pending-s3
 priority: P1
 effort: "2.5d"
 dependencies: [1]
@@ -210,15 +210,15 @@ export function makeTestApiDeps(overrides?: Partial<ApiDeps>): ApiDeps; // db m�
 
 ## Function / Interface Checklist
 
-- [ ] `LIMITS`, `storyCreateSchema`, `storyUpdateSchema`, `tagSlugSchema`, `storyStatusSchema`
-- [ ] `parseStoryKey`, `storyKey`, `coverImageUrl`, `s3EnvSchema`, `loadOptionalEnv`
-- [ ] `insertStoryWithPublicId`, `seedTags`
-- [ ] `Result`, `canEditStory`, `loadOwnedStory`
-- [ ] `createStory`, `updateStory`, `getAuthorStory`, `listAuthorStories`, `listTags`, `setStoryCover`, `removeStoryCover`
-- [ ] `processCoverImage`, `COVER_MAX_PIXELS`, `createSemaphore`, `StoragePort`, `createS3Storage`
-- [ ] `validate`, `coreError`, `makeTestApiDeps`, `createStoryRoutes`, `createTagRoutes`, `createMeRoutes(deps)`
-- [ ] `getInfra()` (export từ `server/infra.ts`)
-- [ ] `WriterGate`, `StoryForm`, `TagPicker`, `CoverUpload`, `readApiError`, `apiErrorMessage`
+- [x] `LIMITS`, `storyCreateSchema`, `storyUpdateSchema`, `tagSlugSchema`, `storyStatusSchema`
+- [x] `parseStoryKey`, `storyKey`, `coverImageUrl`, `s3EnvSchema`, `loadOptionalEnv`
+- [x] `insertStoryWithPublicId`, `seedTags`
+- [x] `Result`, `canEditStory`, `loadOwnedStory`
+- [x] `createStory`, `updateStory`, `getAuthorStory`, `listAuthorStories`, `listTags`, `setStoryCover`, `removeStoryCover`
+- [x] `processCoverImage`, `COVER_MAX_PIXELS`, `createSemaphore`, `StoragePort`, `createS3Storage`
+- [x] `validate`, `coreError`, `makeTestApiDeps`, `createStoryRoutes`, `createTagRoutes`, `createMeRoutes(deps)`
+- [x] `getInfra()` (export từ `server/infra.ts`)
+- [x] `WriterGate`, `StoryForm`, `TagPicker`, `CoverUpload`, `readApiError`, `apiErrorMessage`
 
 ## Test Scenario Matrix
 
@@ -258,10 +258,10 @@ export function makeTestApiDeps(overrides?: Partial<ApiDeps>): ApiDeps; // db m�
 
 ## Success Criteria
 
-- [ ] Tạo/sửa truyện với đủ trường của checkbox; giới hạn khớp spec mục 4
+- [x] Tạo/sửa truyện với đủ trường của checkbox; giới hạn khớp spec mục 4
 - [ ] Bìa upload, resize đúng 2 cỡ WebP, lưu MinIO: smoke thật + int test S3 pass với bucket dev (bắt buộc trước khi đánh checkbox)
-- [ ] Không UUID nào ra API/UI; mọi lỗi đúng dạng chuẩn
-- [ ] Role `author` tự động; mod/admin không bị hạ
+- [x] Không UUID nào ra API/UI; mọi lỗi đúng dạng chuẩn
+- [x] Role `author` tự động; mod/admin không bị hạ
 - [ ] Gate 5 lệnh xanh; checkbox 1 Giai đoạn 1 = `[x]`
 
 ## Risk Assessment

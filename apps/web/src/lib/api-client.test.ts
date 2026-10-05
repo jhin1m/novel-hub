@@ -1,19 +1,15 @@
 import { createApp } from '@novel-hub/api';
+import { makeTestApiDeps } from '@novel-hub/api/testing';
 import type { HealthReport } from '@novel-hub/core';
 import { describe, expect, expectTypeOf, it } from 'vitest';
 import { createApiClient } from './api-client';
 
 describe('createApiClient', () => {
-  it('gọi /api/v1/health và suy ra type HealthReport', async () => {
+  it('calls /api/v1/health and infers the HealthReport type', async () => {
     const report: HealthReport = { status: 'ok', checks: { postgres: 'up', redis: 'up' } };
-    const app = createApp({
-      checkHealth: () => Promise.resolve(report),
-      appUrl: 'http://localhost',
-      auth: {
-        handler: () => Promise.resolve(new Response(null, { status: 404 })),
-        lookupSession: () => Promise.resolve({ user: null, setCookies: [] }),
-      },
-    });
+    const app = createApp(
+      makeTestApiDeps({ checkHealth: () => Promise.resolve(report), appUrl: 'http://localhost' }),
+    );
     const client = createApiClient('http://localhost', {
       fetch: (input: RequestInfo | URL, init?: RequestInit) => app.request(input, init),
     });

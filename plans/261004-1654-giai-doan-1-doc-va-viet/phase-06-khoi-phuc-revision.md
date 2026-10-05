@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "Phase 6: Khôi phục revision"
-status: pending
+status: completed
 priority: P1
 effort: "1d"
 dependencies: [5]
@@ -127,11 +127,11 @@ export function restoreRevision(db: Db, actor: StoryActor, publicId: string, num
 
 ## Function / Interface Checklist
 
-- [ ] `revisionKeySchema`, `revisionParamSchema`, `restoreRevisionSchema`
-- [ ] `revisionKey(createdAt)`, `findRevision` (nội bộ)
-- [ ] `listRevisions`, `getRevisionPreview`, `restoreRevision` (trả `Result`)
-- [ ] 3 route trong `createChapterRoutes(deps)` (chain)
-- [ ] `RevisionHistorySheet` dùng `autosave.pause/rebase/resume`
+- [x] `revisionKeySchema`, `revisionParamSchema`, `restoreRevisionSchema`
+- [x] `revisionKey(createdAt)`, `findRevision` (nội bộ)
+- [x] `listRevisions`, `getRevisionPreview`, `restoreRevision` (trả `Result`)
+- [x] 3 route trong `createChapterRoutes(deps)` (chain)
+- [x] `RevisionHistorySheet` dùng `autosave.pause/rebase/resume`
 
 ## Test Scenario Matrix
 
@@ -155,11 +155,11 @@ export function restoreRevision(db: Db, actor: StoryActor, publicId: string, num
 
 ## Success Criteria
 
-- [ ] Panel lịch sử hiện đúng các bản đã đăng, xem trước được
-- [ ] Khôi phục chỉ đổi draft qua `saveDraft`, giữ `pid`, chống ghi đè bằng 409 `DRAFT_CONFLICT`
-- [ ] Không mất phím gõ khi khôi phục (pause/resume)
-- [ ] Không có UUID ở API/URL/DOM
-- [ ] Gate 5 lệnh xanh; checkbox 5 Giai đoạn 1 = `[x]`
+- [x] Panel lịch sử hiện đúng các bản đã đăng, xem trước được
+- [x] Khôi phục chỉ đổi draft qua `saveDraft`, giữ `pid`, chống ghi đè bằng 409 `DRAFT_CONFLICT`
+- [x] Không mất phím gõ khi khôi phục (pause/resume)
+- [x] Không có UUID ở API/URL/DOM
+- [x] Gate 5 lệnh xanh; checkbox 5 Giai đoạn 1 = `[x]`
 
 ## Risk Assessment
 
@@ -181,6 +181,14 @@ Rollback: chỉ thêm route, module core, component; gỡ 3 route + nút toolbar
 ## Câu hỏi mở (đã chốt — Validation Session 1, 2026-10-05)
 
 1. Khôi phục **không** tự chụp nháp hiện tại thành revision; dùng hộp xác nhận + mirror localStorage.
+
+## Ghi chú triển khai (2026-10-05)
+
+- Gắn `RevisionHistorySheet` trong `chapter-editor.tsx` (nơi giữ `editor`, `autosave`), không sửa file route.
+- Response restore thêm `hasUnpublishedChanges` (cùng nghĩa với `getDraft`, dùng chung `differsFromStoredContent` trong `core/chapters/drafts.ts`) để badge đúng cả với chương hẹn giờ.
+- Restore 409: editor hiện banner xung đột; "Giữ bản của tôi" giờ luôn xếp nội dung editor vào autosave trước khi gửi (trước đây không gửi gì nếu không còn thay đổi chờ).
+- Sau khi khôi phục thành công thì xoá mirror localStorage (server đã có đúng nội dung editor), giống luồng đăng.
+- Dùng lại `editor_word_count` thay cho key `revision_words`.
 
 ## Next Steps
 

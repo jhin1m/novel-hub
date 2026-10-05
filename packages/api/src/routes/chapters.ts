@@ -3,7 +3,10 @@ import {
   createChapter,
   deleteChapter,
   getDraft,
+  getRevisionPreview,
+  listRevisions,
   publishChapter,
+  restoreRevision,
   saveDraft,
   scheduleChapter,
   unscheduleChapter,
@@ -15,6 +18,8 @@ import {
   chapterNumberParamSchema,
   draftSaveSchema,
   publishChapterSchema,
+  restoreRevisionSchema,
+  revisionParamSchema,
   scheduleChapterSchema,
 } from '@novel-hub/shared';
 import { Hono } from 'hono';
@@ -157,6 +162,48 @@ export function createChapterRoutes(deps: Pick<ApiDeps, 'db'>) {
           const result = await unscheduleChapter(deps.db, c.var.authUser, publicId, number);
           if (!result.ok) return coreError(c, result.error);
           return c.json({ chapter: result.value }, 200);
+        },
+      )
+      .get(
+        '/:number/revisions',
+        requireVerifiedEmail,
+        validate('param', chapterNumberParamSchema),
+        async (c) => {
+          const { publicId, number } = c.req.valid('param');
+          const result = await listRevisions(deps.db, c.var.authUser, publicId, number);
+          if (!result.ok) return coreError(c, result.error);
+          return c.json({ revisions: result.value }, 200);
+        },
+      )
+      .get(
+        '/:number/revisions/:key',
+        requireVerifiedEmail,
+        validate('param', revisionParamSchema),
+        async (c) => {
+          const { publicId, number, key } = c.req.valid('param');
+          const result = await getRevisionPreview(deps.db, c.var.authUser, publicId, number, key);
+          if (!result.ok) return coreError(c, result.error);
+          return c.json({ revision: result.value }, 200);
+        },
+      )
+      // Restoring only replaces the draft; making it public again goes through publish.
+      .post(
+        '/:number/revisions/:key/restore',
+        requireVerifiedEmail,
+        validate('param', revisionParamSchema),
+        validate('json', restoreRevisionSchema),
+        async (c) => {
+          const { publicId, number, key } = c.req.valid('param');
+          const result = await restoreRevision(
+            deps.db,
+            c.var.authUser,
+            publicId,
+            number,
+            key,
+            c.req.valid('json').baseUpdatedAt,
+          );
+          if (!result.ok) return coreError(c, result.error);
+          return c.json({ draft: result.value }, 200);
         },
       )
   );

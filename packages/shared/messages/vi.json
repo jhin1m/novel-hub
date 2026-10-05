@@ -210,5 +210,21 @@
   "chapter_delete_title": "Xoá chương {number}?",
   "chapter_delete_published_warning": "Chương đã đăng sẽ biến mất khỏi trang truyện. Số chương {number} sẽ bỏ trống, các chương khác không đánh số lại.",
   "chapter_delete_draft_warning": "Chương sẽ bị xoá khỏi danh sách cùng bản nháp của nó.",
-  "chapter_delete_confirm": "Xoá chương"
+  "chapter_delete_confirm": "Xoá chương",
+  "revision_history": "Lịch sử",
+  "revision_history_title": "Lịch sử phiên bản",
+  "revision_history_description": "Mỗi lần đăng hoặc cập nhật chương được lưu thành một phiên bản.",
+  "revision_loading": "Đang tải…",
+  "revision_load_failed": "Không tải được lịch sử phiên bản.",
+  "revision_empty": "Chưa có phiên bản nào. Phiên bản được lưu khi bạn đăng chương.",
+  "revision_published_badge": "Đang đăng",
+  "revision_back": "Danh sách phiên bản",
+  "revision_restore": "Khôi phục vào bản nháp",
+  "revision_restore_confirm_title": "Khôi phục phiên bản này?",
+  "revision_restore_confirm_body": "Nội dung bản nháp hiện tại sẽ bị thay bằng bản này. Bản đã đăng không đổi cho tới khi bạn đăng lại.",
+  "revision_restore_confirm": "Khôi phục",
+  "revision_restore_pending": "Đang khôi phục…",
+  "revision_cancel": "Huỷ",
+  "revision_restored": "Đã khôi phục bản lúc {time}.",
+  "revision_save_first": "Chưa lưu được bản nháp nên chưa khôi phục. Hãy thử lại."
 }

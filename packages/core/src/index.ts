@@ -98,3 +98,12 @@ export {
   unscheduleChapter,
   validateScheduleTime,
 } from './publishing/schedule-chapter';
+export {
+  type RestoredDraft,
+  type RevisionPreview,
+  type RevisionSummary,
+  getRevisionPreview,
+  listRevisions,
+  restoreRevision,
+  revisionKey,
+} from './revisions/revisions';

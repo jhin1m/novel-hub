@@ -1,4 +1,10 @@
-import type { AuthorChapterView, DraftView } from '@novel-hub/core';
+import type {
+  AuthorChapterView,
+  DraftView,
+  RestoredDraft,
+  RevisionPreview,
+  RevisionSummary,
+} from '@novel-hub/core';
 import type { ChapterMetaInput, EditorDocJson } from '@novel-hub/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from './api-client';
@@ -11,7 +17,7 @@ import { myStoryQueryKey } from './stories';
 const api = createApiClient();
 const chapters = api.api.v1.stories[':publicId'].chapters;
 
-export type { AuthorChapterView, DraftView };
+export type { AuthorChapterView, DraftView, RestoredDraft, RevisionPreview, RevisionSummary };
 
 /** `keepalive` requests are capped around 64 KB by browsers; larger bodies go as normal requests. */
 const KEEPALIVE_MAX_BYTES = 60_000;
@@ -192,4 +198,55 @@ export function useUpdateChapterMeta(publicId: string, number: number) {
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: myChaptersQueryKey(publicId), exact: true }),
   });
+}
+
+const revisionsQueryKey = (publicId: string, number: number) =>
+  [...meQueryKey, 'chapter-revisions', publicId, number] as const;
+
+/** Fetched each time the history opens: a publish adds a revision. */
+export function useRevisions(publicId: string, number: number, enabled: boolean) {
+  return useQuery({
+    queryKey: revisionsQueryKey(publicId, number),
+    queryFn: async (): Promise<RevisionSummary[]> => {
+      const res = await chapters[':number'].revisions.$get({
+        param: { publicId, number: String(number) },
+      });
+      if (!res.ok) throw await readApiError(res);
+      return (await res.json()).revisions;
+    },
+    enabled,
+    staleTime: 0,
+    retry: false,
+  });
+}
+
+/** A revision never changes once written, so its preview is fetched once. */
+export function useRevisionPreview(publicId: string, number: number, key: string | null) {
+  return useQuery({
+    queryKey: [...revisionsQueryKey(publicId, number), key] as const,
+    queryFn: async (): Promise<RevisionPreview> => {
+      const res = await chapters[':number'].revisions[':key'].$get({
+        param: { publicId, number: String(number), key: key ?? '' },
+      });
+      if (!res.ok) throw await readApiError(res);
+      return (await res.json()).revision;
+    },
+    enabled: key !== null,
+    staleTime: Infinity,
+    retry: false,
+  });
+}
+
+export async function restoreRevisionRequest(
+  publicId: string,
+  number: number,
+  key: string,
+  baseUpdatedAt: string,
+): Promise<RestoredDraft> {
+  const res = await chapters[':number'].revisions[':key'].restore.$post({
+    param: { publicId, number: String(number), key },
+    json: { baseUpdatedAt },
+  });
+  if (!res.ok) throw await readApiError(res);
+  return (await res.json()).draft;
 }

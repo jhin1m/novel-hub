@@ -59,20 +59,31 @@ export async function getDraft(
     [draft] = await read();
     if (!draft) throw new Error('Chapter draft was not created');
   }
-  const [stored] = await db
-    .select({ contentHash: chapterContents.contentHash })
-    .from(chapterContents)
-    .where(eq(chapterContents.chapterId, chapter.id));
-  // Rendering a full chapter takes a few milliseconds; valid pids are kept, so an unchanged
-  // draft renders to the stored HTML byte for byte.
-  const rendered = stored ? renderPublishedContent(draft.doc) : null;
   return ok({
     chapter: toAuthorChapterView(chapter, draft.updatedAt),
     doc: draft.doc as EditorDocJson,
     updatedAt: draft.updatedAt.toISOString(),
-    hasUnpublishedChanges:
-      stored !== undefined && (!rendered?.ok || rendered.value.contentHash !== stored.contentHash),
+    hasUnpublishedChanges: await differsFromStoredContent(db, chapter.id, draft.doc),
   });
+}
+
+/**
+ * Whether `doc` would render differently from the chapter's stored (published or scheduled)
+ * content; false when nothing is stored. Rendering a full chapter takes a few milliseconds; valid
+ * pids are kept, so an unchanged draft renders to the stored HTML byte for byte.
+ */
+export async function differsFromStoredContent(
+  db: Db,
+  chapterId: string,
+  doc: unknown,
+): Promise<boolean> {
+  const [stored] = await db
+    .select({ contentHash: chapterContents.contentHash })
+    .from(chapterContents)
+    .where(eq(chapterContents.chapterId, chapterId));
+  if (!stored) return false;
+  const rendered = renderPublishedContent(doc);
+  return !rendered.ok || rendered.value.contentHash !== stored.contentHash;
 }
 
 export type SaveDraftError = OwnedStoryError | 'INVALID_DOCUMENT' | 'DRAFT_CONFLICT';

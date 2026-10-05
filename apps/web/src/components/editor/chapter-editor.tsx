@@ -18,8 +18,10 @@ import {
   type AuthorChapterView,
   type DraftView,
   type PublishResponse,
+  type RevisionSummary,
   fetchDraft,
   publishRequest,
+  restoreRevisionRequest,
   saveDraftRequest,
   scheduleRequest,
   unscheduleRequest,
@@ -41,12 +43,19 @@ import { DraftRestoreBanner } from './draft-restore-banner';
 import { EditorToolbar } from './editor-toolbar';
 import { FocusToggle, useFocusMode } from './focus-toggle';
 import { PublishDialog } from './publish-dialog';
+import { RevisionHistorySheet } from './revision-history-sheet';
 import { SaveStatusText } from './save-status';
 import { ScheduleBanner } from './schedule-banner';
 
 const WORD_COUNT_DELAY_MS = 500;
 
 const wordsOf = (doc: EditorDocJson) => countWords(docToText(doc));
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
+/** `HH:mm dd/MM` in local time, for short notices. */
+const shortDateTime = (date: Date) =>
+  `${pad2(date.getHours())}:${pad2(date.getMinutes())} ${pad2(date.getDate())}/${pad2(date.getMonth() + 1)}`;
 
 /**
  * The chapter writing screen. Loaded once per visit from `draft`; from then on the editor is the
@@ -179,6 +188,8 @@ export function ChapterEditor({
       const latest = await fetchDraft(publicId, number);
       if (keepMine) {
         autosave.rebase(latest.updatedAt, JSON.stringify(latest.doc));
+        // Queue what the editor shows: after a failed restore nothing is pending in autosave.
+        autosave.change(() => editor.getJSON() as EditorDocJson);
         await autosave.flush();
       } else {
         editor.commands.setContent(latest.doc, { emitUpdate: false });
@@ -290,6 +301,47 @@ export function ChapterEditor({
     }
   };
 
+  /**
+   * Same locking as publishing: read-only editor and paused autosave, so every keystroke is saved
+   * before the restore is sent with that version, and none lands on top of the restored content.
+   */
+  const restoreRevision = async (revision: RevisionSummary): Promise<string | null> => {
+    const autosave = autosaveRef.current;
+    if (!editor || !autosave) return m.editor_action_failed();
+    setNotice(null);
+    setPublishError(null);
+    editor.setEditable(false, false);
+    try {
+      const saved = await autosave.pause();
+      if (saved.kind !== 'saved') return m.revision_save_first();
+      const draft = await restoreRevisionRequest(
+        publicId,
+        number,
+        revision.key,
+        autosave.getBase(),
+      );
+      editor.commands.setContent(draft.doc, { emitUpdate: false });
+      autosave.rebase(draft.updatedAt, JSON.stringify(editor.getJSON()));
+      // The local copy holds the replaced draft; the server now has everything the editor shows.
+      mirrorRef.current?.cancel();
+      clearMirror(browserStorage(), mirrorKey(publicId, number));
+      setWords(wordsOf(draft.doc));
+      setUnpublished(draft.hasUnpublishedChanges);
+      setNotice(m.revision_restored({ time: shortDateTime(new Date(revision.createdAt)) }));
+      return null;
+    } catch (error) {
+      if (error instanceof ApiError && error.code === 'DRAFT_CONFLICT') {
+        // Saved elsewhere meanwhile: the usual conflict banner lets the author pick a side.
+        setStatus({ kind: 'conflict' });
+        return null;
+      }
+      return apiErrorMessage(error);
+    } finally {
+      autosave.resume();
+      editor.setEditable(true, false);
+    }
+  };
+
   const showUnpublished =
     unpublished && (chapter.status === 'published' || chapter.status === 'scheduled');
 
@@ -340,6 +392,11 @@ export function ChapterEditor({
               <span className="text-xs text-muted-foreground">
                 {m.editor_word_count({ count: words.toLocaleString('vi-VN') })}
               </span>
+              <RevisionHistorySheet
+                publicId={publicId}
+                number={number}
+                onRestore={restoreRevision}
+              />
               <PublishDialog
                 number={number}
                 status={chapter.status}

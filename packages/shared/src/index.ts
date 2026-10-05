@@ -64,3 +64,9 @@ export {
   publishChapterSchema,
   scheduleChapterSchema,
 } from './schemas/chapter';
+export {
+  type RestoreRevisionInput,
+  restoreRevisionSchema,
+  revisionKeySchema,
+  revisionParamSchema,
+} from './schemas/revision';

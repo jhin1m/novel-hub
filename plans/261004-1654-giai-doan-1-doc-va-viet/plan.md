@@ -36,7 +36,7 @@ Giai đoạn 0 xong (`plans/261004-1255-giai-doan-0-nen-mong`). Spec `docs/proje
 | 3 | [Bìa mặc định dạng chữ](./phase-03-bia-mac-dinh-dang-chu.md) | 2 | Completed |
 | 4 | [Editor Tiptap và autosave](./phase-04-editor-tiptap-autosave.md) | 3 | Completed |
 | 5 | [Đăng chương và hẹn giờ](./phase-05-dang-chuong-va-hen-gio.md) | 4 | Completed |
-| 6 | [Khôi phục revision](./phase-06-khoi-phuc-revision.md) | 5 | Pending |
+| 6 | [Khôi phục revision](./phase-06-khoi-phuc-revision.md) | 5 | Completed |
 | 7 | [Trang đọc: route, cache, giao diện](./phase-07-trang-doc-route-giao-dien.md) | 6 (phần 1/3) | Pending |
 | 8 | [Trang đọc: cài đặt hiển thị](./phase-08-cai-dat-trang-doc.md) | 6 (phần 2/3) | Pending |
 | 9 | [Trang đọc: tiến độ, purge CDN, lượt đọc](./phase-09-tien-do-purge-luot-doc.md) | 6 (đánh `[x]`) | Pending |

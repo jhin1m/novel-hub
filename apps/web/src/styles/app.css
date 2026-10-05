@@ -76,7 +76,11 @@
 .chapter-editor-content {
   min-height: 50vh;
   outline: none;
+}
 
+/* Revision previews render the same HTML, so they share the editor's typography. */
+.chapter-editor-content,
+.chapter-preview-content {
   & > * + * {
     margin-top: 1em;
   }

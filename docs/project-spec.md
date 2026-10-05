@@ -155,7 +155,7 @@ Làm tuần tự; mỗi mục chỉ coi là xong khi đạt tiêu chí và có t
 - [x] Bìa mặc định dạng chữ khi tác giả không có bìa.
 - [x] Editor Tiptap: autosave vào `chapter_drafts` (debounce \~2 giây), trạng thái đã lưu, chế độ tập trung.
 - [x] Đăng chương: sinh HTML đã sanitize, gắn `data-pid`, ghi revision, đếm số chữ, hẹn giờ đăng.
-- [ ] Khôi phục từ revision cũ.
+- [x] Khôi phục từ revision cũ.
 - [ ] Trang đọc chương theo mục 6 và mục 8.
 - [ ] Trang truyện, trang tác giả, trang tag, trang chủ (mới cập nhật, truyện mới đáng chú ý).
 - [ ] Tìm kiếm Meilisearch: truyện và tác giả, lọc theo tag, trạng thái, số chữ.

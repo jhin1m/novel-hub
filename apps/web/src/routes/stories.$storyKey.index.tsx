@@ -61,7 +61,7 @@ function StoryPage() {
     <>
       {/* While the 18+ screen shows, everything behind it is out of reach. */}
       <div inert={gated}>
-        <SiteLayout>
+        <SiteLayout bottomInset="cta">
           <article className="mx-auto flex max-w-3xl flex-col gap-10 px-4 py-10">
             <header className="flex flex-col gap-6 sm:flex-row sm:items-start">
               <StoryCover

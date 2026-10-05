@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Layout header footer thanh tab"
-status: pending
+status: completed
 priority: P1
 effort: "0.75d"
 dependencies: [2]
@@ -88,10 +88,10 @@ Ghi chú: `/` và trang chương ở 360/390 đã được `header-mobile.spec.t
 
 ## Function/interface checklist
 
-- [ ] `SiteLayout({ children, bottomInset?: 'tabBar' | 'cta' | 'none' })`
-- [ ] `SiteHeader()`, `SiteAccountMenu()`, `SiteFooter()`, `MobileTabBar()`
-- [ ] `type MainTab = 'home' | 'explore' | 'library' | 'write' | 'me'`
-- [ ] `activeMainTab(pathname: string): MainTab | null`
+- [x] `SiteLayout({ children, bottomInset?: 'tabBar' | 'cta' | 'none' })`
+- [x] `SiteHeader()`, `SiteAccountMenu()`, `SiteFooter()`, `MobileTabBar()`
+- [x] `type MainTab = 'home' | 'explore' | 'library' | 'write' | 'me'`
+- [x] `activeMainTab(pathname: string): MainTab | null`
 
 ## Dependency map
 
@@ -128,12 +128,12 @@ Ghi chú: `/` và trang chương ở 360/390 đã được `header-mobile.spec.t
 
 ## Success Criteria
 
-- [ ] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
-- [ ] `site-layout.tsx` và mọi file mới ≤ 200 dòng
-- [ ] HTML SSR `/` không chứa tên người dùng, không `Set-Cookie` (catalog/layout e2e giữ xanh)
-- [ ] Thanh tab không có trong `<header>`; không hiện ở ≥ md, trang truyện; tab "Tủ truyện"/"Viết"/"Tôi" là `Link` (không `<a href>` thường)
-- [ ] `header-mobile.spec.ts` khách 360 không tràn ngang
-- [ ] Không e2e cũ nào phải đổi
+- [x] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
+- [x] `site-layout.tsx` và mọi file mới ≤ 200 dòng
+- [x] HTML SSR `/` không chứa tên người dùng, không `Set-Cookie` (catalog/layout e2e giữ xanh)
+- [x] Thanh tab không có trong `<header>`; không hiện ở ≥ md, trang truyện; tab "Tủ truyện"/"Viết"/"Tôi" là `Link` (không `<a href>` thường)
+- [x] `header-mobile.spec.ts` khách 360 không tràn ngang
+- [x] Không e2e cũ nào phải đổi
 
 ## Risk Assessment
 
@@ -151,3 +151,12 @@ Ghi chú: `/` và trang chương ở 360/390 đã được `header-mobile.spec.t
 ## Ngoài phạm vi phase
 
 Không đổi `auth-ui.tsx`, `not-found.tsx`, `static-page.tsx` (phase 11); không CTA trang truyện (phase 5); không đổi trang đọc/editor; không đổi `font-serif` ở file khác ngoài header.
+
+## Kết quả thực hiện (2026-10-06)
+
+- Gate xanh: typecheck, lint, format:check, unit 654, int 301, e2e 77 (thêm 5 e2e `mobile-navigation.spec.ts`, 14 unit `main-nav.test.ts`).
+- Review: `reports/code-reviewer-261006-phase-03-layout-header-footer-thanh-tab-review-report.md` (chỉ Low).
+- [auto] Pill "Tủ truyện"/"Viết truyện" desktop bọc `div`, không `nav`. Lý do: tránh landmark thứ hai trùng tên "Điều hướng chính" với thanh tab.
+- [auto] Ô tìm giữ viền `border-input` của `Input` thay `--border`. Lý do: viền ô nhập cần tương phản 3:1.
+- [auto] `header-mobile.spec.ts` không đổi (vòng lặp không nhận danh sách URL); trang truyện 360 được kiểm ở `mobile-navigation.spec.ts`. Lý do: đúng điều kiện trong file inventory.
+- [auto] Hoãn `scroll-padding-bottom` và `viewport-fit=cover` (review Low 2, 3). Lý do: CSS/head toàn cục ngoài phạm vi phase; ghi cho phase 11.

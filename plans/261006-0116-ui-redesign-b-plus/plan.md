@@ -38,7 +38,7 @@ Plan riêng do user thêm (không ứng với checkbox nào ở mục 5 spec), c
 |-------|------|--------|
 | 1 | [Tokens và font](./phase-01-tokens-va-font.md) | Completed |
 | 2 | [Component dùng chung](./phase-02-component-dung-chung.md) | Completed |
-| 3 | [Layout header footer thanh tab](./phase-03-layout-header-footer-thanh-tab.md) | Pending |
+| 3 | [Layout header footer thanh tab](./phase-03-layout-header-footer-thanh-tab.md) | Completed |
 | 4 | [Trang chủ](./phase-04-trang-chu.md) | Pending |
 | 5 | [Trang truyện](./phase-05-trang-truyen.md) | Pending |
 | 6 | [Trang đọc: khung](./phase-06-trang-doc-khung.md) | Pending |

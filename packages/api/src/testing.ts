@@ -30,6 +30,8 @@ export function makeTestApiDeps(overrides: Partial<ApiDeps> = {}): ApiDeps {
     storage: null,
     viewCounter: null,
     search: null,
+    rateLimit: null,
+    clientIp: () => null,
     ...overrides,
   };
 }

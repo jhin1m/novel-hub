@@ -43,6 +43,7 @@ export async function lookupSession(
       avatarUrl: user.image ?? null,
       role: user.role,
       status: user.status,
+      createdAt: user.createdAt,
     },
     setCookies,
   };

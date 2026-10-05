@@ -10,12 +10,15 @@
  */
 import {
   type MailQueue,
+  type RateLimiter,
   type SearchCtx,
   type StoragePort,
   type ViewCounter,
   createHealthRedis,
   createMailQueue,
+  createClientIpResolver,
   createProducerConnection,
+  createRateLimiter,
   createS3Storage,
   createSearchCtx,
   createViewCounter,
@@ -32,19 +35,24 @@ import {
   loadServerEnv,
   meiliWebEnvSchema,
   queueEnvSchema,
+  rateLimitEnvSchema,
   redisEnvSchema,
   requireGooglePair,
+  requireUnitRateLimitFactorInProduction,
   s3EnvSchema,
 } from '@novel-hub/shared/env';
 import type { z } from 'zod';
 
 // The web app sends no mail (the worker does), so it needs no SMTP variables.
-const serverEnvSchema = requireGooglePair(
-  appEnvSchema
-    .extend(dbEnvSchema.shape)
-    .extend(redisEnvSchema.shape)
-    .extend(queueEnvSchema.shape)
-    .extend(authEnvSchema.shape),
+const serverEnvSchema = requireUnitRateLimitFactorInProduction(
+  requireGooglePair(
+    appEnvSchema
+      .extend(dbEnvSchema.shape)
+      .extend(redisEnvSchema.shape)
+      .extend(queueEnvSchema.shape)
+      .extend(authEnvSchema.shape)
+      .extend(rateLimitEnvSchema.shape),
+  ),
 );
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
@@ -58,6 +66,10 @@ export interface Infra {
   mailQueue: MailQueue;
   /** Counts chapter reads on `producerRedis`. */
   viewCounter: ViewCounter;
+  /** Rate limits on `producerRedis`. */
+  rateLimit: RateLimiter;
+  /** The client address, trusting `CF-Connecting-IP` only with `TRUST_CF_IP`. */
+  clientIp: (request: Request) => string | null;
   /** `null` when `S3_*` is not configured (dev only; production refuses to start). */
   storage: StoragePort | null;
   /** Search-only Meilisearch client; `null` when `MEILI_SEARCH_KEY` is not set (dev only). */
@@ -67,6 +79,8 @@ export interface Infra {
 
 /** How long to wait for Redis at startup, and for the pool/queue to close at shutdown (ms). */
 const REDIS_CONNECT_WAIT_MS = 2_000;
+/** Past this a rate limit check falls back to the rule's `onStoreError` (ms). */
+const RATE_LIMIT_TIMEOUT_MS = 500;
 const POOL_CLOSE_WAIT_MS = 5_000;
 const QUEUE_CLOSE_WAIT_MS = 2_000;
 
@@ -103,6 +117,13 @@ async function createInfra(): Promise<Infra> {
   const mailQueue = createMailQueue(producerRedis, env.QUEUE_PREFIX);
   // Same prefix as the worker that flushes the counters.
   const viewCounter = createViewCounter(producerRedis, env.QUEUE_PREFIX);
+  const rateLimit = createRateLimiter({
+    redis: producerRedis,
+    prefix: env.QUEUE_PREFIX,
+    factor: env.RATE_LIMIT_FACTOR,
+    timeoutMs: RATE_LIMIT_TIMEOUT_MS,
+  });
+  const clientIp = createClientIpResolver({ trustCf: env.TRUST_CF_IP });
   const close = async () => {
     // With Redis down `Queue.close` may wait forever, so bound it.
     await withTimeout(mailQueue.close(), QUEUE_CLOSE_WAIT_MS, 'queue close').catch(() => {});
@@ -119,6 +140,8 @@ async function createInfra(): Promise<Infra> {
     producerRedis,
     mailQueue,
     viewCounter,
+    rateLimit,
+    clientIp,
     storage,
     search,
     close,

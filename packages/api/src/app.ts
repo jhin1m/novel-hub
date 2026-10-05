@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import type { ApiDeps } from './deps';
 import { handleError, handleNotFound } from './lib/errors';
+import { authRateLimit } from './middleware/auth-rate-limit';
 import { csrf } from './middleware/csrf';
 import { noStore } from './middleware/no-store';
 import { createHealthRoutes } from './routes/health';
@@ -31,7 +32,7 @@ export function createApp(deps: ApiDeps) {
       .use(noStore)
       // Better Auth: sign-up, sign-in, OAuth, sessions. Errors use Better Auth's shape
       // (`{ code, message }`), outside the `/api/v1` contract.
-      .on(['GET', 'POST'], '/auth/*', (c) => deps.auth.handler(c.req.raw))
+      .on(['GET', 'POST'], '/auth/*', authRateLimit(deps), (c) => deps.auth.handler(c.req.raw))
       .route('/v1', createV1Routes(deps))
       .onError(handleError)
       .notFound(handleNotFound)

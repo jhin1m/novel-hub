@@ -16,9 +16,11 @@ import {
   meiliWebEnvSchema,
   meiliWorkerEnvSchema,
   queueEnvSchema,
+  rateLimitEnvSchema,
   redisEnvSchema,
   requireGooglePair,
   requireSmtpInProduction,
+  requireUnitRateLimitFactorInProduction,
   s3EnvSchema,
   smtpEnvSchema,
   testEnvSchema,
@@ -199,6 +201,42 @@ describe('queueEnvSchema', () => {
   it('missing QUEUE_PREFIX → defaults to novelhub; when set it is kept', () => {
     expect(load(queueEnvSchema, {})).toEqual({ QUEUE_PREFIX: 'novelhub' });
     expect(load(queueEnvSchema, { QUEUE_PREFIX: 'e2e' })).toEqual({ QUEUE_PREFIX: 'e2e' });
+  });
+});
+
+describe('rateLimitEnvSchema + requireUnitRateLimitFactorInProduction', () => {
+  const schema = requireUnitRateLimitFactorInProduction(
+    appEnvSchema.extend(rateLimitEnvSchema.shape),
+  );
+
+  it('defaults to no Cloudflare trust and factor 1', () => {
+    expect(load(schema, validApp)).toEqual({
+      ...validApp,
+      TRUST_CF_IP: false,
+      RATE_LIMIT_FACTOR: 1,
+    });
+  });
+
+  it('parses "true"/"false" as booleans, not as truthy strings', () => {
+    expect(load(schema, { ...validApp, TRUST_CF_IP: 'true' }).TRUST_CF_IP).toBe(true);
+    expect(load(schema, { ...validApp, TRUST_CF_IP: 'false' }).TRUST_CF_IP).toBe(false);
+  });
+
+  it('accepts a factor outside production', () => {
+    expect(load(schema, { ...validApp, RATE_LIMIT_FACTOR: '50' }).RATE_LIMIT_FACTOR).toBe(50);
+  });
+
+  it('refuses to start production with a loosened factor', () => {
+    const env = { ...validApp, NODE_ENV: 'production', RATE_LIMIT_FACTOR: '50' };
+    expect(errorOf(() => load(schema, env)).message).toContain(
+      'RATE_LIMIT_FACTOR (must be 1 in production)',
+    );
+  });
+
+  it('refuses a factor out of range', () => {
+    expect(() => load(schema, { ...validApp, RATE_LIMIT_FACTOR: '0' })).toThrow(
+      'RATE_LIMIT_FACTOR',
+    );
   });
 });
 

@@ -198,3 +198,19 @@ export {
   listHistory,
   removeFromHistory,
 } from './reading/history';
+export {
+  type ClientIpOptions,
+  type ClientIpSource,
+  clientIp,
+  createClientIpResolver,
+  normalizeIp,
+  resolveClientIp,
+} from './rate-limit/client-ip';
+export {
+  type CreateRateLimiterOptions,
+  type RateLimitDecision,
+  type RateLimitSubject,
+  type RateLimiter,
+  createRateLimiter,
+} from './rate-limit/limiter';
+export { resetRateLimits } from './rate-limit/reset';

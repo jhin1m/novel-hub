@@ -55,6 +55,7 @@ async function signedIn(username: string, emailVerified = true): Promise<string>
     avatarUrl: null,
     role: row.role,
     status: row.status,
+    createdAt: row.createdAt,
   });
   return `session=${row.id}`;
 }

@@ -33,6 +33,7 @@ async function insertUser(username: string): Promise<CurrentUser> {
     avatarUrl: row.avatarUrl,
     role: row.role,
     status: row.status,
+    createdAt: row.createdAt,
   };
 }
 
@@ -68,11 +69,16 @@ async function publishedStory(): Promise<string> {
   return publicId;
 }
 
-function appAs(user: CurrentUser | null, viewCounter: ViewCounter | null = null) {
+function appAs(
+  user: CurrentUser | null,
+  viewCounter: ViewCounter | null = null,
+  clientIp: (request: Request) => string | null = () => null,
+) {
   return createApp(
     makeTestApiDeps({
       db,
       viewCounter,
+      clientIp,
       auth: {
         handler: () => Promise.resolve(new Response(null, { status: 404 })),
         lookupSession: () => Promise.resolve({ user, setCookies: [] }),
@@ -143,6 +149,17 @@ describe('view', () => {
     expect(again.status).toBe(204);
     expect(again.headers.get('set-cookie')).toBeNull();
     expect(record).toHaveBeenLastCalledWith(expect.objectContaining({ viewer: `a:${id}` }));
+  });
+
+  it('caps reads per IP with the address from clientIp', async () => {
+    const publicId = await publishedStory();
+    const record = vi.fn<ViewCounter['record']>(() => Promise.resolve(true));
+    const res = await appAs(null, { record }, () => '203.0.113.9').request(
+      '/api/v1/reading/view',
+      json('POST', { publicId, number: 1 }),
+    );
+    expect(res.status).toBe(204);
+    expect(record).toHaveBeenCalledWith(expect.objectContaining({ ip: '203.0.113.9' }));
   });
 
   it('a signed-in reader is counted by account, with no cookie', async () => {

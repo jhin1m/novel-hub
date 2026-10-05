@@ -13,6 +13,7 @@ const reader: CurrentUser = {
   avatarUrl: null,
   role: 'reader',
   status: 'active',
+  createdAt: new Date('2026-01-01T00:00:00Z'),
 };
 
 /** App thử: gán sẵn user rồi chạy middleware cần test. */

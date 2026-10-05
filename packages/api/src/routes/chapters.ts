@@ -29,6 +29,7 @@ import type { ApiDeps } from '../deps';
 import { coreError } from '../lib/core-errors';
 import { errorBody } from '../lib/errors';
 import { validate } from '../lib/validate';
+import { rateLimit } from '../middleware/rate-limit';
 import { requireVerifiedEmail } from '../middleware/require-auth';
 
 const storyParamSchema = z.object({ publicId: z.string() });
@@ -48,14 +49,24 @@ function publishBody(result: PublishResult) {
  * session middleware already ran (running it again would look the session up twice). Every route
  * needs a verified email; ownership and soft deletion are checked in `core`.
  */
-export function createChapterRoutes(deps: Pick<ApiDeps, 'db'>) {
+export function createChapterRoutes(deps: Pick<ApiDeps, 'db' | 'rateLimit' | 'clientIp'>) {
   return (
     new Hono()
-      .post('/', requireVerifiedEmail, validate('param', storyParamSchema), async (c) => {
-        const result = await createChapter(deps.db, c.var.authUser, c.req.valid('param').publicId);
-        if (!result.ok) return coreError(c, result.error);
-        return c.json({ chapter: result.value }, 201);
-      })
+      .post(
+        '/',
+        requireVerifiedEmail,
+        rateLimit(deps, 'createChapter'),
+        validate('param', storyParamSchema),
+        async (c) => {
+          const result = await createChapter(
+            deps.db,
+            c.var.authUser,
+            c.req.valid('param').publicId,
+          );
+          if (!result.ok) return coreError(c, result.error);
+          return c.json({ chapter: result.value }, 201);
+        },
+      )
       .patch(
         '/:number',
         requireVerifiedEmail,
@@ -122,6 +133,7 @@ export function createChapterRoutes(deps: Pick<ApiDeps, 'db'>) {
       .post(
         '/:number/publish',
         requireVerifiedEmail,
+        rateLimit(deps, 'publishChapter'),
         validate('param', chapterNumberParamSchema),
         validate('json', publishChapterSchema),
         async (c) => {
@@ -140,6 +152,8 @@ export function createChapterRoutes(deps: Pick<ApiDeps, 'db'>) {
       .put(
         '/:number/schedule',
         requireVerifiedEmail,
+        // Scheduling makes the chapter public later: same budget as publishing now.
+        rateLimit(deps, 'publishChapter'),
         validate('param', chapterNumberParamSchema),
         validate('json', scheduleChapterSchema),
         async (c) => {

@@ -28,7 +28,10 @@ export const redisEnvSchema = z.object({
   REDIS_URL: redisUrl,
 });
 
-/** BullMQ key prefix; tests and e2e use their own prefix so they do not mix with dev jobs. */
+/**
+ * Prefix of the app's Redis keys (BullMQ queues, rate limits, view counters, search index names);
+ * tests and e2e use their own prefix so they do not mix with dev data.
+ */
 export const queueEnvSchema = z.object({
   QUEUE_PREFIX: z.string().default('novelhub'),
 });
@@ -36,6 +39,17 @@ export const queueEnvSchema = z.object({
 export const testEnvSchema = z.object({
   TEST_DATABASE_URL: postgresUrl,
   TEST_REDIS_URL: redisUrl,
+});
+
+/**
+ * Rate limiting (web only). Compose, then wrap with `requireUnitRateLimitFactorInProduction`.
+ * - `TRUST_CF_IP`: take the client IP from `CF-Connecting-IP`. Only safe when the origin accepts
+ *   connections from Cloudflare alone; otherwise anyone can set the header.
+ * - `RATE_LIMIT_FACTOR`: multiplies every limit, for tests that sign up many users from one IP.
+ */
+export const rateLimitEnvSchema = z.object({
+  TRUST_CF_IP: z.stringbool().default(false),
+  RATE_LIMIT_FACTOR: z.coerce.number().int().min(1).max(1000).default(1),
 });
 
 /** Compose with `.extend(authEnvSchema.shape)`, then wrap with `requireGooglePair`. */
@@ -162,6 +176,26 @@ export function requireSmtpInProduction<S extends z.ZodType<SmtpProductionEnv>>(
       if (env[key] === undefined) {
         ctx.addIssue({ code: 'custom', path: [key], message: 'bắt buộc khi production' });
       }
+    }
+  });
+}
+
+interface RateLimitFactorEnv {
+  NODE_ENV: string;
+  RATE_LIMIT_FACTOR: number;
+}
+
+/** Production refuses a loosened rate limit: `RATE_LIMIT_FACTOR` exists for tests only. */
+export function requireUnitRateLimitFactorInProduction<S extends z.ZodType<RateLimitFactorEnv>>(
+  schema: S,
+): S {
+  return schema.superRefine((env, ctx) => {
+    if (env.NODE_ENV === 'production' && env.RATE_LIMIT_FACTOR !== 1) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['RATE_LIMIT_FACTOR'],
+        message: 'must be 1 in production',
+      });
     }
   });
 }

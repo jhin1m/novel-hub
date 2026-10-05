@@ -180,6 +180,8 @@
   "error_not_scheduled": "Chương không còn được hẹn giờ.",
   "error_draft_conflict": "Bản nháp vừa được lưu ở nơi khác. Hãy tải lại trang rồi thử lại.",
   "error_invalid_document": "Nội dung chương có định dạng không hợp lệ.",
+  "error_rate_limited": "Bạn thao tác quá nhanh, hãy thử lại sau ít phút.",
+  "error_rate_limited_minutes": "Bạn thao tác quá nhanh, hãy thử lại sau {minutes} phút.",
   "publish_button": "Đăng",
   "publish_update_button": "Cập nhật",
   "publish_dialog_title": "Đăng chương {number}",

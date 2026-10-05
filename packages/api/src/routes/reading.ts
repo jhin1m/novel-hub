@@ -17,7 +17,6 @@ import { getCookie, setCookie } from 'hono/cookie';
 import type { ApiDeps } from '../deps';
 import { coreError } from '../lib/core-errors';
 import { errorBody } from '../lib/errors';
-import { peerIp } from '../lib/peer-ip';
 import { validate } from '../lib/validate';
 import { requireAuth } from '../middleware/require-auth';
 import { sessionMiddleware } from '../middleware/session';
@@ -33,7 +32,9 @@ const VIEWER_ID = /^[A-Za-z0-9_-]{22}$/;
  * Reading activity: progress and history of signed-in readers (their own rows only) and counted
  * reads. Never cached.
  */
-export function createReadingRoutes(deps: Pick<ApiDeps, 'auth' | 'db' | 'appUrl' | 'viewCounter'>) {
+export function createReadingRoutes(
+  deps: Pick<ApiDeps, 'auth' | 'db' | 'appUrl' | 'viewCounter' | 'clientIp'>,
+) {
   const secureCookie = new URL(deps.appUrl).protocol === 'https:';
 
   /**
@@ -116,7 +117,7 @@ export function createReadingRoutes(deps: Pick<ApiDeps, 'auth' | 'db' | 'appUrl'
         const { viewer, newId } = viewerOf(c, c.var.user?.id);
         const result = await recordChapterView(
           { db: deps.db, viewCounter: deps.viewCounter },
-          { ...c.req.valid('json'), viewer, ip: peerIp(c.req.raw), now: new Date() },
+          { ...c.req.valid('json'), viewer, ip: deps.clientIp(c.req.raw), now: new Date() },
         );
         if (!result.ok) return coreError(c, result.error);
         if (newId) {

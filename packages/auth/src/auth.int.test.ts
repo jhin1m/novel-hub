@@ -1,10 +1,17 @@
 import { createApp } from '@novel-hub/api';
 import { makeTestApiDeps } from '@novel-hub/api/testing';
-import type { AuthMailMessage, AuthMailPort } from '@novel-hub/core';
+import {
+  type AuthMailMessage,
+  type AuthMailPort,
+  createRateLimiter,
+  createWorkerConnection,
+  resetRateLimits,
+} from '@novel-hub/core';
 import { accounts, contentEvents, sessions, users } from '@novel-hub/db';
 import { seedDatabase } from '@novel-hub/db/seed';
 import { createTestDb, truncateAll } from '@novel-hub/db/testing';
-import { usernameSchema } from '@novel-hub/shared';
+import { CLIENT_IP_HEADER, usernameSchema } from '@novel-hub/shared';
+import { loadServerEnv, testEnvSchema } from '@novel-hub/shared/env';
 import { hashPassword } from 'better-auth/crypto';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -22,23 +29,37 @@ let sendImpl: AuthMailPort = (msg) => {
   return Promise.resolve();
 };
 
-function buildApp(env: { GOOGLE_CLIENT_ID?: string; GOOGLE_CLIENT_SECRET?: string } = {}) {
+const { TEST_REDIS_URL } = loadServerEnv(testEnvSchema.pick({ TEST_REDIS_URL: true }));
+const RL_PREFIX = `test-auth-rl-${Date.now().toString(36)}`;
+const redis = createWorkerConnection(TEST_REDIS_URL);
+const limiter = createRateLimiter({ redis, prefix: RL_PREFIX });
+/** Stands in for the TCP peer srvx gives in production (`clientIp`). */
+const PEER_HEADER = 'x-test-peer';
+
+function buildApp(
+  env: { GOOGLE_CLIENT_ID?: string; GOOGLE_CLIENT_SECRET?: string } = {},
+  { rateLimited = false } = {},
+) {
   const auth = createAuth({
     db,
     env: { APP_URL, BETTER_AUTH_URL: APP_URL, BETTER_AUTH_SECRET: 's'.repeat(32), ...env },
     sendAuthEmail: (msg) => sendImpl(msg),
     mailTimeoutMs: 200,
+    ...(rateLimited ? { onPasswordReset: (email) => limiter.clearFailures('signIn', email) } : {}),
   });
   return createApp(
     makeTestApiDeps({
       appUrl: APP_URL,
       db,
       auth: { handler: auth.handler, lookupSession: (headers) => lookupSession(auth, headers) },
+      ...(rateLimited
+        ? { rateLimit: limiter, clientIp: (request) => request.headers.get(PEER_HEADER) }
+        : {}),
     }),
   );
 }
 
-const app = buildApp();
+let app = buildApp();
 
 interface CallOptions {
   method?: string;
@@ -99,6 +120,8 @@ async function waitForMail(kind: AuthMailMessage['kind'], to: string): Promise<A
 }
 
 afterAll(async () => {
+  await resetRateLimits(redis, RL_PREFIX);
+  redis.disconnect();
   await pool.end();
 });
 
@@ -545,5 +568,106 @@ describe('table data', () => {
     const rows = await db.select().from(accounts).where(eq(accounts.userId, user.id));
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ providerId: 'credential', accountId: user.id });
+  });
+});
+
+describe('rate limits (real Redis)', () => {
+  const plainApp = app;
+  const from = (ip: string) => ({ headers: { [PEER_HEADER]: ip } });
+
+  beforeEach(async () => {
+    await resetRateLimits(redis, RL_PREFIX);
+    app = buildApp({}, { rateLimited: true });
+  });
+
+  afterAll(() => {
+    app = plainApp;
+  });
+
+  async function signInFrom(ip: string, email: string, password = PASSWORD) {
+    return call('/auth/sign-in/email', { body: { email, password }, ...from(ip) });
+  }
+
+  it('sixth sign-up from one IP → 429 RATE_LIMITED with Retry-After; another IP still passes', async () => {
+    const statuses: number[] = [];
+    for (let i = 0; i < 6; i++) {
+      const res = await call('/auth/sign-up/email', {
+        body: { name: 'U', email: `u${i}@example.com`, password: PASSWORD },
+        ...from('192.0.2.10'),
+      });
+      statuses.push(res.status);
+      if (i === 5) {
+        expect(await res.json()).toMatchObject({ code: 'RATE_LIMITED' });
+        expect(Number(res.headers.get('retry-after'))).toBeGreaterThan(0);
+      }
+    }
+    expect(statuses).toEqual([200, 200, 200, 200, 200, 429]);
+    const other = await call('/auth/sign-up/email', {
+      body: { name: 'U', email: 'other@example.com', password: PASSWORD },
+      ...from('192.0.2.11'),
+    });
+    expect(other.status).toBe(200);
+  });
+
+  it("wrong passwords from one IP lock that IP out of the email, not the owner's IP", async () => {
+    await signUp({ username: 'lam_phong' });
+    const statuses: number[] = [];
+    for (let i = 0; i < 5; i++) {
+      statuses.push((await signInFrom('192.0.2.20', 'lp@example.com', 'sai-mat-khau')).status);
+    }
+    expect(statuses).toEqual([401, 401, 401, 401, 401]);
+    expect((await signInFrom('192.0.2.20', 'lp@example.com')).status).toBe(429);
+    expect((await signInFrom('192.0.2.21', 'lp@example.com')).status).toBe(200);
+  });
+
+  it('50 failures across IPs block the email everywhere until the owner resets the password', async () => {
+    await signUp({ username: 'lam_phong' });
+    // A correct sign-in does not count as a failure.
+    expect((await signInFrom('192.0.2.30', 'lp@example.com')).status).toBe(200);
+    for (let ip = 0; ip < 10; ip++) {
+      for (let i = 0; i < 5; i++) {
+        await signInFrom(`198.51.100.${ip}`, 'lp@example.com', 'sai-mat-khau');
+      }
+    }
+    expect((await signInFrom('192.0.2.31', 'lp@example.com')).status).toBe(429);
+
+    const reset = await call('/auth/request-password-reset', {
+      body: { email: 'lp@example.com', redirectTo: '/reset-password' },
+      ...from('192.0.2.31'),
+    });
+    expect(reset.status).toBe(200);
+    const mail = await waitForMail('reset', 'lp@example.com');
+    const token = new URL(mail.url).pathname.split('/').pop();
+    const done = await call('/auth/reset-password', {
+      body: { token, newPassword: 'mat-khau-moi-456' },
+      ...from('192.0.2.31'),
+    });
+    expect(done.status).toBe(200);
+    expect((await signInFrom('192.0.2.31', 'lp@example.com', 'mat-khau-moi-456')).status).toBe(200);
+  });
+
+  it('stores the address from clientIp on the session, never the client-sent headers', async () => {
+    const res = await call('/auth/sign-up/email', {
+      body: { name: 'U', email: 'ip@example.com', password: PASSWORD },
+      headers: {
+        [PEER_HEADER]: '192.0.2.40',
+        [CLIENT_IP_HEADER]: '203.0.113.66',
+        'x-forwarded-for': '203.0.113.77',
+      },
+    });
+    expect(res.status).toBe(200);
+    const user = await userByEmail('ip@example.com');
+    const [session] = await db.select().from(sessions).where(eq(sessions.userId, user.id));
+    expect(session?.ipAddress).toBe('192.0.2.40');
+  });
+
+  it('a non-JSON body only gets the IP limits and still reaches Better Auth', async () => {
+    const res = await app.request(`${APP_URL}/api/auth/sign-in/email`, {
+      method: 'POST',
+      headers: { origin: APP_URL, 'content-type': 'text/plain', [PEER_HEADER]: '192.0.2.50' },
+      body: 'not json',
+    });
+    expect(res.status).toBeLessThan(500);
+    expect(res.status).not.toBe(429);
   });
 });

@@ -1,12 +1,13 @@
-import { createSearchCtx } from '@novel-hub/core';
+import { createSearchCtx, createWorkerConnection, resetRateLimits } from '@novel-hub/core';
 import { seedTags } from '@novel-hub/db/seed';
 import { createTestDb, runMigrations, testDatabaseUrl, truncateAll } from '@novel-hub/db/testing';
-import { loadServerEnv, meiliWorkerEnvSchema } from '@novel-hub/shared/env';
+import { loadServerEnv, meiliWorkerEnvSchema, testEnvSchema } from '@novel-hub/shared/env';
 import { E2E_QUEUE_PREFIX } from './helpers/search';
 
 /**
  * Migrates and wipes the test database (refuses anything not named `_test`), then loads tags.
- * Drops the e2e search indexes too, so no story from an earlier run shows up in results.
+ * Drops the e2e search indexes too, so no story from an earlier run shows up in results, and the
+ * e2e rate limit counters, so an earlier run cannot throttle this one.
  */
 export default async function globalSetup(): Promise<void> {
   await runMigrations(testDatabaseUrl());
@@ -25,4 +26,12 @@ export default async function globalSetup(): Promise<void> {
   });
   await client.deleteIndexIfExists(names.stories);
   await client.deleteIndexIfExists(names.authors);
+
+  const { TEST_REDIS_URL } = loadServerEnv(testEnvSchema.pick({ TEST_REDIS_URL: true }));
+  const redis = createWorkerConnection(TEST_REDIS_URL);
+  try {
+    await resetRateLimits(redis, E2E_QUEUE_PREFIX);
+  } finally {
+    redis.disconnect();
+  }
 }

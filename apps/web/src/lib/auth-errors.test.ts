@@ -21,4 +21,14 @@ describe('authErrorMessage', () => {
       expect(authErrorMessage(error)).toBe(m.error_generic());
     }
   });
+
+  it('rate limited → the wait in whole minutes, read from the error body', () => {
+    expect(authErrorMessage({ code: 'RATE_LIMITED', retryAfterSec: 900 })).toBe(
+      'Bạn thao tác quá nhanh, hãy thử lại sau 15 phút.',
+    );
+    expect(authErrorMessage(new AuthClientError({ code: 'RATE_LIMITED', retryAfterSec: 30 }))).toBe(
+      'Bạn thao tác quá nhanh, hãy thử lại sau 1 phút.',
+    );
+    expect(authErrorMessage({ code: 'RATE_LIMITED' })).toBe(m.error_rate_limited());
+  });
 });

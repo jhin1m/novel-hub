@@ -1,16 +1,27 @@
 import { m } from '@novel-hub/shared/messages';
 
-/** A non-2xx answer from `/api/v1/*`, carrying the `{ error: { code } }` of the body when present. */
+/**
+ * A non-2xx answer from `/api/v1/*`, carrying the `{ error: { code } }` of the body when present
+ * and, on 429, the `Retry-After` seconds.
+ */
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string | undefined;
+  readonly retryAfterSec: number | undefined;
 
-  constructor(status: number, code: string | undefined) {
+  constructor(status: number, code: string | undefined, retryAfterSec?: number) {
     super(`API request failed: ${status} ${code ?? ''}`.trim());
     this.name = 'ApiError';
     this.status = status;
     this.code = code;
+    this.retryAfterSec = retryAfterSec;
   }
+}
+
+/** "Too fast, try again in N minutes" (whole minutes, at least one); without a wait, a vague "soon". */
+export function rateLimitedMessage(retryAfterSec: unknown): string {
+  if (typeof retryAfterSec !== 'number' || !(retryAfterSec > 0)) return m.error_rate_limited();
+  return m.error_rate_limited_minutes({ minutes: Math.max(1, Math.ceil(retryAfterSec / 60)) });
 }
 
 /** Reads the error body of a failed response (consuming it) into an `ApiError`. */
@@ -27,7 +38,8 @@ export async function readApiError(res: Response): Promise<ApiError> {
   } catch {
     // Not JSON (proxy error page, network cut): only the status is known.
   }
-  return new ApiError(res.status, code);
+  const retryAfter = Number(res.headers.get('retry-after'));
+  return new ApiError(res.status, code, retryAfter > 0 ? retryAfter : undefined);
 }
 
 const MESSAGES: Record<string, () => string> = {
@@ -57,5 +69,8 @@ const MESSAGES: Record<string, () => string> = {
 /** User-facing message for an API error code; anything unknown gets the generic message. */
 export function apiErrorMessage(error: unknown): string {
   const code = error instanceof ApiError ? error.code : undefined;
+  if (error instanceof ApiError && code === 'RATE_LIMITED') {
+    return rateLimitedMessage(error.retryAfterSec);
+  }
   return ((code && MESSAGES[code]) || m.error_generic)();
 }

@@ -13,6 +13,7 @@ import type { ApiDeps } from '../deps';
 import { coreError } from '../lib/core-errors';
 import { errorBody } from '../lib/errors';
 import { validate } from '../lib/validate';
+import { rateLimit } from '../middleware/rate-limit';
 import { requireVerifiedEmail } from '../middleware/require-auth';
 import { sessionMiddleware } from '../middleware/session';
 import { createChapterRoutes } from './chapters';
@@ -24,7 +25,9 @@ const COVER_BODY_LIMIT = Math.round(LIMITS.cover.maxBytes * 1.1);
  * Public story lists (any visitor) and writing stories (verified email; ownership is checked in
  * `core`).
  */
-export function createStoryRoutes(deps: Pick<ApiDeps, 'auth' | 'db' | 'storage'>) {
+export function createStoryRoutes(
+  deps: Pick<ApiDeps, 'auth' | 'db' | 'storage' | 'rateLimit' | 'clientIp'>,
+) {
   return (
     new Hono()
       .use(sessionMiddleware(deps.auth))
@@ -37,11 +40,17 @@ export function createStoryRoutes(deps: Pick<ApiDeps, 'auth' | 'db' | 'storage'>
         if (!list) return coreError(c, 'NOT_FOUND');
         return c.json(list, 200);
       })
-      .post('/', requireVerifiedEmail, validate('json', storyCreateSchema), async (c) => {
-        const result = await createStory(deps.db, c.var.authUser, c.req.valid('json'));
-        if (!result.ok) return coreError(c, result.error);
-        return c.json({ story: result.value }, 201);
-      })
+      .post(
+        '/',
+        requireVerifiedEmail,
+        rateLimit(deps, 'createStory'),
+        validate('json', storyCreateSchema),
+        async (c) => {
+          const result = await createStory(deps.db, c.var.authUser, c.req.valid('json'));
+          if (!result.ok) return coreError(c, result.error);
+          return c.json({ story: result.value }, 201);
+        },
+      )
       .patch('/:publicId', requireVerifiedEmail, validate('json', storyUpdateSchema), async (c) => {
         const result = await updateStory(
           deps.db,
@@ -55,6 +64,8 @@ export function createStoryRoutes(deps: Pick<ApiDeps, 'auth' | 'db' | 'storage'>
       .put(
         '/:publicId/cover',
         requireVerifiedEmail,
+        // Before the body limit: a refused upload is not read at all.
+        rateLimit(deps, 'uploadCover'),
         bodyLimit({
           maxSize: COVER_BODY_LIMIT,
           onError: (c) => c.json(errorBody('FILE_TOO_LARGE', 'File is larger than 5 MB'), 413),

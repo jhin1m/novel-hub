@@ -10,4 +10,6 @@ export interface CurrentUser extends PolicyUser {
   displayName: string;
   email: string;
   avatarUrl: string | null;
+  /** Picks the stricter rate limit tier for new accounts. */
+  createdAt: Date;
 }

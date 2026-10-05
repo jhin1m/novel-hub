@@ -1,7 +1,7 @@
 ---
 phase: 13
 title: "Phase 13: Rate limit Redis"
-status: pending
+status: completed
 priority: P1
 effort: "1.5d"
 dependencies: [12]
@@ -189,12 +189,12 @@ clientIp: (request: Request) => string | null;
 
 ## Function / Interface Checklist
 
-- [ ] `RATE_LIMITS`, `AUTH_PATH_ACTIONS`, `NEW_ACCOUNT_DAYS`, `rateLimitEnvSchema`
-- [ ] `createRateLimiter(opts).check / recordFailure / clearFailures`
-- [ ] `clientIp(request, { trustCf })`, `normalizeIp(ip)`, `resetRateLimits(redis, prefix)`
-- [ ] `rateLimit(port, action)`, `authRateLimit(deps)`, `withClientIpHeader(req, ip)`, `CLIENT_IP_HEADER`
-- [ ] option `onPasswordReset` của `createAuth`; `ipAddressHeaders`
-- [ ] `CurrentUser.createdAt`; `ApiDeps.rateLimit`, `ApiDeps.clientIp` (+ mặc định trong `makeTestApiDeps`)
+- [x] `RATE_LIMITS`, `AUTH_PATH_ACTIONS`, `NEW_ACCOUNT_DAYS`, `rateLimitEnvSchema`
+- [x] `createRateLimiter(opts).check / recordFailure / clearFailures`
+- [x] `clientIp(request, { trustCf })`, `normalizeIp(ip)`, `resetRateLimits(redis, prefix)`
+- [x] `rateLimit(port, action)`, `authRateLimit(deps)`, `withClientIpHeader(req, ip)`, `CLIENT_IP_HEADER`
+- [x] option `onPasswordReset` của `createAuth`; `ipAddressHeaders`
+- [x] `CurrentUser.createdAt`; `ApiDeps.rateLimit`, `ApiDeps.clientIp` (+ mặc định trong `makeTestApiDeps`)
 
 ## Test Scenario Matrix
 
@@ -225,11 +225,11 @@ clientIp: (request: Request) => string | null;
 
 ## Success Criteria
 
-- [ ] Mọi action trong checkbox (+ `uploadCover`, `createChapter`, `sendVerification`) có giới hạn theo user và/hoặc IP như bảng; bình luận có rule sẵn
-- [ ] Chỉ một limiter (Hono); Better Auth `rateLimit.enabled` vẫn `false`
-- [ ] Người khác không khoá được tài khoản ở IP của chủ (int test); giả `X-Forwarded-For` không lách được
-- [ ] 429 có `Retry-After` ở cả `/api/v1` và `/api/auth`; web hiện thông báo tiếng Việt
-- [ ] Đếm lượt đọc dùng `clientIp`; E2E không flaky; gate xanh; checkbox `[x]`
+- [x] Mọi action trong checkbox (+ `uploadCover`, `createChapter`, `sendVerification`) có giới hạn theo user và/hoặc IP như bảng; bình luận có rule sẵn
+- [x] Chỉ một limiter (Hono); Better Auth `rateLimit.enabled` vẫn `false`
+- [x] Người khác không khoá được tài khoản ở IP của chủ (int test); giả `X-Forwarded-For` không lách được
+- [x] 429 có `Retry-After` ở cả `/api/v1` và `/api/auth`; web hiện thông báo tiếng Việt
+- [x] Đếm lượt đọc dùng `clientIp`; E2E không flaky; gate xanh; checkbox `[x]`
 
 ## Risk Assessment
 

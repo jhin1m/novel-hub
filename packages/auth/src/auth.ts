@@ -6,6 +6,7 @@ import {
   withTimeout,
 } from '@novel-hub/core';
 import { type Db, accounts, describeDbError, sessions, users, verifications } from '@novel-hub/db';
+import { CLIENT_IP_HEADER } from '@novel-hub/shared';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import {
@@ -31,6 +32,11 @@ export interface CreateAuthOptions {
   sendAuthEmail: AuthMailPort;
   /** Quá thời gian này thì ghi log lỗi gửi mail (ms). Mặc định 15000. */
   mailTimeoutMs?: number;
+  /**
+   * Runs after a password was reset through the emailed link (the owner proved the mailbox); the
+   * web clears the email's failed sign-in count here. Errors are only logged.
+   */
+  onPasswordReset?: (email: string) => Promise<void>;
 }
 
 const DEFAULT_MAIL_TIMEOUT_MS = 15_000;
@@ -45,7 +51,13 @@ function sanitizeLogArg(arg: unknown): unknown {
  * Lỗi của `/api/auth/*` theo dạng của Better Auth (`{ code, message }`), nằm ngoài
  * contract `/api/v1`; web gọi qua `better-auth/react`.
  */
-export function createAuth({ db, env, sendAuthEmail, mailTimeoutMs }: CreateAuthOptions) {
+export function createAuth({
+  db,
+  env,
+  sendAuthEmail,
+  mailTimeoutMs,
+  onPasswordReset,
+}: CreateAuthOptions) {
   const timeoutMs = mailTimeoutMs ?? DEFAULT_MAIL_TIMEOUT_MS;
 
   // Better Auth chờ callback gửi mail xong mới trả response, nên không await ở đây:
@@ -91,9 +103,12 @@ export function createAuth({ db, env, sendAuthEmail, mailTimeoutMs }: CreateAuth
       // Better Auth tự tắt kiểm tra Origin khi NODE_ENV=test; bật tường minh để test
       // chạy giống production.
       disableOriginCheck: false,
+      // Set by the API from the address the rate limits use; the client's `X-Forwarded-For` is
+      // never read.
+      ipAddress: { ipAddressHeaders: [CLIENT_IP_HEADER] },
     },
-    // Rate limit mặc định của Better Auth lưu trong bộ nhớ và tin header IP; Giai đoạn 1
-    // làm rate limit bằng Redis.
+    // The Redis rate limits run in the API in front of this handler (one limiter for the whole
+    // app); Better Auth's own in-memory limiter stays off.
     rateLimit: { enabled: false },
     session: {
       // Tắt cache cookie để ban có hiệu lực ngay ở request kế tiếp.
@@ -129,7 +144,12 @@ export function createAuth({ db, env, sendAuthEmail, mailTimeoutMs }: CreateAuth
       revokeSessionsOnPasswordReset: true,
       // Đặt lại mật khẩu qua link trong mail chứng minh sở hữu email: chủ thật lấy lại
       // được tài khoản người khác đăng ký trước bằng email của mình.
-      onPasswordReset: ({ user }) => markEmailVerified(db, user.id),
+      onPasswordReset: async ({ user }) => {
+        await markEmailVerified(db, user.id);
+        await onPasswordReset?.(user.email).catch((err: unknown) => {
+          console.error('[auth] onPasswordReset failed:', describeDbError(err));
+        });
+      },
     },
     emailVerification: {
       sendOnSignUp: true,

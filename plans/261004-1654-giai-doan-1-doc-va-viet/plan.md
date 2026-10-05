@@ -43,7 +43,7 @@ Giai đoạn 0 xong (`plans/261004-1255-giai-doan-0-nen-mong`). Spec `docs/proje
 | 10 | [Trang truyện, tác giả, tag, trang chủ](./phase-10-trang-truyen-tac-gia-tag-trang-chu.md) | 7 | Completed |
 | 11 | [Tìm kiếm Meilisearch](./phase-11-tim-kiem-meilisearch.md) | 8 | Completed |
 | 12 | [Tủ truyện và lịch sử đọc](./phase-12-tu-truyen-lich-su-doc.md) | 9 | Completed |
-| 13 | [Rate limit Redis](./phase-13-rate-limit-redis.md) | 10 | Pending |
+| 13 | [Rate limit Redis](./phase-13-rate-limit-redis.md) | 10 | Completed |
 | 14 | [Kiểm tra trùng lặp](./phase-14-kiem-tra-trung-lap.md) | 11 (phần 1/2) | Pending |
 | 15 | [Báo cáo vi phạm và hàng chờ mod](./phase-15-bao-cao-hang-cho-mod.md) | 11 (đánh `[x]`) | Pending |
 | 16 | [SEO: metadata, OG, sitemap, canonical](./phase-16-seo-metadata-sitemap.md) | 12 | Pending |

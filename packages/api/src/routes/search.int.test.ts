@@ -68,6 +68,7 @@ async function signIn(username: string, showMature: boolean) {
     avatarUrl: null,
     role: row.role,
     status: row.status,
+    createdAt: row.createdAt,
   };
 }
 

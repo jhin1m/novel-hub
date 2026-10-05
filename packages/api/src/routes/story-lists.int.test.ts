@@ -63,6 +63,7 @@ async function makeUser(username: string, showMature = false) {
     avatarUrl: null,
     role: row.role,
     status: row.status,
+    createdAt: row.createdAt,
   });
   return row;
 }

@@ -36,6 +36,7 @@ async function insertUser(preferences: Record<string, unknown>): Promise<Current
     avatarUrl: row.avatarUrl,
     role: row.role,
     status: row.status,
+    createdAt: row.createdAt,
   };
 }
 

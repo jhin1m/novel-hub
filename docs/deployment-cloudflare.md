@@ -81,9 +81,16 @@ pnpm cdn:purge -- --story <publicId>   # trang truyện + mọi chương từng 
 
 Cần đã đặt `CF_*`, `DATABASE_URL`, `APP_URL`; thiếu `CF_*` thì thoát mã 1. Trường hợp rộng hơn dùng "Purge Everything" trên dashboard.
 
-## IP người đọc và đếm lượt đọc
+## IP người dùng: đếm lượt đọc và rate limit
 
-Giới hạn lượt đọc theo IP (10 lượt/chương/ngày) dùng `request.ip` của srvx. **Sau Cloudflare đó là IP edge**, nên mọi người đọc chung một IP. Trước khi đặt origin sau Cloudflare bắt buộc đã có phần rate limit (phase 13: chỉ tin `CF-Connecting-IP` khi `TRUST_CF_IP=true`).
+Mọi chỗ cần IP (rate limit đăng ký/đăng nhập/viết, giới hạn lượt đọc theo IP, `sessions.ip_address`) đi qua một hàm `clientIp()` ở `packages/core/src/rate-limit/client-ip.ts`:
+
+- `TRUST_CF_IP=false` (mặc định): dùng `request.ip` của srvx (IP kết nối TCP), bỏ qua `X-Forwarded-For` và `CF-Connecting-IP`. **Sau Cloudflare đó là IP edge**, nên mọi người chung một bucket: rate limit chặn oan, đếm lượt đọc lệch.
+- `TRUST_CF_IP=true`: dùng `CF-Connecting-IP`. Chỉ bật khi firewall của origin **chỉ nhận kết nối từ dải IP Cloudflare** (https://www.cloudflare.com/ips/), nếu không ai cũng tự đặt được header này và lách giới hạn.
+
+Khi đặt origin sau Cloudflare: bật firewall như trên rồi đặt `TRUST_CF_IP=true`. Lần đầu nhận request, log web in một dòng `[rate-limit] client IP source: <cf-connecting-ip|peer|none>` (không in IP) để kiểm; `none` nghĩa là mọi người chung một bucket, phải xử lý trước khi mở public.
+
+`RATE_LIMIT_FACTOR` chỉ dùng cho test; production khác 1 thì web không khởi động.
 
 ## Kiểm tra sau khi áp
 

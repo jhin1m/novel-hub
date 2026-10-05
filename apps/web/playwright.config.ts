@@ -37,6 +37,10 @@ export default defineConfig({
       GOOGLE_CLIENT_ID: '',
       GOOGLE_CLIENT_SECRET: '',
       QUEUE_PREFIX: 'e2e',
+      // The suite signs up and signs in many times from one address; global setup clears the
+      // counters left by earlier runs.
+      RATE_LIMIT_FACTOR: '50',
+      TRUST_CF_IP: 'false',
     },
   },
 });

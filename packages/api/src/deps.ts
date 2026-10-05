@@ -2,6 +2,7 @@ import type {
   CurrentUser,
   Db,
   HealthReport,
+  RateLimiter,
   SearchCtx,
   StoragePort,
   ViewCounter,
@@ -31,4 +32,8 @@ export interface ApiDeps {
   viewCounter: ViewCounter | null;
   /** Search-only Meilisearch client; `null` when not configured (dev): search answers 503. */
   search: SearchCtx | null;
+  /** Redis rate limits of writes and auth actions; `null` turns them off (tests that do not need them). */
+  rateLimit: RateLimiter | null;
+  /** The client address (`clientIp` of core, bound to the deployment's proxy trust). */
+  clientIp: (request: Request) => string | null;
 }

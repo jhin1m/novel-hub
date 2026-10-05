@@ -39,6 +39,7 @@ async function insertUser(username: string, emailVerified = true): Promise<Curre
     avatarUrl: row.avatarUrl,
     role: row.role,
     status: row.status,
+    createdAt: row.createdAt,
   };
 }
 

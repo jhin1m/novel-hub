@@ -22,6 +22,7 @@ import {
   fetchDraft,
   publishRequest,
   restoreRevisionRequest,
+  revisionsQueryKey,
   saveDraftRequest,
   scheduleRequest,
   unscheduleRequest,
@@ -328,6 +329,11 @@ export function ChapterEditor({
       setWords(wordsOf(draft.doc));
       setUnpublished(draft.hasUnpublishedChanges);
       setNotice(m.revision_restored({ time: shortDateTime(new Date(revision.createdAt)) }));
+      // The replaced draft may have been kept as a new revision.
+      void queryClient.invalidateQueries({
+        queryKey: revisionsQueryKey(publicId, number),
+        exact: true,
+      });
       return null;
     } catch (error) {
       if (error instanceof ApiError && error.code === 'DRAFT_CONFLICT') {

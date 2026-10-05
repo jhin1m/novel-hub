@@ -1,11 +1,13 @@
-import { type Db, chapterRevisions } from '@novel-hub/db';
-import { type ChapterStatus, LIMITS } from '@novel-hub/shared';
+import { type Db, type Tx, chapterContents, chapterDrafts, chapterRevisions } from '@novel-hub/db';
+import { type ChapterStatus, LIMITS, countWords, docToText } from '@novel-hub/shared';
 import { type EditorDocJson, parseEditorDoc } from '@novel-hub/shared/editor';
-import { and, desc, eq, gte, lt } from 'drizzle-orm';
+import { and, desc, eq, gte, lt, sql } from 'drizzle-orm';
+import { nextDraftVersion } from '../chapters/draft-version';
 import { type SaveDraftError, differsFromStoredContent, saveDraft } from '../chapters/drafts';
 import { loadOwnedChapter } from '../chapters/load-owned-chapter';
 import { renderChapterHtml } from '../content/render';
 import { type Result, err, ok } from '../lib/result';
+import { recordRevision } from '../publishing/write-content';
 import type { StoryActor } from '../policies/story';
 import type { OwnedStoryError } from '../stories/load-owned-story';
 
@@ -39,11 +41,15 @@ export function revisionKey(createdAt: Date): string {
 }
 
 /**
- * Revisions are only written when a publish changes the content, so the newest one is the
- * published content as long as the chapter is published.
+ * Position (newest first) of the revision readers currently see: the newest one whose document
+ * equals the stored content. Not simply the newest revision, because a restore also keeps the
+ * replaced draft as one. -1 unless the chapter is published.
  */
-export function isPublishedRevision(index: number, status: ChapterStatus): boolean {
-  return index === 0 && status === 'published';
+export function publishedRevisionIndex(
+  matchesContent: readonly boolean[],
+  status: ChapterStatus,
+): number {
+  return status === 'published' ? matchesContent.indexOf(true) : -1;
 }
 
 /**
@@ -52,7 +58,7 @@ export function isPublishedRevision(index: number, status: ChapterStatus): boole
  * locks the chapter, so two revisions in the same millisecond are not expected, and the newest
  * wins if they ever occur.
  */
-async function findRevision(db: Db, chapterId: string, key: string) {
+async function findRevision(db: Db | Tx, chapterId: string, key: string) {
   const from = new Date(Number(key));
   if (Number.isNaN(from.getTime())) return null;
   const [row] = await db
@@ -85,17 +91,26 @@ export async function listRevisions(
   if (!owned.ok) return err(owned.error);
   const { chapter } = owned.value;
   const rows = await db
-    .select({ createdAt: chapterRevisions.createdAt, wordCount: chapterRevisions.wordCount })
+    .select({
+      createdAt: chapterRevisions.createdAt,
+      wordCount: chapterRevisions.wordCount,
+      matchesContent: sql<boolean>`coalesce(${chapterRevisions.docJson} = ${chapterContents.docJson}, false)`,
+    })
     .from(chapterRevisions)
+    .leftJoin(chapterContents, eq(chapterContents.chapterId, chapterRevisions.chapterId))
     .where(eq(chapterRevisions.chapterId, chapter.id))
     .orderBy(desc(chapterRevisions.createdAt), desc(chapterRevisions.id))
     .limit(LIMITS.revisionsKept);
+  const published = publishedRevisionIndex(
+    rows.map((row) => row.matchesContent),
+    chapter.status,
+  );
   return ok(
     rows.map((row, index) => ({
       key: revisionKey(row.createdAt),
       createdAt: row.createdAt.toISOString(),
       wordCount: row.wordCount,
-      isPublished: isPublishedRevision(index, chapter.status),
+      isPublished: index === published,
     })),
   );
 }
@@ -123,10 +138,52 @@ export async function getRevisionPreview(
   });
 }
 
+/** Aborts the restore transaction with the error `saveDraft` reported. */
+class RestoreAborted extends Error {
+  constructor(readonly reason: SaveDraftError) {
+    super(`Restore aborted: ${reason}`);
+    this.name = 'RestoreAborted';
+  }
+}
+
+/**
+ * Keeps the current draft as a revision unless it equals the newest one (compared as jsonb, so key
+ * order does not matter). Without this the draft would be gone: the browser copy is cleared after
+ * every successful autosave. The snapshot counts towards `LIMITS.revisionsKept` like any revision.
+ */
+async function snapshotDraft(tx: Tx, chapterId: string): Promise<void> {
+  const [draft] = await tx
+    .select({ doc: chapterDrafts.docJson })
+    .from(chapterDrafts)
+    .where(eq(chapterDrafts.chapterId, chapterId))
+    .for('update');
+  if (!draft) return;
+  const [latest] = await tx
+    .select({
+      createdAt: chapterRevisions.createdAt,
+      same: sql<boolean>`${chapterRevisions.docJson} = ${chapterDrafts.docJson}`,
+    })
+    .from(chapterRevisions)
+    .innerJoin(chapterDrafts, eq(chapterDrafts.chapterId, chapterRevisions.chapterId))
+    .where(eq(chapterRevisions.chapterId, chapterId))
+    .orderBy(desc(chapterRevisions.createdAt), desc(chapterRevisions.id))
+    .limit(1);
+  if (latest?.same) return;
+  await recordRevision(tx, {
+    chapterId,
+    docJson: draft.doc,
+    wordCount: countWords(docToText(draft.doc as EditorDocJson)),
+    // A key of its own: revisions are addressed by their creation millisecond.
+    createdAt: nextDraftVersion(latest?.createdAt ?? null),
+  });
+}
+
 /**
  * Copies a revision into the draft through `saveDraft`, so it is guarded by the same version check
- * as autosave (`DRAFT_CONFLICT`) and never touches the published content. Paragraph ids are kept,
- * so republishing leaves anchors on them intact.
+ * as autosave (`DRAFT_CONFLICT`) and never touches the published content. The draft it replaces is
+ * kept as a revision first (see `snapshotDraft`); one transaction under the story → chapter → draft
+ * locks, so a refused restore leaves no snapshot behind. Paragraph ids are kept, so republishing
+ * leaves anchors on them intact.
  */
 export async function restoreRevision(
   db: Db,
@@ -136,18 +193,40 @@ export async function restoreRevision(
   key: string,
   baseUpdatedAt: string,
 ): Promise<Result<RestoredDraft, SaveDraftError>> {
-  const owned = await loadOwnedChapter(db, actor, publicId, number);
-  if (!owned.ok) return err(owned.error);
-  const revision = await findRevision(db, owned.value.chapter.id, key);
-  if (!revision) return err('NOT_FOUND');
-  // Revisions written before a schema change could fail the editor schema; report, do not store.
-  const parsed = parseEditorDoc(revision.docJson);
-  if (!parsed.ok) return err('INVALID_DOCUMENT');
-  const saved = await saveDraft(db, actor, publicId, number, { doc: parsed.doc, baseUpdatedAt });
-  if (!saved.ok) return err(saved.error);
+  let restored: Result<
+    { chapterId: string; doc: EditorDocJson; updatedAt: string },
+    SaveDraftError
+  >;
+  try {
+    restored = await db.transaction(async (tx) => {
+      const owned = await loadOwnedChapter(tx, actor, publicId, number, { forUpdate: true });
+      if (!owned.ok) return err(owned.error);
+      const chapterId = owned.value.chapter.id;
+      const revision = await findRevision(tx, chapterId, key);
+      if (!revision) return err('NOT_FOUND');
+      // Revisions written before a schema change could fail the editor schema; report, do not store.
+      const parsed = parseEditorDoc(revision.docJson);
+      if (!parsed.ok) return err('INVALID_DOCUMENT');
+      await snapshotDraft(tx, chapterId);
+      const saved = await saveDraft(tx, actor, publicId, number, {
+        doc: parsed.doc,
+        baseUpdatedAt,
+      });
+      if (!saved.ok) throw new RestoreAborted(saved.error);
+      return ok({ chapterId, doc: parsed.doc, updatedAt: saved.value.updatedAt });
+    });
+  } catch (error) {
+    if (error instanceof RestoreAborted) return err(error.reason);
+    throw error;
+  }
+  if (!restored.ok) return restored;
   return ok({
-    doc: parsed.doc,
-    updatedAt: saved.value.updatedAt,
-    hasUnpublishedChanges: await differsFromStoredContent(db, owned.value.chapter.id, parsed.doc),
+    doc: restored.value.doc,
+    updatedAt: restored.value.updatedAt,
+    hasUnpublishedChanges: await differsFromStoredContent(
+      db,
+      restored.value.chapterId,
+      restored.value.doc,
+    ),
   });
 }

@@ -32,7 +32,7 @@ async function restoreOldest(page: Page) {
   await expect(sheet.locator('.chapter-preview-content')).toContainText('cũ0 cũ1');
   await sheet.getByRole('button', { name: 'Khôi phục vào bản nháp' }).click();
   const confirm = page.getByRole('dialog', { name: 'Khôi phục phiên bản này?' });
-  await expect(confirm).toContainText('Nội dung bản nháp hiện tại sẽ bị thay');
+  await expect(confirm).toContainText('Bản nháp hiện tại sẽ được lưu vào lịch sử phiên bản');
   await confirm.getByRole('button', { name: 'Khôi phục', exact: true }).click();
   return sheet;
 }
@@ -90,6 +90,18 @@ test('keystrokes typed right before a restore are saved first and do not cause a
   await expect(editorBox(page)).not.toContainText('gõthêm');
   await expect(page.getByText('Chương đang được sửa ở nơi khác.')).toHaveCount(0);
   await page.unroute('**/revisions/*/restore');
+
+  // The replaced draft, typing included, is kept as the newest version.
+  await page.getByRole('button', { name: 'Lịch sử' }).click();
+  const history = page.getByRole('dialog', { name: 'Lịch sử phiên bản' });
+  const items = history.getByRole('listitem');
+  await expect(items).toHaveCount(3);
+  await expect(items.first()).not.toContainText('Đang đăng');
+  await expect(items.nth(1)).toContainText('Đang đăng');
+  await items.first().getByRole('button').click();
+  await expect(history.locator('.chapter-preview-content')).toContainText('gõthêm');
+  await page.keyboard.press('Escape');
+  await expect(history).toBeHidden();
 
   // Autosave continues from the restored version.
   await editorBox(page).click();

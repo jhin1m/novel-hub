@@ -1,4 +1,4 @@
-import { type Db, chapterContents, chapterDrafts } from '@novel-hub/db';
+import { type Db, type Tx, chapterContents, chapterDrafts } from '@novel-hub/db';
 import { type EditorDocJson, emptyDraftDoc, parseEditorDoc } from '@novel-hub/shared/editor';
 import { and, eq, sql } from 'drizzle-orm';
 import { renderPublishedContent } from '../content/render';
@@ -94,7 +94,7 @@ export type SaveDraftError = OwnedStoryError | 'INVALID_DOCUMENT' | 'DRAFT_CONFL
  * document is checked against the editor schema first, so drafts in the DB are always valid.
  */
 export async function saveDraft(
-  db: Db,
+  db: Db | Tx,
   actor: StoryActor,
   publicId: string,
   number: number,

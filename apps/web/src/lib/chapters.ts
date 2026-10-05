@@ -200,10 +200,10 @@ export function useUpdateChapterMeta(publicId: string, number: number) {
   });
 }
 
-const revisionsQueryKey = (publicId: string, number: number) =>
+export const revisionsQueryKey = (publicId: string, number: number) =>
   [...meQueryKey, 'chapter-revisions', publicId, number] as const;
 
-/** Fetched each time the history opens: a publish adds a revision. */
+/** Fetched each time the history opens: a publish or a restore adds a revision. */
 export function useRevisions(publicId: string, number: number, enabled: boolean) {
   return useQuery({
     queryKey: revisionsQueryKey(publicId, number),

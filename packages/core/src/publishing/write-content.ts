@@ -5,6 +5,31 @@ import { draftVersion, nextDraftVersion } from '../chapters/draft-version';
 import { type PublishedContent, renderPublishedContent } from '../content/render';
 import { type Result, err, ok } from '../lib/result';
 
+/**
+ * Inserts a revision and drops all but the newest `LIMITS.revisionsKept` of the chapter. Every
+ * revision write goes through here so the cap holds whatever wrote it.
+ */
+export async function recordRevision(
+  tx: Db | Tx,
+  revision: { chapterId: string; docJson: unknown; wordCount: number; createdAt: Date },
+): Promise<void> {
+  await tx.insert(chapterRevisions).values(revision);
+  const kept = tx
+    .select({ id: chapterRevisions.id })
+    .from(chapterRevisions)
+    .where(eq(chapterRevisions.chapterId, revision.chapterId))
+    .orderBy(desc(chapterRevisions.createdAt), desc(chapterRevisions.id))
+    .limit(LIMITS.revisionsKept);
+  await tx
+    .delete(chapterRevisions)
+    .where(
+      and(
+        eq(chapterRevisions.chapterId, revision.chapterId),
+        notInArray(chapterRevisions.id, kept),
+      ),
+    );
+}
+
 /** Thrown to roll the whole transaction back when the draft moved under the publish. */
 export class DraftConflictError extends Error {
   constructor() {
@@ -93,18 +118,12 @@ export async function writeChapterContent(
     if (!row) throw new DraftConflictError();
   }
 
-  await tx
-    .insert(chapterRevisions)
-    .values({ chapterId, docJson: content.doc, wordCount: content.wordCount, createdAt: version });
-  const kept = tx
-    .select({ id: chapterRevisions.id })
-    .from(chapterRevisions)
-    .where(eq(chapterRevisions.chapterId, chapterId))
-    .orderBy(desc(chapterRevisions.createdAt), desc(chapterRevisions.id))
-    .limit(LIMITS.revisionsKept);
-  await tx
-    .delete(chapterRevisions)
-    .where(and(eq(chapterRevisions.chapterId, chapterId), notInArray(chapterRevisions.id, kept)));
+  await recordRevision(tx, {
+    chapterId,
+    docJson: content.doc,
+    wordCount: content.wordCount,
+    createdAt: version,
+  });
 
   return content.pidsChanged
     ? { changed: true, draftUpdatedAt: version, normalizedDoc: content.doc }

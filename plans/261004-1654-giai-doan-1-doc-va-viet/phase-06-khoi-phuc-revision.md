@@ -34,7 +34,8 @@ Spec checkbox: `Khôi phục từ revision cũ.`
 - **Bẫy độ chính xác:** `timestamptz` micro giây, JS mili giây. Tra bằng khoảng `created_at >= t AND created_at < t + 1ms` (dùng index); hơn một dòng thì lấy dòng mới nhất.
 - **Một đường ghi draft:** `restoreRevision(db, actor, publicId, number, key, baseUpdatedAt)` = `loadOwnedChapter` → tra revision → `saveDraft` của phase 4 với doc revision. Cùng `DRAFT_CONFLICT`, cùng kiểm schema, cùng điều kiện `date_trunc`. <!-- Red Team: lệch hợp đồng phase 4 -->
 - **Khôi phục đi qua autosave controller:** `editor.setEditable(false)` → `await autosave.pause()` (flush; khác `saved` thì dừng, báo lỗi) → POST restore → `setContent(doc, { emitUpdate: false })` → `rebase(updatedAt, JSON.stringify(doc))` → `resume()` → `setEditable(true)`. Không phím nào bị mất, không 409 giả do base cũ. <!-- Red Team: race gõ phím, rebase base cũ -->
-- **Không có "Hoàn tác"**: dialog xác nhận nói rõ nháp hiện tại sẽ bị thay; bản đã đăng luôn còn trong revision, mirror localStorage của phase 4 vẫn là lớp bảo vệ khi lỡ tay. <!-- Red Team: bỏ Hoàn tác (YAGNI, thêm đường ghi thứ hai) -->
+- **Không có "Hoàn tác"**: bản đã đăng luôn còn trong revision. <!-- Red Team: bỏ Hoàn tác (YAGNI, thêm đường ghi thứ hai) -->
+- **Chụp nháp trước khi khôi phục** (user đổi quyết định 2026-10-05, sau phase 6): mirror localStorage **không** phải lớp bảo vệ, vì bị xoá sau mỗi lần autosave thành công và khi khôi phục. `restoreRevision` chạy trong một transaction (khoá story → chapter → draft); nếu nháp hiện tại khác revision mới nhất (so jsonb) thì ghi nó thành revision (số chữ `countWords(docToText)`, cắt theo `LIMITS.revisionsKept` bằng helper chung `recordRevision` với phase 5) rồi mới `saveDraft`; 409 rollback cả bản chụp. Nhãn "Đang đăng" vì thế tính theo nội dung (revision mới nhất trùng `chapter_contents.doc_json`), không còn là revision mới nhất. Dialog xác nhận nói nháp hiện tại được lưu vào lịch sử phiên bản.
 - HTML xem trước sinh ở server bằng `renderChapterHtml` của phase 5 (không chuẩn hoá lại pid). Không nhận HTML từ client, không lưu HTML trong revision.
 - Chương `hidden_by_mod` vẫn khôi phục được vào nháp (nháp không công khai, khớp quy tắc phase 5).
 
@@ -165,7 +166,7 @@ export function restoreRevision(db: Db, actor: StoryActor, publicId: string, num
 
 | Rủi ro | Khả năng × Ảnh hưởng | Giảm thiểu |
 |---|---|---|
-| Khôi phục đè mất nháp chưa đăng | Trung bình × Trung bình | Dialog xác nhận nói rõ; mirror localStorage phase 4; câu hỏi mở 1 |
+| Khôi phục đè mất nháp chưa đăng | Trung bình × Trung bình | Nháp khác revision mới nhất được chụp thành revision trước khi thay (quyết định 2026-10-05, sau phase 6); bản chụp chiếm một suất trong giới hạn 20 |
 | Autosave đang bay khi khôi phục → 409 giả hoặc ghi đè ngược | Trung bình × Trung bình | `pause()` chờ flush; editor read-only; `rebase` sau `setContent` |
 | Key mili giây khớp nhiều dòng | Rất thấp × Thấp | Lấy dòng mới nhất; phase 5 khoá chương khi đăng |
 | Render kéo dependency nặng vào api | Thấp × Thấp | Walker thuần TS ở core, không React |
@@ -180,7 +181,7 @@ Rollback: chỉ thêm route, module core, component; gỡ 3 route + nút toolbar
 
 ## Câu hỏi mở (đã chốt — Validation Session 1, 2026-10-05)
 
-1. Khôi phục **không** tự chụp nháp hiện tại thành revision; dùng hộp xác nhận + mirror localStorage.
+1. Khôi phục **không** tự chụp nháp hiện tại thành revision; dùng hộp xác nhận + mirror localStorage. **Đã đảo** (2026-10-05, sau phase 6): khôi phục tự chụp nháp, xem Key Insights.
 
 ## Ghi chú triển khai (2026-10-05)
 

@@ -1,7 +1,7 @@
 import { chapterContents, chapterDrafts, chapterRevisions, chapters, users } from '@novel-hub/db';
 import { seedTags } from '@novel-hub/db/seed';
 import { createTestDb, truncateAll } from '@novel-hub/db/testing';
-import { eq, sql } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { createChapter } from '../chapters/create-chapter';
 import { getDraft, saveDraft } from '../chapters/drafts';
@@ -284,5 +284,141 @@ describe('restoreRevision', () => {
     const restored = await restoreRevision(db, s.author, s.publicId, 1, old.key, s.base);
     expect(restored.ok).toBe(true);
     expect(await draftDoc(s.chapterId)).toEqual(twoParagraphs('cũ'));
+  });
+
+  it('keeps a draft that differs from the newest revision as a revision before replacing it', async () => {
+    let s = await setup();
+    s = await publishDoc(s, twoParagraphs('cũ'));
+    s = await publishDoc(s, twoParagraphs('mới'));
+    const saved = await saveDraft(db, s.author, s.publicId, 1, {
+      doc: twoParagraphs('đang gõ'),
+      baseUpdatedAt: s.base,
+    });
+    if (!saved.ok) throw new Error(saved.error);
+    const before = await listRevisions(db, s.author, s.publicId, 1);
+    const old = before.ok ? before.value[1] : undefined;
+    if (!old) throw new Error('missing revision');
+
+    const restored = await restoreRevision(
+      db,
+      s.author,
+      s.publicId,
+      1,
+      old.key,
+      saved.value.updatedAt,
+    );
+    if (!restored.ok) throw new Error(restored.error);
+    expect(await draftDoc(s.chapterId)).toEqual(twoParagraphs('cũ'));
+
+    const after = await listRevisions(db, s.author, s.publicId, 1);
+    if (!after.ok) throw new Error(after.error);
+    expect(after.value).toHaveLength(3);
+    // The snapshot is the newest revision; the published one keeps its marker below it.
+    expect(after.value.map((r) => r.isPublished)).toEqual([false, true, false]);
+    const snapshot = after.value[0];
+    if (!snapshot) throw new Error('missing snapshot');
+    // "đang gõ" is two words per generated token.
+    expect(snapshot.wordCount).toBe(640);
+    expect(Number(snapshot.key)).toBeGreaterThan(Number(after.value[1]?.key));
+    const [row] = await db
+      .select({ doc: chapterRevisions.docJson })
+      .from(chapterRevisions)
+      .orderBy(desc(chapterRevisions.createdAt))
+      .limit(1);
+    expect(row?.doc).toEqual(twoParagraphs('đang gõ'));
+  });
+
+  it('does not snapshot a draft equal to the newest revision', async () => {
+    let s = await setup();
+    s = await publishDoc(s, twoParagraphs('cũ'));
+    s = await publishDoc(s, twoParagraphs('mới'));
+    // Same content with keys in another order is still the same document.
+    const reordered = {
+      content: twoParagraphs('mới').content.map((p) => ({
+        content: p.content,
+        attrs: p.attrs,
+        type: p.type,
+      })),
+      type: 'doc',
+    };
+    const saved = await saveDraft(db, s.author, s.publicId, 1, {
+      doc: reordered,
+      baseUpdatedAt: s.base,
+    });
+    if (!saved.ok) throw new Error(saved.error);
+    const list = await listRevisions(db, s.author, s.publicId, 1);
+    const old = list.ok ? list.value[1] : undefined;
+    if (!old) throw new Error('missing revision');
+
+    const restored = await restoreRevision(
+      db,
+      s.author,
+      s.publicId,
+      1,
+      old.key,
+      saved.value.updatedAt,
+    );
+    expect(restored.ok).toBe(true);
+    expect((await db.select().from(chapterRevisions)).length).toBe(2);
+  });
+
+  it('keeps the revision cap when the snapshot is added', async () => {
+    const s = await setup();
+    const start = Date.now() - 3_600_000;
+    await db.insert(chapterRevisions).values(
+      Array.from({ length: 20 }, (_, i) => ({
+        chapterId: s.chapterId,
+        docJson: twoParagraphs(`r${i}`),
+        wordCount: i,
+        createdAt: new Date(start + i * 1000),
+      })),
+    );
+    const saved = await saveDraft(db, s.author, s.publicId, 1, {
+      doc: twoParagraphs('đang gõ'),
+      baseUpdatedAt: s.base,
+    });
+    if (!saved.ok) throw new Error(saved.error);
+
+    const restored = await restoreRevision(
+      db,
+      s.author,
+      s.publicId,
+      1,
+      String(start + 5000),
+      saved.value.updatedAt,
+    );
+    if (!restored.ok) throw new Error(restored.error);
+    expect(await draftDoc(s.chapterId)).toEqual(twoParagraphs('r5'));
+    const rows = await db
+      .select({ wordCount: chapterRevisions.wordCount })
+      .from(chapterRevisions)
+      .orderBy(desc(chapterRevisions.createdAt));
+    expect(rows).toHaveLength(20);
+    // Snapshot first, then r19…r1: the oldest (r0) was cut.
+    expect(rows.map((r) => r.wordCount)).toEqual([
+      640,
+      ...Array.from({ length: 19 }, (_, i) => 19 - i),
+    ]);
+  });
+
+  it('leaves no snapshot behind when the restore is refused for a stale version', async () => {
+    let s = await setup();
+    s = await publishDoc(s, twoParagraphs('cũ'));
+    const stale = s.base;
+    const first = await saveDraft(db, s.author, s.publicId, 1, {
+      doc: twoParagraphs('tab một'),
+      baseUpdatedAt: s.base,
+    });
+    if (!first.ok) throw new Error(first.error);
+    const list = await listRevisions(db, s.author, s.publicId, 1);
+    const key = list.ok ? list.value[0]?.key : undefined;
+    if (!key) throw new Error('missing revision');
+
+    expect(await restoreRevision(db, s.author, s.publicId, 1, key, stale)).toEqual({
+      ok: false,
+      error: 'DRAFT_CONFLICT',
+    });
+    expect((await db.select().from(chapterRevisions)).length).toBe(1);
+    expect(await draftDoc(s.chapterId)).toEqual(twoParagraphs('tab một'));
   });
 });

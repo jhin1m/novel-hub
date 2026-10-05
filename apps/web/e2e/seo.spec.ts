@@ -76,6 +76,21 @@ test('18+ story and chapter pages are noindex in the meta and the header', async
   }
 });
 
+test('an 18+ chapter shows no cover or synopsis in its link preview', async ({
+  request,
+  baseURL,
+}) => {
+  const path = mature.chapterPath(1);
+  const html = await ok(await request.get(path), path);
+  const neutral = 'Truyện có nội dung 18+ trên Novel Hub.';
+  expect(metaContent(html, 'description')).toBe(neutral);
+  expect(metaContent(html, 'og:description')).toBe(neutral);
+  expect(metaContent(html, 'og:image')).toBe(`${baseURL}/og-default.png`);
+  expect(metaContent(html, 'twitter:card')).toBe('summary_large_image');
+  expect(metaContent(html, 'og:title')).toContain(mature.title);
+  expect(html).toMatch(new RegExp(`<title>[^<]*${mature.title}[^<]* · Novel Hub</title>`));
+});
+
 test('pages and static pages have canonical links; private ones are noindex', async ({
   request,
   baseURL,
@@ -135,11 +150,14 @@ test('the sitemap index and child sitemaps list public URLs only', async ({ requ
   }
 });
 
-test('robots.txt blocks everything outside production', async ({ request }) => {
+test('robots.txt lets crawlers in when indexing is allowed', async ({ request, baseURL }) => {
   const res = await request.get('/robots.txt');
   expect(res.status()).toBe(200);
   expect(res.headers()['content-type']).toBe('text/plain; charset=utf-8');
-  expect(await res.text()).toBe('User-agent: *\nDisallow: /\n');
+  const robots = await res.text();
+  expect(robots).toContain('Allow: /\n');
+  expect(robots).toContain(`Sitemap: ${baseURL}/sitemap.xml\n`);
+  expect(robots).not.toMatch(/^Disallow: \/$/m);
 });
 
 test('the default social image is served', async ({ request }) => {

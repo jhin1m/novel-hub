@@ -22,6 +22,7 @@ import {
   requireSmtpInProduction,
   requireUnitRateLimitFactorInProduction,
   s3EnvSchema,
+  seoEnvSchema,
   smtpEnvSchema,
   testEnvSchema,
 } from './env';
@@ -201,6 +202,23 @@ describe('queueEnvSchema', () => {
   it('missing QUEUE_PREFIX → defaults to novelhub; when set it is kept', () => {
     expect(load(queueEnvSchema, {})).toEqual({ QUEUE_PREFIX: 'novelhub' });
     expect(load(queueEnvSchema, { QUEUE_PREFIX: 'e2e' })).toEqual({ QUEUE_PREFIX: 'e2e' });
+  });
+});
+
+describe('seoEnvSchema', () => {
+  const schema = appEnvSchema.extend(seoEnvSchema.shape);
+
+  it('keeps search engines out unless ALLOW_INDEXING is set, even in production', () => {
+    expect(load(schema, validApp).ALLOW_INDEXING).toBe(false);
+    expect(load(schema, { ...validApp, NODE_ENV: 'production' }).ALLOW_INDEXING).toBe(false);
+  });
+
+  it('parses "true"/"false" as booleans and refuses anything else', () => {
+    expect(load(schema, { ...validApp, ALLOW_INDEXING: 'true' }).ALLOW_INDEXING).toBe(true);
+    expect(load(schema, { ...validApp, ALLOW_INDEXING: 'false' }).ALLOW_INDEXING).toBe(false);
+    expect(() => load(schema, { ...validApp, ALLOW_INDEXING: 'yes please' })).toThrow(
+      'ALLOW_INDEXING',
+    );
   });
 });
 

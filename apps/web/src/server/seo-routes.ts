@@ -13,6 +13,7 @@ import {
 } from '@novel-hub/core';
 import { z } from 'zod';
 import { getInfra } from './infra';
+import { getSiteEnv } from './site-env';
 
 /** An hour at the CDN: a hidden story or banned author leaves the sitemap within that time. */
 const SITEMAP_CACHE = 'public, s-maxage=3600, stale-while-revalidate=86400';
@@ -38,9 +39,9 @@ function notFound(): Response {
   });
 }
 
-export async function robotsResponse(): Promise<Response> {
-  const { env } = await getInfra();
-  return new Response(renderRobots(env.APP_URL, env.NODE_ENV === 'production'), {
+export function robotsResponse(): Response {
+  const { appUrl, allowIndexing } = getSiteEnv();
+  return new Response(renderRobots(appUrl, allowIndexing), {
     headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': ROBOTS_CACHE },
   });
 }

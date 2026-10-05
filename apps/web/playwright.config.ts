@@ -41,6 +41,9 @@ export default defineConfig({
       // counters left by earlier runs.
       RATE_LIMIT_FACTOR: '50',
       TRUST_CF_IP: 'false',
+      // Lifts the site-wide noindex so the suite can check the per-page noindex (18+, private
+      // pages); the default (off) is covered by unit tests.
+      ALLOW_INDEXING: 'true',
     },
   },
 });

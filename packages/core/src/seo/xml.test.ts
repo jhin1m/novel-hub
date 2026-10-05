@@ -44,7 +44,7 @@ describe('renderSitemapIndex', () => {
 });
 
 describe('renderRobots', () => {
-  it('points crawlers at the sitemap in production and blocks private areas', () => {
+  it('points crawlers at the sitemap when indexing is allowed and blocks private areas', () => {
     const robots = renderRobots(APP_URL, true);
     expect(robots).toContain('Disallow: /api/\n');
     expect(robots).toContain('Disallow: /write\n');
@@ -53,7 +53,7 @@ describe('renderRobots', () => {
     expect(robots).not.toMatch(/^Disallow: \/$/m);
   });
 
-  it('blocks everything outside production', () => {
+  it('blocks everything when indexing is not allowed', () => {
     expect(renderRobots(APP_URL, false)).toBe('User-agent: *\nDisallow: /\n');
   });
 });

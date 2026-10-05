@@ -43,12 +43,13 @@ export function renderSitemapIndex(appUrl: string, paths: readonly string[]): st
 }
 
 /**
- * `robots.txt`. Outside production everything is off limits, so a staging copy never competes with
- * the real site. In production only areas that are never public are blocked: a page that must stay
- * out of search results says so with `noindex`, which crawlers only see when they may fetch it.
+ * `robots.txt`. Unless indexing is allowed (`ALLOW_INDEXING`, the real production site only)
+ * everything is off limits, so a staging copy never competes with the real site. When allowed only
+ * areas that are never public are blocked: a page that must stay out of search results says so
+ * with `noindex`, which crawlers only see when they may fetch it.
  */
-export function renderRobots(appUrl: string, production: boolean): string {
-  if (!production) return 'User-agent: *\nDisallow: /\n';
+export function renderRobots(appUrl: string, allowIndexing: boolean): string {
+  if (!allowIndexing) return 'User-agent: *\nDisallow: /\n';
   return [
     'User-agent: *',
     'Allow: /',

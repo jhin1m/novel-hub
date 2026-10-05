@@ -57,7 +57,7 @@ export const Route = createFileRoute('/stories/$storyKey/chapter-{$number}')({
           }),
       image: story.coverUrl,
       type: 'article',
-      noindex: story.isMature,
+      mature: story.isMature,
     });
   },
   notFoundComponent: NotFoundPage,

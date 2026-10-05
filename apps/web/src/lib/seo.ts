@@ -11,6 +11,8 @@ const COVER_IMAGE = { width: 600, height: 900 };
 /** What the root loader hands every `head()`: the origin is read from env on the server only. */
 export interface SiteConfig {
   appUrl: string;
+  /** `ALLOW_INDEXING`: off (the default, and always on staging), every page is noindex. */
+  allowIndexing: boolean;
 }
 
 export interface SeoInput {
@@ -25,6 +27,11 @@ export interface SeoInput {
   image?: string | null;
   type?: 'website' | 'article' | 'book' | 'profile';
   noindex?: boolean;
+  /**
+   * 18+ story or chapter: link previews get a neutral description and the default image instead
+   * of the synopsis and cover, and the page is noindex. The title is kept.
+   */
+  mature?: boolean;
 }
 
 type HeadMeta =
@@ -47,34 +54,50 @@ export function seo(input: SeoInput): { meta: HeadMeta[]; links: HeadLink[] } {
   const ogTitle = input.title ?? siteName;
   const meta: HeadMeta[] = [{ title }, { property: 'og:title', content: ogTitle }];
   const links: HeadLink[] = [];
+  const noindex = input.noindex || input.mature;
+  const rawDescription = input.mature ? m.mature_page_description() : input.description;
+  const cover = input.mature ? null : input.image;
 
-  if (input.description !== undefined) {
-    const description = metaDescription(input.description);
+  if (rawDescription !== undefined) {
+    const description = metaDescription(rawDescription);
     meta.push(
       { name: 'description', content: description },
       { property: 'og:description', content: description },
     );
   }
   meta.push({ property: 'og:type', content: input.type ?? 'website' });
-  if (input.noindex) meta.push({ name: 'robots', content: 'noindex' });
+  if (noindex) meta.push({ name: 'robots', content: 'noindex' });
 
   const { appUrl } = input;
   if (appUrl) {
-    if (input.path && !input.noindex) {
+    if (input.path && !noindex) {
       const canonical = absoluteUrl(appUrl, input.path);
       links.push({ rel: 'canonical', href: canonical });
       meta.push({ property: 'og:url', content: canonical });
     }
     // Always with its size: the root's default image tags would otherwise outlive a cover.
-    const image = input.image ? { ...COVER_IMAGE, path: input.image } : DEFAULT_OG_IMAGE;
+    const image = cover ? { ...COVER_IMAGE, path: cover } : DEFAULT_OG_IMAGE;
     meta.push(
       { property: 'og:image', content: absoluteUrl(appUrl, image.path) },
       { property: 'og:image:width', content: String(image.width) },
       { property: 'og:image:height', content: String(image.height) },
-      { name: 'twitter:card', content: input.image ? 'summary' : 'summary_large_image' },
+      { name: 'twitter:card', content: cover ? 'summary' : 'summary_large_image' },
     );
   }
   return { meta, links };
+}
+
+/**
+ * Site-wide defaults of the root `head()`, which leaf routes override tag by tag. A page that
+ * failed to load (404, error) is never indexed, nor is any page while `ALLOW_INDEXING` is off
+ * (or the config did not load): leaves only ever add `noindex`, so nothing turns this one back.
+ */
+export function rootSeo(config: SiteConfig | undefined, failed: boolean): ReturnType<typeof seo> {
+  return seo({
+    appUrl: config?.appUrl,
+    description: m.home_description(),
+    noindex: failed || !config?.allowIndexing,
+  });
 }
 
 /** The root loader's `SiteConfig` from a `head()` context, if it loaded. */
@@ -90,6 +113,8 @@ function isSiteConfig(value: unknown): value is SiteConfig {
     typeof value === 'object' &&
     value !== null &&
     'appUrl' in value &&
-    typeof value.appUrl === 'string'
+    typeof value.appUrl === 'string' &&
+    'allowIndexing' in value &&
+    typeof value.allowIndexing === 'boolean'
   );
 }

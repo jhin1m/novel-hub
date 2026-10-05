@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { absoluteUrl, seo, siteConfig } from './seo';
+import { absoluteUrl, rootSeo, seo, siteConfig } from './seo';
 
 const APP_URL = 'https://novelhub.example';
 
@@ -86,6 +86,59 @@ describe('seo', () => {
   });
 });
 
+describe('seo on an 18+ page', () => {
+  const mature = seo({
+    appUrl: APP_URL,
+    path: '/stories/kiem-dao-k7m2xq9p/chapter-1',
+    title: 'Chương 1 – Kiếm Đạo',
+    description: 'Giới thiệu có chi tiết người lớn.',
+    image: 'https://cdn.example/c-600.webp',
+    type: 'article',
+    mature: true,
+  });
+
+  it('keeps the title but shows a neutral description in place of the synopsis', () => {
+    expect(mature.meta).toContainEqual({ title: 'Chương 1 – Kiếm Đạo · Novel Hub' });
+    expect(metaContent(mature.meta, 'og:title')).toBe('Chương 1 – Kiếm Đạo');
+    expect(metaContent(mature.meta, 'description')).toBe('Truyện có nội dung 18+ trên Novel Hub.');
+    expect(metaContent(mature.meta, 'og:description')).toBe(
+      'Truyện có nội dung 18+ trên Novel Hub.',
+    );
+    expect(JSON.stringify(mature)).not.toContain('Giới thiệu');
+  });
+
+  it('uses the default image instead of the cover', () => {
+    expect(metaContent(mature.meta, 'og:image')).toBe(`${APP_URL}/og-default.png`);
+    expect(metaContent(mature.meta, 'og:image:width')).toBe('1200');
+    expect(metaContent(mature.meta, 'twitter:card')).toBe('summary_large_image');
+    expect(JSON.stringify(mature)).not.toContain('cdn.example');
+  });
+
+  it('is noindex with no canonical link', () => {
+    expect(metaContent(mature.meta, 'robots')).toBe('noindex');
+    expect(mature.links).toEqual([]);
+  });
+
+  it('describes the page even when it has no description of its own', () => {
+    const { meta } = seo({ appUrl: APP_URL, title: 'Kiếm Đạo', mature: true });
+    expect(metaContent(meta, 'description')).toBe('Truyện có nội dung 18+ trên Novel Hub.');
+  });
+});
+
+describe('rootSeo', () => {
+  it('is noindex site-wide while indexing is not allowed', () => {
+    const { meta } = rootSeo({ appUrl: APP_URL, allowIndexing: false }, false);
+    expect(metaContent(meta, 'robots')).toBe('noindex');
+    expect(metaContent(rootSeo(undefined, false).meta, 'robots')).toBe('noindex');
+  });
+
+  it('leaves loaded pages indexable once indexing is allowed, but never a failed one', () => {
+    const config = { appUrl: APP_URL, allowIndexing: true };
+    expect(metaContent(rootSeo(config, false).meta, 'robots')).toBeUndefined();
+    expect(metaContent(rootSeo(config, true).meta, 'robots')).toBe('noindex');
+  });
+});
+
 describe('absoluteUrl', () => {
   it('resolves a path against the origin and keeps an absolute URL', () => {
     expect(absoluteUrl(APP_URL, '/og-default.png')).toBe(`${APP_URL}/og-default.png`);
@@ -95,11 +148,13 @@ describe('absoluteUrl', () => {
 
 describe('siteConfig', () => {
   it('reads the root loader data from the head matches', () => {
+    const config = { appUrl: APP_URL, allowIndexing: true };
     const matches = [
-      { routeId: '__root__', loaderData: { appUrl: APP_URL } },
+      { routeId: '__root__', loaderData: config },
       { routeId: '/', loaderData: {} },
     ];
-    expect(siteConfig(matches)).toEqual({ appUrl: APP_URL });
+    expect(siteConfig(matches)).toEqual(config);
     expect(siteConfig([{ routeId: '__root__' }])).toBeUndefined();
+    expect(siteConfig([{ routeId: '__root__', loaderData: { appUrl: APP_URL } }])).toBeUndefined();
   });
 });

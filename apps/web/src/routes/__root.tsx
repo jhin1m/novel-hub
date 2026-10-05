@@ -7,7 +7,7 @@ import beVietnamProVietnamese from '@fontsource/be-vietnam-pro/files/be-vietnam-
 import literataLatin from '@fontsource-variable/literata/files/literata-latin-wght-normal.woff2?url';
 import literataVietnamese from '@fontsource-variable/literata/files/literata-vietnamese-wght-normal.woff2?url';
 import { BOOT_SCRIPT } from '../lib/boot-script';
-import { seo } from '../lib/seo';
+import { rootSeo } from '../lib/seo';
 import { getSiteConfig } from '../server-fns/site-config';
 import appCss from '../styles/app.css?url';
 
@@ -24,15 +24,10 @@ export const Route = createRootRoute({
   // The site origin for absolute URLs in every page head. Read once: it never changes at runtime.
   loader: () => getSiteConfig(),
   staleTime: Infinity,
-  // Defaults that leaf routes override tag by tag (the deepest `name`/`property` wins). A page that
-  // failed to load (404, error) is never indexed.
+  // Defaults that leaf routes override tag by tag (the deepest `name`/`property` wins).
   head: ({ matches, loaderData }) => {
     const failed = matches.some((match) => match.status !== 'success' || match._notFound);
-    const defaults = seo({
-      appUrl: loaderData?.appUrl,
-      description: m.home_description(),
-      noindex: failed,
-    });
+    const defaults = rootSeo(loaderData, failed);
     return {
       meta: [
         { charSet: 'utf-8' },

@@ -41,7 +41,7 @@ export const Route = createFileRoute('/stories/$storyKey/')({
       description: story.synopsis,
       image: story.coverUrl,
       type: 'book',
-      noindex: story.isMature,
+      mature: story.isMature,
     });
   },
   notFoundComponent: NotFoundPage,

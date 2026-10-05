@@ -20,6 +20,14 @@ export const appEnvSchema = z.object({
   APP_URL: httpUrl,
 });
 
+/**
+ * `ALLOW_INDEXING`: lets search engines in (robots.txt allows crawling, pages drop the site-wide
+ * noindex). Off by default; turn on for the real production site only, never on staging.
+ */
+export const seoEnvSchema = z.object({
+  ALLOW_INDEXING: z.stringbool().default(false),
+});
+
 export const dbEnvSchema = z.object({
   DATABASE_URL: postgresUrl,
 });

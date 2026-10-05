@@ -18,7 +18,7 @@
 | `/api/*`, `/_serverFn/*` | — | `no-store` hoặc không cache |
 
 - HTML công khai không bao giờ phụ thuộc cookie và không có `Set-Cookie`; phần cá nhân tải ở client qua `/api/v1/*`.
-- Truyện 18+ thêm `X-Robots-Tag: noindex`. HTML mọi danh sách không bao giờ chứa truyện 18+; người đã bật xem 18+ tải lại danh sách ở client qua `GET /api/v1/stories` (`no-store`).
+- Truyện 18+ thêm `X-Robots-Tag: noindex`; `og:*`/meta description của trang truyện và chương 18+ dùng ảnh OG mặc định và mô tả trung tính (giữ tiêu đề), không lộ bìa hay giới thiệu trong link preview. HTML mọi danh sách không bao giờ chứa truyện 18+; người đã bật xem 18+ tải lại danh sách ở client qua `GET /api/v1/stories` (`no-store`).
 - `/settings` trả `no-store`, không nằm trong Cache Rule.
 - URL chuẩn dựng bằng `canonicalPath()` (`packages/shared/src/canonical-path.ts`). Purge (worker) chỉ chạm URL chuẩn, nên mọi biến thể khác chỉ được giữ phản hồi 301/404, không bao giờ giữ nội dung.
 
@@ -86,6 +86,16 @@ pnpm cdn:purge -- --story <publicId>   # trang truyện + mọi chương từng 
 ```
 
 Cần đã đặt `CF_*`, `DATABASE_URL`, `APP_URL`; thiếu `CF_*` thì thoát mã 1. Trường hợp rộng hơn dùng "Purge Everything" trên dashboard.
+
+## Cho phép index (`ALLOW_INDEXING`)
+
+Máy tìm kiếm chỉ được vào khi `ALLOW_INDEXING=true` (mặc định `false`, không phụ thuộc `NODE_ENV`):
+
+- `false`: `/robots.txt` trả `User-agent: *` + `Disallow: /`, và mọi trang HTML có `<meta name="robots" content="noindex">` (đặt ở root route, trang lá không gỡ được).
+- `true`: `/robots.txt` chỉ chặn `/api/`, `/write`, `/moderation` và trỏ tới `/sitemap.xml`; trang công khai không còn meta robots.
+- Bất kể biến này: trang 18+ (meta + `X-Robots-Tag: noindex`), trang riêng tư (tìm kiếm, đăng nhập, viết, tủ truyện...) và trang 404/lỗi luôn `noindex`.
+
+Chỉ bật trên production thật. Staging (NAS) và dev luôn để `false`, kể cả khi chạy `NODE_ENV=production`. Sau khi đổi giá trị phải restart web (env đọc một lần) và purge `/robots.txt` cùng HTML đã cache trên Cloudflare (`robots.txt` cache 1 ngày, trang 1 ngày), nếu không bản cũ còn tới khi hết hạn.
 
 ## IP người dùng: đếm lượt đọc và rate limit
 

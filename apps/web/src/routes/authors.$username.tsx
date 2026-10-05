@@ -7,7 +7,7 @@ import { SiteLayout } from '../components/site-layout';
 import { StoryGrid } from '../components/story/story-grid';
 import { publicPageHeaders } from '../lib/cache-headers';
 import { assertCanonical, requestLocation } from '../lib/canonical';
-import { metaDescription } from '../lib/meta-description';
+import { seo, siteConfig } from '../lib/seo';
 import { throwNotFound } from '../lib/route-signals';
 import { useMatureAwareList } from '../lib/use-mature-aware-list';
 import { getAuthorPage } from '../server-fns/catalog';
@@ -25,17 +25,20 @@ export const Route = createFileRoute('/authors/$username')({
     return page;
   },
   headers: ({ match }) => publicPageHeaders(match.status, { list: true }),
-  head: ({ loaderData }) => {
+  head: ({ loaderData, matches }) => {
     if (!loaderData) return {};
-    const { author, appUrl } = loaderData;
-    const path = canonicalPath({ kind: 'author', username: author.username });
-    return {
-      meta: [
-        { title: author.displayName },
-        { name: 'description', content: metaDescription(author.bio ?? '') },
-      ],
-      links: [{ rel: 'canonical', href: new URL(path, appUrl).href }],
-    };
+    const { author, stories } = loaderData;
+    return seo({
+      appUrl: siteConfig(matches)?.appUrl,
+      path: canonicalPath({ kind: 'author', username: author.username }),
+      title: author.displayName,
+      description: author.bio?.trim()
+        ? author.bio
+        : m.author_page_description({ name: author.displayName }),
+      type: 'profile',
+      // Only 18+ stories: the server-rendered list is empty, nothing to index.
+      noindex: stories.length === 0,
+    });
   },
   notFoundComponent: NotFoundPage,
   component: AuthorPage,

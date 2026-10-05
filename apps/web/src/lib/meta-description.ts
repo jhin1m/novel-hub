@@ -11,7 +11,8 @@ export function metaDescription(text: string): string {
   const line = firstParagraph.replace(/\s+/g, ' ').trim();
   if (!line) return m.home_description();
   if (line.length <= MAX_LENGTH) return line;
-  const cut = line.slice(0, MAX_LENGTH - 1);
+  // Never end on half of a surrogate pair (emoji and other astral characters).
+  const cut = line.slice(0, MAX_LENGTH - 1).replace(/[\uD800-\uDBFF]$/, '');
   const lastSpace = cut.lastIndexOf(' ');
   return `${(lastSpace > MAX_LENGTH / 2 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
 }

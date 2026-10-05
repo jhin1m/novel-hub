@@ -25,7 +25,7 @@ test.describe('reading a chapter', () => {
       'Mở đầu chương 2.',
     );
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Chương 2');
-    await expect(page).toHaveTitle('Chương 2 – Kiếm Đạo Độc Tôn');
+    await expect(page).toHaveTitle('Chương 2 – Kiếm Đạo Độc Tôn · Novel Hub');
     await context.close();
   });
 

@@ -10,6 +10,8 @@ export interface ChapterPageData {
     slug: string;
     title: string;
     isMature: boolean;
+    /** Stored 600px cover, for the page's social image; `null` for the default text cover. */
+    coverUrl: string | null;
     authorUsername: string;
     authorDisplayName: string;
     /** Canonical `warning` tags, shown on the 18+ screen; empty for other stories. */
@@ -44,6 +46,7 @@ export async function getChapterForReading(
       slug: stories.slug,
       storyTitle: stories.title,
       isMature: stories.isMature,
+      coverUrl: stories.coverUrl,
       visibility: stories.visibility,
       authorUsername: users.username,
       authorDisplayName: users.displayName,
@@ -83,6 +86,7 @@ export async function getChapterForReading(
       slug: row.slug,
       title: row.storyTitle,
       isMature: row.isMature,
+      coverUrl: row.coverUrl,
       authorUsername: row.authorUsername,
       authorDisplayName: row.authorDisplayName,
       warningTags,

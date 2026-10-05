@@ -12,6 +12,9 @@
 | Chỉ khác chữ hoa/thường hoặc có query lạ (trang tag: mọi query ngoài một `page` dạng chuẩn; `page=1` cũng bị bỏ) | 301 | `no-store` |
 | `/` cuối path (router tự chuyển, trước loader) | 307 | không có |
 | Không tồn tại hoặc không đọc được; trang tag vượt số trang | 404 | `public, s-maxage=60` |
+| `/sitemap.xml`, `/sitemap/pages`, `/sitemap/stories/{n}`, `/sitemap/chapters/{n}` | 200 | `public, s-maxage=3600, stale-while-revalidate=86400` |
+| `/sitemap/stories/{n}`, `/sitemap/chapters/{n}` với `n` không hợp lệ hoặc quá số trang | 404 | `public, s-maxage=60` |
+| `/robots.txt` | 200 | `public, s-maxage=86400` |
 | `/api/*`, `/_serverFn/*` | — | `no-store` hoặc không cache |
 
 - HTML công khai không bao giờ phụ thuộc cookie và không có `Set-Cookie`; phần cá nhân tải ở client qua `/api/v1/*`.
@@ -32,9 +35,12 @@ Rules → Cache Rules → Create rule, tên `public-html`:
      or starts_with(http.request.uri.path, "/stories/")
      or starts_with(http.request.uri.path, "/authors/")
      or starts_with(http.request.uri.path, "/tags/")
-     or http.request.uri.path in {"/terms" "/content-policy"}
+     or http.request.uri.path in {"/terms" "/content-policy" "/robots.txt" "/sitemap.xml"}
+     or starts_with(http.request.uri.path, "/sitemap/")
    )
    ```
+
+   Sitemap và `robots.txt` phải nằm trong rule: mỗi lần origin dựng sitemap là một lượt đếm/quét bảng chương trên Postgres. Sitemap không được purge khi nội dung đổi; truyện bị ẩn hoặc tác giả bị ban rời sitemap trong tối đa 1 giờ (trang của chúng đã bị purge và trả 404).
 
    Không đưa vào: `/api/*`, `/_serverFn/*`, `/write/*`, `/moderation*`, `/library*`, `/settings*`, `/search*`, trang đăng nhập/đăng ký/quên mật khẩu/đặt lại mật khẩu. Các đường dẫn này không khớp biểu thức trên nên Cloudflare không cache HTML của chúng.
 

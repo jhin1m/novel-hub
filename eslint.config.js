@@ -10,6 +10,10 @@ const BROWSER_IMPORT_EXEMPT = [
   'apps/web/src/server/**',
   'apps/web/src/server-fns/**',
   'apps/web/src/routes/api/**',
+  // Server routes without a page: robots.txt and the sitemaps.
+  'apps/web/src/routes/robots*.ts',
+  'apps/web/src/routes/sitemap*.ts',
+  'apps/web/src/routes/sitemap/**',
   'apps/web/src/**/*.test.{ts,tsx}',
 ];
 

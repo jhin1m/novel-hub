@@ -5,6 +5,7 @@ import { ChapterEditor } from '../../../../../components/editor/chapter-editor';
 import { WriterGate } from '../../../../../components/writer-gate';
 import { ApiError } from '../../../../../lib/api-errors';
 import { useChapterDraft } from '../../../../../lib/chapters';
+import { seo } from '../../../../../lib/seo';
 
 /** Positive integer as written in the URL; anything else is treated as a missing chapter. */
 function parseChapterNumber(raw: string): number | null {
@@ -14,9 +15,7 @@ function parseChapterNumber(raw: string): number | null {
 export const Route = createFileRoute('/write/stories/$publicId/chapters/$number')({
   // The editor is browser-only (Tiptap needs the DOM) and personal; nothing to render on the server.
   ssr: false,
-  head: () => ({
-    meta: [{ title: m.editor_content_label() }, { name: 'robots', content: 'noindex' }],
-  }),
+  head: () => seo({ title: m.editor_content_label(), noindex: true }),
   component: ChapterEditorPage,
 });
 

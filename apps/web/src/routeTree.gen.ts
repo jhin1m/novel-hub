@@ -15,15 +15,20 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LibraryRouteImport } from './routes/library'
 import { Route as ModerationRouteImport } from './routes/moderation'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as AuthorsUsernameRouteImport } from './routes/authors.$username'
+import { Route as SitemapPagesRouteImport } from './routes/sitemap/pages'
 import { Route as TagsTagSlugRouteImport } from './routes/tags.$tagSlug'
 import { Route as WriteIndexRouteImport } from './routes/write/index'
+import { Route as SitemapChaptersPageRouteImport } from './routes/sitemap/chapters/$page'
+import { Route as SitemapStoriesPageRouteImport } from './routes/sitemap/stories/$page'
 import { Route as StoriesStoryKeyIndexRouteImport } from './routes/stories.$storyKey.index'
 import { Route as StoriesStoryKeyChapterChar123numberChar125RouteImport } from './routes/stories.$storyKey.chapter-{$number}'
 import { Route as WriteStoriesNewRouteImport } from './routes/write/stories/new'
@@ -60,6 +65,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
@@ -80,6 +90,11 @@ const SignUpRoute = SignUpRouteImport.update({
   path: '/sign-up',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -95,6 +110,11 @@ const AuthorsUsernameRoute = AuthorsUsernameRouteImport.update({
   path: '/authors/$username',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SitemapPagesRoute = SitemapPagesRouteImport.update({
+  id: '/sitemap/pages',
+  path: '/sitemap/pages',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TagsTagSlugRoute = TagsTagSlugRouteImport.update({
   id: '/tags/$tagSlug',
   path: '/tags/$tagSlug',
@@ -103,6 +123,16 @@ const TagsTagSlugRoute = TagsTagSlugRouteImport.update({
 const WriteIndexRoute = WriteIndexRouteImport.update({
   id: '/write/',
   path: '/write/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapChaptersPageRoute = SitemapChaptersPageRouteImport.update({
+  id: '/sitemap/chapters/$page',
+  path: '/sitemap/chapters/$page',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapStoriesPageRoute = SitemapStoriesPageRouteImport.update({
+  id: '/sitemap/stories/$page',
+  path: '/sitemap/stories/$page',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StoriesStoryKeyIndexRoute = StoriesStoryKeyIndexRouteImport.update({
@@ -141,15 +171,20 @@ export interface FileRoutesByFullPath {
   '/library': typeof LibraryRoute
   '/moderation': typeof ModerationRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/api/$': typeof ApiSplatRoute
   '/authors/$username': typeof AuthorsUsernameRoute
+  '/sitemap/pages': typeof SitemapPagesRoute
   '/tags/$tagSlug': typeof TagsTagSlugRoute
   '/write/': typeof WriteIndexRoute
+  '/sitemap/chapters/$page': typeof SitemapChaptersPageRoute
+  '/sitemap/stories/$page': typeof SitemapStoriesPageRoute
   '/stories/$storyKey/chapter-{$number}': typeof StoriesStoryKeyChapterChar123numberChar125Route
   '/write/stories/new': typeof WriteStoriesNewRoute
   '/stories/$storyKey/': typeof StoriesStoryKeyIndexRoute
@@ -163,15 +198,20 @@ export interface FileRoutesByTo {
   '/library': typeof LibraryRoute
   '/moderation': typeof ModerationRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/api/$': typeof ApiSplatRoute
   '/authors/$username': typeof AuthorsUsernameRoute
+  '/sitemap/pages': typeof SitemapPagesRoute
   '/tags/$tagSlug': typeof TagsTagSlugRoute
   '/write': typeof WriteIndexRoute
+  '/sitemap/chapters/$page': typeof SitemapChaptersPageRoute
+  '/sitemap/stories/$page': typeof SitemapStoriesPageRoute
   '/stories/$storyKey/chapter-{$number}': typeof StoriesStoryKeyChapterChar123numberChar125Route
   '/write/stories/new': typeof WriteStoriesNewRoute
   '/stories/$storyKey': typeof StoriesStoryKeyIndexRoute
@@ -186,15 +226,20 @@ export interface FileRoutesById {
   '/library': typeof LibraryRoute
   '/moderation': typeof ModerationRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/api/$': typeof ApiSplatRoute
   '/authors/$username': typeof AuthorsUsernameRoute
+  '/sitemap/pages': typeof SitemapPagesRoute
   '/tags/$tagSlug': typeof TagsTagSlugRoute
   '/write/': typeof WriteIndexRoute
+  '/sitemap/chapters/$page': typeof SitemapChaptersPageRoute
+  '/sitemap/stories/$page': typeof SitemapStoriesPageRoute
   '/stories/$storyKey/chapter-{$number}': typeof StoriesStoryKeyChapterChar123numberChar125Route
   '/write/stories/new': typeof WriteStoriesNewRoute
   '/stories/$storyKey/': typeof StoriesStoryKeyIndexRoute
@@ -210,15 +255,20 @@ export interface FileRouteTypes {
     | '/library'
     | '/moderation'
     | '/reset-password'
+    | '/robots.txt'
     | '/search'
     | '/settings'
     | '/sign-in'
     | '/sign-up'
+    | '/sitemap.xml'
     | '/terms'
     | '/api/$'
     | '/authors/$username'
+    | '/sitemap/pages'
     | '/tags/$tagSlug'
     | '/write/'
+    | '/sitemap/chapters/$page'
+    | '/sitemap/stories/$page'
     | '/stories/$storyKey/chapter-{$number}'
     | '/write/stories/new'
     | '/stories/$storyKey/'
@@ -232,15 +282,20 @@ export interface FileRouteTypes {
     | '/library'
     | '/moderation'
     | '/reset-password'
+    | '/robots.txt'
     | '/search'
     | '/settings'
     | '/sign-in'
     | '/sign-up'
+    | '/sitemap.xml'
     | '/terms'
     | '/api/$'
     | '/authors/$username'
+    | '/sitemap/pages'
     | '/tags/$tagSlug'
     | '/write'
+    | '/sitemap/chapters/$page'
+    | '/sitemap/stories/$page'
     | '/stories/$storyKey/chapter-{$number}'
     | '/write/stories/new'
     | '/stories/$storyKey'
@@ -254,15 +309,20 @@ export interface FileRouteTypes {
     | '/library'
     | '/moderation'
     | '/reset-password'
+    | '/robots.txt'
     | '/search'
     | '/settings'
     | '/sign-in'
     | '/sign-up'
+    | '/sitemap.xml'
     | '/terms'
     | '/api/$'
     | '/authors/$username'
+    | '/sitemap/pages'
     | '/tags/$tagSlug'
     | '/write/'
+    | '/sitemap/chapters/$page'
+    | '/sitemap/stories/$page'
     | '/stories/$storyKey/chapter-{$number}'
     | '/write/stories/new'
     | '/stories/$storyKey/'
@@ -277,15 +337,20 @@ export interface RootRouteChildren {
   LibraryRoute: typeof LibraryRoute
   ModerationRoute: typeof ModerationRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   ApiSplatRoute: typeof ApiSplatRoute
   AuthorsUsernameRoute: typeof AuthorsUsernameRoute
+  SitemapPagesRoute: typeof SitemapPagesRoute
   TagsTagSlugRoute: typeof TagsTagSlugRoute
   WriteIndexRoute: typeof WriteIndexRoute
+  SitemapChaptersPageRoute: typeof SitemapChaptersPageRoute
+  SitemapStoriesPageRoute: typeof SitemapStoriesPageRoute
   StoriesStoryKeyChapterChar123numberChar125Route: typeof StoriesStoryKeyChapterChar123numberChar125Route
   WriteStoriesNewRoute: typeof WriteStoriesNewRoute
   StoriesStoryKeyIndexRoute: typeof StoriesStoryKeyIndexRoute
@@ -337,6 +402,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/search': {
       id: '/search'
       path: '/search'
@@ -365,6 +437,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignUpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terms': {
       id: '/terms'
       path: '/terms'
@@ -386,6 +465,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthorsUsernameRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sitemap/pages': {
+      id: '/sitemap/pages'
+      path: '/sitemap/pages'
+      fullPath: '/sitemap/pages'
+      preLoaderRoute: typeof SitemapPagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tags/$tagSlug': {
       id: '/tags/$tagSlug'
       path: '/tags/$tagSlug'
@@ -398,6 +484,20 @@ declare module '@tanstack/react-router' {
       path: '/write'
       fullPath: '/write/'
       preLoaderRoute: typeof WriteIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap/chapters/$page': {
+      id: '/sitemap/chapters/$page'
+      path: '/sitemap/chapters/$page'
+      fullPath: '/sitemap/chapters/$page'
+      preLoaderRoute: typeof SitemapChaptersPageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap/stories/$page': {
+      id: '/sitemap/stories/$page'
+      path: '/sitemap/stories/$page'
+      fullPath: '/sitemap/stories/$page'
+      preLoaderRoute: typeof SitemapStoriesPageRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stories/$storyKey/': {
@@ -445,15 +545,20 @@ const rootRouteChildren: RootRouteChildren = {
   LibraryRoute: LibraryRoute,
   ModerationRoute: ModerationRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   ApiSplatRoute: ApiSplatRoute,
   AuthorsUsernameRoute: AuthorsUsernameRoute,
+  SitemapPagesRoute: SitemapPagesRoute,
   TagsTagSlugRoute: TagsTagSlugRoute,
   WriteIndexRoute: WriteIndexRoute,
+  SitemapChaptersPageRoute: SitemapChaptersPageRoute,
+  SitemapStoriesPageRoute: SitemapStoriesPageRoute,
   StoriesStoryKeyChapterChar123numberChar125Route:
     StoriesStoryKeyChapterChar123numberChar125Route,
   WriteStoriesNewRoute: WriteStoriesNewRoute,

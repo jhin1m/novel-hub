@@ -8,6 +8,7 @@ import { publicPageHeaders } from '../lib/cache-headers';
 import { assertCanonical, requestLocation } from '../lib/canonical';
 import { searchHref } from '../lib/search';
 import { getSearchFilters } from '../server-fns/catalog';
+import { seo } from '../lib/seo';
 
 export const Route = createFileRoute('/search')({
   // Every field falls back instead of failing, so a hand-edited URL still shows the page.
@@ -24,13 +25,8 @@ export const Route = createFileRoute('/search')({
     return getSearchFilters();
   },
   headers: ({ match }) => publicPageHeaders(match.status, { list: true, noindex: true }),
-  head: () => ({
-    meta: [
-      { title: m.search_page_title() },
-      { name: 'description', content: m.search_page_description() },
-      { name: 'robots', content: 'noindex' },
-    ],
-  }),
+  head: () =>
+    seo({ title: m.search_page_title(), description: m.search_page_description(), noindex: true }),
   component: SearchPage,
 });
 

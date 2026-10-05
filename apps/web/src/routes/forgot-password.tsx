@@ -11,9 +11,10 @@ import {
 import { authClient } from '../lib/auth-client';
 import { authErrorMessage, throwIfAuthError } from '../lib/auth-errors';
 import { formText } from '../lib/form-text';
+import { seo } from '../lib/seo';
 
 export const Route = createFileRoute('/forgot-password')({
-  head: () => ({ meta: [{ title: m.forgot_title() }] }),
+  head: () => seo({ title: m.forgot_title(), noindex: true }),
   component: ForgotPasswordPage,
 });
 

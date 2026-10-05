@@ -18,6 +18,7 @@ import { NO_STORE } from '../lib/cache-headers';
 import { type MeUser, useMe } from '../lib/me';
 import { useReports } from '../lib/moderation';
 import { cn } from '../lib/utils';
+import { seo } from '../lib/seo';
 
 const MODERATION_TABS = ['reports', 'tags'] as const;
 
@@ -43,9 +44,7 @@ export const Route = createFileRoute('/moderation')({
   ssr: false,
   validateSearch: (raw: Record<string, unknown>) => moderationSearchSchema.parse(raw),
   headers: () => NO_STORE,
-  head: () => ({
-    meta: [{ title: m.moderation_title() }, { name: 'robots', content: 'noindex' }],
-  }),
+  head: () => seo({ title: m.moderation_title(), noindex: true }),
   component: ModerationPage,
 });
 

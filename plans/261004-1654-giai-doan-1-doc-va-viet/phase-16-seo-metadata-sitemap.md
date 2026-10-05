@@ -1,7 +1,7 @@
 ---
 phase: 16
 title: "Phase 16: SEO: metadata, Open Graph, sitemap, canonical"
-status: pending
+status: completed
 priority: P1
 effort: "1.5d"
 dependencies: [15]

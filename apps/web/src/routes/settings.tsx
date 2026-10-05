@@ -21,13 +21,12 @@ import { authErrorMessage, throwIfAuthError } from '../lib/auth-errors';
 import { NO_STORE } from '../lib/cache-headers';
 import { type MeUser, useMe, useSignOut } from '../lib/me';
 import { usePatchPreferences } from '../lib/preferences';
+import { seo } from '../lib/seo';
 
 export const Route = createFileRoute('/settings')({
   // Everything here is personal and loaded in the browser; the page itself is never stored.
   headers: () => NO_STORE,
-  head: () => ({
-    meta: [{ title: m.settings_title() }, { name: 'robots', content: 'noindex' }],
-  }),
+  head: () => seo({ title: m.settings_title(), noindex: true }),
   component: SettingsPage,
 });
 

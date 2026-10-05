@@ -12,9 +12,10 @@ import { authClient } from '../lib/auth-client';
 import { authErrorMessage, throwIfAuthError } from '../lib/auth-errors';
 import { formText } from '../lib/form-text';
 import { meQueryKey } from '../lib/me';
+import { seo } from '../lib/seo';
 
 export const Route = createFileRoute('/sign-up')({
-  head: () => ({ meta: [{ title: m.sign_up_title() }] }),
+  head: () => seo({ title: m.sign_up_title(), noindex: true }),
   component: SignUpPage,
 });
 

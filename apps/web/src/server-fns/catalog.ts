@@ -20,31 +20,27 @@ const SSR_LISTS = { includeMature: false };
 export const getStoryPage = createServerFn({ method: 'GET' })
   .validator(z.object({ publicId: z.string().refine(isValidPublicId) }))
   .handler(async ({ data }) => {
-    const { db, env } = await getInfra();
-    const page = await loadStoryPage(db, data.publicId);
-    // The origin goes with the data so `head()` builds absolute canonical URLs.
-    return page ? { ...page, appUrl: env.APP_URL } : null;
+    const { db } = await getInfra();
+    return loadStoryPage(db, data.publicId);
   });
 
 export const getAuthorPage = createServerFn({ method: 'GET' })
   .validator(z.object({ username: usernameParamSchema }))
   .handler(async ({ data }) => {
-    const { db, env } = await getInfra();
-    const page = await loadAuthorPage(db, data.username, SSR_LISTS);
-    return page ? { ...page, appUrl: env.APP_URL } : null;
+    const { db } = await getInfra();
+    return loadAuthorPage(db, data.username, SSR_LISTS);
   });
 
 export const getTagPage = createServerFn({ method: 'GET' })
   .validator(z.object({ slug: tagSlugSchema, page: z.number().int().positive().max(100_000) }))
   .handler(async ({ data }) => {
-    const { db, env } = await getInfra();
-    const result = await loadTagPage(db, data.slug, { ...SSR_LISTS, page: data.page });
-    return result ? { ...result, appUrl: env.APP_URL } : null;
+    const { db } = await getInfra();
+    return loadTagPage(db, data.slug, { ...SSR_LISTS, page: data.page });
   });
 
 export const getHomePage = createServerFn({ method: 'GET' }).handler(async () => {
-  const { db, env } = await getInfra();
-  return { ...(await loadHomePage(db)), appUrl: env.APP_URL };
+  const { db } = await getInfra();
+  return loadHomePage(db);
 });
 
 /** Filters of the search page: the genres to pick from (results load in the browser). */

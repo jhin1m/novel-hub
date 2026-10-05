@@ -4,13 +4,20 @@ import { createFileRoute } from '@tanstack/react-router';
 import { StaticPage } from '../components/static-page';
 import { publicPageHeaders } from '../lib/cache-headers';
 import { assertCanonical, requestLocation } from '../lib/canonical';
+import { seo, siteConfig } from '../lib/seo';
 
 export const Route = createFileRoute('/terms')({
   loader: ({ location }) => {
     assertCanonical(requestLocation(location), canonicalPath({ kind: 'static', path: '/terms' }));
   },
   headers: ({ match }) => publicPageHeaders(match.status),
-  head: () => ({ meta: [{ title: m.terms_title() }] }),
+  head: ({ matches }) =>
+    seo({
+      appUrl: siteConfig(matches)?.appUrl,
+      path: canonicalPath({ kind: 'static', path: '/terms' }),
+      title: m.terms_title(),
+      description: m.terms_intro(),
+    }),
   component: TermsPage,
 });
 

@@ -16,11 +16,8 @@ export const getChapterPage = createServerFn({ method: 'GET' })
     z.object({ publicId: publicIdSchema, number: z.number().int().positive().max(2_147_483_647) }),
   )
   .handler(async ({ data }) => {
-    const { db, env } = await getInfra();
-    const page = await getChapterForReading(db, data.publicId, data.number);
-    // The origin goes with the data so `head()` builds absolute canonical URLs without reading env
-    // in shared code.
-    return page ? { ...page, appUrl: env.APP_URL } : null;
+    const { db } = await getInfra();
+    return getChapterForReading(db, data.publicId, data.number);
   });
 
 /** Table of contents, loaded when the reader opens it. `null`: the story cannot be seen. */

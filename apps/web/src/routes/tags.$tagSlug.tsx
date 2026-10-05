@@ -8,6 +8,7 @@ import { TAG_KIND_LABELS } from '../components/story/story-labels';
 import { StoryGrid } from '../components/story/story-grid';
 import { publicPageHeaders } from '../lib/cache-headers';
 import { assertCanonical, requestLocation } from '../lib/canonical';
+import { seo, siteConfig } from '../lib/seo';
 import { throwNotFound } from '../lib/route-signals';
 import { useMatureAwareList } from '../lib/use-mature-aware-list';
 import { getTagPage } from '../server-fns/catalog';
@@ -34,22 +35,20 @@ export const Route = createFileRoute('/tags/$tagSlug')({
     return result;
   },
   headers: ({ match }) => publicPageHeaders(match.status, { list: true }),
-  head: ({ loaderData }) => {
+  head: ({ loaderData, matches }) => {
     if (!loaderData) return {};
-    const { tag, stories, appUrl } = loaderData;
-    const path = canonicalPath({ kind: 'tag', slug: tag.slug, page: stories.page });
-    return {
-      meta: [
-        {
-          title:
-            stories.page > 1
-              ? m.tag_page_title_paged({ name: tag.name, page: String(stories.page) })
-              : m.tag_page_title({ name: tag.name }),
-        },
-        { name: 'description', content: m.tag_page_description({ name: tag.name }) },
-      ],
-      links: [{ rel: 'canonical', href: new URL(path, appUrl).href }],
-    };
+    const { tag, stories } = loaderData;
+    return seo({
+      appUrl: siteConfig(matches)?.appUrl,
+      path: canonicalPath({ kind: 'tag', slug: tag.slug, page: stories.page }),
+      title:
+        stories.page > 1
+          ? m.tag_page_title_paged({ name: tag.name, page: String(stories.page) })
+          : m.tag_page_title({ name: tag.name }),
+      description: m.tag_page_description({ name: tag.name }),
+      // A page only 18+ readers fill is empty in this HTML: nothing to index.
+      noindex: stories.items.length === 0,
+    });
   },
   notFoundComponent: NotFoundPage,
   component: TagPage,

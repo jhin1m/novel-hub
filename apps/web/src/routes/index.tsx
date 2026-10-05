@@ -7,6 +7,7 @@ import { SiteLayout } from '../components/site-layout';
 import { StoryGrid } from '../components/story/story-grid';
 import { publicPageHeaders } from '../lib/cache-headers';
 import { assertCanonical, requestLocation } from '../lib/canonical';
+import { seo, siteConfig } from '../lib/seo';
 import { useMatureAwareList } from '../lib/use-mature-aware-list';
 import { getHomePage } from '../server-fns/catalog';
 
@@ -18,17 +19,12 @@ export const Route = createFileRoute('/')({
     return getHomePage();
   },
   headers: ({ match }) => publicPageHeaders(match.status, { list: true }),
-  head: ({ loaderData }) => ({
-    meta: [{ title: m.app_name() }, { name: 'description', content: m.home_description() }],
-    links: loaderData
-      ? [
-          {
-            rel: 'canonical',
-            href: new URL(canonicalPath({ kind: 'home' }), loaderData.appUrl).href,
-          },
-        ]
-      : [],
-  }),
+  head: ({ matches }) =>
+    seo({
+      appUrl: siteConfig(matches)?.appUrl,
+      path: canonicalPath({ kind: 'home' }),
+      description: m.home_description(),
+    }),
   component: HomePage,
 });
 

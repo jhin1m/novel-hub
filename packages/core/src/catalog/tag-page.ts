@@ -130,10 +130,10 @@ export async function canonicalTagSlug(db: Db, slug: string): Promise<string | n
   return row?.slug ?? null;
 }
 
-type MergedTag = { id: string; canonicalId: string | null };
+export type MergedTag = { id: string; canonicalId: string | null };
 
 /** The canonical tag id at the end of a merge chain starting at `id`; `null` past the hop limit. */
-function followMerges(id: string, merged: readonly MergedTag[]): string | null {
+export function followMerges(id: string, merged: readonly MergedTag[]): string | null {
   const next = new Map(merged.map((t) => [t.id, t.canonicalId]));
   let current = id;
   for (let hop = 1; hop < MAX_MERGE_HOPS; hop++) {

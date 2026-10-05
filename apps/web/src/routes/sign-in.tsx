@@ -13,9 +13,10 @@ import { authClient } from '../lib/auth-client';
 import { authErrorMessage, throwIfAuthError } from '../lib/auth-errors';
 import { formText } from '../lib/form-text';
 import { meQueryKey } from '../lib/me';
+import { seo } from '../lib/seo';
 
 export const Route = createFileRoute('/sign-in')({
-  head: () => ({ meta: [{ title: m.sign_in_title() }] }),
+  head: () => seo({ title: m.sign_in_title(), noindex: true }),
   component: SignInPage,
 });
 

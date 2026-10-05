@@ -12,6 +12,7 @@ import { NO_STORE } from '../lib/cache-headers';
 import { useLibraryShelf } from '../lib/library';
 import { useMe } from '../lib/me';
 import { cn } from '../lib/utils';
+import { seo } from '../lib/seo';
 
 const librarySearchSchema = z.object({
   shelf: libraryTabSchema.catch('reading'),
@@ -30,9 +31,7 @@ export const Route = createFileRoute('/library')({
   validateSearch: (raw: Record<string, unknown>) => librarySearchSchema.parse(raw),
   // Everything here is personal and loaded in the browser; the page itself is never stored.
   headers: () => NO_STORE,
-  head: () => ({
-    meta: [{ title: m.library_title() }, { name: 'robots', content: 'noindex' }],
-  }),
+  head: () => seo({ title: m.library_title(), noindex: true }),
   component: LibraryPage,
 });
 

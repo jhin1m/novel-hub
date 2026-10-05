@@ -162,7 +162,7 @@ Làm tuần tự; mỗi mục chỉ coi là xong khi đạt tiêu chí và có t
 - [x] Tủ truyện và lịch sử đọc, nút đọc tiếp.
 - [x] Rate limit Redis theo user và IP: đăng ký, đăng nhập, quên mật khẩu, tạo truyện, đăng chương, bình luận, báo cáo (mục 7).
 - [x] Kiểm tra trùng lặp khi đăng chương, báo cáo vi phạm, trang hàng chờ cho mod (mục 7).
-- [ ] SEO: metadata, Open Graph, sitemap, canonical URL.
+- [x] SEO: metadata, Open Graph, sitemap, canonical URL.
 - [ ] Trước khi mở public: backup Postgres ra ngoài VPS và thử restore thành công (mục 11).
 
 ### Giai đoạn 2: Cộng đồng

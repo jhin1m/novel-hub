@@ -16,7 +16,7 @@ import { publicPageHeaders } from '../lib/cache-headers';
 import { assertCanonical, requestLocation } from '../lib/canonical';
 import { throwNotFound } from '../lib/route-signals';
 import { getStoryPage } from '../server-fns/catalog';
-import { metaDescription } from '../lib/meta-description';
+import { seo, siteConfig } from '../lib/seo';
 
 export const Route = createFileRoute('/stories/$storyKey/')({
   // Never reads the session: the HTML is the same for every visitor and cached by the CDN.
@@ -31,22 +31,18 @@ export const Route = createFileRoute('/stories/$storyKey/')({
   },
   headers: ({ match, loaderData }) =>
     publicPageHeaders(match.status, { noindex: loaderData?.story.isMature }),
-  head: ({ loaderData }) => {
+  head: ({ loaderData, matches }) => {
     if (!loaderData) return {};
-    const { story, appUrl } = loaderData;
-    return {
-      meta: [
-        { title: m.story_page_title({ title: story.title, author: story.author.displayName }) },
-        { name: 'description', content: metaDescription(story.synopsis) },
-        ...(story.isMature ? [{ name: 'robots', content: 'noindex' }] : []),
-      ],
-      links: [
-        {
-          rel: 'canonical',
-          href: new URL(canonicalPath({ kind: 'story', ...story }), appUrl).href,
-        },
-      ],
-    };
+    const { story } = loaderData;
+    return seo({
+      appUrl: siteConfig(matches)?.appUrl,
+      path: canonicalPath({ kind: 'story', ...story }),
+      title: m.story_page_title({ title: story.title, author: story.author.displayName }),
+      description: story.synopsis,
+      image: story.coverUrl,
+      type: 'book',
+      noindex: story.isMature,
+    });
   },
   notFoundComponent: NotFoundPage,
   component: StoryPage,

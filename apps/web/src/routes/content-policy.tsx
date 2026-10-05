@@ -4,6 +4,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { StaticPage } from '../components/static-page';
 import { publicPageHeaders } from '../lib/cache-headers';
 import { assertCanonical, requestLocation } from '../lib/canonical';
+import { seo, siteConfig } from '../lib/seo';
 
 export const Route = createFileRoute('/content-policy')({
   loader: ({ location }) => {
@@ -13,7 +14,13 @@ export const Route = createFileRoute('/content-policy')({
     );
   },
   headers: ({ match }) => publicPageHeaders(match.status),
-  head: () => ({ meta: [{ title: m.rules_title() }] }),
+  head: ({ matches }) =>
+    seo({
+      appUrl: siteConfig(matches)?.appUrl,
+      path: canonicalPath({ kind: 'static', path: '/content-policy' }),
+      title: m.rules_title(),
+      description: m.rules_intro(),
+    }),
   component: ContentPolicyPage,
 });
 

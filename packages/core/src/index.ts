@@ -238,3 +238,12 @@ export { applyModerationAction } from './moderation/apply-action';
 export { type ModerationError, type ModerationTarget } from './moderation/log-action';
 export { banUser, moderateUser, unbanUser } from './moderation/user-status';
 export { mergeTag } from './moderation/merge-tag';
+export {
+  SITEMAP_PAGE_SIZE,
+  type SitemapPaging,
+  countSitemap,
+  listSitemapChapters,
+  listSitemapPages,
+  listSitemapStories,
+} from './seo/sitemap';
+export { type SitemapEntry, renderRobots, renderSitemapIndex, renderUrlset } from './seo/xml';

@@ -15,11 +15,10 @@ import {
   useTags,
   useUpdateStory,
 } from '../../../../lib/stories';
+import { seo } from '../../../../lib/seo';
 
 export const Route = createFileRoute('/write/stories/$publicId/')({
-  head: () => ({
-    meta: [{ title: m.story_edit_title() }, { name: 'robots', content: 'noindex' }],
-  }),
+  head: () => seo({ title: m.story_edit_title(), noindex: true }),
   component: EditStoryPage,
 });
 

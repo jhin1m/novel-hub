@@ -12,6 +12,7 @@ import {
 import { authClient } from '../lib/auth-client';
 import { authErrorMessage, throwIfAuthError } from '../lib/auth-errors';
 import { formText } from '../lib/form-text';
+import { seo } from '../lib/seo';
 
 // Better Auth redirects here with `?token=` (valid link) or `?error=INVALID_TOKEN`.
 const searchSchema = z.object({
@@ -21,7 +22,7 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute('/reset-password')({
   validateSearch: searchSchema,
-  head: () => ({ meta: [{ title: m.reset_title() }] }),
+  head: () => seo({ title: m.reset_title(), noindex: true }),
   component: ResetPasswordPage,
 });
 

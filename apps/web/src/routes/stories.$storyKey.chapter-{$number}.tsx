@@ -9,6 +9,7 @@ import { ReaderNav } from '../components/reader/reader-nav';
 import { NotFoundPage } from '../components/not-found';
 import { publicPageHeaders } from '../lib/cache-headers';
 import { assertCanonical, requestLocation } from '../lib/canonical';
+import { seo, siteConfig } from '../lib/seo';
 import { throwNotFound } from '../lib/route-signals';
 import { useArrowKeys } from '../lib/reader/use-arrow-keys';
 import { useNavVisibility } from '../lib/reader/use-nav-visibility';
@@ -35,17 +36,29 @@ export const Route = createFileRoute('/stories/$storyKey/chapter-{$number}')({
   },
   headers: ({ match, loaderData }) =>
     publicPageHeaders(match.status, { noindex: loaderData?.story.isMature }),
-  head: ({ loaderData }) => {
+  head: ({ loaderData, matches }) => {
     if (!loaderData) return {};
-    const { story, chapter, appUrl } = loaderData;
-    const path = canonicalPath({ kind: 'chapter', ...story, number: chapter.number });
-    return {
-      meta: [
-        { title: m.reader_page_title({ chapter: chapterLabel(chapter), story: story.title }) },
-        ...(story.isMature ? [{ name: 'robots', content: 'noindex' }] : []),
-      ],
-      links: [{ rel: 'canonical', href: new URL(path, appUrl).href }],
-    };
+    const { story, chapter } = loaderData;
+    return seo({
+      appUrl: siteConfig(matches)?.appUrl,
+      path: canonicalPath({ kind: 'chapter', ...story, number: chapter.number }),
+      title: m.reader_page_title({ chapter: chapterLabel(chapter), story: story.title }),
+      description: chapter.title
+        ? m.reader_page_description_titled({
+            number: String(chapter.number),
+            title: chapter.title,
+            story: story.title,
+            author: story.authorDisplayName,
+          })
+        : m.reader_page_description({
+            number: String(chapter.number),
+            story: story.title,
+            author: story.authorDisplayName,
+          }),
+      image: story.coverUrl,
+      type: 'article',
+      noindex: story.isMature,
+    });
   },
   notFoundComponent: NotFoundPage,
   component: ReaderPage,

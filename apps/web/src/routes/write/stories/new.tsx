@@ -6,11 +6,10 @@ import { StoryForm } from '../../../components/story-form';
 import { WriterGate } from '../../../components/writer-gate';
 import { apiErrorMessage } from '../../../lib/api-errors';
 import { useCreateStory, useTags } from '../../../lib/stories';
+import { seo } from '../../../lib/seo';
 
 export const Route = createFileRoute('/write/stories/new')({
-  head: () => ({
-    meta: [{ title: m.story_new_title() }, { name: 'robots', content: 'noindex' }],
-  }),
+  head: () => seo({ title: m.story_new_title(), noindex: true }),
   component: NewStoryPage,
 });
 

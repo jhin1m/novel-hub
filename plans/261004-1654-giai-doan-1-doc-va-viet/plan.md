@@ -46,7 +46,7 @@ Giai đoạn 0 xong (`plans/261004-1255-giai-doan-0-nen-mong`). Spec `docs/proje
 | 13 | [Rate limit Redis](./phase-13-rate-limit-redis.md) | 10 | Completed |
 | 14 | [Kiểm tra trùng lặp](./phase-14-kiem-tra-trung-lap.md) | 11 (phần 1/2) | Completed |
 | 15 | [Báo cáo vi phạm và hàng chờ mod](./phase-15-bao-cao-hang-cho-mod.md) | 11 (đánh `[x]`) | Completed |
-| 16 | [SEO: metadata, OG, sitemap, canonical](./phase-16-seo-metadata-sitemap.md) | 12 | Pending |
+| 16 | [SEO: metadata, OG, sitemap, canonical](./phase-16-seo-metadata-sitemap.md) | 12 | Done |
 | 17 | [Backup offsite và thử restore](./phase-17-backup-offsite-restore.md) | 13 | Pending |
 
 Phụ thuộc tuyến tính 1 → 17.
@@ -279,7 +279,8 @@ Phụ thuộc tuyến tính 1 → 17.
 - Phase 11 xong (2026-10-05): gate 5 lệnh xanh; checkbox 8 `[x]`. Review `../reports/code-reviewer-261005-1454-phase-11-search-review-report.md` (8/10, đã sửa M1–M3, L1, L4, L5). Report: `../reports/cook-261005-1524-phase-11-search-report.md`. Lệch plan: không cần trường `*Folded` (`đ` đã khớp), `searchCatalog` nhận `db`, sync đọc lại tới khi ổn định, query lạ ở `/search` nhận 307 của router.
 - Phase 12 xong (2026-10-05): gate 5 lệnh xanh; checkbox 9 `[x]`. Review `../reports/code-reviewer-261005-1536-phase-12-library-history-review-report.md` (8/10, đã sửa M1–M3, L1). Report: `../reports/cook-261005-1602-phase-12-library-history-report.md`. Lệch plan: cursor lịch sử theo µs, LATERAL `resumeChapter` thay `resolveReadableChapter`, `bodyLimit` reading chỉ cho route có body.
 - Phase 15 xong (2026-10-05): gate 5 lệnh xanh; checkbox 11 `[x]`. Review `../reports/code-reviewer-261005-1747-phase-15-moderation-review-report.md` (7.5/10, đã sửa H1, M1, M2, L1, L2, L5, L6). Report: `../reports/cook-261005-1747-phase-15-moderation-report.md`. Lệch plan: khách bấm báo cáo → `/sign-in` không kèm redirect; luật quyền mod áp cả cho nội dung của mod/admin; chưa smoke worker thật (bước 9).
-- Tiếp: cook phase 16.
+- Phase 16 xong (2026-10-05): gate 5 lệnh xanh; checkbox 12 `[x]`. Review `../reports/code-reviewer-261005-1905-phase-16-seo-review-report.md` (8/10, đã sửa M1, M2 (doc Cloudflare), L1, L2, L4). Report: `../reports/cook-261005-2009-phase-16-seo-report.md`. Lệch plan: `appUrl` chỉ lấy từ root loader (bỏ khỏi server fn trang), head dựng path bằng `canonicalPath` trực tiếp thay vì block `seo` trong server fn; trang tác giả/tag rỗng `noindex`. Chờ user quyết: M3 (preview 18+ có hiện bìa/giới thiệu), L3 (biến env cho robots thay `NODE_ENV`).
+- Tiếp: cook phase 17.
 - Nhắc trước khi mở public: backup Postgres ra ngoài VPS + thử restore (phase 17).
 
 <!-- slug: giai-doan-1-doc-va-viet -->

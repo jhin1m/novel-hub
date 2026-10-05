@@ -109,6 +109,7 @@ describe('getChapterForReading', () => {
         slug: 'kiem-dao-doc-ton',
         title: 'Kiếm Đạo Độc Tôn',
         isMature: false,
+        coverUrl: null,
         authorUsername: 'author',
         authorDisplayName: 'Lâm Phong',
         warningTags: [],

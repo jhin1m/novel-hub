@@ -9,11 +9,10 @@ import { STATUS_LABELS } from '../../components/story-form';
 import { WriterGate } from '../../components/writer-gate';
 import { useMe } from '../../lib/me';
 import { type AuthorStoryView, useMyStories } from '../../lib/stories';
+import { seo } from '../../lib/seo';
 
 export const Route = createFileRoute('/write/')({
-  head: () => ({
-    meta: [{ title: m.writer_title() }, { name: 'robots', content: 'noindex' }],
-  }),
+  head: () => seo({ title: m.writer_title(), noindex: true }),
   component: WriterHomePage,
 });
 

@@ -1,13 +1,26 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { COVER_PALETTE_SIZE } from '../lib/cover-palette';
 import { contrastViolations } from '../lib/contrast';
-import { CONTRAST_PAIRS, READER_PRESETS, TOKEN_VALUES, resolvedScopes } from './token-values';
+import {
+  CONTRAST_PAIRS,
+  COVER_CONTRAST_PAIRS,
+  READER_PRESETS,
+  TOKEN_VALUES,
+  coverBackgrounds,
+  resolvedScopes,
+} from './token-values';
 
 const tokensCss = readFileSync(new URL('./tokens.css', import.meta.url), 'utf8');
 
 /** Every `--name: #hex;` declaration listed in `TOKEN_VALUES`. */
 function declarations(): Array<[string, string]> {
-  const scopes = [TOKEN_VALUES.light, TOKEN_VALUES.dark, ...Object.values(TOKEN_VALUES.reader)];
+  const scopes = [
+    TOKEN_VALUES.light,
+    TOKEN_VALUES.dark,
+    TOKEN_VALUES.cover,
+    ...Object.values(TOKEN_VALUES.reader),
+  ];
   return scopes.flatMap((scope) => Object.entries(scope));
 }
 
@@ -29,6 +42,16 @@ describe('design tokens', () => {
       expect(contrastViolations(colors, CONTRAST_PAIRS)).toEqual([]);
     },
   );
+
+  it('every default cover colour meets AA against the cover text colour', () => {
+    expect(contrastViolations(TOKEN_VALUES.cover, COVER_CONTRAST_PAIRS)).toEqual([]);
+  });
+
+  it('the cover palette has exactly COVER_PALETTE_SIZE colours, in TS and in the CSS', () => {
+    const expected = Array.from({ length: COVER_PALETTE_SIZE }, (_, i) => `--cover-${i}`);
+    expect(coverBackgrounds()).toEqual(expected);
+    expect(tokensCss.match(/--cover-\d+:/g)).toEqual(expected.map((name) => `${name}:`));
+  });
 
   it('tokens.css declares all six reader presets', () => {
     for (const preset of READER_PRESETS) {

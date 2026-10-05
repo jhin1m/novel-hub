@@ -1,10 +1,11 @@
-import { COVER_MIME_TYPES, LIMITS, coverImageUrl } from '@novel-hub/shared';
+import { COVER_MIME_TYPES, LIMITS } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { apiErrorMessage } from '@/lib/api-errors';
 import { type AuthorStoryView, useRemoveCover, useUploadCover } from '@/lib/stories';
 import { FormMessage } from './auth-ui';
+import { StoryCover } from './story-cover';
 
 const ACCEPTED: readonly string[] = COVER_MIME_TYPES;
 
@@ -12,7 +13,7 @@ const ACCEPTED: readonly string[] = COVER_MIME_TYPES;
  * Cover picker with a local preview. Type and size are checked here first to save an upload; the
  * server checks again from the file contents (and the minimum dimensions).
  */
-export function CoverUpload({ story }: { story: AuthorStoryView }) {
+export function CoverUpload({ story, authorName }: { story: AuthorStoryView; authorName: string }) {
   const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -53,22 +54,25 @@ export function CoverUpload({ story }: { story: AuthorStoryView }) {
         {m.cover_title()}
       </h2>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-        <div className="aspect-[2/3] w-40 shrink-0 overflow-hidden rounded-md border bg-muted">
+        <div className="flex w-40 shrink-0 flex-col gap-2">
           {preview ? (
-            <img src={preview} alt={m.cover_preview_alt()} className="size-full object-cover" />
-          ) : story.coverUrl ? (
             <img
-              src={coverImageUrl(story.coverUrl, 300)}
-              srcSet={`${coverImageUrl(story.coverUrl, 300)} 300w, ${coverImageUrl(story.coverUrl, 600)} 600w`}
-              sizes="160px"
-              alt={m.cover_current_alt({ title: story.title })}
-              className="size-full object-cover"
+              src={preview}
+              alt={m.cover_preview_alt()}
+              className="aspect-[2/3] w-full rounded-md bg-muted object-cover"
             />
           ) : (
-            <div className="flex size-full items-center justify-center p-3 text-center text-sm text-muted-foreground">
-              {m.cover_none()}
-            </div>
+            <StoryCover
+              title={story.title}
+              authorName={authorName}
+              mainTagSlug={story.mainTag.slug}
+              coverUrl={story.coverUrl}
+              sizes="160px"
+            />
           )}
+          {!preview && !story.coverUrl ? (
+            <p className="text-center text-sm text-muted-foreground">{m.cover_none()}</p>
+          ) : null}
         </div>
         <div className="flex flex-col gap-3">
           <label htmlFor={`${id}-file`} className="text-sm font-medium">

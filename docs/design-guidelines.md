@@ -67,6 +67,29 @@ Chọn bằng thuộc tính `data-reader-theme` trên phần tử gốc; không 
 
 Không có bảng chọn màu tự do.
 
+## Bìa mặc định
+
+Truyện chưa có bìa hiện bìa chữ (`components/story-cover.tsx`): HTML/CSS thuần, tỷ lệ 2:3, tiêu đề (Literata) + đường kẻ mảnh + bút danh (Be Vietnam Pro), không hiện tag. Có bìa thì dùng `<img>` `srcset` 300w/600w, `width=600 height=900`; ảnh lỗi tải thì rơi về bìa chữ.
+
+| Token | Màu | Tên gợi nhớ |
+| --- | --- | --- |
+| `--cover-0` | `#8A2F3C` | đỏ son |
+| `--cover-1` | `#7A4E2D` | nâu đất |
+| `--cover-2` | `#7D6420` | vàng đồng |
+| `--cover-3` | `#4F5D2F` | rêu |
+| `--cover-4` | `#2F5D50` | lục bảo |
+| `--cover-5` | `#2E5266` | lam khói |
+| `--cover-6` | `#2C3E66` | chàm |
+| `--cover-7` | `#5B3A64` | tím mơ |
+| `--cover-8` | `#7E3B54` | hồng trầm |
+| `--cover-9` | `#3A3632` | xám than |
+| `--cover-fg` | `#FBF8F3` | chữ trên bìa |
+
+- Dùng chung cho light và dark (bìa là "vật thể", không đổi theo theme). Mọi màu đạt ≥ 5.3:1 với `--cover-fg`.
+- Chọn màu: FNV-1a 32-bit trên slug tag chính `% COVER_PALETTE_SIZE` (`lib/cover-palette.ts`). Truyện cùng tag chính cùng màu; hash thuần số nguyên nên server và trình duyệt cho cùng kết quả.
+- Cỡ tiêu đề theo 4 nấc độ dài (≤ 20, ≤ 45, ≤ 90, > 90 ký tự), đơn vị `cqw` theo bề rộng bìa (cỡ `rem` làm dự phòng), tối đa 6 dòng.
+- Thêm màu: thêm `--cover-N` (N liên tiếp) vào `tokens.css` và `TOKEN_VALUES.cover`, tăng `COVER_PALETTE_SIZE`. `pnpm test` kiểm tương phản và số biến khớp nhau. Đổi số màu làm đổi màu của các tag hiện có.
+
 ## Quy tắc tương phản
 
 - Mọi cặp chữ/nền đạt WCAG AA **4.5:1**; viền ô nhập đạt **3:1** (WCAG 1.4.11).

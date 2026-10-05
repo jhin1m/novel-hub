@@ -69,7 +69,34 @@ const reader: Readonly<Record<ReaderPreset, Scope>> = {
   'den-oled': { '--reader-bg': '#000000', '--reader-fg': '#c9c5be', '--reader-muted': '#8f8b85' },
 };
 
-export const TOKEN_VALUES = { light, dark, reader } as const;
+/** Default text cover palette (`--cover-N`) and its text colour; the same in light and dark. */
+const cover: Scope = {
+  '--cover-0': '#8a2f3c',
+  '--cover-1': '#7a4e2d',
+  '--cover-2': '#7d6420',
+  '--cover-3': '#4f5d2f',
+  '--cover-4': '#2f5d50',
+  '--cover-5': '#2e5266',
+  '--cover-6': '#2c3e66',
+  '--cover-7': '#5b3a64',
+  '--cover-8': '#7e3b54',
+  '--cover-9': '#3a3632',
+  '--cover-fg': '#fbf8f3',
+};
+
+export const TOKEN_VALUES = { light, dark, reader, cover } as const;
+
+/** Names of the `--cover-N` background variables, in palette order. */
+export function coverBackgrounds(): string[] {
+  return Object.keys(cover).filter((name) => /^--cover-\d+$/.test(name));
+}
+
+/** Every cover background against the cover text colour; the author name is small text, so 4.5:1. */
+export const COVER_CONTRAST_PAIRS: ReadonlyArray<ContrastPair> = coverBackgrounds().map((bg) => ({
+  bg,
+  fg: '--cover-fg',
+  min: 4.5,
+}));
 
 /** Text/background pairs that must meet WCAG AA (4.5:1 for text, 3:1 for input borders per 1.4.11). */
 export const CONTRAST_PAIRS: ReadonlyArray<ContrastPair> = [

@@ -32,6 +32,23 @@
   --reader-fg: #2b2722;
   --reader-muted: #675f55;
 
+  /*
+   * Default text cover palette, picked by a hash of the main tag slug (`lib/cover-palette.ts`).
+   * Shared by light and dark: a cover is an object, not a theme surface. Keep the number of
+   * `--cover-N` variables equal to `COVER_PALETTE_SIZE`.
+   */
+  --cover-0: #8a2f3c;
+  --cover-1: #7a4e2d;
+  --cover-2: #7d6420;
+  --cover-3: #4f5d2f;
+  --cover-4: #2f5d50;
+  --cover-5: #2e5266;
+  --cover-6: #2c3e66;
+  --cover-7: #5b3a64;
+  --cover-8: #7e3b54;
+  --cover-9: #3a3632;
+  --cover-fg: #fbf8f3;
+
   --radius: 0.375rem;
 
   --font-ui: 'Be Vietnam Pro', system-ui, sans-serif;

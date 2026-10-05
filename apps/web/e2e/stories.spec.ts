@@ -22,11 +22,18 @@ test('a verified writer creates a story, finds it as a draft and renames it', as
   await expect(page.getByLabel('Tên truyện')).toHaveValue('Kiếm Đạo Thử Nghiệm');
   await expect(page.getByRole('checkbox', { name: 'Truyện có nội dung 18+' })).toBeChecked();
   await expect(page.getByText('Chưa có bìa')).toBeVisible();
+  await expect(page.getByRole('img', { name: 'Bìa truyện Kiếm Đạo Thử Nghiệm' })).toContainText(
+    'Kiếm Đạo Thử Nghiệm',
+  );
 
   await page.getByRole('link', { name: 'Truyện của tôi' }).click();
   const item = page.getByRole('listitem').filter({ hasText: 'Kiếm Đạo Thử Nghiệm' });
   await expect(item).toBeVisible();
   await expect(item.getByText('Nháp')).toBeVisible();
+  // No uploaded cover: the default text cover shows the title.
+  const cover = item.getByRole('img', { name: 'Bìa truyện Kiếm Đạo Thử Nghiệm' });
+  await expect(cover).toBeVisible();
+  await expect(cover).toContainText('Kiếm Đạo Thử Nghiệm');
 
   await item.getByRole('link', { name: 'Kiếm Đạo Thử Nghiệm' }).click();
   await page.waitForLoadState('networkidle');

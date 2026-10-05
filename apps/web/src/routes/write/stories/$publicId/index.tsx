@@ -6,6 +6,7 @@ import { SiteLayout } from '../../../../components/site-layout';
 import { StoryForm } from '../../../../components/story-form';
 import { WriterGate } from '../../../../components/writer-gate';
 import { ApiError, apiErrorMessage } from '../../../../lib/api-errors';
+import { useMe } from '../../../../lib/me';
 import {
   type AuthorStoryView,
   type TagView,
@@ -39,6 +40,8 @@ function EditStoryPage() {
 
 function EditStory() {
   const { publicId } = Route.useParams();
+  // Already loaded by `WriterGate`; the author is the signed-in account.
+  const me = useMe();
   const story = useMyStory(publicId);
   const tags = useTags();
 
@@ -54,7 +57,7 @@ function EditStory() {
 
   return (
     <div className="flex flex-col gap-10">
-      <CoverUpload story={story.data} />
+      <CoverUpload story={story.data} authorName={me.data?.displayName ?? ''} />
       <EditStoryForm key={story.data.publicId} story={story.data} tags={tags.data} />
     </div>
   );

@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Phase 3: Bìa mặc định dạng chữ"
-status: pending
+status: completed
 priority: P1
 effort: "0.75d"
 dependencies: [2]
@@ -129,10 +129,10 @@ Bảng màu dùng chung cho light và dark (bìa là "vật thể", không đổ
 
 ## Function / Interface Checklist
 
-- [ ] `fnv1a32(input): number`
-- [ ] `coverPaletteIndex(tagSlug): number`, `COVER_PALETTE_SIZE`
-- [ ] `coverTitleClass(title): string`
-- [ ] `StoryCover(props: StoryCoverProps)`
+- [x] `fnv1a32(input): number`
+- [x] `coverPaletteIndex(tagSlug): number`, `COVER_PALETTE_SIZE`
+- [x] `coverTitleClass(title): string`
+- [x] `StoryCover(props: StoryCoverProps)`
 
 ## Test Scenario Matrix
 
@@ -155,10 +155,10 @@ Bảng màu dùng chung cho light và dark (bìa là "vật thể", không đổ
 
 ## Success Criteria
 
-- [ ] Truyện không có bìa hiện bìa chữ đúng tỷ lệ 2:3, màu theo tag chính, có tiêu đề và bút danh
-- [ ] Truyện có bìa dùng `srcset` 300/600, không nhảy layout
-- [ ] Test tương phản và test component xanh; lưới bìa chữ được duyệt mắt
-- [ ] Gate 5 lệnh xanh; checkbox 2 Giai đoạn 1 = `[x]`
+- [x] Truyện không có bìa hiện bìa chữ đúng tỷ lệ 2:3, màu theo tag chính, có tiêu đề và bút danh
+- [x] Truyện có bìa dùng `srcset` 300/600, không nhảy layout
+- [x] Test tương phản và test component xanh; lưới bìa chữ được duyệt mắt
+- [x] Gate 5 lệnh xanh; checkbox 2 Giai đoạn 1 = `[x]`
 
 ## Risk Assessment
 

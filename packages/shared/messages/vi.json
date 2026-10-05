@@ -112,7 +112,7 @@
   "cover_upload": "Tải bìa lên",
   "cover_remove": "Gỡ bìa",
   "cover_none": "Chưa có bìa",
-  "cover_current_alt": "Bìa truyện {title}",
+  "cover_alt": "Bìa truyện {title}",
   "cover_preview_alt": "Xem trước bìa mới",
   "cover_uploaded": "Đã cập nhật bìa.",
   "cover_removed": "Đã gỡ bìa.",

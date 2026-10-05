@@ -152,7 +152,7 @@ Làm tuần tự; mỗi mục chỉ coi là xong khi đạt tiêu chí và có t
 ### Giai đoạn 1: Đọc và viết
 
 - [ ] Tạo và sửa truyện: tiêu đề, giới thiệu, bìa (upload S3, resize), tag, cờ 18+, cờ có dùng AI.
-- [ ] Bìa mặc định dạng chữ khi tác giả không có bìa.
+- [x] Bìa mặc định dạng chữ khi tác giả không có bìa.
 - [ ] Editor Tiptap: autosave vào `chapter_drafts` (debounce \~2 giây), trạng thái đã lưu, chế độ tập trung.
 - [ ] Đăng chương: sinh HTML đã sanitize, gắn `data-pid`, ghi revision, đếm số chữ, hẹn giờ đăng.
 - [ ] Khôi phục từ revision cũ.

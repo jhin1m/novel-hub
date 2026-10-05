@@ -1,5 +1,5 @@
 import { canonicalPath } from '@novel-hub/shared';
-import { type Page, expect, test } from '@playwright/test';
+import { type Locator, type Page, expect, test } from '@playwright/test';
 import { gotoHydrated, signUpVerified } from './helpers/accounts';
 import { type PublishedStory, createPublishedStory } from './helpers/content';
 
@@ -9,8 +9,14 @@ const TABS = ['Trang chủ', 'Khám phá', 'Tủ truyện', 'Viết', 'Tôi'];
 let story: PublishedStory;
 
 test.beforeAll(async () => {
-  story = await createPublishedStory({ title: `Thanh Tab ${Date.now().toString(36)}` });
+  // A long title, so the story page hero is checked for horizontal overflow.
+  story = await createPublishedStory({
+    title: `Thanh Tab ${Date.now().toString(36)} – một tiêu đề thật dài để thử xem phần đầu trang truyện có tràn ngang trên màn hình điện thoại hẹp hay không`,
+  });
 });
+
+const storyPath = () =>
+  canonicalPath({ kind: 'story', slug: story.slug, publicId: story.publicId });
 
 async function expectNoHorizontalScroll(page: Page) {
   const { scrollWidth, clientWidth } = await page.evaluate(() => ({
@@ -76,14 +82,26 @@ test.describe('mobile tab bar at 360px', () => {
     expect(await page.evaluate(() => (window as unknown as { __nav?: number }).__nav)).toBe(1);
   });
 
-  test('the story page has no tab bar and no horizontal scroll', async ({ page }) => {
-    await gotoHydrated(
-      page,
-      canonicalPath({ kind: 'story', slug: story.slug, publicId: story.publicId }),
-    );
+  test('the story page has no tab bar, no horizontal scroll and one sticky reading link', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, storyPath());
     await expect(page.getByRole('heading', { level: 1, name: story.title })).toBeVisible();
     await expect(page.getByRole('navigation', MAIN_NAV)).toHaveCount(0);
+    // The hero's own reading link is hidden on a narrow screen: only the sticky one is there.
+    const start = page.getByRole('link', { name: 'Đọc từ đầu' });
+    await expect(start).toHaveCount(1);
+    await expect(start).toBeVisible();
+    await expect(start).toHaveAttribute('href', story.chapterPath(1));
     await expectNoHorizontalScroll(page);
+  });
+
+  test('the sticky reading link never covers the footer', async ({ page }) => {
+    await gotoHydrated(page, storyPath());
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    // A plain click: it fails if anything fixed sits over the link.
+    await page.getByRole('contentinfo').getByRole('link', { name: 'Điều khoản' }).click();
+    await expect(page).toHaveURL('/terms');
   });
 });
 
@@ -93,5 +111,25 @@ test.describe('desktop at 1280px', () => {
   test('the tab bar is hidden', async ({ page }) => {
     await gotoHydrated(page, '/');
     await expect(page.getByRole('navigation', MAIN_NAV)).toBeHidden();
+  });
+
+  test('library buttons on the story hero use the cover text colour, like its title', async ({
+    page,
+  }) => {
+    const color = (locator: Locator) => locator.evaluate((el) => getComputedStyle(el).color);
+    await gotoHydrated(page, storyPath());
+    const title = page.getByRole('heading', { level: 1, name: story.title });
+    const titleColor = await color(title);
+
+    const guestAdd = page.getByRole('link', { name: 'Thêm vào tủ' });
+    await expect(guestAdd).toBeVisible();
+    expect(await color(guestAdd)).toBe(titleColor);
+
+    await signUpVerified(page);
+    await gotoHydrated(page, storyPath());
+    await page.getByRole('button', { name: 'Thêm vào tủ' }).click();
+    const onShelf = page.getByRole('button', { name: 'Trong tủ: Đang đọc' });
+    await expect(onShelf).toBeVisible();
+    expect(await color(onShelf)).toBe(titleColor);
   });
 });

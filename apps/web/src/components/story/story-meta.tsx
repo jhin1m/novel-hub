@@ -1,40 +1,46 @@
-import type { StoryStatus } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
-import { formatDate, formatDecimal, formatWordCount } from '@/lib/format';
-import { STORY_STATUS_LABELS } from './story-labels';
+import { formatDate, formatDecimal, formatWordCount } from '../../lib/format';
 
-/** The facts of a story, laid out like the colophon of a book. */
+/**
+ * The story's numbers as one row of figures split by thin rules: chapters, words, pace and last
+ * update (the last two only when known). Colours come from the surrounding text, so the row reads
+ * the same on the cover-coloured hero. On a narrow screen the (up to four) columns spread across
+ * the width, each as wide as its figure, so a date never has to break.
+ */
 export function StoryMeta({
-  status,
   chapterCount,
   wordCount,
   chaptersPerWeek,
   lastChapterAt,
 }: {
-  status: StoryStatus;
   chapterCount: number;
   wordCount: number;
   chaptersPerWeek: number | null;
   lastChapterAt: string | null;
 }) {
-  const rows: [string, string][] = [
-    [m.story_status_label(), STORY_STATUS_LABELS[status]()],
-    [m.story_page_chapters(), String(chapterCount)],
-    [m.story_page_words(), formatWordCount(wordCount)],
+  const items: [string, string][] = [
+    [m.story_page_stat_chapters(), String(chapterCount)],
+    [m.story_page_stat_words(), formatWordCount(wordCount)],
   ];
   if (chaptersPerWeek !== null) {
-    rows.push([
-      m.story_page_pace(),
-      m.story_page_pace_value({ count: formatDecimal(chaptersPerWeek) }),
+    items.push([
+      m.story_page_stat_pace(),
+      m.story_page_pace_short({ count: formatDecimal(chaptersPerWeek) }),
     ]);
   }
-  if (lastChapterAt) rows.push([m.story_page_updated(), formatDate(lastChapterAt)]);
+  if (lastChapterAt) items.push([m.story_page_stat_updated(), formatDate(lastChapterAt)]);
   return (
-    <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm">
-      {rows.map(([label, value]) => (
-        <div key={label} className="contents">
-          <dt className="text-muted-foreground">{label}</dt>
-          <dd>{value}</dd>
+    <dl className="flex flex-wrap justify-between gap-y-3 divide-x divide-current/25 md:justify-start">
+      {items.map(([label, value]) => (
+        // Value above its label on screen; the label still comes first for screen readers.
+        <div
+          key={label}
+          className="flex flex-col-reverse gap-0.5 px-2.5 first:pl-0 last:pr-0 md:px-6"
+        >
+          <dt className="text-xs font-semibold">{label}</dt>
+          <dd className="text-sm font-extrabold tracking-tight whitespace-nowrap md:text-xl">
+            {value}
+          </dd>
         </div>
       ))}
     </dl>

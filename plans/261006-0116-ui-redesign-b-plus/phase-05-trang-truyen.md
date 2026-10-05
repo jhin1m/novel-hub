@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Trang truyện"
-status: pending
+status: completed
 priority: P1
 effort: "0.75d"
 dependencies: [4]
@@ -98,14 +98,14 @@ currentNumber = useContinueReading(publicId, !!me.data).data?.chapterNumber ?? n
 
 ## Function/interface checklist
 
-- [ ] `StoryHero({ story, chaptersPerWeek, firstChapterNumber })`
-- [ ] `StoryMeta({ chapterCount, wordCount, chaptersPerWeek, lastChapterAt, tone?: 'hero' })` (bỏ prop `status`)
-- [ ] `StoryChapterList({ story, chapters, currentNumber })`
-- [ ] `StorySynopsis({ text })`, `StoryAuthorCard({ author })`, `StoryStickyCta({ story, firstChapterNumber })`
-- [ ] `ContinueReadingButton({ story, firstChapterNumber, className?, size?, showRestart?, tone?: 'default' | 'on-cover' })`
-- [ ] `LibraryButton({ publicId, tone?: 'default' | 'on-cover' })`
-- [ ] `ON_COVER_SOLID`, `ON_COVER_OUTLINE`
-- [ ] `SiteLayout` dùng `bottomInset="cta"` (có từ phase 3)
+- [x] `StoryHero({ story, chaptersPerWeek, firstChapterNumber })`
+- [x] `StoryMeta({ chapterCount, wordCount, chaptersPerWeek, lastChapterAt, tone?: 'hero' })` (bỏ prop `status`)
+- [x] `StoryChapterList({ story, chapters, currentNumber })`
+- [x] `StorySynopsis({ text })`, `StoryAuthorCard({ author })`, `StoryStickyCta({ story, firstChapterNumber })`
+- [x] `ContinueReadingButton({ story, firstChapterNumber, className?, size?, showRestart?, tone?: 'default' | 'on-cover' })`
+- [x] `LibraryButton({ publicId, tone?: 'default' | 'on-cover' })`
+- [x] `ON_COVER_SOLID`, `ON_COVER_OUTLINE`
+- [x] `SiteLayout` dùng `bottomInset="cta"` (có từ phase 3)
 
 ## Dependency map
 
@@ -148,13 +148,13 @@ h1 = tên truyện; link "Đọc tiếp chương N" (strict); chữ "Đọc từ
 
 ## Success Criteria
 
-- [ ] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
-- [ ] Không file nào trong `packages/` đổi (trừ `messages/vi.json`)
-- [ ] Ở 1280 chỉ một link "Đọc tiếp chương N"/"Đọc từ đầu" chính hiển thị (hero); ở 360/390 chỉ CTA dính đáy
-- [ ] Mọi nút trên hero dùng `ON_COVER_*` (`rg -n 'tone="on-cover"' apps/web/src/components/story/story-hero.tsx` có cả `LibraryButton` và `ContinueReadingButton`); không chip nào nền trắng trong suốt có chữ
-- [ ] `mature-gate.tsx` lớp ngoài vẫn có `mature-gate fixed inset-0 z-40`, không có `/50`, `bg-black`; ở route chương `<MatureGate>` không nằm trong `div.reader-page`
-- [ ] `rg -n 'font-serif' apps/web/src/routes/stories.\$storyKey.index.tsx apps/web/src/components/story apps/web/src/components/reader/mature-gate.tsx` chỉ còn giới thiệu (`story-synopsis.tsx`)
-- [ ] Route và file mới ≤ 200 dòng
+- [x] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
+- [x] Không file nào trong `packages/` đổi (trừ `messages/vi.json`)
+- [x] Ở 1280 chỉ một link "Đọc tiếp chương N"/"Đọc từ đầu" chính hiển thị (hero); ở 360/390 chỉ CTA dính đáy
+- [x] Mọi nút trên hero dùng `ON_COVER_*` (`rg -n 'tone="on-cover"' apps/web/src/components/story/story-hero.tsx` có cả `LibraryButton` và `ContinueReadingButton`); không chip nào nền trắng trong suốt có chữ
+- [x] `mature-gate.tsx` lớp ngoài vẫn có `mature-gate fixed inset-0 z-40`, không có `/50`, `bg-black`; ở route chương `<MatureGate>` không nằm trong `div.reader-page`
+- [x] `rg -n 'font-serif' apps/web/src/routes/stories.\$storyKey.index.tsx apps/web/src/components/story apps/web/src/components/reader/mature-gate.tsx` chỉ còn giới thiệu (`story-synopsis.tsx`)
+- [x] Route và file mới ≤ 200 dòng
 
 ## Risk Assessment
 

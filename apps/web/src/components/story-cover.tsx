@@ -2,6 +2,7 @@ import { coverImageUrl } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { useEffect, useRef, useState } from 'react';
 import { coverColorVar, coverTitleClass } from '../lib/cover-palette';
+import { formatInitial } from '../lib/format';
 import { cn } from '../lib/utils';
 
 export interface StoryCoverProps {
@@ -88,7 +89,7 @@ export function StoryCover({
         aria-hidden="true"
         className="pointer-events-none absolute -right-[0.12em] -bottom-[0.3em] text-8xl leading-none font-extrabold text-white/11 select-none supports-[width:1cqw]:text-[length:105cqw]"
       >
-        {coverInitial(title)}
+        {formatInitial(title)}
       </span>
       <CoverSpine />
       <div
@@ -123,9 +124,4 @@ function CoverSpine() {
       className="pointer-events-none absolute inset-y-0 left-0 w-[5%] min-w-[3px] border-r border-white/15 bg-black/20"
     />
   );
-}
-
-/** First character of the title, by code point so a surrogate pair is never split. */
-function coverInitial(title: string): string {
-  return (Array.from(title.trim())[0] ?? '').toUpperCase();
 }

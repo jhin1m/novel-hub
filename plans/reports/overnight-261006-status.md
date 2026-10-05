@@ -1,6 +1,6 @@
 # Overnight 261006: đang chạy
-Cập nhật: 2026-10-06 04:40
-Đang làm: Q5 / phase-05
+Cập nhật: 2026-10-06 05:20
+Đang làm: Q5 / phase-06
 ## Đã xong
 - Q1 canvas /write + editor (artboard F-* trên https://claude.ai/artifact/X7w7oUBxruy6Y47oQ4HdAo), đặc tả ở plans/reports/design-261006-write-editor-screens-report.md
 - Q2 report brainstorm cuối: plans/reports/brainstorm-261006-ui-redesign-b-plus-final-report.md
@@ -10,6 +10,7 @@ Cập nhật: 2026-10-06 04:40
 - Q5 phase-02 component dùng chung
 - Q5 phase-03 layout header/footer/thanh tab
 - Q5 phase-04 trang chủ
+- Q5 phase-05 trang truyện
 
 ## Quyết định [auto] (sáng cần duyệt)
 - Q1: 8 quyết định [auto] trong design-261006-write-editor-screens-report.md
@@ -23,10 +24,13 @@ Cập nhật: 2026-10-06 04:40
 - Q5 p02: thẻ lưới thêm bút danh + dòng 'Cập nhật {ngày}' (spec §8), dày hơn canvas; lưới mobile giữ 2 cột ở 360px
 - Q5 p03 câu hỏi mở: giữ chỗ 42px cho nút tài khoản (header khách dịch ~150px khi tải xong)?; thêm viewport-fit=cover + scroll-padding-bottom ở phase 11?
 - Q5 p04: e2e 'Đọc tiếp' bật 18+ thẳng trong DB thay vì qua trang cài đặt; chi tiết trong reports/cook-261006-phase-04-home-page-report.md
+- Q5 p05: xoá key i18n story_page_by; viền focus breadcrumb hero dùng --cover-fg
 
 ## Chặn / lỗi
 - Q3 (nhẹ): 'ck plan add-phase --after' lỗi afterId.toLowerCase; worker đổi tên phase bằng tay, 'ck plan validate' xác nhận
 - Thư mục .claude/ (settings.local.json, agent-memory của code-reviewer) do subagent tạo ở gốc repo, chưa track; controller không commit, sáng xem rồi xoá hoặc gitignore
+- Q5 p05 (controller): lần đầu đóng worker khi nó còn chạy e2e nền (chưa in RESULT) → e2e mồ côi cổng 3100 chạy chồng gate, test int publishing-worker đỏ. Đã kill tiến trình mồ côi, sửa controller chỉ đóng worker khi có RESULT, cook lại phase 5 trên working tree; không tính là lần sửa gate
+- Test chập chờn apps/worker/src/publishing-worker.int.test.ts (chạy riêng 1/3 đỏ); câu hỏi mở: sửa bằng chờ đúng job id? Chưa sửa vì ngoài phạm vi redesign
 
 ## Lệnh tiếp theo cho user
 - (đang chạy)

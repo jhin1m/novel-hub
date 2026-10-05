@@ -32,3 +32,8 @@ export function formatWordCount(words: number): string {
 export function formatDate(iso: string): string {
   return date.format(new Date(iso));
 }
+
+/** First letter of a name or title, upper-cased, by code point so a surrogate pair is never split. */
+export function formatInitial(text: string): string {
+  return (Array.from(text.trim())[0] ?? '').toUpperCase();
+}

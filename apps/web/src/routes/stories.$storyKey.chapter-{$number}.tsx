@@ -89,58 +89,61 @@ function ReaderPage() {
   useViewBeacon(chapterRef, !gated);
 
   return (
-    <div className="reader-page">
-      {/* While the 18+ screen shows, everything behind it is out of reach. */}
-      <ReaderNav
-        inert={gated}
-        story={story}
-        chapterNumber={chapter.number}
-        chapterLabel={chapterLabel(chapter)}
-        prevHref={prevHref}
-        nextHref={nextHref}
-        hidden={hidden}
-      />
-      <main className="px-4 pt-20 pb-16" inert={gated}>
-        <div className="reader-column">
-          <header className="mb-10 flex flex-col gap-2 font-sans">
-            <a
-              href={canonicalPath({ kind: 'story', ...story })}
-              className="text-sm text-reader-muted underline-offset-4 hover:underline"
-            >
-              {story.title}
-            </a>
-            <p className="text-sm text-reader-muted">
-              {m.reader_by_author({ name: story.authorDisplayName })}
-            </p>
-            {/* Focus target once the 18+ screen goes away. */}
-            <h1
-              tabIndex={-1}
-              className="font-serif text-2xl leading-snug font-semibold outline-none"
-            >
-              {m.reader_chapter_label({ number: chapter.number })}
-              {chapter.title ? `: ${chapter.title}` : null}
-            </h1>
-          </header>
-          <ChapterContent
-            html={chapter.html}
-            nextHref={nextHref}
-            onClick={onReadingAreaClick}
-            contentRef={contentRef}
-          />
-          <ChapterEnd
-            nextHref={nextHref}
-            authorNote={chapter.authorNote}
-            reportTarget={{
-              type: 'chapter',
-              storyPublicId: story.publicId,
-              number: chapter.number,
-            }}
-          />
-        </div>
-      </main>
+    <>
+      <div className="reader-page">
+        {/* While the 18+ screen shows, everything behind it is out of reach. */}
+        <ReaderNav
+          inert={gated}
+          story={story}
+          chapterNumber={chapter.number}
+          chapterLabel={chapterLabel(chapter)}
+          prevHref={prevHref}
+          nextHref={nextHref}
+          hidden={hidden}
+        />
+        <main className="px-4 pt-20 pb-16" inert={gated}>
+          <div className="reader-column">
+            <header className="mb-10 flex flex-col gap-2 font-sans">
+              <a
+                href={canonicalPath({ kind: 'story', ...story })}
+                className="text-sm text-reader-muted underline-offset-4 hover:underline"
+              >
+                {story.title}
+              </a>
+              <p className="text-sm text-reader-muted">
+                {m.reader_by_author({ name: story.authorDisplayName })}
+              </p>
+              {/* Focus target once the 18+ screen goes away. */}
+              <h1
+                tabIndex={-1}
+                className="font-serif text-2xl leading-snug font-semibold outline-none"
+              >
+                {m.reader_chapter_label({ number: chapter.number })}
+                {chapter.title ? `: ${chapter.title}` : null}
+              </h1>
+            </header>
+            <ChapterContent
+              html={chapter.html}
+              nextHref={nextHref}
+              onClick={onReadingAreaClick}
+              contentRef={contentRef}
+            />
+            <ChapterEnd
+              nextHref={nextHref}
+              authorNote={chapter.authorNote}
+              reportTarget={{
+                type: 'chapter',
+                storyPublicId: story.publicId,
+                number: chapter.number,
+              }}
+            />
+          </div>
+        </main>
+      </div>
+      {/* Outside the reading area, so the site colours apply rather than the reader preset's. */}
       {story.isMature ? (
         <MatureGate storyTitle={story.title} warningTags={story.warningTags} />
       ) : null}
-    </div>
+    </>
   );
 }

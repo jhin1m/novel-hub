@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { useContinueReading } from '@/lib/library';
 import { useMe } from '@/lib/me';
 import { setResumeHandoff } from '@/lib/reader/resume-handoff';
+import { cn } from '@/lib/utils';
+import { ON_COVER_OUTLINE, ON_COVER_SOLID } from '../story/on-cover-classes';
 
 interface StoryRef {
   slug: string;
@@ -25,7 +27,7 @@ export function ResumeLink({
   story: StoryRef;
   number: number;
   scrollPct: number;
-  size?: 'sm';
+  size?: 'sm' | 'lg';
   className?: string;
 }) {
   const href = canonicalPath({ kind: 'chapter', ...story, number });
@@ -56,28 +58,55 @@ export function ResumeLink({
 
 /**
  * "Start reading" as the server renders it for everyone; once the browser knows the reader has
- * progress in the story, "Continue chapter N" in the same place.
+ * progress in the story, "Continue chapter N" in the same place, plus "Start reading" beside it
+ * when `showRestart` is set. `tone="on-cover"` is for the cover-coloured story hero.
  */
 export function ContinueReadingButton({
   story,
   firstChapterNumber,
+  className,
+  size,
+  showRestart = false,
+  tone = 'default',
 }: {
   story: StoryRef;
   firstChapterNumber: number;
+  className?: string;
+  size?: 'sm' | 'lg';
+  showRestart?: boolean;
+  tone?: 'default' | 'on-cover';
 }) {
   const me = useMe();
   const progress = useContinueReading(story.publicId, !!me.data).data;
+  const onCover = tone === 'on-cover';
+  const startHref = canonicalPath({ kind: 'chapter', ...story, number: firstChapterNumber });
 
   if (!progress) {
     return (
-      <Button asChild>
-        <a href={canonicalPath({ kind: 'chapter', ...story, number: firstChapterNumber })}>
-          {m.story_page_start()}
-        </a>
+      <Button asChild size={size} className={cn(onCover && ON_COVER_SOLID, className)}>
+        <a href={startHref}>{m.story_page_start()}</a>
       </Button>
     );
   }
   return (
-    <ResumeLink story={story} number={progress.chapterNumber} scrollPct={progress.scrollPct} />
+    <>
+      <ResumeLink
+        story={story}
+        number={progress.chapterNumber}
+        scrollPct={progress.scrollPct}
+        size={size}
+        className={cn(onCover && ON_COVER_SOLID, className)}
+      />
+      {showRestart ? (
+        <Button
+          asChild
+          variant="outline"
+          size={size}
+          className={cn(onCover && ON_COVER_OUTLINE, className)}
+        >
+          <a href={startHref}>{m.story_page_start()}</a>
+        </Button>
+      ) : null}
+    </>
   );
 }

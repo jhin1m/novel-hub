@@ -135,6 +135,24 @@ test('a guest opening an 18+ story sees the warning, and the page is noindex', a
   await expect(gate).toContainText('Nội dung 18+');
 });
 
+test('the 18+ screen fully covers the story and chapter pages for a guest', async ({ page }) => {
+  for (const path of [storyPath(mature), mature.chapterPath(1)]) {
+    await gotoHydrated(page, path);
+    const gate = page.getByRole('alertdialog');
+    await expect(gate, path).toBeVisible();
+    const { centreInGate, background } = await gate.evaluate((el) => {
+      const hit = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+      return {
+        centreInGate: !!hit && el.contains(hit),
+        background: getComputedStyle(el).backgroundColor,
+      };
+    });
+    expect(centreInGate, path).toBe(true);
+    // Opaque: `rgb(...)`, never `rgba(..., <1)` or `transparent`.
+    expect(background, path).toMatch(/^rgb\(/);
+  }
+});
+
 test('turning 18+ on in settings (with the age statement) adds 18+ stories to the lists', async ({
   page,
 }) => {

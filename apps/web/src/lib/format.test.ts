@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDate, formatWordCount } from './format';
+import { formatDate, formatInitial, formatWordCount } from './format';
 
 describe('formatWordCount', () => {
   it.each([
@@ -20,5 +20,17 @@ describe('formatDate', () => {
     expect(formatDate('2026-10-05T03:00:00.000Z')).toBe('05/10/2026');
     // 23:30 UTC on the 4th is already the 5th in Vietnam.
     expect(formatDate('2026-10-04T23:30:00.000Z')).toBe('05/10/2026');
+  });
+});
+
+describe('formatInitial', () => {
+  it('takes the first letter upper-cased, Vietnamese included', () => {
+    expect(formatInitial('đường xa')).toBe('Đ');
+    expect(formatInitial('  Lão Mặc')).toBe('L');
+  });
+
+  it('keeps a surrogate pair whole and returns nothing for blank text', () => {
+    expect(formatInitial('𠀀 chữ')).toBe('𠀀');
+    expect(formatInitial('   ')).toBe('');
   });
 });

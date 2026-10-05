@@ -1,17 +1,19 @@
 import { canonicalPath, parseStoryKey } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { createFileRoute } from '@tanstack/react-router';
-import { Badge } from '@/components/ui/badge';
-import { ContinueReadingButton } from '../components/library/continue-reading-button';
-import { LibraryButton } from '../components/library/library-button';
 import { ReportButton } from '../components/report/report-button';
 import { NotFoundPage } from '../components/not-found';
 import { MatureGate, useMatureAllowed } from '../components/reader/mature-gate';
 import { SiteLayout } from '../components/site-layout';
+import { StoryAuthorCard } from '../components/story/story-author-card';
 import { StoryChapterList } from '../components/story/story-chapter-list';
+import { StoryHero } from '../components/story/story-hero';
 import { TAG_KIND_LABELS } from '../components/story/story-labels';
-import { StoryMeta } from '../components/story/story-meta';
-import { StoryCover } from '../components/story-cover';
+import { StoryStickyCta } from '../components/story/story-sticky-cta';
+import { StorySynopsis } from '../components/story/story-synopsis';
+import { TagChip } from '../components/tag-chip';
+import { useContinueReading } from '../lib/library';
+import { useMe } from '../lib/me';
 import { publicPageHeaders } from '../lib/cache-headers';
 import { assertCanonical, requestLocation } from '../lib/canonical';
 import { throwNotFound } from '../lib/route-signals';
@@ -53,6 +55,9 @@ function StoryPage() {
   const matureAllowed = useMatureAllowed();
   const gated = story.isMature && !matureAllowed;
   const first = chapters[0];
+  // Same query as the reading buttons, so no extra request; the server always renders `null`.
+  const me = useMe();
+  const currentNumber = useContinueReading(story.publicId, !!me.data).data?.chapterNumber ?? null;
   const tagGroups = (['genre', 'theme', 'warning'] as const)
     .map((kind) => ({ kind, tags: story.tags.filter((t) => t.kind === kind) }))
     .filter((group) => group.tags.length > 0);
@@ -62,92 +67,62 @@ function StoryPage() {
       {/* While the 18+ screen shows, everything behind it is out of reach. */}
       <div inert={gated}>
         <SiteLayout bottomInset="cta">
-          <article className="mx-auto flex max-w-3xl flex-col gap-10 px-4 py-10">
-            <header className="flex flex-col gap-6 sm:flex-row sm:items-start">
-              <StoryCover
-                title={story.title}
-                authorName={story.author.displayName}
-                mainTagSlug={story.mainTag.slug}
-                coverUrl={story.coverUrl}
-                sizes="(min-width: 640px) 200px, 60vw"
-                priority
-                className="w-48 shrink-0 self-center sm:w-52 sm:self-start"
-              />
-              <div className="flex min-w-0 flex-col gap-4">
-                {/* Focus target once the 18+ screen goes away. */}
-                <h1
-                  tabIndex={-1}
-                  className="font-serif text-3xl leading-tight font-semibold text-balance outline-none"
-                >
-                  {story.title}
-                </h1>
-                <p>
-                  <span className="text-muted-foreground">{m.story_page_by()} </span>
-                  <a
-                    href={canonicalPath({ kind: 'author', username: story.author.username })}
-                    className="font-medium underline-offset-4 hover:underline"
-                  >
-                    {story.author.displayName}
-                  </a>
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <TagLink slug={story.mainTag.slug} name={story.mainTag.name} />
-                  {story.isAiAssisted ? <Badge variant="outline">{m.story_card_ai()}</Badge> : null}
-                  {story.isMature ? <Badge variant="outline">{m.story_card_mature()}</Badge> : null}
-                </div>
-                <StoryMeta
-                  status={story.status}
-                  chapterCount={story.chapterCount}
-                  wordCount={story.wordCount}
-                  chaptersPerWeek={chaptersPerWeek}
-                  lastChapterAt={story.lastChapterAt}
-                />
-                <div className="flex flex-wrap gap-2">
-                  {first ? (
-                    <ContinueReadingButton story={story} firstChapterNumber={first.number} />
+          <StoryHero
+            story={story}
+            chaptersPerWeek={chaptersPerWeek}
+            firstChapterNumber={first?.number ?? null}
+          />
+          <div className="relative mx-auto -mt-7 flex max-w-[1240px] flex-wrap items-start gap-6 rounded-t-[28px] bg-background px-4 pt-4 pb-12 md:-mt-14 md:rounded-none md:bg-transparent md:px-8">
+            <article className="flex min-w-0 flex-[999_1_560px] flex-col gap-8 rounded-[18px] border border-border bg-card p-5 md:rounded-[28px] md:p-8">
+              {story.synopsis ? (
+                <section aria-labelledby="synopsis-title" className="flex flex-col gap-3">
+                  <h2 id="synopsis-title" className="text-xl font-extrabold tracking-tight">
+                    {m.story_page_synopsis()}
+                  </h2>
+                  <StorySynopsis text={story.synopsis} />
+                </section>
+              ) : null}
+
+              {tagGroups.length > 0 ? (
+                <dl className="flex flex-col gap-3">
+                  {tagGroups.map((group) => (
+                    <div key={group.kind} className="flex flex-wrap items-center gap-2">
+                      <dt className="mr-1 text-sm text-muted-foreground">
+                        {TAG_KIND_LABELS[group.kind]()}
+                      </dt>
+                      {group.tags.map((tag) => (
+                        <dd key={tag.slug}>
+                          <TagChip slug={tag.slug} name={tag.name} />
+                        </dd>
+                      ))}
+                    </div>
+                  ))}
+                </dl>
+              ) : null}
+
+              <section aria-labelledby="toc-title" className="flex flex-col gap-4">
+                <div className="flex items-baseline justify-between gap-3">
+                  <h2 id="toc-title" className="text-xl font-extrabold tracking-tight">
+                    {m.story_page_toc()}
+                  </h2>
+                  {chapters.length > 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      {m.story_page_toc_count({ count: String(chapters.length) })}
+                    </p>
                   ) : null}
-                  <LibraryButton publicId={story.publicId} />
-                  <ReportButton
-                    target={{ type: 'story', storyPublicId: story.publicId }}
-                    className="self-center"
-                  />
                 </div>
-              </div>
-            </header>
-
-            {story.synopsis ? (
-              <section aria-labelledby="synopsis-title" className="flex flex-col gap-3">
-                <h2 id="synopsis-title" className="font-serif text-xl font-semibold">
-                  {m.story_page_synopsis()}
-                </h2>
-                <p className="font-serif leading-relaxed whitespace-pre-line">{story.synopsis}</p>
+                <StoryChapterList story={story} chapters={chapters} currentNumber={currentNumber} />
               </section>
-            ) : null}
-
-            {tagGroups.length > 0 ? (
-              <dl className="flex flex-col gap-3">
-                {tagGroups.map((group) => (
-                  <div key={group.kind} className="flex flex-wrap items-center gap-2">
-                    <dt className="text-sm text-muted-foreground">
-                      {TAG_KIND_LABELS[group.kind]()}
-                    </dt>
-                    {group.tags.map((tag) => (
-                      <dd key={tag.slug}>
-                        <TagLink slug={tag.slug} name={tag.name} />
-                      </dd>
-                    ))}
-                  </div>
-                ))}
-              </dl>
-            ) : null}
-
-            <section aria-labelledby="toc-title" className="flex flex-col gap-3">
-              <h2 id="toc-title" className="font-serif text-xl font-semibold">
-                {m.story_page_toc()}
-              </h2>
-              <StoryChapterList story={story} chapters={chapters} />
-            </section>
-          </article>
+            </article>
+            <aside className="flex min-w-0 flex-[1_1_300px] flex-col gap-3">
+              <StoryAuthorCard author={story.author} />
+              <ReportButton
+                target={{ type: 'story', storyPublicId: story.publicId }}
+                className="self-start"
+              />
+            </aside>
+          </div>
+          {first ? <StoryStickyCta story={story} firstChapterNumber={first.number} /> : null}
         </SiteLayout>
       </div>
       {story.isMature ? (
@@ -157,13 +132,5 @@ function StoryPage() {
         />
       ) : null}
     </>
-  );
-}
-
-function TagLink({ slug, name }: { slug: string; name: string }) {
-  return (
-    <Badge asChild variant="secondary">
-      <a href={canonicalPath({ kind: 'tag', slug })}>{name}</a>
-    </Badge>
   );
 }

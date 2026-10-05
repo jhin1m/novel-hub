@@ -46,14 +46,15 @@ export function MatureGate({
       aria-modal="true"
       aria-labelledby="mature-gate-title"
       aria-describedby="mature-gate-description"
-      className="mature-gate fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-reader-bg p-4 text-reader-fg outline-none"
+      className="mature-gate fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-background p-4 text-foreground outline-none"
     >
-      <div className="flex w-full max-w-md flex-col gap-4">
-        <p className="font-serif text-lg">{storyTitle}</p>
-        <h1 id="mature-gate-title" className="text-2xl font-semibold">
+      {/* The opaque outer layer hides the page; this card is only the content inside it. */}
+      <div className="flex w-full max-w-md flex-col gap-4 rounded-3xl border border-border bg-card p-6 text-card-foreground md:p-8">
+        <p className="text-lg font-bold">{storyTitle}</p>
+        <h1 id="mature-gate-title" className="text-2xl font-extrabold tracking-tight">
           {m.mature_title()}
         </h1>
-        <p id="mature-gate-description" className="text-reader-muted">
+        <p id="mature-gate-description" className="text-muted-foreground">
           {m.mature_description()}
         </p>
         {warningTags.length > 0 ? (

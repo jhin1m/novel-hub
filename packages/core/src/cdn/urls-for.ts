@@ -1,15 +1,25 @@
 import { type Db, chapters, stories, users } from '@novel-hub/db';
 import { canonicalPath } from '@novel-hub/shared';
 import { and, asc, eq, isNotNull } from 'drizzle-orm';
+import { catalogUrls } from '../catalog/urls';
 import type { ContentChange } from '../content/hooks';
 import { neighbourNumbers } from '../reader/get-chapter-for-reading';
 
 /**
  * The absolute URLs of the cached public pages a change may have altered, built from the current
  * state of the database (so a job that runs late or twice still purges the right pages). Only
- * canonical URLs: variants of a URL only ever hold a 301 to it.
+ * canonical URLs: variants of a URL only ever hold a 301 to it. The pages of the content itself
+ * come first, then the lists showing it (`catalogUrls`).
  */
 export async function urlsFor(db: Db, change: ContentChange, appUrl: string): Promise<string[]> {
+  const [own, lists] = await Promise.all([
+    contentUrls(db, change, appUrl),
+    catalogUrls(db, change),
+  ]);
+  return [...new Set([...own, ...lists.map((path) => absolute(path, appUrl))])];
+}
+
+async function contentUrls(db: Db, change: ContentChange, appUrl: string): Promise<string[]> {
   switch (change.entity) {
     case 'chapter':
       return chapterUrls(db, change.storyId, change.chapterNumber, appUrl);

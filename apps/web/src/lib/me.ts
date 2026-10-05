@@ -51,8 +51,13 @@ export function useSignOut() {
     },
     onSuccess: () => {
       syncMatureFlag(false);
-      // Drop every per-account cache (my stories...) so the next account never sees them.
-      queryClient.removeQueries({ queryKey: meQueryKey });
+      // Drop every per-account cache (my stories...) so the next account never sees them. The
+      // account itself is set, not removed: a removed query leaves every mounted `useMe()` that
+      // did not re-render on its own still showing the signed-out account.
+      queryClient.removeQueries({
+        queryKey: meQueryKey,
+        predicate: (query) => query.queryKey.length > meQueryKey.length,
+      });
       queryClient.setQueryData(meQueryKey, null);
     },
   });

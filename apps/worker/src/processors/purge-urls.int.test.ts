@@ -53,6 +53,8 @@ describe('purge-urls job (real Postgres, fake CDN)', () => {
     expect(purge).toHaveBeenCalledWith([
       'https://truyen.example/authors/tac_gia',
       `https://truyen.example/stories/${story.slug}-${story.publicId}`,
+      'https://truyen.example/',
+      'https://truyen.example/tags/tien-hiep',
     ]);
   });
 });

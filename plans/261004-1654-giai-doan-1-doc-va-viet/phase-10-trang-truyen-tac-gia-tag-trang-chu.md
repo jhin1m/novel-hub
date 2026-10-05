@@ -1,7 +1,7 @@
 ---
 phase: 10
 title: "Phase 10: Trang truyện, tác giả, tag, trang chủ"
-status: pending
+status: completed
 priority: P1
 effort: "2.5d"
 dependencies: [9]
@@ -182,14 +182,14 @@ export function canonicalPageParam(raw: string[]): { page: number; canonical: st
 
 ## Function / Interface Checklist
 
-- [ ] `StoryCardDto`, `storyCardColumns`, `toStoryCard`, `publicStoryWhere`
-- [ ] `chaptersPerWeek`, `canonicalPageParam`
-- [ ] `getStoryPage`, `getAuthorPage`, `getTagPage`, `listRecentlyUpdated`, `listNotable`, `getHomePage`
-- [ ] server fn `getStoryPage`, `getAuthorPage`, `getTagPage`, `getHomePage`
-- [ ] `GET /api/v1/stories`
-- [ ] `useMatureAwareList`, `formatWordCount`, `formatDate`
-- [ ] `StoryCard`, `StoryGrid`, `Pagination`, `ChapterList`, `StoryMeta`
-- [ ] `catalogUrls` nối vào `urlsFor`
+- [x] `StoryCardDto`, `storyCardColumns`, `toStoryCard`, `publicStoryWhere`
+- [x] `chaptersPerWeek`, `canonicalPageParam`
+- [x] `getStoryPage`, `getAuthorPage`, `getTagPage`, `listRecentlyUpdated`, `listNotable`, `getHomePage`
+- [x] server fn `getStoryPage`, `getAuthorPage`, `getTagPage`, `getHomePage`
+- [x] `GET /api/v1/stories`
+- [x] `useMatureAwareList`, `formatWordCount`, `formatDate`
+- [x] `StoryCard`, `StoryGrid`, `Pagination`, `ChapterList`, `StoryMeta`
+- [x] `catalogUrls` nối vào `urlsFor`
 
 ## Test Scenario Matrix
 
@@ -229,12 +229,12 @@ export function canonicalPageParam(raw: string[]): { page: number; canonical: st
 
 ## Success Criteria
 
-- [ ] Bốn trang công khai SSR đúng nội dung spec mục 8, cache công khai, 301/404 đúng
-- [ ] Mọi biến thể query/chữ hoa ngoài allowlist trả 301; link giữa trang công khai là điều hướng tài liệu
-- [ ] Không truyện 18+ trong HTML danh sách; user đã bật thấy thêm qua API
-- [ ] `/settings` bật 18+ có xác nhận; trang điều khoản và quy định có mặt
-- [ ] Purge gồm trang danh sách liên quan, kể cả khi truyện bị ẩn hoặc tác giả bị ban
-- [ ] Gate 5 lệnh xanh; checkbox spec = `[x]`
+- [x] Bốn trang công khai SSR đúng nội dung spec mục 8, cache công khai, 301/404 đúng
+- [x] Mọi biến thể query/chữ hoa ngoài allowlist trả 301; link giữa trang công khai là điều hướng tài liệu
+- [x] Không truyện 18+ trong HTML danh sách; user đã bật thấy thêm qua API
+- [x] `/settings` bật 18+ có xác nhận; trang điều khoản và quy định có mặt
+- [x] Purge gồm trang danh sách liên quan, kể cả khi truyện bị ẩn hoặc tác giả bị ban
+- [x] Gate 5 lệnh xanh; checkbox spec = `[x]`
 
 ## Risk Assessment
 

@@ -1,99 +1,88 @@
+import { canonicalPath } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
-import { useMutation } from '@tanstack/react-query';
-import { Link, createFileRoute } from '@tanstack/react-router';
-import { Button } from '@/components/ui/button';
-import { FormMessage, textLinkClass } from '../components/auth-ui';
+import { createFileRoute } from '@tanstack/react-router';
+import type { ReactNode } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { SiteLayout } from '../components/site-layout';
-import { authClient } from '../lib/auth-client';
-import { authErrorMessage, throwIfAuthError } from '../lib/auth-errors';
-import { useMe, useSignOut } from '../lib/me';
+import { StoryGrid } from '../components/story/story-grid';
+import { publicPageHeaders } from '../lib/cache-headers';
+import { assertCanonical, requestLocation } from '../lib/canonical';
+import { useMatureAwareList } from '../lib/use-mature-aware-list';
+import { getHomePage } from '../server-fns/catalog';
 
 export const Route = createFileRoute('/')({
+  // Never reads the session: the account lives in the header and on `/settings`, loaded in the
+  // browser, so this HTML is the same for everyone and cached by the CDN.
+  loader: async ({ location }) => {
+    assertCanonical(requestLocation(location), canonicalPath({ kind: 'home' }));
+    return getHomePage();
+  },
+  headers: ({ match }) => publicPageHeaders(match.status, { list: true }),
+  head: ({ loaderData }) => ({
+    meta: [{ title: m.app_name() }, { name: 'description', content: m.home_description() }],
+    links: loaderData
+      ? [
+          {
+            rel: 'canonical',
+            href: new URL(canonicalPath({ kind: 'home' }), loaderData.appUrl).href,
+          },
+        ]
+      : [],
+  }),
   component: HomePage,
 });
 
-/** Placeholder that only shows the sign-in state until the real home page is built. */
 function HomePage() {
+  const { recent, notable, genres } = Route.useLoaderData();
+  const recentList = useMatureAwareList(
+    { stories: recent, page: 1, totalPages: 1 },
+    { list: 'recent' },
+  );
+  const notableList = useMatureAwareList(
+    { stories: notable, page: 1, totalPages: 1 },
+    { list: 'notable' },
+  );
   return (
     <SiteLayout>
-      <div className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-12">
-        <h1 className="font-serif text-2xl font-semibold">{m.app_name()}</h1>
-        <AccountStatus />
+      <div className="mx-auto flex max-w-6xl flex-col gap-12 px-4 py-10">
+        <h1 className="sr-only">{m.app_name()}</h1>
+        <HomeSection id="recent" title={m.home_recent()}>
+          {recentList.stories.length > 0 ? (
+            <StoryGrid stories={recentList.stories} priorityCount={6} />
+          ) : (
+            <p className="text-muted-foreground">{m.home_empty()}</p>
+          )}
+        </HomeSection>
+        {notableList.stories.length > 0 ? (
+          <HomeSection id="notable" title={m.home_notable()}>
+            <StoryGrid stories={notableList.stories} />
+          </HomeSection>
+        ) : null}
+        {genres.length > 0 ? (
+          <HomeSection id="genres" title={m.home_genres()}>
+            <ul className="flex flex-wrap gap-2">
+              {genres.map((tag) => (
+                <li key={tag.slug}>
+                  <Badge asChild variant="secondary" className="px-3 py-1 text-sm">
+                    <a href={canonicalPath({ kind: 'tag', slug: tag.slug })}>{tag.name}</a>
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+          </HomeSection>
+        ) : null}
       </div>
     </SiteLayout>
   );
 }
 
-function AccountStatus() {
-  const me = useMe();
-  const signOut = useSignOut();
-  // Read the email from the session only on resend: `/api/v1/me` does not return it.
-  const resend = useMutation({
-    mutationFn: async () => {
-      const { data } = await authClient.getSession();
-      if (!data) throw new Error('No active session');
-      const { error } = await authClient.sendVerificationEmail({
-        email: data.user.email,
-        callbackURL: '/',
-      });
-      throwIfAuthError(error);
-    },
-  });
-
-  if (me.isPending) return <p>{m.home_loading()}</p>;
-  if (me.isError) return <FormMessage>{m.error_generic()}</FormMessage>;
-
-  const user = me.data;
-  if (!user) {
-    return (
-      <section className="flex flex-col gap-2">
-        <p>{m.home_guest()}</p>
-        <nav className="flex gap-4">
-          <Link to="/sign-in" className={textLinkClass}>
-            {m.home_sign_in()}
-          </Link>
-          <Link to="/sign-up" className={textLinkClass}>
-            {m.home_sign_up()}
-          </Link>
-        </nav>
-      </section>
-    );
-  }
-
+function HomeSection({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-3">
-      <p>{m.home_greeting({ name: user.displayName })}</p>
-      <p>{m.home_username({ username: user.username })}</p>
-      {user.emailVerified ? (
-        <p>{m.home_email_verified()}</p>
-      ) : (
-        <div className="flex flex-col gap-2">
-          <p>{m.home_email_unverified()}</p>
-          {resend.isSuccess ? (
-            <FormMessage tone="info">{m.home_verification_sent()}</FormMessage>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              className="self-start"
-              disabled={resend.isPending}
-              onClick={() => resend.mutate()}
-            >
-              {m.home_resend_verification()}
-            </Button>
-          )}
-          {resend.isError ? <FormMessage>{authErrorMessage(resend.error)}</FormMessage> : null}
-        </div>
-      )}
-      <Button
-        type="button"
-        variant="outline"
-        className="self-start"
-        disabled={signOut.isPending}
-        onClick={() => signOut.mutate()}
-      >
-        {m.home_sign_out()}
-      </Button>
+    <section aria-labelledby={`${id}-title`} className="flex flex-col gap-4">
+      <h2 id={`${id}-title`} className="font-serif text-2xl font-semibold">
+        {title}
+      </h2>
+      {children}
     </section>
   );
 }

@@ -6,15 +6,17 @@
 
 | Trường hợp | Status | `Cache-Control` |
 | --- | --- | --- |
-| Trang công khai đúng URL chuẩn (chương, sau này truyện, tác giả, tag, trang chủ) | 200 | `public, s-maxage=86400, stale-while-revalidate=3600` |
-| Sai slug (path viết thường vẫn khác URL chuẩn) | 301 | `public, s-maxage=3600` |
-| Chỉ khác chữ hoa/thường hoặc có query lạ | 301 | `no-store` |
+| Trang chương, trang truyện, `/terms`, `/content-policy` đúng URL chuẩn | 200 | `public, s-maxage=86400, stale-while-revalidate=3600` |
+| Danh sách đúng URL chuẩn: `/`, `/authors/{username}`, `/tags/{slug}` (và `?page=N`, N > 1) | 200 | `public, s-maxage=600, stale-while-revalidate=3600` |
+| Sai slug (path viết thường vẫn khác URL chuẩn), tag đã gộp sang tag chuẩn | 301 | `public, s-maxage=3600` |
+| Chỉ khác chữ hoa/thường hoặc có query lạ (trang tag: mọi query ngoài một `page` dạng chuẩn; `page=1` cũng bị bỏ) | 301 | `no-store` |
 | `/` cuối path (router tự chuyển, trước loader) | 307 | không có |
-| Không tồn tại hoặc không đọc được | 404 | `public, s-maxage=60` |
+| Không tồn tại hoặc không đọc được; trang tag vượt số trang | 404 | `public, s-maxage=60` |
 | `/api/*`, `/_serverFn/*` | — | `no-store` hoặc không cache |
 
 - HTML công khai không bao giờ phụ thuộc cookie và không có `Set-Cookie`; phần cá nhân tải ở client qua `/api/v1/*`.
-- Truyện 18+ thêm `X-Robots-Tag: noindex`.
+- Truyện 18+ thêm `X-Robots-Tag: noindex`. HTML mọi danh sách không bao giờ chứa truyện 18+; người đã bật xem 18+ tải lại danh sách ở client qua `GET /api/v1/stories` (`no-store`).
+- `/settings` trả `no-store`, không nằm trong Cache Rule.
 - URL chuẩn dựng bằng `canonicalPath()` (`packages/shared/src/canonical-path.ts`). Purge (worker) chỉ chạm URL chuẩn, nên mọi biến thể khác chỉ được giữ phản hồi 301/404, không bao giờ giữ nội dung.
 
 ## Cache Rule
@@ -60,6 +62,7 @@ Mọi thay đổi nội dung công khai (chương, truyện, đổi tên hiển 
 - Chương: chương đó, chương đọc được liền trước/sau, trang truyện.
 - Truyện: trang truyện và mọi chương từng đăng (kể cả đã ẩn/xoá mềm); đổi slug thì purge cả bộ URL slug cũ.
 - User: trang tác giả và mọi trang của mọi truyện của họ.
+- Kèm theo (chương, truyện, user): trang chủ `/`, trang tác giả, trang 1 của trang tag chuẩn của mọi tag gắn với truyện, kể cả tag vừa bỏ khi tác giả đổi tag (`previousTagSlugs` trong event) (`catalogUrls`, `packages/core/src/catalog/urls.ts`). Trang tag `?page=N` (N > 1) không purge, chỉ hết hạn theo `s-maxage=600`.
 
 **Token:** tạo API Token với đúng một quyền **Zone → Cache Purge → Purge**, giới hạn ở zone của site. Chỉ worker đọc hai biến:
 

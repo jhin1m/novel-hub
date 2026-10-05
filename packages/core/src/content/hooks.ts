@@ -13,6 +13,8 @@ export type ContentChange =
       storyId: string;
       /** Slug before a rename, so the old URLs can be purged too. */
       previousSlug?: string;
+      /** Canonical tag slugs before the tags changed, so the tag pages it left are purged too. */
+      previousTagSlugs?: string[];
     }
   | {
       entity: 'chapter';
@@ -30,6 +32,7 @@ export const contentChangeSchema: z.ZodType<ContentChange> = z.discriminatedUnio
     action: z.enum(['published', 'updated', 'hidden', 'restored']),
     storyId: z.uuid(),
     previousSlug: z.string().min(1).optional(),
+    previousTagSlugs: z.array(z.string().min(1)).max(50).optional(),
   }),
   z.object({
     entity: z.literal('chapter'),

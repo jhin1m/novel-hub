@@ -22,9 +22,11 @@ beforeEach(async () => {
 const storyUrl = (slug: string, publicId: string) => `${APP}/stories/${slug}-${publicId}`;
 const chapterUrl = (slug: string, publicId: string, n: number) =>
   `${storyUrl(slug, publicId)}/chapter-${n}`;
+/** List pages showing a story by `author` tagged only with its main tag `tien-hiep`. */
+const listUrls = [`${APP}/`, `${APP}/authors/author`, `${APP}/tags/tien-hiep`];
 
 describe('urlsFor', () => {
-  it('a chapter change purges the chapter, its readable neighbours and the story page', async () => {
+  it('a chapter change purges the chapter, its readable neighbours, the story page and its lists', async () => {
     const author = await makeAuthor(db);
     const s = await makePublishedStory(db, author, 5);
     // Chapter 4 hidden: the next readable chapter after 3 is 5.
@@ -54,6 +56,7 @@ describe('urlsFor', () => {
         chapterUrl(s.slug, s.publicId, 2),
         chapterUrl(s.slug, s.publicId, 3),
         chapterUrl(s.slug, s.publicId, 5),
+        ...listUrls,
       ].sort(),
     );
   });
@@ -76,6 +79,7 @@ describe('urlsFor', () => {
         chapterUrl(s.slug, s.publicId, 1),
         chapterUrl(s.slug, s.publicId, 2),
         chapterUrl(s.slug, s.publicId, 3),
+        ...listUrls,
       ].sort(),
     );
   });
@@ -88,13 +92,13 @@ describe('urlsFor', () => {
       { entity: 'story', action: 'updated', storyId: s.storyId, previousSlug: 'ten-cu' },
       APP,
     );
-    expect(urls).toHaveLength(6);
+    expect(urls).toHaveLength(6 + listUrls.length);
     expect(urls).toContain(storyUrl('ten-cu', s.publicId));
     expect(urls).toContain(chapterUrl('ten-cu', s.publicId, 2));
     expect(urls).toContain(chapterUrl(s.slug, s.publicId, 2));
   });
 
-  it('a banned author purges the author page and every page of every story', async () => {
+  it('a banned author purges the author page, every page of every story and their lists', async () => {
     const author = await makeAuthor(db);
     const a = await makePublishedStory(db, author, 2, 'Truyện Một');
     const b = await makePublishedStory(db, author, 1, 'Truyện Hai');
@@ -110,6 +114,8 @@ describe('urlsFor', () => {
           chapterUrl(a.slug, a.publicId, 2),
           storyUrl(b.slug, b.publicId),
           chapterUrl(b.slug, b.publicId, 1),
+          `${APP}/`,
+          `${APP}/tags/tien-hiep`,
         ].sort(),
       );
     }

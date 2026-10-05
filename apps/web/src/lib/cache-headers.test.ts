@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  LIST_CACHE,
   NOT_FOUND_CACHE,
   NO_STORE,
   PUBLIC_CACHE,
@@ -31,5 +32,12 @@ describe('publicPageHeaders', () => {
     expect(publicPageHeaders('notFound')).toEqual(NOT_FOUND_CACHE);
     expect(publicPageHeaders('error')).toEqual(NO_STORE);
     expect(publicPageHeaders('pending')).toEqual(NO_STORE);
+  });
+
+  it('lists expire after 10 minutes, and only loaded lists are cached that way', () => {
+    expect(LIST_CACHE['Cache-Control']).toBe('public, s-maxage=600, stale-while-revalidate=3600');
+    expect(publicPageHeaders('success', { list: true })).toEqual(LIST_CACHE);
+    expect(publicPageHeaders('notFound', { list: true })).toEqual(NOT_FOUND_CACHE);
+    expect(publicPageHeaders('error', { list: true })).toEqual(NO_STORE);
   });
 });

@@ -1,6 +1,7 @@
+import { canonicalPath } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { Link } from '@tanstack/react-router';
-import { ChevronDownIcon } from 'lucide-react';
+import { ChevronDownIcon, SettingsIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,7 +37,10 @@ function SiteHeader() {
         </Link>
         <div className="flex items-center gap-1">
           <Button asChild variant="ghost">
-            <Link to="/write">{m.layout_write()}</Link>
+            <Link to="/settings">
+              <SettingsIcon aria-hidden />
+              <span className="sr-only sm:not-sr-only">{m.layout_settings()}</span>
+            </Link>
           </Button>
           <AccountMenu />
         </div>
@@ -45,7 +49,10 @@ function SiteHeader() {
   );
 }
 
-/** Account state is only known once `useMe()` runs in the browser; SSR always renders a placeholder. */
+/**
+ * Account state is only known once `useMe()` runs in the browser; SSR always renders a placeholder.
+ * Writing is offered to signed-in accounts only.
+ */
 function AccountMenu() {
   const me = useMe();
   const signOut = useSignOut();
@@ -68,21 +75,26 @@ function AccountMenu() {
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="max-w-48">
-          {/* Prefix instead of aria-label so the accessible name still contains the visible name. */}
-          <span className="sr-only">{m.layout_account_menu()}: </span>
-          <span className="truncate">{user.displayName}</span>
-          <ChevronDownIcon aria-hidden />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem disabled={signOut.isPending} onSelect={() => signOut.mutate()}>
-          {m.layout_sign_out()}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <Button asChild variant="ghost">
+        <Link to="/write">{m.layout_write()}</Link>
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="max-w-48">
+            {/* Prefix instead of aria-label so the accessible name still contains the visible name. */}
+            <span className="sr-only">{m.layout_account_menu()}: </span>
+            <span className="truncate">{user.displayName}</span>
+            <ChevronDownIcon aria-hidden />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem disabled={signOut.isPending} onSelect={() => signOut.mutate()}>
+            {m.layout_sign_out()}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
   );
 }
 
@@ -90,11 +102,27 @@ function SiteFooter() {
   return (
     <footer className="border-t">
       {/* CDN-cached HTML can hydrate after New Year, or in a different time zone than the server. */}
-      <div
-        suppressHydrationWarning
-        className="mx-auto max-w-5xl px-4 py-6 text-sm text-muted-foreground"
-      >
-        {m.layout_footer_copyright({ year: String(new Date().getFullYear()), name: m.app_name() })}
+      <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-6 text-sm text-muted-foreground">
+        <p suppressHydrationWarning>
+          {m.layout_footer_copyright({
+            year: String(new Date().getFullYear()),
+            name: m.app_name(),
+          })}
+        </p>
+        <nav aria-label={m.layout_footer_nav()} className="flex gap-4">
+          <a
+            href={canonicalPath({ kind: 'static', path: '/terms' })}
+            className="underline-offset-4 hover:underline"
+          >
+            {m.layout_terms()}
+          </a>
+          <a
+            href={canonicalPath({ kind: 'static', path: '/content-policy' })}
+            className="underline-offset-4 hover:underline"
+          >
+            {m.layout_content_policy()}
+          </a>
+        </nav>
       </div>
     </footer>
   );

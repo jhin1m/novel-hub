@@ -12,8 +12,11 @@ import { canonicalPath } from '@novel-hub/shared';
 let counter = 0;
 
 export interface PublishedStory {
+  title: string;
   slug: string;
   publicId: string;
+  /** Username of the author created for the story. */
+  username: string;
   /** Canonical path of chapter `number`. */
   chapterPath: (number: number) => string;
 }
@@ -30,6 +33,7 @@ export function chapterText(number: number): string {
  */
 export async function createPublishedStory(
   opts: {
+    title?: string;
     published?: number;
     drafts?: number;
     isMature?: boolean;
@@ -57,8 +61,9 @@ export async function createPublishedStory(
       status: row.status,
       emailVerified: row.emailVerified,
     };
+    const title = opts.title ?? 'Kiếm Đạo Độc Tôn';
     const story = await createStory(db, author, {
-      title: 'Kiếm Đạo Độc Tôn',
+      title,
       synopsis: '',
       mainTag: 'tien-hiep',
       tags: opts.warningTags ?? [],
@@ -103,8 +108,10 @@ export async function createPublishedStory(
     }
 
     return {
+      title,
       slug,
       publicId,
+      username,
       chapterPath: (number) => canonicalPath({ kind: 'chapter', slug, publicId, number }),
     };
   } finally {
@@ -112,7 +119,7 @@ export async function createPublishedStory(
   }
 }
 
-/** Turns on 18+ content for an account, as the settings page will. */
+/** Turns on 18+ content for an account, as the settings page does. */
 export async function allowMatureContent(email: string): Promise<void> {
   const { pool } = createTestDb();
   try {

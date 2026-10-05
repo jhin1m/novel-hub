@@ -8,6 +8,15 @@ export const PUBLIC_CACHE: Record<string, string> = {
   'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=3600',
 };
 
+/**
+ * Lists (home, tag and author pages): purged when a story on them changes, but later tag pages
+ * are not, so they expire sooner. Shorter stale window than chapters, so a story hidden by a
+ * moderator leaves every list within about an hour.
+ */
+export const LIST_CACHE: Record<string, string> = {
+  'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=3600',
+};
+
 /** Missing or unreadable pages: cached briefly, so content that comes back shows up soon. */
 export const NOT_FOUND_CACHE: Record<string, string> = {
   'Cache-Control': 'public, s-maxage=60',
@@ -31,9 +40,10 @@ export const NOINDEX: Record<string, string> = { 'X-Robots-Tag': 'noindex' };
  */
 export function publicPageHeaders(
   status: 'pending' | 'success' | 'error' | 'notFound',
-  opts: { noindex?: boolean } = {},
+  opts: { noindex?: boolean; list?: boolean } = {},
 ): Record<string, string> {
   if (status === 'notFound') return NOT_FOUND_CACHE;
   if (status !== 'success') return NO_STORE;
-  return opts.noindex ? { ...PUBLIC_CACHE, ...NOINDEX } : PUBLIC_CACHE;
+  const cache = opts.list ? LIST_CACHE : PUBLIC_CACHE;
+  return opts.noindex ? { ...cache, ...NOINDEX } : cache;
 }

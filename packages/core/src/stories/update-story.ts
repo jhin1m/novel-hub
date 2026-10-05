@@ -1,6 +1,7 @@
 import { type Db, type NewStory, stories, storyTags } from '@novel-hub/db';
 import { type StoryUpdateInput, slugify } from '@novel-hub/shared';
 import { eq } from 'drizzle-orm';
+import { storyTagSlugs } from '../catalog/urls';
 import { recordContentChanges } from '../content/outbox';
 import { type Result, err, ok } from '../lib/result';
 import type { StoryActor } from '../policies/story';
@@ -39,9 +40,12 @@ export async function updateStory(
       changes.title = input.title;
       changes.slug = slugify(input.title);
     }
+    // Tag pages the story leaves hold its card too: the purge needs the tags it had.
+    let previousTagSlugs: string[] = [];
     if (input.mainTag !== undefined) {
       const resolved = await resolveTags(tx, input.mainTag, input.tags ?? []);
       if (!resolved.ok) return err(resolved.error);
+      previousTagSlugs = await storyTagSlugs(tx, [current.id]);
       changes.mainTagId = resolved.value.mainTagId;
       await tx.delete(storyTags).where(eq(storyTags.storyId, current.id));
       await tx
@@ -65,6 +69,7 @@ export async function updateStory(
           action: 'updated',
           storyId: row.id,
           ...(previousSlug ? { previousSlug } : {}),
+          ...(previousTagSlugs.length > 0 ? { previousTagSlugs } : {}),
         },
       ]);
     }

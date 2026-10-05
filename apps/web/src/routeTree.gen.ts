@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ContentPolicyRouteImport } from './routes/content-policy'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
+import { Route as AuthorsUsernameRouteImport } from './routes/authors.$username'
+import { Route as TagsTagSlugRouteImport } from './routes/tags.$tagSlug'
 import { Route as WriteIndexRouteImport } from './routes/write/index'
+import { Route as StoriesStoryKeyIndexRouteImport } from './routes/stories.$storyKey.index'
 import { Route as StoriesStoryKeyChapterChar123numberChar125RouteImport } from './routes/stories.$storyKey.chapter-{$number}'
 import { Route as WriteStoriesNewRouteImport } from './routes/write/stories/new'
 import { Route as WriteStoriesPublicIdIndexRouteImport } from './routes/write/stories/$publicId/index'
@@ -24,6 +30,11 @@ import { Route as WriteStoriesPublicIdChaptersNumberRouteImport } from './routes
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContentPolicyRoute = ContentPolicyRouteImport.update({
+  id: '/content-policy',
+  path: '/content-policy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -36,6 +47,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignInRoute = SignInRouteImport.update({
   id: '/sign-in',
   path: '/sign-in',
@@ -46,14 +62,34 @@ const SignUpRoute = SignUpRouteImport.update({
   path: '/sign-up',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
   id: '/api/$',
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthorsUsernameRoute = AuthorsUsernameRouteImport.update({
+  id: '/authors/$username',
+  path: '/authors/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TagsTagSlugRoute = TagsTagSlugRouteImport.update({
+  id: '/tags/$tagSlug',
+  path: '/tags/$tagSlug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WriteIndexRoute = WriteIndexRouteImport.update({
   id: '/write/',
   path: '/write/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoriesStoryKeyIndexRoute = StoriesStoryKeyIndexRouteImport.update({
+  id: '/stories/$storyKey/',
+  path: '/stories/$storyKey/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StoriesStoryKeyChapterChar123numberChar125Route =
@@ -82,41 +118,59 @@ const WriteStoriesPublicIdChaptersNumberRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/content-policy': typeof ContentPolicyRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/terms': typeof TermsRoute
   '/api/$': typeof ApiSplatRoute
+  '/authors/$username': typeof AuthorsUsernameRoute
+  '/tags/$tagSlug': typeof TagsTagSlugRoute
   '/write/': typeof WriteIndexRoute
   '/stories/$storyKey/chapter-{$number}': typeof StoriesStoryKeyChapterChar123numberChar125Route
   '/write/stories/new': typeof WriteStoriesNewRoute
+  '/stories/$storyKey/': typeof StoriesStoryKeyIndexRoute
   '/write/stories/$publicId/': typeof WriteStoriesPublicIdIndexRoute
   '/write/stories/$publicId/chapters/$number': typeof WriteStoriesPublicIdChaptersNumberRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/content-policy': typeof ContentPolicyRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/terms': typeof TermsRoute
   '/api/$': typeof ApiSplatRoute
+  '/authors/$username': typeof AuthorsUsernameRoute
+  '/tags/$tagSlug': typeof TagsTagSlugRoute
   '/write': typeof WriteIndexRoute
   '/stories/$storyKey/chapter-{$number}': typeof StoriesStoryKeyChapterChar123numberChar125Route
   '/write/stories/new': typeof WriteStoriesNewRoute
+  '/stories/$storyKey': typeof StoriesStoryKeyIndexRoute
   '/write/stories/$publicId': typeof WriteStoriesPublicIdIndexRoute
   '/write/stories/$publicId/chapters/$number': typeof WriteStoriesPublicIdChaptersNumberRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/content-policy': typeof ContentPolicyRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/terms': typeof TermsRoute
   '/api/$': typeof ApiSplatRoute
+  '/authors/$username': typeof AuthorsUsernameRoute
+  '/tags/$tagSlug': typeof TagsTagSlugRoute
   '/write/': typeof WriteIndexRoute
   '/stories/$storyKey/chapter-{$number}': typeof StoriesStoryKeyChapterChar123numberChar125Route
   '/write/stories/new': typeof WriteStoriesNewRoute
+  '/stories/$storyKey/': typeof StoriesStoryKeyIndexRoute
   '/write/stories/$publicId/': typeof WriteStoriesPublicIdIndexRoute
   '/write/stories/$publicId/chapters/$number': typeof WriteStoriesPublicIdChaptersNumberRoute
 }
@@ -124,54 +178,78 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/content-policy'
     | '/forgot-password'
     | '/reset-password'
+    | '/settings'
     | '/sign-in'
     | '/sign-up'
+    | '/terms'
     | '/api/$'
+    | '/authors/$username'
+    | '/tags/$tagSlug'
     | '/write/'
     | '/stories/$storyKey/chapter-{$number}'
     | '/write/stories/new'
+    | '/stories/$storyKey/'
     | '/write/stories/$publicId/'
     | '/write/stories/$publicId/chapters/$number'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/content-policy'
     | '/forgot-password'
     | '/reset-password'
+    | '/settings'
     | '/sign-in'
     | '/sign-up'
+    | '/terms'
     | '/api/$'
+    | '/authors/$username'
+    | '/tags/$tagSlug'
     | '/write'
     | '/stories/$storyKey/chapter-{$number}'
     | '/write/stories/new'
+    | '/stories/$storyKey'
     | '/write/stories/$publicId'
     | '/write/stories/$publicId/chapters/$number'
   id:
     | '__root__'
     | '/'
+    | '/content-policy'
     | '/forgot-password'
     | '/reset-password'
+    | '/settings'
     | '/sign-in'
     | '/sign-up'
+    | '/terms'
     | '/api/$'
+    | '/authors/$username'
+    | '/tags/$tagSlug'
     | '/write/'
     | '/stories/$storyKey/chapter-{$number}'
     | '/write/stories/new'
+    | '/stories/$storyKey/'
     | '/write/stories/$publicId/'
     | '/write/stories/$publicId/chapters/$number'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ContentPolicyRoute: typeof ContentPolicyRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SettingsRoute: typeof SettingsRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
+  TermsRoute: typeof TermsRoute
   ApiSplatRoute: typeof ApiSplatRoute
+  AuthorsUsernameRoute: typeof AuthorsUsernameRoute
+  TagsTagSlugRoute: typeof TagsTagSlugRoute
   WriteIndexRoute: typeof WriteIndexRoute
   StoriesStoryKeyChapterChar123numberChar125Route: typeof StoriesStoryKeyChapterChar123numberChar125Route
   WriteStoriesNewRoute: typeof WriteStoriesNewRoute
+  StoriesStoryKeyIndexRoute: typeof StoriesStoryKeyIndexRoute
   WriteStoriesPublicIdIndexRoute: typeof WriteStoriesPublicIdIndexRoute
   WriteStoriesPublicIdChaptersNumberRoute: typeof WriteStoriesPublicIdChaptersNumberRoute
 }
@@ -183,6 +261,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/content-policy': {
+      id: '/content-policy'
+      path: '/content-policy'
+      fullPath: '/content-policy'
+      preLoaderRoute: typeof ContentPolicyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -199,6 +284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sign-in': {
       id: '/sign-in'
       path: '/sign-in'
@@ -213,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignUpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/$': {
       id: '/api/$'
       path: '/api/$'
@@ -220,11 +319,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/authors/$username': {
+      id: '/authors/$username'
+      path: '/authors/$username'
+      fullPath: '/authors/$username'
+      preLoaderRoute: typeof AuthorsUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tags/$tagSlug': {
+      id: '/tags/$tagSlug'
+      path: '/tags/$tagSlug'
+      fullPath: '/tags/$tagSlug'
+      preLoaderRoute: typeof TagsTagSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/write/': {
       id: '/write/'
       path: '/write'
       fullPath: '/write/'
       preLoaderRoute: typeof WriteIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stories/$storyKey/': {
+      id: '/stories/$storyKey/'
+      path: '/stories/$storyKey'
+      fullPath: '/stories/$storyKey/'
+      preLoaderRoute: typeof StoriesStoryKeyIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stories/$storyKey/chapter-{$number}': {
@@ -260,15 +380,21 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ContentPolicyRoute: ContentPolicyRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SettingsRoute: SettingsRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
+  TermsRoute: TermsRoute,
   ApiSplatRoute: ApiSplatRoute,
+  AuthorsUsernameRoute: AuthorsUsernameRoute,
+  TagsTagSlugRoute: TagsTagSlugRoute,
   WriteIndexRoute: WriteIndexRoute,
   StoriesStoryKeyChapterChar123numberChar125Route:
     StoriesStoryKeyChapterChar123numberChar125Route,
   WriteStoriesNewRoute: WriteStoriesNewRoute,
+  StoriesStoryKeyIndexRoute: StoriesStoryKeyIndexRoute,
   WriteStoriesPublicIdIndexRoute: WriteStoriesPublicIdIndexRoute,
   WriteStoriesPublicIdChaptersNumberRoute:
     WriteStoriesPublicIdChaptersNumberRoute,

@@ -81,6 +81,7 @@ export {
 } from './schemas/revision';
 export {
   DEFAULT_READER_SETTINGS,
+  LEGACY_READER_FONTS,
   READER_ALIGNS,
   READER_FONTS,
   READER_RANGES,
@@ -96,6 +97,7 @@ export {
   type ReadingProgressInput,
   chapterViewInput,
   isInReaderRange,
+  migrateLegacyReaderFont,
   parseChapterNumber,
   parseChapterSegment,
   readerSettingsSchema,

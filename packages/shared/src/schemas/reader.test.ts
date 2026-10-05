@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_READER_SETTINGS,
+  READER_FONTS,
   READER_RANGES,
   READER_THEMES,
   chapterViewInput,
@@ -75,9 +76,22 @@ describe('readerSettingsSchema', () => {
   const valid = (patch: Record<string, unknown>) =>
     readerSettingsSchema.safeParse({ ...DEFAULT_READER_SETTINGS, ...patch }).success;
 
-  it('accepts the defaults and every preset', () => {
+  it('accepts the defaults, every preset and every font', () => {
     expect(valid({})).toBe(true);
     for (const theme of READER_THEMES) expect(valid({ theme })).toBe(true);
+    for (const font of READER_FONTS) expect(valid({ font })).toBe(true);
+  });
+
+  it('maps fonts removed from the list to their replacement', () => {
+    for (const font of ['be-vietnam-pro', 'inter']) {
+      const parsed = readerSettingsSchema.parse({ ...DEFAULT_READER_SETTINGS, font });
+      expect(parsed.font).toBe('plus-jakarta-sans');
+    }
+  });
+
+  it('does not treat Object.prototype keys as legacy fonts', () => {
+    expect(valid({ font: 'toString' })).toBe(false);
+    expect(valid({ font: '__proto__' })).toBe(false);
   });
 
   it('accepts the range ends and values on a step', () => {

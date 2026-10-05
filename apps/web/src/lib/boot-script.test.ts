@@ -64,7 +64,7 @@ const FIXTURES: Array<[string, string | null]> = [
     'every field changed',
     json({
       theme: 'oled-black',
-      font: 'inter',
+      font: 'noto-serif',
       fontSize: 24,
       lineHeight: 2.2,
       paragraphSpacing: 1.75,
@@ -78,6 +78,9 @@ const FIXTURES: Array<[string, string | null]> = [
   ['out of range', json({ fontSize: 13, lineHeight: 2.25, paragraphSpacing: 3 })],
   ['off a step', json({ fontSize: 18.5, paragraphSpacing: 0.3 })],
   ['numbers as strings', json({ fontSize: '24', lineHeight: '2' })],
+  ['legacy font inter', json({ font: 'inter' })],
+  ['legacy font be-vietnam-pro', json({ font: 'be-vietnam-pro' })],
+  ['Object.prototype key as font', json({ font: 'toString' })],
   [
     'unknown enum values',
     json({ theme: 'neon', font: 'comic-sans', width: 'huge', align: 'center' }),
@@ -116,7 +119,7 @@ describe('BOOT_SCRIPT', () => {
     expect(runWithReader(json({ theme: 'sepia', fontSize: 24 }))).toEqual({
       attributes: {
         'data-reader-theme': 'sepia',
-        'data-reader-font': 'literata',
+        'data-reader-font': 'source-serif-4',
         'data-reader-width': 'medium',
         'data-reader-align': 'left',
       },
@@ -126,6 +129,12 @@ describe('BOOT_SCRIPT', () => {
         '--reader-paragraph-gap': '1em',
       },
     });
+  });
+
+  it('maps a legacy font to its replacement', () => {
+    expect(runWithReader(json({ font: 'be-vietnam-pro' })).attributes['data-reader-font']).toBe(
+      'plus-jakarta-sans',
+    );
   });
 
   it('keeps the 18+ hint when the reader settings are broken', () => {

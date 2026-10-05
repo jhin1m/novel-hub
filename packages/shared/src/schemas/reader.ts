@@ -48,7 +48,13 @@ export const READER_THEMES = [
   'dark-gray',
   'oled-black',
 ] as const;
-export const READER_FONTS = ['literata', 'noto-serif', 'be-vietnam-pro', 'inter'] as const;
+/** The first one is the default content font; the others are only downloaded once picked. */
+export const READER_FONTS = [
+  'source-serif-4',
+  'literata',
+  'noto-serif',
+  'plus-jakarta-sans',
+] as const;
 /** Text column width; only takes effect on wide screens. */
 export const READER_WIDTHS = ['narrow', 'medium', 'wide'] as const;
 export const READER_ALIGNS = ['left', 'justify'] as const;
@@ -63,6 +69,23 @@ export type ReaderFont = (typeof READER_FONTS)[number];
 export type ReaderWidth = (typeof READER_WIDTHS)[number];
 export type ReaderAlign = (typeof READER_ALIGNS)[number];
 export type ReaderRange = (typeof READER_RANGES)[keyof typeof READER_RANGES];
+
+/**
+ * Fonts that were removed from `READER_FONTS` but may still be stored in localStorage or
+ * `users.preferences.reader`, mapped to their replacement so old settings keep parsing.
+ * `BOOT_SCRIPT` applies the same map before the first paint.
+ */
+export const LEGACY_READER_FONTS: Readonly<Record<string, ReaderFont>> = {
+  'be-vietnam-pro': 'plus-jakarta-sans',
+  inter: 'plus-jakarta-sans',
+};
+
+/** Maps a legacy font value to its replacement; anything else passes through unchanged. */
+export function migrateLegacyReaderFont(value: unknown): unknown {
+  return typeof value === 'string' && Object.hasOwn(LEGACY_READER_FONTS, value)
+    ? LEGACY_READER_FONTS[value]
+    : value;
+}
 
 /** Within the range and on a step (with float tolerance: 1.7 is `1.5 + 2 × 0.1`). */
 export function isInReaderRange(value: number, range: ReaderRange): boolean {
@@ -82,7 +105,7 @@ function rangeSchema(range: ReaderRange) {
 export const readerSettingsSchema = z.object({
   /** Absent = follow the system colour scheme. */
   theme: z.enum(READER_THEMES).optional(),
-  font: z.enum(READER_FONTS),
+  font: z.preprocess(migrateLegacyReaderFont, z.enum(READER_FONTS)),
   fontSize: rangeSchema(READER_RANGES.fontSize),
   lineHeight: rangeSchema(READER_RANGES.lineHeight),
   paragraphSpacing: rangeSchema(READER_RANGES.paragraphSpacing),
@@ -95,7 +118,7 @@ export type ReaderSettings = z.infer<typeof readerSettingsSchema>;
 
 /** Must match the `:root` defaults in `apps/web/src/styles/reader.css`. */
 export const DEFAULT_READER_SETTINGS: ReaderSettings = {
-  font: 'literata',
+  font: 'source-serif-4',
   fontSize: 19,
   lineHeight: 1.8,
   paragraphSpacing: 1,

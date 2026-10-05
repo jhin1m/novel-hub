@@ -1,10 +1,10 @@
 import { READER_THEMES, type ReaderTheme } from '@novel-hub/shared';
-import type { ContrastPair } from '../lib/contrast';
 
 /**
  * Copy of the colour values in `tokens.css` as TS constants, so contrast can be tested without
  * parsing CSS. `tokens.test.ts` checks every `--name: #hex;` appears verbatim in `tokens.css`,
- * so the two places cannot drift apart silently.
+ * so the two places cannot drift apart silently. The pairs checked live in
+ * `token-contrast-pairs.ts`.
  */
 
 type Scope = Readonly<Record<`--${string}`, `#${string}`>>;
@@ -14,61 +14,125 @@ export const READER_PRESETS = READER_THEMES;
 
 export type ReaderPreset = ReaderTheme;
 
+/** Reading-page accent that stays readable on light presets. */
+const lightReaderAccent: Scope = {
+  '--reader-primary': '#0e6b5b',
+  '--reader-primary-foreground': '#ffffff',
+  '--reader-primary-soft': '#ddefea',
+};
+
+/** Reading-page accent that stays readable on dark presets. */
+const darkReaderAccent: Scope = {
+  '--reader-primary': '#4fc2a8',
+  '--reader-primary-foreground': '#0b1f1a',
+  '--reader-primary-soft': '#17332c',
+};
+
 const light: Scope = {
-  '--background': '#fbf8f3',
-  '--foreground': '#2a2724',
-  '--card': '#fbf8f3',
-  '--card-foreground': '#2a2724',
-  '--popover': '#fbf8f3',
-  '--popover-foreground': '#2a2724',
-  '--primary': '#a8432a',
-  '--primary-foreground': '#fbf8f3',
-  '--secondary': '#f2eee7',
-  '--secondary-foreground': '#2a2724',
-  '--muted': '#f2eee7',
-  '--muted-foreground': '#6b645c',
-  '--accent': '#f2eee7',
-  '--accent-foreground': '#2a2724',
-  '--destructive': '#a3342b',
-  '--border': '#e4ded4',
-  '--input': '#8a8278',
-  '--ring': '#a8432a',
+  '--background': '#f5f4ef',
+  '--foreground': '#1c1d1b',
+  '--card': '#ffffff',
+  '--card-foreground': '#1c1d1b',
+  '--popover': '#ffffff',
+  '--popover-foreground': '#1c1d1b',
+  '--primary': '#0e6b5b',
+  '--primary-foreground': '#ffffff',
+  '--primary-soft': '#ddefea',
+  '--secondary': '#eceae3',
+  '--secondary-foreground': '#1c1d1b',
+  '--muted': '#eceae3',
+  '--muted-foreground': '#5d5f59',
+  '--accent': '#eceae3',
+  '--accent-foreground': '#1c1d1b',
+  '--destructive': '#b3261e',
+  '--warning-soft': '#fff1dc',
+  '--warning-foreground': '#8a4b00',
+  '--band': '#ece8df',
+  '--border': '#e3e1d9',
+  '--input': '#8a8c85',
+  '--ring': '#0e6b5b',
+  // No preset chosen on a light system: ivory.
   '--reader-bg': '#fbf6ec',
   '--reader-fg': '#2b2722',
   '--reader-muted': '#675f55',
+  '--reader-card': '#f3ecdd',
+  ...lightReaderAccent,
 };
 
 const dark: Scope = {
-  '--background': '#1c1a18',
-  '--foreground': '#ece6dd',
-  '--card': '#1c1a18',
-  '--card-foreground': '#ece6dd',
-  '--popover': '#1c1a18',
-  '--popover-foreground': '#ece6dd',
-  '--primary': '#d9825f',
-  '--primary-foreground': '#1c1a18',
-  '--secondary': '#2a2724',
-  '--secondary-foreground': '#ece6dd',
-  '--muted': '#2a2724',
-  '--muted-foreground': '#a89f94',
-  '--accent': '#2a2724',
-  '--accent-foreground': '#ece6dd',
-  '--destructive': '#e5806f',
-  '--border': '#3a3632',
-  '--input': '#6f675e',
-  '--ring': '#d9825f',
+  '--background': '#101312',
+  '--foreground': '#e8ece9',
+  '--card': '#181c1a',
+  '--card-foreground': '#e8ece9',
+  '--popover': '#181c1a',
+  '--popover-foreground': '#e8ece9',
+  '--primary': '#4fc2a8',
+  '--primary-foreground': '#0b1f1a',
+  '--primary-soft': '#17332c',
+  '--secondary': '#222724',
+  '--secondary-foreground': '#e8ece9',
+  '--muted': '#222724',
+  '--muted-foreground': '#9aa39e',
+  '--accent': '#222724',
+  '--accent-foreground': '#e8ece9',
+  '--destructive': '#f2877c',
+  '--warning-soft': '#2e2312',
+  '--warning-foreground': '#f2b866',
+  '--band': '#161a18',
+  '--border': '#2c322f',
+  '--input': '#6e7771',
+  '--ring': '#4fc2a8',
+  // No preset chosen on a dark system: dark grey.
   '--reader-bg': '#2b2b2b',
   '--reader-fg': '#d6d3ce',
   '--reader-muted': '#a3a09b',
+  '--reader-card': '#363636',
+  ...darkReaderAccent,
 };
 
 const reader: Readonly<Record<ReaderPreset, Scope>> = {
-  white: { '--reader-bg': '#ffffff', '--reader-fg': '#1f1f1f', '--reader-muted': '#5f5f5f' },
-  ivory: { '--reader-bg': '#fbf6ec', '--reader-fg': '#2b2722', '--reader-muted': '#675f55' },
-  sepia: { '--reader-bg': '#f4ecd8', '--reader-fg': '#3b2f22', '--reader-muted': '#6a5a47' },
-  'soft-green': { '--reader-bg': '#e6efe4', '--reader-fg': '#22302a', '--reader-muted': '#4e5f55' },
-  'dark-gray': { '--reader-bg': '#2b2b2b', '--reader-fg': '#d6d3ce', '--reader-muted': '#a3a09b' },
-  'oled-black': { '--reader-bg': '#000000', '--reader-fg': '#c9c5be', '--reader-muted': '#8f8b85' },
+  white: {
+    '--reader-bg': '#ffffff',
+    '--reader-fg': '#1f1f1f',
+    '--reader-muted': '#5f5f5f',
+    '--reader-card': '#f4f4f2',
+    ...lightReaderAccent,
+  },
+  ivory: {
+    '--reader-bg': '#fbf6ec',
+    '--reader-fg': '#2b2722',
+    '--reader-muted': '#675f55',
+    '--reader-card': '#f3ecdd',
+    ...lightReaderAccent,
+  },
+  sepia: {
+    '--reader-bg': '#f4ecd8',
+    '--reader-fg': '#3b2f22',
+    '--reader-muted': '#6a5a47',
+    '--reader-card': '#eadfc6',
+    ...lightReaderAccent,
+  },
+  'soft-green': {
+    '--reader-bg': '#e6efe4',
+    '--reader-fg': '#22302a',
+    '--reader-muted': '#4e5f55',
+    '--reader-card': '#d9e5d6',
+    ...lightReaderAccent,
+  },
+  'dark-gray': {
+    '--reader-bg': '#2b2b2b',
+    '--reader-fg': '#d6d3ce',
+    '--reader-muted': '#a3a09b',
+    '--reader-card': '#363636',
+    ...darkReaderAccent,
+  },
+  'oled-black': {
+    '--reader-bg': '#000000',
+    '--reader-fg': '#c9c5be',
+    '--reader-muted': '#8f8b85',
+    '--reader-card': '#141414',
+    ...darkReaderAccent,
+  },
 };
 
 /** Default text cover palette (`--cover-N`) and its text colour; the same in light and dark. */
@@ -83,7 +147,7 @@ const cover: Scope = {
   '--cover-7': '#5b3a64',
   '--cover-8': '#7e3b54',
   '--cover-9': '#3a3632',
-  '--cover-fg': '#fbf8f3',
+  '--cover-fg': '#f6f1e7',
 };
 
 export const TOKEN_VALUES = { light, dark, reader, cover } as const;
@@ -92,32 +156,6 @@ export const TOKEN_VALUES = { light, dark, reader, cover } as const;
 export function coverBackgrounds(): string[] {
   return Object.keys(cover).filter((name) => /^--cover-\d+$/.test(name));
 }
-
-/** Every cover background against the cover text colour; the author name is small text, so 4.5:1. */
-export const COVER_CONTRAST_PAIRS: ReadonlyArray<ContrastPair> = coverBackgrounds().map((bg) => ({
-  bg,
-  fg: '--cover-fg',
-  min: 4.5,
-}));
-
-/** Text/background pairs that must meet WCAG AA (4.5:1 for text, 3:1 for input borders per 1.4.11). */
-export const CONTRAST_PAIRS: ReadonlyArray<ContrastPair> = [
-  { bg: '--background', fg: '--foreground', min: 4.5 },
-  { bg: '--background', fg: '--muted-foreground', min: 4.5 },
-  { bg: '--muted', fg: '--muted-foreground', min: 4.5 },
-  { bg: '--card', fg: '--card-foreground', min: 4.5 },
-  { bg: '--popover', fg: '--popover-foreground', min: 4.5 },
-  { bg: '--secondary', fg: '--secondary-foreground', min: 4.5 },
-  { bg: '--accent', fg: '--accent-foreground', min: 4.5 },
-  { bg: '--primary', fg: '--primary-foreground', min: 4.5 },
-  // Links use the accent colour on the page background.
-  { bg: '--background', fg: '--primary', min: 4.5 },
-  { bg: '--background', fg: '--destructive', min: 4.5 },
-  { bg: '--background', fg: '--input', min: 3 },
-  { bg: '--background', fg: '--ring', min: 3 },
-  { bg: '--reader-bg', fg: '--reader-fg', min: 4.5 },
-  { bg: '--reader-bg', fg: '--reader-muted', min: 4.5 },
-];
 
 /**
  * Effective palette per context: dark and each reader preset inherit light for any variable they

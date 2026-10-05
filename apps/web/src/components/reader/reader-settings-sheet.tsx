@@ -35,10 +35,10 @@ const THEME_LABELS: Record<ReaderTheme, () => string> = {
 };
 
 const FONT_LABELS: Record<ReaderFont, () => string> = {
+  'source-serif-4': m.reader_settings_font_source_serif_4,
   literata: m.reader_settings_font_literata,
   'noto-serif': m.reader_settings_font_noto_serif,
-  'be-vietnam-pro': m.reader_settings_font_be_vietnam_pro,
-  inter: m.reader_settings_font_inter,
+  'plus-jakarta-sans': m.reader_settings_font_plus_jakarta_sans,
 };
 
 const WIDTH_LABELS: Record<ReaderWidth, () => string> = {

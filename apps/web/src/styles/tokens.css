@@ -3,34 +3,47 @@
  * Colours are hex, one `--name: #hex;` per line: `tokens.test.ts` matches them verbatim against
  * `token-values.ts` and checks WCAG AA contrast. Change a value in both places.
  *
- * Names follow shadcn/ui: `--primary` is the single accent colour (terracotta);
+ * Names follow shadcn/ui: `--primary` is the single accent colour (teal);
  * `--accent` is only the component hover background, not the accent colour.
+ * Surfaces step up from the page: `--background` → `--band` (plain strip behind a section) →
+ * `--card` (cards, sheets, inputs). Hierarchy comes from these steps, not from shadows.
  */
 
 :root {
-  --background: #fbf8f3;
-  --foreground: #2a2724;
-  --card: #fbf8f3;
-  --card-foreground: #2a2724;
-  --popover: #fbf8f3;
-  --popover-foreground: #2a2724;
-  --primary: #a8432a;
-  --primary-foreground: #fbf8f3;
-  --secondary: #f2eee7;
-  --secondary-foreground: #2a2724;
-  --muted: #f2eee7;
-  --muted-foreground: #6b645c;
-  --accent: #f2eee7;
-  --accent-foreground: #2a2724;
-  --destructive: #a3342b;
-  --border: #e4ded4;
-  --input: #8a8278;
-  --ring: #a8432a;
+  --background: #f5f4ef;
+  --foreground: #1c1d1b;
+  --card: #ffffff;
+  --card-foreground: #1c1d1b;
+  --popover: #ffffff;
+  --popover-foreground: #1c1d1b;
+  --primary: #0e6b5b;
+  --primary-foreground: #ffffff;
+  --primary-soft: #ddefea;
+  --secondary: #eceae3;
+  --secondary-foreground: #1c1d1b;
+  --muted: #eceae3;
+  --muted-foreground: #5d5f59;
+  --accent: #eceae3;
+  --accent-foreground: #1c1d1b;
+  --destructive: #b3261e;
+  --warning-soft: #fff1dc;
+  --warning-foreground: #8a4b00;
+  --band: #ece8df;
+  --border: #e3e1d9;
+  --input: #8a8c85;
+  --ring: #0e6b5b;
 
-  /* Reader default when no preset is chosen: ivory (`nga`). */
+  /*
+   * Reader default when no preset is chosen: ivory. The reading page swaps the site
+   * accent for `--reader-primary*` (`reader.css`), so presets never touch `--primary` on `<html>`.
+   */
   --reader-bg: #fbf6ec;
   --reader-fg: #2b2722;
   --reader-muted: #675f55;
+  --reader-card: #f3ecdd;
+  --reader-primary: #0e6b5b;
+  --reader-primary-foreground: #ffffff;
+  --reader-primary-soft: #ddefea;
 
   /*
    * Default text cover palette, picked by a hash of the main tag slug (`lib/cover-palette.ts`).
@@ -47,81 +60,114 @@
   --cover-7: #5b3a64;
   --cover-8: #7e3b54;
   --cover-9: #3a3632;
-  --cover-fg: #fbf8f3;
+  --cover-fg: #f6f1e7;
 
-  --radius: 0.375rem;
-
-  --font-ui: 'Be Vietnam Pro', system-ui, sans-serif;
-  --font-content: 'Literata Variable', Georgia, serif;
+  --font-ui: 'Plus Jakarta Sans Variable', system-ui, sans-serif;
+  --font-content: 'Source Serif 4 Variable', Georgia, serif;
+  --font-reader-literata: 'Literata Variable', Georgia, serif;
   --font-reader-noto-serif: 'Noto Serif Variable', Georgia, serif;
-  --font-reader-inter: 'Inter Variable', system-ui, sans-serif;
 
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #1c1a18;
-    --foreground: #ece6dd;
-    --card: #1c1a18;
-    --card-foreground: #ece6dd;
-    --popover: #1c1a18;
-    --popover-foreground: #ece6dd;
-    --primary: #d9825f;
-    --primary-foreground: #1c1a18;
-    --secondary: #2a2724;
-    --secondary-foreground: #ece6dd;
-    --muted: #2a2724;
-    --muted-foreground: #a89f94;
-    --accent: #2a2724;
-    --accent-foreground: #ece6dd;
-    --destructive: #e5806f;
-    --border: #3a3632;
-    --input: #6f675e;
-    --ring: #d9825f;
+    --background: #101312;
+    --foreground: #e8ece9;
+    --card: #181c1a;
+    --card-foreground: #e8ece9;
+    --popover: #181c1a;
+    --popover-foreground: #e8ece9;
+    --primary: #4fc2a8;
+    --primary-foreground: #0b1f1a;
+    --primary-soft: #17332c;
+    --secondary: #222724;
+    --secondary-foreground: #e8ece9;
+    --muted: #222724;
+    --muted-foreground: #9aa39e;
+    --accent: #222724;
+    --accent-foreground: #e8ece9;
+    --destructive: #f2877c;
+    --warning-soft: #2e2312;
+    --warning-foreground: #f2b866;
+    --band: #161a18;
+    --border: #2c322f;
+    --input: #6e7771;
+    --ring: #4fc2a8;
 
     /* Reader default when no preset is chosen: dark grey (`dark-gray`). */
     --reader-bg: #2b2b2b;
     --reader-fg: #d6d3ce;
     --reader-muted: #a3a09b;
+    --reader-card: #363636;
+    --reader-primary: #4fc2a8;
+    --reader-primary-foreground: #0b1f1a;
+    --reader-primary-soft: #17332c;
 
     color-scheme: dark;
   }
 }
 
-/* Reader background presets, selected by setting `data-reader-theme` on the root element. */
+/*
+ * Reader background presets, selected by setting `data-reader-theme` on the root element. Each
+ * carries the light or dark accent that stays readable on it, whatever the system scheme is.
+ */
 [data-reader-theme='white'] {
   --reader-bg: #ffffff;
   --reader-fg: #1f1f1f;
   --reader-muted: #5f5f5f;
+  --reader-card: #f4f4f2;
+  --reader-primary: #0e6b5b;
+  --reader-primary-foreground: #ffffff;
+  --reader-primary-soft: #ddefea;
 }
 
 [data-reader-theme='ivory'] {
   --reader-bg: #fbf6ec;
   --reader-fg: #2b2722;
   --reader-muted: #675f55;
+  --reader-card: #f3ecdd;
+  --reader-primary: #0e6b5b;
+  --reader-primary-foreground: #ffffff;
+  --reader-primary-soft: #ddefea;
 }
 
 [data-reader-theme='sepia'] {
   --reader-bg: #f4ecd8;
   --reader-fg: #3b2f22;
   --reader-muted: #6a5a47;
+  --reader-card: #eadfc6;
+  --reader-primary: #0e6b5b;
+  --reader-primary-foreground: #ffffff;
+  --reader-primary-soft: #ddefea;
 }
 
 [data-reader-theme='soft-green'] {
   --reader-bg: #e6efe4;
   --reader-fg: #22302a;
   --reader-muted: #4e5f55;
+  --reader-card: #d9e5d6;
+  --reader-primary: #0e6b5b;
+  --reader-primary-foreground: #ffffff;
+  --reader-primary-soft: #ddefea;
 }
 
 [data-reader-theme='dark-gray'] {
   --reader-bg: #2b2b2b;
   --reader-fg: #d6d3ce;
   --reader-muted: #a3a09b;
+  --reader-card: #363636;
+  --reader-primary: #4fc2a8;
+  --reader-primary-foreground: #0b1f1a;
+  --reader-primary-soft: #17332c;
 }
 
 [data-reader-theme='oled-black'] {
   --reader-bg: #000000;
   --reader-fg: #c9c5be;
   --reader-muted: #8f8b85;
+  --reader-card: #141414;
+  --reader-primary: #4fc2a8;
+  --reader-primary-foreground: #0b1f1a;
+  --reader-primary-soft: #17332c;
 }

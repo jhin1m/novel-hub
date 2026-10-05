@@ -22,7 +22,8 @@ describe('parseStoredSettings', () => {
     expect(parseStoredSettings(raw)).toEqual({
       ...DEFAULT_READER_SETTINGS,
       theme: 'sepia',
-      font: 'inter',
+      // A font removed from the list is mapped to its replacement, not reset to the default.
+      font: 'plus-jakarta-sans',
     });
   });
 });

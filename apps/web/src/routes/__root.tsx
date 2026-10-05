@@ -2,22 +2,23 @@ import { m } from '@novel-hub/shared/messages';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router';
 import { type ReactNode, useState } from 'react';
-import beVietnamProLatin from '@fontsource/be-vietnam-pro/files/be-vietnam-pro-latin-400-normal.woff2?url';
-import beVietnamProVietnamese from '@fontsource/be-vietnam-pro/files/be-vietnam-pro-vietnamese-400-normal.woff2?url';
-import literataLatin from '@fontsource-variable/literata/files/literata-latin-wght-normal.woff2?url';
-import literataVietnamese from '@fontsource-variable/literata/files/literata-vietnamese-wght-normal.woff2?url';
+import plusJakartaSansLatin from '@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2?url';
+import plusJakartaSansVietnamese from '@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-vietnamese-wght-normal.woff2?url';
+import sourceSerif4Latin from '@fontsource-variable/source-serif-4/files/source-serif-4-latin-wght-normal.woff2?url';
+import sourceSerif4Vietnamese from '@fontsource-variable/source-serif-4/files/source-serif-4-vietnamese-wght-normal.woff2?url';
 import { BOOT_SCRIPT } from '../lib/boot-script';
 import { rootSeo } from '../lib/seo';
 import { getSiteConfig } from '../server-fns/site-config';
 import appCss from '../styles/app.css?url';
 
-// Preload the UI font (400) and the content font, latin + vietnamese subsets. The `?url` imports
-// resolve to the same files `app.css` references, so the browser reuses the preloaded copies.
+// Preload the UI font and the content font (both variable, upright), latin + vietnamese subsets.
+// The `?url` imports resolve to the same files `app.css` references, so the browser reuses the
+// preloaded copies.
 const PRELOAD_FONTS = [
-  literataLatin,
-  literataVietnamese,
-  beVietnamProLatin,
-  beVietnamProVietnamese,
+  plusJakartaSansLatin,
+  plusJakartaSansVietnamese,
+  sourceSerif4Latin,
+  sourceSerif4Vietnamese,
 ];
 
 export const Route = createRootRoute({

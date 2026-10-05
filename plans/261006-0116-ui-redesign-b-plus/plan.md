@@ -4,7 +4,7 @@ description: >-
   Đổi giao diện toàn site sang hướng B+ (ứng dụng đọc ấm): tokens, 2 font mới,
   component, layout có thanh tab mobile, trang chủ, trang truyện, trang đọc,
   /write, editor, trang phụ và tài liệu; không đổi API/DB/URL.
-status: pending
+status: in-progress
 priority: P1
 effort: 8d
 branch: overnight/261006
@@ -36,7 +36,7 @@ Plan riêng do user thêm (không ứng với checkbox nào ở mục 5 spec), c
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | [Tokens và font](./phase-01-tokens-va-font.md) | Pending |
+| 1 | [Tokens và font](./phase-01-tokens-va-font.md) | Completed |
 | 2 | [Component dùng chung](./phase-02-component-dung-chung.md) | Pending |
 | 3 | [Layout header footer thanh tab](./phase-03-layout-header-footer-thanh-tab.md) | Pending |
 | 4 | [Trang chủ](./phase-04-trang-chu.md) | Pending |

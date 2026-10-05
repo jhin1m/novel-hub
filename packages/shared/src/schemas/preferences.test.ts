@@ -20,6 +20,14 @@ describe('userPreferencesSchema', () => {
     expect(userPreferencesSchema.parse({ reader })).toEqual({ showMature: false, reader });
   });
 
+  it('keeps stored reader settings that use a removed font, mapped to its replacement', () => {
+    const reader = { ...DEFAULT_READER_SETTINGS, font: 'inter', updatedAt: 5 };
+    expect(userPreferencesSchema.parse({ reader })).toEqual({
+      showMature: false,
+      reader: { ...reader, font: 'plus-jakarta-sans' },
+    });
+  });
+
   it('drops stored reader settings that no longer parse, keeping the rest', () => {
     expect(userPreferencesSchema.parse({ showMature: true, reader: { theme: 'neon' } })).toEqual({
       showMature: true,

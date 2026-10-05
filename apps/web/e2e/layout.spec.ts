@@ -32,17 +32,18 @@ test('home page HTML preloads UI and content fonts and sets no cookie', async ({
   const preloads = [...html.matchAll(/<link[^>]*rel="preload"[^>]*>/g)].map(([tag]) => tag);
   const fontPreloads = preloads.filter((tag) => tag.includes('as="font"'));
   for (const file of [
-    'literata-latin-wght-normal',
-    'literata-vietnamese-wght-normal',
-    'be-vietnam-pro-latin-400-normal',
-    'be-vietnam-pro-vietnamese-400-normal',
+    'plus-jakarta-sans-latin-wght-normal',
+    'plus-jakarta-sans-vietnamese-wght-normal',
+    'source-serif-4-latin-wght-normal',
+    'source-serif-4-vietnamese-wght-normal',
   ]) {
     expect(fontPreloads.some((tag) => tag.includes(file))).toBe(true);
   }
+  expect(fontPreloads).toHaveLength(4);
   for (const tag of fontPreloads) expect(tag).toContain('crossorigin');
 });
 
-test('regular pages do not download the optional reader fonts (Noto Serif, Inter)', async ({
+test('regular pages do not download the optional reader fonts (Literata, Noto Serif)', async ({
   page,
 }) => {
   const fonts: string[] = [];
@@ -52,6 +53,6 @@ test('regular pages do not download the optional reader fonts (Noto Serif, Inter
   await page.goto('/');
   await page.waitForLoadState('networkidle');
 
-  expect(fonts.some((url) => url.includes('be-vietnam-pro'))).toBe(true);
-  expect(fonts.filter((url) => /noto-serif|inter-/.test(url))).toEqual([]);
+  expect(fonts.some((url) => url.includes('plus-jakarta-sans'))).toBe(true);
+  expect(fonts.filter((url) => /literata|noto-serif/.test(url))).toEqual([]);
 });

@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "Tokens và font"
-status: pending
+status: completed
 priority: P1
 effort: "0.5d"
 dependencies: []
@@ -92,14 +92,14 @@ Luồng dữ liệu font: localStorage `nh:reader` / `users.preferences.reader` 
 
 ## Function/interface checklist
 
-- [ ] `READER_FONTS` (enum mới, thứ tự như Requirements), `type ReaderFont`
-- [ ] `LEGACY_READER_FONTS: Readonly<Record<string, ReaderFont>>` (export, dùng chung Zod + boot)
-- [ ] `migrateLegacyReaderFont(value: unknown): unknown` (dùng `Object.hasOwn`)
-- [ ] `readerSettingsSchema.font = z.preprocess(migrateLegacyReaderFont, z.enum(READER_FONTS))`
-- [ ] `DEFAULT_READER_SETTINGS.font = 'source-serif-4'`
-- [ ] `BOOT_SCRIPT` map alias trước `indexOf`
-- [ ] `TOKEN_VALUES`, `resolvedScopes()` (preset mang theo `--reader-*` mới), `CONTRAST_PAIRS`, `READER_CONTRAST_PAIRS`, `COVER_CONTRAST_PAIRS`
-- [ ] `PRELOAD_FONTS` (4 phần tử)
+- [x] `READER_FONTS` (enum mới, thứ tự như Requirements), `type ReaderFont`
+- [x] `LEGACY_READER_FONTS: Readonly<Record<string, ReaderFont>>` (export, dùng chung Zod + boot)
+- [x] `migrateLegacyReaderFont(value: unknown): unknown` (dùng `Object.hasOwn`)
+- [x] `readerSettingsSchema.font = z.preprocess(migrateLegacyReaderFont, z.enum(READER_FONTS))`
+- [x] `DEFAULT_READER_SETTINGS.font = 'source-serif-4'`
+- [x] `BOOT_SCRIPT` map alias trước `indexOf`
+- [x] `TOKEN_VALUES`, `resolvedScopes()` (preset mang theo `--reader-*` mới), `CONTRAST_PAIRS`, `READER_CONTRAST_PAIRS`, `COVER_CONTRAST_PAIRS`
+- [x] `PRELOAD_FONTS` (4 phần tử)
 
 ## Dependency map
 
@@ -137,13 +137,18 @@ Luồng dữ liệu font: localStorage `nh:reader` / `users.preferences.reader` 
 
 ## Success Criteria
 
-- [ ] `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
-- [ ] `apps/web/package.json` chỉ còn 4 package font: literata, noto-serif, plus-jakarta-sans, source-serif-4 (pin `5.3.0`)
+- [x] `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
+- [x] `apps/web/package.json` chỉ còn 4 package font: literata, noto-serif, plus-jakarta-sans, source-serif-4 (pin `5.3.0`)
 <!-- Updated: Red Team 2026-10-06 - tiêu chí grep loại fixture test -->
-- [ ] `rg -n 'be-vietnam-pro|Be Vietnam|Inter Variable|a8432a|terracotta' apps/web/src packages/shared/src --glob '!*.test.ts'` chỉ còn: khai báo alias legacy trong `packages/shared/src/schemas/reader.ts` (`LEGACY_READER_FONTS`) và selector giá trị cũ trong `apps/web/src/styles/reader.css` (có comment). Fixture legacy trong `*.test.ts` (`boot-script.test.ts`, `settings.test.ts`, `reader.test.ts`, `preferences.test.ts`) **phải giữ** (chứng minh map)
-- [ ] `rg -n -- '--reader-card' apps/web/src/styles/tokens.css` có trong `:root` light, `:root` dark và 6 preset
-- [ ] `grep -n "\-\-primary:" apps/web/src/styles/tokens.css` chỉ nằm trong `:root` light/dark
-- [ ] Mọi file code đụng tới ≤ 200 dòng (trừ `reader-settings-sheet.tsx` giữ 244, tách ở phase 7)
+- [x] `rg -n 'be-vietnam-pro|Be Vietnam|Inter Variable|a8432a|terracotta' apps/web/src packages/shared/src --glob '!*.test.ts'` chỉ còn: khai báo alias legacy trong `packages/shared/src/schemas/reader.ts` (`LEGACY_READER_FONTS`) và selector giá trị cũ trong `apps/web/src/styles/reader.css` (có comment). Fixture legacy trong `*.test.ts` (`boot-script.test.ts`, `settings.test.ts`, `reader.test.ts`, `preferences.test.ts`) **phải giữ** (chứng minh map)
+- [x] `rg -n -- '--reader-card' apps/web/src/styles/tokens.css` có trong `:root` light, `:root` dark và 6 preset
+- [x] `grep -n "\-\-primary:" apps/web/src/styles/tokens.css` chỉ nằm trong `:root` light/dark
+- [x] Mọi file code đụng tới ≤ 200 dòng (trừ `reader-settings-sheet.tsx` giữ 244, tách ở phase 7)
+
+**Kết quả cook (2026-10-06):** typecheck, lint, test (624), test:int (301 + 1 skip S3), test:e2e (72) xanh; lặp lại e2e reader/publish/layout/revision (28) sau sửa review. `format:check` chỉ báo 2 file sinh tự động đã git-ignore `packages/shared/project.inlang/{.meta.json,README.md}` (tạo 17:11, trước phiên này, không do phase); `prettier --check . '!packages/shared/project.inlang/**'` sạch.
+- [auto] Review (Medium): `body` 500 lan vào chữ truyện/editor/xem trước revision → đặt `font-weight: 400` cho `.reader-column` (`reader.css`) và `.chapter-editor-content, .chapter-preview-content` (`app.css`). Lý do: brainstorm §3 chỉ đặt 15/500 cho giao diện; phase ghi khu đọc/editor không bị ảnh hưởng.
+- [auto] Không spawn `tester` riêng: gate đầy đủ đã chạy trực tiếp ở phiên chính. Lý do: tránh chạy e2e trùng (không chạy hai gate song song).
+- Report review: `reports/code-reviewer-261006-phase-01-tokens-va-font-review-report.md`.
 
 ## Risk Assessment
 

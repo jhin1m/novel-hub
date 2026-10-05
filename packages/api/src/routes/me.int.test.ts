@@ -91,7 +91,7 @@ describe('GET /api/v1/me', () => {
 describe('PATCH /api/v1/me/preferences', () => {
   const reader = {
     theme: 'sepia',
-    font: 'inter',
+    font: 'plus-jakarta-sans',
     fontSize: 24,
     lineHeight: 2,
     paragraphSpacing: 1.5,

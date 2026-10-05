@@ -5,11 +5,9 @@ import { contrastViolations } from '../lib/contrast';
 import {
   CONTRAST_PAIRS,
   COVER_CONTRAST_PAIRS,
-  READER_PRESETS,
-  TOKEN_VALUES,
-  coverBackgrounds,
-  resolvedScopes,
-} from './token-values';
+  READER_CONTRAST_PAIRS,
+} from './token-contrast-pairs';
+import { READER_PRESETS, TOKEN_VALUES, coverBackgrounds, resolvedScopes } from './token-values';
 
 const tokensCss = readFileSync(new URL('./tokens.css', import.meta.url), 'utf8');
 
@@ -42,6 +40,22 @@ describe('design tokens', () => {
       expect(contrastViolations(colors, CONTRAST_PAIRS)).toEqual([]);
     },
   );
+
+  // `light` and `dark` are the reading page without a preset (what every guest sees).
+  it.each(Object.entries(resolvedScopes()))(
+    '%s: reading page text, card and accent meet their threshold',
+    (_, colors) => {
+      expect(contrastViolations(colors, READER_CONTRAST_PAIRS)).toEqual([]);
+    },
+  );
+
+  it('reader presets never override the site accent', () => {
+    for (const preset of READER_PRESETS) {
+      expect(
+        Object.keys(TOKEN_VALUES.reader[preset]).filter((name) => !name.startsWith('--reader-')),
+      ).toEqual([]);
+    }
+  });
 
   it('every default cover colour meets AA against the cover text colour', () => {
     expect(contrastViolations(TOKEN_VALUES.cover, COVER_CONTRAST_PAIRS)).toEqual([]);

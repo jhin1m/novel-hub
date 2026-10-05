@@ -6,6 +6,9 @@ dist
 .nitro
 **/routeTree.gen.ts
 **/src/paraglide
+# inlang SDK generates these itself; only settings.json is source
+**/*.inlang/*
+!**/*.inlang/settings.json
 packages/db/drizzle
 test-results
 playwright-report

@@ -11,10 +11,10 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@fontsource-variable/inter": "5.3.0",
     "@fontsource-variable/literata": "5.3.0",
     "@fontsource-variable/noto-serif": "5.3.0",
-    "@fontsource/be-vietnam-pro": "5.3.0",
+    "@fontsource-variable/plus-jakarta-sans": "5.3.0",
+    "@fontsource-variable/source-serif-4": "5.3.0",
     "@novel-hub/api": "workspace:*",
     "@novel-hub/auth": "workspace:*",
     "@novel-hub/core": "workspace:*",

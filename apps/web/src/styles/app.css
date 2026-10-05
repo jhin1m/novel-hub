@@ -3,18 +3,17 @@
 
 /*
  * Self-hosted fonts. Fontsource `@font-face` rules carry `unicode-range` and browsers only fetch a
- * woff2 once text actually uses that face, so Noto Serif/Inter (optional reader fonts) are not
- * downloaded on regular pages.
+ * woff2 once text actually uses that face, so Literata/Noto Serif (optional reader fonts) are not
+ * downloaded on regular pages. Plus Jakarta Sans (UI) and Source Serif 4 (content) are preloaded
+ * in `__root.tsx`.
  */
-@import '@fontsource/be-vietnam-pro/400.css';
-@import '@fontsource/be-vietnam-pro/500.css';
-@import '@fontsource/be-vietnam-pro/600.css';
-@import '@fontsource/be-vietnam-pro/700.css';
+@import '@fontsource-variable/plus-jakarta-sans/wght.css';
+@import '@fontsource-variable/source-serif-4/wght.css';
+@import '@fontsource-variable/source-serif-4/wght-italic.css';
 @import '@fontsource-variable/literata/wght.css';
 @import '@fontsource-variable/literata/wght-italic.css';
 @import '@fontsource-variable/noto-serif/wght.css';
 @import '@fontsource-variable/noto-serif/wght-italic.css';
-@import '@fontsource-variable/inter/wght.css';
 
 @import './tokens.css';
 @import './reader.css';
@@ -35,21 +34,33 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-primary-soft: var(--primary-soft);
   --color-destructive: var(--destructive);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-band: var(--band);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-reader-bg: var(--reader-bg);
   --color-reader-fg: var(--reader-fg);
   --color-reader-muted: var(--reader-muted);
+  --color-reader-card: var(--reader-card);
+  --color-reader-primary: var(--reader-primary);
+  --color-reader-primary-foreground: var(--reader-primary-foreground);
+  --color-reader-primary-soft: var(--reader-primary-soft);
 
   --font-sans: var(--font-ui);
   --font-serif: var(--font-content);
 
-  --radius-sm: calc(var(--radius) - 2px);
-  --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 2px);
-  --radius-xl: calc(var(--radius) + 4px);
+  /* Status badges `xs`, small covers `sm`, covers and inputs `md`, cards `lg`, sheets and dialogs
+     `xl`, heroes `2xl`; buttons, chips and tabs are `rounded-full`. */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-2xl: 28px;
 }
 
 @layer base {
@@ -58,7 +69,7 @@
   }
 
   body {
-    @apply bg-background font-sans text-foreground antialiased;
+    @apply bg-background font-sans text-[15px] font-medium text-foreground antialiased;
   }
 }
 
@@ -82,6 +93,9 @@
 /* Revision previews render the same HTML, so they share the editor's typography. */
 .chapter-editor-content,
 .chapter-preview-content {
+  /* Story text stays regular; the 500 weight on `body` is for the interface only. */
+  font-weight: 400;
+
   & > * + * {
     margin-top: 1em;
   }

@@ -12,6 +12,12 @@
 }
 
 .reader-page {
+  /* The accent follows the reading preset; sheets portal outside and keep the site accent. */
+  --primary: var(--reader-primary);
+  --primary-foreground: var(--reader-primary-foreground);
+  --primary-soft: var(--reader-primary-soft);
+  --ring: var(--reader-primary);
+
   min-height: 100dvh;
   background: var(--reader-bg);
   color: var(--reader-fg);
@@ -21,21 +27,29 @@
   max-width: var(--reader-column);
   margin-inline: auto;
   font-family: var(--reader-font);
+  /* Story text stays regular; the 500 weight on `body` is for the interface only. */
+  font-weight: 400;
   font-size: var(--reader-font-size);
   line-height: var(--reader-line-height);
 }
 
-/* Optional fonts: their files are only fetched once the reader picks them and text uses them. */
+/*
+ * Optional fonts: their files are only fetched once the reader picks them and text uses them.
+ * `source-serif-4` is the default `--font-content`, so it needs no rule.
+ */
+:root[data-reader-font='literata'] {
+  --reader-font: var(--font-reader-literata);
+}
+
 :root[data-reader-font='noto-serif'] {
   --reader-font: var(--font-reader-noto-serif);
 }
 
-:root[data-reader-font='be-vietnam-pro'] {
-  --reader-font: var(--font-ui);
-}
-
+:root[data-reader-font='plus-jakarta-sans'],
+/* Old values still stored on some devices (`LEGACY_READER_FONTS` maps them in JS). */
+:root[data-reader-font='be-vietnam-pro'],
 :root[data-reader-font='inter'] {
-  --reader-font: var(--font-reader-inter);
+  --reader-font: var(--font-ui);
 }
 
 /* The column width choice only matters where the column is narrower than the screen. */

@@ -171,13 +171,13 @@ test.describe('18+ stories', () => {
     await expect(gate.getByRole('link', { name: 'Đăng nhập để đọc' })).toBeVisible();
   });
 
-  test('a signed-in reader without the setting sees a hint; with it, the chapter', async ({
+  test('a signed-in reader without the setting is offered to turn it on; with it, the chapter', async ({
     page,
   }) => {
     const account = await signUp(page);
     await gotoHydrated(page, story.chapterPath(1));
     const gate = page.getByRole('alertdialog');
-    await expect(gate.getByText(/Bật tuỳ chọn “Hiện nội dung 18\+”/)).toBeVisible();
+    await expect(gate.getByRole('checkbox', { name: 'Tôi xác nhận đã đủ 18 tuổi' })).toBeVisible();
 
     await allowMatureContent(account.email);
     await gotoHydrated(page, story.chapterPath(1));

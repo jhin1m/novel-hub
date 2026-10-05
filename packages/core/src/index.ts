@@ -119,4 +119,4 @@ export {
   listReadableChapters,
 } from './reader/get-chapter-for-reading';
 export { getChapterToc } from './reader/toc';
-export { getPreferences } from './users/preferences';
+export { type PreferencesError, getPreferences, updatePreferences } from './users/preferences';

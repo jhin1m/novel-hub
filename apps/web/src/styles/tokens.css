@@ -80,7 +80,7 @@
     --input: #6f675e;
     --ring: #d9825f;
 
-    /* Reader default when no preset is chosen: dark grey (`xam-toi`). */
+    /* Reader default when no preset is chosen: dark grey (`dark-gray`). */
     --reader-bg: #2b2b2b;
     --reader-fg: #d6d3ce;
     --reader-muted: #a3a09b;
@@ -90,13 +90,13 @@
 }
 
 /* Reader background presets, selected by setting `data-reader-theme` on the root element. */
-[data-reader-theme='sang'] {
+[data-reader-theme='white'] {
   --reader-bg: #ffffff;
   --reader-fg: #1f1f1f;
   --reader-muted: #5f5f5f;
 }
 
-[data-reader-theme='nga'] {
+[data-reader-theme='ivory'] {
   --reader-bg: #fbf6ec;
   --reader-fg: #2b2722;
   --reader-muted: #675f55;
@@ -108,19 +108,19 @@
   --reader-muted: #6a5a47;
 }
 
-[data-reader-theme='xanh-diu'] {
+[data-reader-theme='soft-green'] {
   --reader-bg: #e6efe4;
   --reader-fg: #22302a;
   --reader-muted: #4e5f55;
 }
 
-[data-reader-theme='xam-toi'] {
+[data-reader-theme='dark-gray'] {
   --reader-bg: #2b2b2b;
   --reader-fg: #d6d3ce;
   --reader-muted: #a3a09b;
 }
 
-[data-reader-theme='den-oled'] {
+[data-reader-theme='oled-black'] {
   --reader-bg: #000000;
   --reader-fg: #c9c5be;
   --reader-muted: #8f8b85;

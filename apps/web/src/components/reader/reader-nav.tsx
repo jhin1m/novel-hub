@@ -3,6 +3,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChapterTocSheet } from './chapter-toc-sheet';
+import { ReaderSettingsSheet } from './reader-settings-sheet';
 
 interface ReaderNavProps {
   story: { slug: string; publicId: string; title: string };
@@ -15,9 +16,9 @@ interface ReaderNavProps {
 }
 
 /**
- * Reading bar: chapter name, previous/next and table of contents, nothing else. Slides away while
- * scrolling down. Chapter links are plain anchors: every chapter view is a document load served
- * from the CDN cache.
+ * Reading bar: chapter name, previous/next, table of contents and display settings, nothing
+ * else. Slides away while scrolling down. Chapter links are plain anchors: every chapter view is a
+ * document load served from the CDN cache.
  */
 export function ReaderNav({
   story,
@@ -44,6 +45,7 @@ export function ReaderNav({
         <NavLink href={nextHref} label={m.reader_next()} rel="next">
           <ChevronRightIcon />
         </NavLink>
+        <ReaderSettingsSheet />
       </div>
     </nav>
   );

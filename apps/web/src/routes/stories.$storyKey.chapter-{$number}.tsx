@@ -86,7 +86,11 @@ function ReaderPage() {
             <p className="text-sm text-reader-muted">
               {m.reader_by_author({ name: story.authorDisplayName })}
             </p>
-            <h1 className="font-serif text-2xl leading-snug font-semibold">
+            {/* Focus target once the 18+ screen goes away. */}
+            <h1
+              tabIndex={-1}
+              className="font-serif text-2xl leading-snug font-semibold outline-none"
+            >
               {m.reader_chapter_label({ number: chapter.number })}
               {chapter.title ? `: ${chapter.title}` : null}
             </h1>

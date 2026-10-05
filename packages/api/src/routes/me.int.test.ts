@@ -86,3 +86,56 @@ describe('GET /api/v1/me', () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe('PATCH /api/v1/me/preferences', () => {
+  const reader = {
+    theme: 'sepia',
+    font: 'inter',
+    fontSize: 24,
+    lineHeight: 2,
+    paragraphSpacing: 1.5,
+    width: 'wide',
+    align: 'justify',
+    updatedAt: 1_700_000_000_000,
+  } as const;
+
+  it('guest → 401', async () => {
+    const res = await testClient(appAs(null)).api.v1.me.preferences.$patch({
+      json: { reader },
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it('turning 18+ on without confirming the age → 400 ADULT_CONFIRMATION_REQUIRED', async () => {
+    const user = await insertUser({});
+    const res = await testClient(appAs(user)).api.v1.me.preferences.$patch({
+      json: { showMature: true },
+    });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({ error: { code: 'ADULT_CONFIRMATION_REQUIRED' } });
+  });
+
+  it('unknown fields or invalid settings → 400 VALIDATION_ERROR', async () => {
+    const user = await insertUser({});
+    const client = testClient(appAs(user));
+    for (const json of [{ role: 'admin' }, { reader: { ...reader, fontSize: 40 } }]) {
+      const res = await client.api.v1.me.preferences.$patch({ json });
+      expect(res.status).toBe(400);
+      expect(await res.json()).toMatchObject({ error: { code: 'VALIDATION_ERROR' } });
+    }
+  });
+
+  it('saves and returns the merged preferences, uncached; GET /me sees them', async () => {
+    const user = await insertUser({ showMature: true });
+    const client = testClient(appAs(user));
+    const res = await client.api.v1.me.preferences.$patch({ json: { reader } });
+    expect(res.status).toBe(200);
+    expect(res.headers.get('cache-control')).toBe('no-store');
+    expect(await res.json()).toEqual({ preferences: { showMature: true, reader } });
+
+    const me = await client.api.v1.me.$get();
+    expect(me.status).toBe(200);
+    if (me.status !== 200) return;
+    expect((await me.json()).user.preferences).toEqual({ showMature: true, reader });
+  });
+});

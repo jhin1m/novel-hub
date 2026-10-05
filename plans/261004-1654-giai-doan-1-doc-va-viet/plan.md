@@ -38,7 +38,7 @@ Giai đoạn 0 xong (`plans/261004-1255-giai-doan-0-nen-mong`). Spec `docs/proje
 | 5 | [Đăng chương và hẹn giờ](./phase-05-dang-chuong-va-hen-gio.md) | 4 | Completed |
 | 6 | [Khôi phục revision](./phase-06-khoi-phuc-revision.md) | 5 | Completed |
 | 7 | [Trang đọc: route, cache, giao diện](./phase-07-trang-doc-route-giao-dien.md) | 6 (phần 1/3) | Completed (checkbox chờ phase 9) |
-| 8 | [Trang đọc: cài đặt hiển thị](./phase-08-cai-dat-trang-doc.md) | 6 (phần 2/3) | Pending |
+| 8 | [Trang đọc: cài đặt hiển thị](./phase-08-cai-dat-trang-doc.md) | 6 (phần 2/3) | Completed (checkbox chờ phase 9) |
 | 9 | [Trang đọc: tiến độ, purge CDN, lượt đọc](./phase-09-tien-do-purge-luot-doc.md) | 6 (đánh `[x]`) | Pending |
 | 10 | [Trang truyện, tác giả, tag, trang chủ](./phase-10-trang-truyen-tac-gia-tag-trang-chu.md) | 7 | Pending |
 | 11 | [Tìm kiếm Meilisearch](./phase-11-tim-kiem-meilisearch.md) | 8 | Pending |
@@ -272,7 +272,8 @@ Phụ thuộc tuyến tính 1 → 17.
 - Phase 3 xong (2026-10-05): gate 5 lệnh xanh, checkbox 2 `[x]`. Review `../reports/code-review-261005-1054-phase-03-text-cover-report.md` (8.5/10, 0 Critical/High/Medium; đã sửa L2, L3; L1 duyệt mắt dark ổn, không sửa; L4 để user quyết). Report: `../reports/cook-261005-1054-phase-03-text-cover-report.md`.
 - Phase 4 xong (2026-10-05): gate 5 lệnh xanh, checkbox 3 `[x]`. Review `../reports/code-reviewer-261005-1122-phase-04-editor-autosave-review-report.md` (7.5/10, đã sửa H1, M1–M3, L1, L2). Report: `../reports/cook-261005-1137-phase-04-editor-autosave-report.md`. DB dev cũ cần `pnpm db:seed --reset` (pid `p1`).
 - Phase 7 xong (2026-10-05): gate 5 lệnh xanh; checkbox 6 **chưa** đánh (phase 9). Review `../reports/code-reviewer-261005-1245-phase-07-reader-route-review-report.md` (8/10, đã sửa H1, M1, M2 và 4 Low). Report: `../reports/cook-261005-1228-phase-07-reader-route-report.md`. Lệch plan: `/` cuối nhận 307 của router (không cache); `%2D` trả 200 do Start decode path, dựa vào URL Normalization của Cloudflare (`docs/deployment-cloudflare.md`).
-- Tiếp: cook phase 8.
+- Phase 8 xong (2026-10-05): gate 5 lệnh xanh; checkbox 6 **chưa** đánh (phase 9). Review `../reports/code-reviewer-261005-1314-phase-08-reader-settings-review-report.md` (8.5/10, đã sửa M1, L1, L2, L6, L7). Report: `../reports/cook-261005-1337-phase-08-reader-settings-report.md`. Lệch plan: enum preset/width/align đổi sang tiếng Anh (`white`…`oled-black`, `narrow/medium/wide`, `left/justify`), chi tiết trong phase-08.
+- Tiếp: cook phase 9.
 - Nhắc trước khi mở public: backup Postgres ra ngoài VPS + thử restore (phase 17).
 
 <!-- slug: giai-doan-1-doc-va-viet -->

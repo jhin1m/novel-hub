@@ -54,16 +54,16 @@ Self-host qua `@fontsource*`, không gọi Google Fonts.
 
 ## Preset trang đọc
 
-Chọn bằng thuộc tính `data-reader-theme` trên phần tử gốc; không có thuộc tính thì mặc định `nga` (light) hoặc `xam-toi` (dark). Biến: `--reader-bg`, `--reader-fg`, `--reader-muted` (utility `bg-reader-bg`, `text-reader-fg`, `text-reader-muted`).
+Chọn bằng thuộc tính `data-reader-theme` trên phần tử gốc; không có thuộc tính thì mặc định `ivory` (light) hoặc `dark-gray` (dark). Danh sách preset khai báo ở `READER_THEMES` (`packages/shared/src/schemas/reader.ts`). Biến: `--reader-bg`, `--reader-fg`, `--reader-muted` (utility `bg-reader-bg`, `text-reader-fg`, `text-reader-muted`).
 
 | Preset | Tên hiển thị | `--reader-bg` | `--reader-fg` | `--reader-muted` |
 | --- | --- | --- | --- | --- |
-| `sang` | Sáng | `#FFFFFF` | `#1F1F1F` | `#5F5F5F` |
-| `nga` | Ngà | `#FBF6EC` | `#2B2722` | `#675F55` |
+| `white` | Sáng | `#FFFFFF` | `#1F1F1F` | `#5F5F5F` |
+| `ivory` | Ngà | `#FBF6EC` | `#2B2722` | `#675F55` |
 | `sepia` | Sepia | `#F4ECD8` | `#3B2F22` | `#6A5A47` |
-| `xanh-diu` | Xanh dịu (xanh lá nhạt) | `#E6EFE4` | `#22302A` | `#4E5F55` |
-| `xam-toi` | Xám tối | `#2B2B2B` | `#D6D3CE` | `#A3A09B` |
-| `den-oled` | Đen OLED | `#000000` | `#C9C5BE` | `#8F8B85` |
+| `soft-green` | Xanh dịu (xanh lá nhạt) | `#E6EFE4` | `#22302A` | `#4E5F55` |
+| `dark-gray` | Xám tối | `#2B2B2B` | `#D6D3CE` | `#A3A09B` |
+| `oled-black` | Đen OLED | `#000000` | `#C9C5BE` | `#8F8B85` |
 
 Không có bảng chọn màu tự do.
 

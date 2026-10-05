@@ -1,9 +1,12 @@
 import { m } from '@novel-hub/shared/messages';
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { useMe } from '@/lib/me';
+import { usePatchPreferences } from '@/lib/preferences';
 
 /** Whether the visitor allowed 18+ content. Only known in the browser; SSR always says no. */
 export function useMatureAllowed(): boolean {
@@ -72,7 +75,7 @@ export function MatureGate({
               <Link to="/sign-in">{m.mature_sign_in()}</Link>
             </Button>
           ) : (
-            <p className="text-sm">{m.mature_enable_hint()}</p>
+            <EnableMatureForm />
           )
         ) : null}
         <Button asChild variant="outline" className="self-start">
@@ -82,5 +85,52 @@ export function MatureGate({
         </Button>
       </div>
     </div>
+  );
+}
+
+/**
+ * Turns 18+ content on for the signed-in account, after the reader states they are 18 or older.
+ * The server checks the confirmation too. Success updates the cached account, which removes the
+ * screen, and stores the hint so the next page skips it before paint.
+ */
+function EnableMatureForm() {
+  const [confirmed, setConfirmed] = useState(false);
+  const enable = usePatchPreferences();
+  const checkboxId = useId();
+  return (
+    <form
+      className="flex flex-col gap-3"
+      onSubmit={(event) => {
+        event.preventDefault();
+        enable.mutate(
+          { showMature: true, confirmAdult: true },
+          {
+            // The screen (and the focus inside it) is gone after the next paint: move focus to
+            // the page heading so keyboard and screen reader users carry on from the content.
+            onSuccess: () =>
+              requestAnimationFrame(() =>
+                document.querySelector<HTMLElement>('main h1[tabindex]')?.focus(),
+              ),
+          },
+        );
+      }}
+    >
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id={checkboxId}
+          checked={confirmed}
+          onCheckedChange={(checked) => setConfirmed(checked === true)}
+        />
+        <Label htmlFor={checkboxId}>{m.mature_confirm_adult()}</Label>
+      </div>
+      <Button type="submit" disabled={!confirmed || enable.isPending} className="self-start">
+        {m.mature_enable()}
+      </Button>
+      {enable.isError ? (
+        <p role="alert" className="text-sm">
+          {m.mature_enable_error()}
+        </p>
+      ) : null}
+    </form>
   );
 }

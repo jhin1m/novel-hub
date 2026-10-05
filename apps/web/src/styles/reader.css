@@ -1,6 +1,6 @@
 /*
- * Reading page. Defaults live on `:root` so the reader settings can override them on `<html>`
- * before the first paint.
+ * Reading page. Defaults live on `:root` (keep them equal to `DEFAULT_READER_SETTINGS`) so the
+ * reader settings can override them on `<html>` before the first paint.
  */
 :root {
   --reader-font: var(--font-content);
@@ -23,6 +23,34 @@
   font-family: var(--reader-font);
   font-size: var(--reader-font-size);
   line-height: var(--reader-line-height);
+}
+
+/* Optional fonts: their files are only fetched once the reader picks them and text uses them. */
+:root[data-reader-font='noto-serif'] {
+  --reader-font: var(--font-reader-noto-serif);
+}
+
+:root[data-reader-font='be-vietnam-pro'] {
+  --reader-font: var(--font-ui);
+}
+
+:root[data-reader-font='inter'] {
+  --reader-font: var(--font-reader-inter);
+}
+
+/* The column width choice only matters where the column is narrower than the screen. */
+@media (min-width: 1024px) {
+  :root[data-reader-width='narrow'] {
+    --reader-column: 60ch;
+  }
+
+  :root[data-reader-width='wide'] {
+    --reader-column: 75ch;
+  }
+}
+
+:root[data-reader-align='justify'] .reader-content {
+  text-align: justify;
 }
 
 /* Published chapter HTML: only the tags the sanitizer allows. */

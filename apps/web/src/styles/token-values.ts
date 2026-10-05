@@ -1,3 +1,4 @@
+import { READER_THEMES, type ReaderTheme } from '@novel-hub/shared';
 import type { ContrastPair } from '../lib/contrast';
 
 /**
@@ -8,9 +9,10 @@ import type { ContrastPair } from '../lib/contrast';
 
 type Scope = Readonly<Record<`--${string}`, `#${string}`>>;
 
-export const READER_PRESETS = ['sang', 'nga', 'sepia', 'xanh-diu', 'xam-toi', 'den-oled'] as const;
+/** The reader presets themselves are declared in `@novel-hub/shared` (`READER_THEMES`). */
+export const READER_PRESETS = READER_THEMES;
 
-export type ReaderPreset = (typeof READER_PRESETS)[number];
+export type ReaderPreset = ReaderTheme;
 
 const light: Scope = {
   '--background': '#fbf8f3',
@@ -61,12 +63,12 @@ const dark: Scope = {
 };
 
 const reader: Readonly<Record<ReaderPreset, Scope>> = {
-  sang: { '--reader-bg': '#ffffff', '--reader-fg': '#1f1f1f', '--reader-muted': '#5f5f5f' },
-  nga: { '--reader-bg': '#fbf6ec', '--reader-fg': '#2b2722', '--reader-muted': '#675f55' },
+  white: { '--reader-bg': '#ffffff', '--reader-fg': '#1f1f1f', '--reader-muted': '#5f5f5f' },
+  ivory: { '--reader-bg': '#fbf6ec', '--reader-fg': '#2b2722', '--reader-muted': '#675f55' },
   sepia: { '--reader-bg': '#f4ecd8', '--reader-fg': '#3b2f22', '--reader-muted': '#6a5a47' },
-  'xanh-diu': { '--reader-bg': '#e6efe4', '--reader-fg': '#22302a', '--reader-muted': '#4e5f55' },
-  'xam-toi': { '--reader-bg': '#2b2b2b', '--reader-fg': '#d6d3ce', '--reader-muted': '#a3a09b' },
-  'den-oled': { '--reader-bg': '#000000', '--reader-fg': '#c9c5be', '--reader-muted': '#8f8b85' },
+  'soft-green': { '--reader-bg': '#e6efe4', '--reader-fg': '#22302a', '--reader-muted': '#4e5f55' },
+  'dark-gray': { '--reader-bg': '#2b2b2b', '--reader-fg': '#d6d3ce', '--reader-muted': '#a3a09b' },
+  'oled-black': { '--reader-bg': '#000000', '--reader-fg': '#c9c5be', '--reader-muted': '#8f8b85' },
 };
 
 /** Default text cover palette (`--cover-N`) and its text colour; the same in light and dark. */

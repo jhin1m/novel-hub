@@ -5,7 +5,12 @@ export {
   generatePublicId,
   isValidPublicId,
 } from './public-id';
-export { userPreferencesSchema, type UserPreferences } from './schemas/preferences';
+export {
+  type PreferencesPatch,
+  type UserPreferences,
+  preferencesPatchSchema,
+  userPreferencesSchema,
+} from './schemas/preferences';
 export {
   DISPLAY_NAME_MAX_LENGTH,
   RESERVED_USERNAMES,
@@ -70,5 +75,22 @@ export {
   revisionKeySchema,
   revisionParamSchema,
 } from './schemas/revision';
-export { parseChapterNumber, parseChapterSegment } from './schemas/reader';
+export {
+  DEFAULT_READER_SETTINGS,
+  READER_ALIGNS,
+  READER_FONTS,
+  READER_RANGES,
+  READER_THEMES,
+  READER_WIDTHS,
+  type ReaderAlign,
+  type ReaderFont,
+  type ReaderRange,
+  type ReaderSettings,
+  type ReaderTheme,
+  type ReaderWidth,
+  isInReaderRange,
+  parseChapterNumber,
+  parseChapterSegment,
+  readerSettingsSchema,
+} from './schemas/reader';
 export { type CanonicalTarget, canonicalPath } from './canonical-path';

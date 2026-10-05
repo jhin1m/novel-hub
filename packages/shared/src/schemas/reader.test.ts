@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { parseChapterNumber, parseChapterSegment } from './reader';
+import {
+  DEFAULT_READER_SETTINGS,
+  READER_RANGES,
+  READER_THEMES,
+  isInReaderRange,
+  parseChapterNumber,
+  parseChapterSegment,
+  readerSettingsSchema,
+} from './reader';
 
 describe('parseChapterSegment', () => {
   it('reads the number of a canonical segment', () => {
@@ -36,5 +44,63 @@ describe('parseChapterNumber', () => {
   it('parses the bare number', () => {
     expect(parseChapterNumber('7')).toBe(7);
     expect(parseChapterNumber('07')).toBeNull();
+  });
+});
+
+describe('readerSettingsSchema', () => {
+  const valid = (patch: Record<string, unknown>) =>
+    readerSettingsSchema.safeParse({ ...DEFAULT_READER_SETTINGS, ...patch }).success;
+
+  it('accepts the defaults and every preset', () => {
+    expect(valid({})).toBe(true);
+    for (const theme of READER_THEMES) expect(valid({ theme })).toBe(true);
+  });
+
+  it('accepts the range ends and values on a step', () => {
+    for (const patch of [
+      { fontSize: 14 },
+      { fontSize: 28 },
+      { lineHeight: 1.5 },
+      { lineHeight: 1.7 },
+      { lineHeight: 2.2 },
+      { paragraphSpacing: 0 },
+      { paragraphSpacing: 1.75 },
+      { paragraphSpacing: 2 },
+    ]) {
+      expect(valid(patch), JSON.stringify(patch)).toBe(true);
+    }
+  });
+
+  it('rejects values out of range or off a step', () => {
+    for (const patch of [
+      { fontSize: 13 },
+      { fontSize: 29 },
+      { fontSize: 18.5 },
+      { lineHeight: 1.4 },
+      { lineHeight: 2.25 },
+      { paragraphSpacing: 0.3 },
+      { paragraphSpacing: -0.25 },
+      { fontSize: Number.NaN },
+    ]) {
+      expect(valid(patch), JSON.stringify(patch)).toBe(false);
+    }
+  });
+
+  it('rejects unknown enum values and a missing or fractional updatedAt', () => {
+    expect(valid({ theme: 'neon' })).toBe(false);
+    expect(valid({ font: 'comic-sans' })).toBe(false);
+    expect(valid({ width: 'huge' })).toBe(false);
+    expect(valid({ align: 'center' })).toBe(false);
+    expect(valid({ updatedAt: 1.5 })).toBe(false);
+    expect(valid({ updatedAt: -1 })).toBe(false);
+    expect(valid({ updatedAt: undefined })).toBe(false);
+  });
+});
+
+describe('isInReaderRange', () => {
+  it('handles float steps without rounding errors', () => {
+    for (let i = 0; i <= 7; i += 1) {
+      expect(isInReaderRange(1.5 + i * 0.1, READER_RANGES.lineHeight)).toBe(true);
+    }
   });
 });

@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 /** Largest chapter number Postgres `integer` holds. */
 const MAX_CHAPTER_NUMBER = 2_147_483_647;
 
@@ -17,3 +19,68 @@ export function parseChapterSegment(segment: string): number | null {
     ? parseChapterNumber(segment.slice('chapter-'.length))
     : null;
 }
+
+/** Background presets of the reading page (`data-reader-theme`), each with an AA text colour. */
+export const READER_THEMES = [
+  'white',
+  'ivory',
+  'sepia',
+  'soft-green',
+  'dark-gray',
+  'oled-black',
+] as const;
+export const READER_FONTS = ['literata', 'noto-serif', 'be-vietnam-pro', 'inter'] as const;
+/** Text column width; only takes effect on wide screens. */
+export const READER_WIDTHS = ['narrow', 'medium', 'wide'] as const;
+export const READER_ALIGNS = ['left', 'justify'] as const;
+export const READER_RANGES = {
+  fontSize: { min: 14, max: 28, step: 1 },
+  lineHeight: { min: 1.5, max: 2.2, step: 0.1 },
+  paragraphSpacing: { min: 0, max: 2, step: 0.25 },
+} as const;
+
+export type ReaderTheme = (typeof READER_THEMES)[number];
+export type ReaderFont = (typeof READER_FONTS)[number];
+export type ReaderWidth = (typeof READER_WIDTHS)[number];
+export type ReaderAlign = (typeof READER_ALIGNS)[number];
+export type ReaderRange = (typeof READER_RANGES)[keyof typeof READER_RANGES];
+
+/** Within the range and on a step (with float tolerance: 1.7 is `1.5 + 2 × 0.1`). */
+export function isInReaderRange(value: number, range: ReaderRange): boolean {
+  if (!Number.isFinite(value) || value < range.min || value > range.max) return false;
+  const steps = (value - range.min) / range.step;
+  return Math.abs(steps - Math.round(steps)) < 1e-6;
+}
+
+function rangeSchema(range: ReaderRange) {
+  return z.number().refine((value) => isInReaderRange(value, range), 'Off the allowed steps');
+}
+
+/**
+ * Display settings of the reading page. Stored in localStorage and, for signed-in readers, in
+ * `users.preferences.reader`; `updatedAt` (ms) decides which copy wins when they differ.
+ */
+export const readerSettingsSchema = z.object({
+  /** Absent = follow the system colour scheme. */
+  theme: z.enum(READER_THEMES).optional(),
+  font: z.enum(READER_FONTS),
+  fontSize: rangeSchema(READER_RANGES.fontSize),
+  lineHeight: rangeSchema(READER_RANGES.lineHeight),
+  paragraphSpacing: rangeSchema(READER_RANGES.paragraphSpacing),
+  width: z.enum(READER_WIDTHS),
+  align: z.enum(READER_ALIGNS),
+  updatedAt: z.number().int().nonnegative(),
+});
+
+export type ReaderSettings = z.infer<typeof readerSettingsSchema>;
+
+/** Must match the `:root` defaults in `apps/web/src/styles/reader.css`. */
+export const DEFAULT_READER_SETTINGS: ReaderSettings = {
+  font: 'literata',
+  fontSize: 19,
+  lineHeight: 1.8,
+  paragraphSpacing: 1,
+  width: 'medium',
+  align: 'left',
+  updatedAt: 0,
+};

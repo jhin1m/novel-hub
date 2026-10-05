@@ -21,6 +21,7 @@ const expected: [CoreErrorCode, number][] = [
   ['CHAPTER_HIDDEN_BY_MOD', 409],
   ['ALREADY_PUBLISHED', 409],
   ['NOT_SCHEDULED', 409],
+  ['ADULT_CONFIRMATION_REQUIRED', 400],
 ];
 
 describe('coreError', () => {

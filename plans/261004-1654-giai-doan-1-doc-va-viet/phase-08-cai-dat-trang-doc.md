@@ -1,7 +1,7 @@
 ---
 phase: 8
 title: "Phase 8: Trang đọc B — tuỳ chỉnh đọc và preferences"
-status: pending
+status: completed
 priority: P1
 effort: "1d"
 dependencies: [7]
@@ -138,12 +138,12 @@ export function pickNewer(a: ReaderSettings | null, b: ReaderSettings | null): '
 
 ## Function / Interface Checklist
 
-- [ ] `READER_THEMES`, `READER_FONTS`, `READER_WIDTHS`, `READER_ALIGNS`, `READER_RANGES`
-- [ ] `readerSettingsSchema`, `DEFAULT_READER_SETTINGS`, `preferencesPatchSchema`, `userPreferencesSchema.reader`
-- [ ] `updatePreferences`
-- [ ] `PATCH /api/v1/me/preferences`
-- [ ] `applyReaderSettings`, `readLocalSettings`, `pickNewer`, `BOOT_SCRIPT` (phần đọc)
-- [ ] `useReaderSettings`, `usePatchPreferences`, `ReaderSettingsSheet`, `MatureGate` (nút bật)
+- [x] `READER_THEMES`, `READER_FONTS`, `READER_WIDTHS`, `READER_ALIGNS`, `READER_RANGES`
+- [x] `readerSettingsSchema`, `DEFAULT_READER_SETTINGS`, `preferencesPatchSchema`, `userPreferencesSchema.reader`
+- [x] `updatePreferences`
+- [x] `PATCH /api/v1/me/preferences`
+- [x] `applyReaderSettings`, `readLocalSettings`, `pickNewer`, `BOOT_SCRIPT` (phần đọc)
+- [x] `useReaderSettings`, `usePatchPreferences`, `ReaderSettingsSheet`, `MatureGate` (nút bật)
 
 ## Test Scenario Matrix
 
@@ -171,11 +171,11 @@ export function pickNewer(a: ReaderSettings | null, b: ReaderSettings | null): '
 
 ## Success Criteria
 
-- [ ] Bảng tuỳ chỉnh đủ mục spec mục 8, xem trước ngay
-- [ ] Tải lại không nháy (e2e chặn script module vẫn thấy cài đặt)
-- [ ] Đồng bộ giữa thiết bị khi đăng nhập, "mới hơn thắng"
-- [ ] Bật 18+ cần đăng nhập + xác nhận, kiểm ở core
-- [ ] Gate 5 lệnh xanh; checkbox 6 **chưa** đánh
+- [x] Bảng tuỳ chỉnh đủ mục spec mục 8, xem trước ngay
+- [x] Tải lại không nháy (e2e chặn script module vẫn thấy cài đặt)
+- [x] Đồng bộ giữa thiết bị khi đăng nhập, "mới hơn thắng"
+- [x] Bật 18+ cần đăng nhập + xác nhận, kiểm ở core
+- [x] Gate 5 lệnh xanh; checkbox 6 **chưa** đánh
 
 ## Risk Assessment
 
@@ -199,6 +199,21 @@ Rollback: không migration. `preferences.reader` optional nên bản trước đ
 
 1. Mặc định: 19px, line-height 1.8, khoảng đoạn 1em, cột vừa, preset theo hệ thống.
 2. Độ rộng hẹp/vừa/rộng = 60/68/75 `ch`.
+
+## Kết quả (2026-10-05)
+
+Gate 5 lệnh xanh (unit 354, int 171, e2e 34). Review 8.5/10: `../reports/code-reviewer-261005-1314-phase-08-reader-settings-review-report.md` (đã sửa M1, L1, L2, L6, L7; L3–L5 chấp nhận). Report: `../reports/cook-261005-1337-phase-08-reader-settings-report.md`.
+
+**Lệch so với plan (code là chuẩn):**
+- Giá trị enum tiếng Anh theo `docs/code-standards.md`: theme `white`, `ivory`, `sepia`, `soft-green`, `dark-gray`, `oled-black` (đổi luôn selector trong `tokens.css`, `token-values.ts`, `docs/design-guidelines.md`); width `narrow`/`medium`/`wide`; align `left`/`justify`. `READER_RANGES` dạng `{ min, max, step }`.
+- Biến CSS khoảng đoạn giữ tên có sẵn `--reader-paragraph-gap` (không phải `--reader-para-gap`).
+- Field sai trong `nh:reader` rơi về mặc định **từng field** ở cả `BOOT_SCRIPT` lẫn `parseStoredSettings`; `BOOT_SCRIPT` chèn hằng bằng `JSON.stringify` nên không thể lệch allowlist.
+- `useReaderSettings` dùng `useSyncExternalStore` (store theo tab, server snapshot = mặc định) thay vì state + effect; nghe sự kiện `storage` để đồng bộ giữa tab.
+- `usePatchPreferences` ghi thẳng cache `me` (chỉ field đã đổi) thay vì `invalidateQueries`; lỗi PATCH bỏ qua, không log (local mới hơn sẽ upload lại ở lượt xem sau).
+- `userPreferencesSchema.reader` có `.catch(undefined)`: `reader` lưu hỏng bị bỏ, không kéo `showMature` về mặc định.
+- Bảng tuỳ chỉnh là Sheet không modal (không lớp phủ) để xem trước trên chữ chương; sau khi bật 18+, focus chuyển vào `h1` của chương.
+- Bỏ key `mature_enable_hint` (thay bằng form xác nhận).
+- Bước 12 (thủ công: Inter chỉ tải khi chọn, OLED trên 375px) chưa kiểm bằng mắt; cơ chế CSS đúng (đổi `--reader-font`, `@font-face` có sẵn).
 
 ## Next Steps
 

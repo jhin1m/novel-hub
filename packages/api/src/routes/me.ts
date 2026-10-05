@@ -3,10 +3,13 @@ import {
   getPreferences,
   listAuthorChapters,
   listAuthorStories,
+  updatePreferences,
 } from '@novel-hub/core';
+import { preferencesPatchSchema } from '@novel-hub/shared';
 import { Hono } from 'hono';
 import type { ApiDeps } from '../deps';
 import { coreError } from '../lib/core-errors';
+import { validate } from '../lib/validate';
 import { requireAuth } from '../middleware/require-auth';
 import { sessionMiddleware } from '../middleware/session';
 
@@ -21,6 +24,11 @@ export function createMeRoutes(deps: Pick<ApiDeps, 'auth' | 'db'>) {
         { user: { username, displayName, avatarUrl, role, status, emailVerified, preferences } },
         200,
       );
+    })
+    .patch('/preferences', requireAuth, validate('json', preferencesPatchSchema), async (c) => {
+      const result = await updatePreferences(deps.db, c.var.authUser.id, c.req.valid('json'));
+      if (!result.ok) return coreError(c, result.error);
+      return c.json({ preferences: result.value }, 200);
     })
     .get('/stories', requireAuth, async (c) => {
       const stories = await listAuthorStories(deps.db, c.var.authUser);

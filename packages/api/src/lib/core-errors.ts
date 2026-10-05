@@ -21,6 +21,7 @@ const CORE_ERROR_STATUS = {
   CHAPTER_HIDDEN_BY_MOD: 409,
   ALREADY_PUBLISHED: 409,
   NOT_SCHEDULED: 409,
+  ADULT_CONFIRMATION_REQUIRED: 400,
 } as const;
 
 export type CoreErrorCode = keyof typeof CORE_ERROR_STATUS;
@@ -45,6 +46,7 @@ const CORE_ERROR_MESSAGES: Record<CoreErrorCode, string> = {
   CHAPTER_HIDDEN_BY_MOD: 'The chapter was hidden by a moderator',
   ALREADY_PUBLISHED: 'The chapter has already been published',
   NOT_SCHEDULED: 'The chapter is not scheduled',
+  ADULT_CONFIRMATION_REQUIRED: 'Turning 18+ content on requires confirming you are 18 or older',
 };
 
 export function coreError<C extends CoreErrorCode>(c: Context, code: C) {

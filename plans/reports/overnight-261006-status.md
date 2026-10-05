@@ -1,6 +1,6 @@
 # Overnight 261006: đang chạy
-Cập nhật: 2026-10-06 05:20
-Đang làm: Q5 / phase-06
+Cập nhật: 2026-10-06 06:07
+Đang làm: Q5 / phase-07
 ## Đã xong
 - Q1 canvas /write + editor (artboard F-* trên https://claude.ai/artifact/X7w7oUBxruy6Y47oQ4HdAo), đặc tả ở plans/reports/design-261006-write-editor-screens-report.md
 - Q2 report brainstorm cuối: plans/reports/brainstorm-261006-ui-redesign-b-plus-final-report.md
@@ -11,6 +11,7 @@ Cập nhật: 2026-10-06 05:20
 - Q5 phase-03 layout header/footer/thanh tab
 - Q5 phase-04 trang chủ
 - Q5 phase-05 trang truyện
+- Q5 phase-06 trang đọc: khung
 
 ## Quyết định [auto] (sáng cần duyệt)
 - Q1: 8 quyết định [auto] trong design-261006-write-editor-screens-report.md
@@ -25,6 +26,7 @@ Cập nhật: 2026-10-06 05:20
 - Q5 p03 câu hỏi mở: giữ chỗ 42px cho nút tài khoản (header khách dịch ~150px khi tải xong)?; thêm viewport-fit=cover + scroll-padding-bottom ở phase 11?
 - Q5 p04: e2e 'Đọc tiếp' bật 18+ thẳng trong DB thay vì qua trang cài đặt; chi tiết trong reports/cook-261006-phase-04-home-page-report.md
 - Q5 p05: xoá key i18n story_page_by; viền focus breadcrumb hero dùng --cover-fg
+- Q5 p06: vạch tiến độ dùng cùng cách đo tiến độ đọc (chương ngắn mở ra đã ~50%); xoá reader_by_author, reader_author_note
 
 ## Chặn / lỗi
 - Q3 (nhẹ): 'ck plan add-phase --after' lỗi afterId.toLowerCase; worker đổi tên phase bằng tay, 'ck plan validate' xác nhận

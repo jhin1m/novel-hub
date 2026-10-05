@@ -133,3 +133,102 @@ test.describe('desktop at 1280px', () => {
     expect(await color(onShelf)).toBe(titleColor);
   });
 });
+
+test.describe('chapter reading controls', () => {
+  const CHAPTER_NAV = { name: 'Điều hướng chương' } as const;
+  let book: PublishedStory;
+  let mature: PublishedStory;
+
+  test.beforeAll(async () => {
+    book = await createPublishedStory({ published: 2 });
+    mature = await createPublishedStory({ isMature: true });
+  });
+
+  /** Tabs through the page; nothing behind the 18+ screen ever takes focus or opens a panel. */
+  async function expectGateKeepsFocus(page: Page) {
+    await gotoHydrated(page, mature.chapterPath(1));
+    await expect(page.getByRole('alertdialog')).toBeVisible();
+    for (let i = 0; i < 6; i++) {
+      await page.keyboard.press('Tab');
+      expect(
+        await page.evaluate(() => document.activeElement?.closest('.reader-page') ?? null),
+      ).toBeNull();
+      await expect(page.locator('button[aria-label="Mục lục"]').first()).not.toBeFocused();
+      await expect(page.locator('button[aria-label="Cài đặt hiển thị"]').first()).not.toBeFocused();
+    }
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+  }
+
+  test.describe('at 360px', () => {
+    test.use({ viewport: { width: 360, height: 800 } });
+
+    test('one bottom bar with the four controls; chapter 1 has no previous chapter', async ({
+      page,
+    }) => {
+      await gotoHydrated(page, book.chapterPath(1));
+      const nav = page.getByRole('navigation', CHAPTER_NAV);
+      await expect(nav).toHaveCount(1);
+      await expect(nav).toHaveClass(/reader-bottom-bar/);
+      await expect(nav.getByRole('button', { name: 'Mục lục' })).toBeVisible();
+      await expect(nav.getByRole('button', { name: 'Cài đặt hiển thị' })).toBeVisible();
+      await expect(nav.getByRole('button', { name: 'Chương trước' })).toBeDisabled();
+      await expect(nav.getByRole('link', { name: 'Chương sau' })).toHaveAttribute(
+        'href',
+        book.chapterPath(2),
+      );
+      await expectNoHorizontalScroll(page);
+    });
+
+    test('the 18+ screen keeps keyboard focus off the reading controls', async ({ page }) => {
+      await expectGateKeepsFocus(page);
+    });
+  });
+
+  test.describe('at 1280px', () => {
+    test.use({ viewport: { width: 1280, height: 720 } });
+
+    test('only the rail shows; closing a panel gives focus back to its button', async ({
+      page,
+    }) => {
+      await gotoHydrated(page, book.chapterPath(2));
+      const nav = page.getByRole('navigation', CHAPTER_NAV);
+      await expect(nav).toHaveCount(1);
+      await expect(nav).toHaveClass(/reader-rail/);
+      await expect(nav.getByRole('link', { name: 'Chương trước' })).toHaveAttribute(
+        'href',
+        book.chapterPath(1),
+      );
+
+      const toc = nav.getByRole('button', { name: 'Mục lục' });
+      await toc.click();
+      // The modal sheet hides the rest of the page from the accessibility tree meanwhile.
+      await expect(page.locator('.reader-rail button[aria-label="Mục lục"]')).toHaveAttribute(
+        'aria-expanded',
+        'true',
+      );
+      await expect(page.getByRole('dialog', { name: 'Mục lục' })).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(page.getByRole('dialog')).toHaveCount(0);
+      await expect(toc).toBeFocused();
+      await expect(toc).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    test('closing the settings panel by clicking the text leaves focus off its button', async ({
+      page,
+    }) => {
+      await gotoHydrated(page, book.chapterPath(1));
+      const settings = page
+        .getByRole('navigation', CHAPTER_NAV)
+        .getByRole('button', { name: 'Cài đặt hiển thị' });
+      await settings.click();
+      await expect(page.getByRole('dialog', { name: 'Cài đặt hiển thị' })).toBeVisible();
+      await page.locator('.reader-content').click({ position: { x: 10, y: 10 } });
+      await expect(page.getByRole('dialog')).toHaveCount(0);
+      await expect(settings).not.toBeFocused();
+    });
+
+    test('the 18+ screen keeps keyboard focus off the reading controls', async ({ page }) => {
+      await expectGateKeepsFocus(page);
+    });
+  });
+});

@@ -1,17 +1,15 @@
 import { canonicalPath } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { useQuery } from '@tanstack/react-query';
-import { ListIcon } from 'lucide-react';
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import type { RefObject } from 'react';
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from '@/components/ui/sheet';
+import { usePanelTrigger } from '@/lib/reader/use-panel-trigger';
 import { cn } from '@/lib/utils';
 import { getChapterToc } from '../../server-fns/reader';
 
@@ -21,9 +19,24 @@ interface StoryRef {
   title: string;
 }
 
-/** Table of contents in a side sheet, fetched the first time it opens. */
-export function ChapterTocSheet({ story, current }: { story: StoryRef; current: number }) {
-  const [open, setOpen] = useState(false);
+/**
+ * Table of contents in a side sheet, fetched the first time it opens. Opened from the reading
+ * controls (`trigger`), which hold the open state.
+ */
+export function ChapterTocSheet({
+  story,
+  current,
+  open,
+  onOpenChange,
+  trigger,
+}: {
+  story: StoryRef;
+  current: number;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  trigger: RefObject<HTMLButtonElement | null>;
+}) {
+  const panelFocus = usePanelTrigger(trigger, true);
   const toc = useQuery({
     queryKey: ['chapter-toc', story.publicId],
     queryFn: () => getChapterToc({ data: { publicId: story.publicId } }),
@@ -32,13 +45,8 @@ export function ChapterTocSheet({ story, current }: { story: StoryRef; current: 
   });
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label={m.reader_toc()}>
-          <ListIcon />
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="left" className="gap-0">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="left" className="gap-0" {...panelFocus}>
         <SheetHeader>
           <SheetTitle>{m.reader_toc()}</SheetTitle>
           <SheetDescription asChild>

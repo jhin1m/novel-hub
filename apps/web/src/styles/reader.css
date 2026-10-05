@@ -106,16 +106,39 @@
   }
 }
 
-.reader-nav {
-  transition: transform 200ms ease;
+/* Reading bars: they get out of the way while scrolling down (`data-hidden`). */
+.reader-top-bar,
+.reader-bottom-bar,
+.reader-rail {
+  transition:
+    transform 200ms ease,
+    opacity 200ms ease;
+}
 
-  &[data-hidden] {
-    transform: translateY(-100%);
-  }
+.reader-top-bar[data-hidden] {
+  transform: translateY(-100%);
+}
+
+.reader-bottom-bar[data-hidden] {
+  transform: translateY(100%);
+}
+
+/* Faded and pushed off the edge, but still in the accessibility tree like the other bars. */
+.reader-rail[data-hidden] {
+  opacity: 0;
+  transform: translateX(calc(100% + 1.5rem));
+}
+
+/* Share of the chapter read, set from script as `scaleX(0..1)`. */
+.reader-progress {
+  transform: scaleX(0);
+  transform-origin: left;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .reader-nav {
+  .reader-top-bar,
+  .reader-bottom-bar,
+  .reader-rail {
     transition: none;
   }
 }
@@ -125,7 +148,10 @@
   display: none;
 }
 
-/* Keyboard focus inside the hidden bar brings it back. */
-.reader-nav:focus-within {
+/* Keyboard focus inside a hidden bar brings it back. */
+.reader-top-bar:focus-within,
+.reader-bottom-bar:focus-within,
+.reader-rail:focus-within {
+  opacity: 1;
   transform: none;
 }

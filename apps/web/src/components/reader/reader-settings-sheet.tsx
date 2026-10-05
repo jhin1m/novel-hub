@@ -11,8 +11,7 @@ import {
   type ReaderWidth,
 } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
-import { Settings2Icon } from 'lucide-react';
-import { type ReactNode, useId } from 'react';
+import { type ReactNode, type RefObject, useId } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -20,9 +19,9 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from '@/components/ui/sheet';
 import { useReaderSettings } from '@/lib/reader/use-reader-settings';
+import { usePanelTrigger } from '@/lib/reader/use-panel-trigger';
 import { cn } from '@/lib/utils';
 
 const THEME_LABELS: Record<ReaderTheme, () => string> = {
@@ -54,19 +53,24 @@ const ALIGN_LABELS: Record<ReaderAlign, () => string> = {
 
 /**
  * Display settings panel. Not modal: the page stays visible and undimmed behind it, so every
- * change previews on the chapter text right away.
+ * change previews on the chapter text right away. Opened from the reading controls (`trigger`),
+ * which hold the open state.
  */
-export function ReaderSettingsSheet() {
+export function ReaderSettingsSheet({
+  open,
+  onOpenChange,
+  trigger,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  trigger: RefObject<HTMLButtonElement | null>;
+}) {
   const { settings, update, reset } = useReaderSettings();
+  const panelFocus = usePanelTrigger(trigger, false);
 
   return (
-    <Sheet modal={false}>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label={m.reader_settings()}>
-          <Settings2Icon />
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="right" className="gap-0 overflow-y-auto">
+    <Sheet modal={false} open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="gap-0 overflow-y-auto" {...panelFocus}>
         <SheetHeader>
           <SheetTitle>{m.reader_settings()}</SheetTitle>
           <SheetDescription>{m.reader_settings_description()}</SheetDescription>

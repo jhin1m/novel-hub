@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "Trang đọc: khung"
-status: pending
+status: completed
 priority: P1
 effort: "0.75d"
 dependencies: [5]
@@ -96,14 +96,14 @@ ReaderPage (route, SSR) ─ state panel ; openPanel = gated ? null : panel ; use
 
 ## Function/interface checklist
 
-- [ ] `type ReaderPanel = 'toc' | 'settings'`
-- [ ] `ReaderTopBar({ story, chapterNumber, chapterTitle, hidden, contentRef, inert })` (`inert: boolean` bắt buộc)
-- [ ] `ReaderControls({ variant: 'bar' | 'rail', prevHref, nextHref, activePanel, onOpen, hidden, inert })` (`inert: boolean` bắt buộc; `onOpen(panel: ReaderPanel, trigger: HTMLButtonElement)`)
-- [ ] `ChapterHeader({ chapter: { number, title, wordCount, publishedAt } })`
-- [ ] `chapterHeading(chapter): { heading: string; label: string | null }`
-- [ ] `ChapterTocSheet({ story, current, open, onOpenChange })`, `ReaderSettingsSheet({ open, onOpenChange })` (controlled, không `SheetTrigger`)
-- [ ] `ChapterEnd({ prevHref, nextHref, authorNote, authorName, reportTarget })`
-- [ ] `useScrollProgress(contentRef, barRef): void`
+- [x] `type ReaderPanel = 'toc' | 'settings'`
+- [x] `ReaderTopBar({ story, chapterNumber, chapterTitle, hidden, contentRef, inert })` (`inert: boolean` bắt buộc)
+- [x] `ReaderControls({ variant: 'bar' | 'rail', prevHref, nextHref, activePanel, onOpen, hidden, inert })` (`inert: boolean` bắt buộc; `onOpen(panel: ReaderPanel, trigger: HTMLButtonElement)`)
+- [x] `ChapterHeader({ chapter: { number, title, wordCount, publishedAt } })`
+- [x] `chapterHeading(chapter): { heading: string; label: string | null }`
+- [x] `ChapterTocSheet({ story, current, open, onOpenChange })`, `ReaderSettingsSheet({ open, onOpenChange })` (controlled, không `SheetTrigger`)
+- [x] `ChapterEnd({ prevHref, nextHref, authorNote, authorName, reportTarget })`
+- [x] `useScrollProgress(contentRef, barRef): void`
 
 ## Dependency map
 
@@ -141,13 +141,13 @@ Link "Về trang truyện"; nút "Mục lục"; nút "Cài đặt hiển thị";
 
 ## Success Criteria
 
-- [ ] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
-- [ ] Ở mọi viewport chỉ một trigger "Mục lục" và một "Cài đặt hiển thị" hiển thị
-- [ ] `rg -n 'md:' apps/web/src/components/reader/reader-controls.tsx apps/web/src/components/reader/reader-top-bar.tsx` rỗng (một mốc `lg`)
-- [ ] `inert={gated}` có ở `ReaderTopBar`, 2 `ReaderControls`, `main`; e2e Tab khi chặn 18+ xanh
-- [ ] `styles/reader.css` khối `hr` không đổi (`git diff` không chạm `content: '* * *'`)
-- [ ] HTML SSR trang chương không phụ thuộc cookie (catalog/reader e2e giữ xanh)
-- [ ] Mọi file đụng tới ≤ 200 dòng, trừ `reader-settings-sheet.tsx` (244, chỉ đổi controlled, tách ở phase 7)
+- [x] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
+- [x] Ở mọi viewport chỉ một trigger "Mục lục" và một "Cài đặt hiển thị" hiển thị
+- [x] `rg -n 'md:' apps/web/src/components/reader/reader-controls.tsx apps/web/src/components/reader/reader-top-bar.tsx` rỗng (một mốc `lg`)
+- [x] `inert={gated}` có ở `ReaderTopBar`, 2 `ReaderControls`, `main`; e2e Tab khi chặn 18+ xanh
+- [x] `styles/reader.css` khối `hr` không đổi (`git diff` không chạm `content: '* * *'`)
+- [x] HTML SSR trang chương không phụ thuộc cookie (catalog/reader e2e giữ xanh)
+- [x] Mọi file đụng tới ≤ 200 dòng, trừ `reader-settings-sheet.tsx` (244, chỉ đổi controlled, tách ở phase 7)
 
 ## Risk Assessment
 

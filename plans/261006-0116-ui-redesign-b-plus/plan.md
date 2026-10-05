@@ -41,7 +41,7 @@ Plan riêng do user thêm (không ứng với checkbox nào ở mục 5 spec), c
 | 3 | [Layout header footer thanh tab](./phase-03-layout-header-footer-thanh-tab.md) | Completed |
 | 4 | [Trang chủ](./phase-04-trang-chu.md) | Completed |
 | 5 | [Trang truyện](./phase-05-trang-truyen.md) | Completed |
-| 6 | [Trang đọc: khung](./phase-06-trang-doc-khung.md) | Pending |
+| 6 | [Trang đọc: khung](./phase-06-trang-doc-khung.md) | Completed |
 | 7 | [Trang đọc: sheet cài đặt và mục lục](./phase-07-trang-doc-sheet.md) | Pending |
 | 8 | [Trang write](./phase-08-trang-write.md) | Pending |
 | 9 | [Editor chương: tách file](./phase-09-editor-tach-file.md) | Pending |

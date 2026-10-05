@@ -1,16 +1,21 @@
 import { canonicalPath, parseChapterNumber, parseStoryKey } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { createFileRoute } from '@tanstack/react-router';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { ChapterContent } from '../components/reader/chapter-content';
 import { ChapterEnd } from '../components/reader/chapter-end';
+import { ChapterHeader } from '../components/reader/chapter-header';
+import { ChapterTocSheet } from '../components/reader/chapter-toc-sheet';
 import { MatureGate, useMatureAllowed } from '../components/reader/mature-gate';
-import { ReaderNav } from '../components/reader/reader-nav';
+import { type ReaderPanel, ReaderControls } from '../components/reader/reader-controls';
+import { ReaderSettingsSheet } from '../components/reader/reader-settings-sheet';
+import { ReaderTopBar } from '../components/reader/reader-top-bar';
 import { NotFoundPage } from '../components/not-found';
 import { publicPageHeaders } from '../lib/cache-headers';
 import { assertCanonical, requestLocation } from '../lib/canonical';
 import { seo, siteConfig } from '../lib/seo';
 import { throwNotFound } from '../lib/route-signals';
+import { chapterHeading } from '../lib/reader/chapter-heading';
 import { useArrowKeys } from '../lib/reader/use-arrow-keys';
 import { useNavVisibility } from '../lib/reader/use-nav-visibility';
 import { useReadingProgress } from '../lib/reader/use-reading-progress';
@@ -42,7 +47,7 @@ export const Route = createFileRoute('/stories/$storyKey/chapter-{$number}')({
     return seo({
       appUrl: siteConfig(matches)?.appUrl,
       path: canonicalPath({ kind: 'chapter', ...story, number: chapter.number }),
-      title: m.reader_page_title({ chapter: chapterLabel(chapter), story: story.title }),
+      title: m.reader_page_title({ chapter: chapterHeading(chapter).heading, story: story.title }),
       description: chapter.title
         ? m.reader_page_description_titled({
             number: String(chapter.number),
@@ -64,11 +69,6 @@ export const Route = createFileRoute('/stories/$storyKey/chapter-{$number}')({
   component: ReaderPage,
 });
 
-/** "Chương 3" or the chapter title when it has one. */
-function chapterLabel(chapter: { number: number; title: string | null }): string {
-  return chapter.title ?? m.reader_chapter_label({ number: chapter.number });
-}
-
 function ReaderPage() {
   const { story, chapter, prevNumber, nextNumber } = Route.useLoaderData();
   const chapterHref = (number: number | null) =>
@@ -87,41 +87,35 @@ function ReaderPage() {
   // Nothing is recorded while the 18+ screen hides the text, nor before the position is restored.
   useReadingProgress(contentRef, chapterRef, !!me.data && !gated && !resuming);
   useViewBeacon(chapterRef, !gated);
+  const [panel, setPanel] = useState<ReaderPanel | null>(null);
+  // No panel opens over the 18+ screen: sheets sit above it.
+  const openPanel = gated ? null : panel;
+  // The control that opened the panel gets focus back when it closes.
+  const trigger = useRef<HTMLButtonElement>(null);
+  const onOpen = (next: ReaderPanel, button: HTMLButtonElement) => {
+    trigger.current = button;
+    setPanel((current) => (current === next ? null : next));
+  };
+  const onOpenChange = (name: ReaderPanel) => (open: boolean) => setPanel(open ? name : null);
+  const controls = { prevHref, nextHref, activePanel: openPanel, onOpen, hidden, inert: gated };
 
   return (
     <>
       <div className="reader-page">
         {/* While the 18+ screen shows, everything behind it is out of reach. */}
-        <ReaderNav
-          inert={gated}
+        <ReaderTopBar
           story={story}
           chapterNumber={chapter.number}
-          chapterLabel={chapterLabel(chapter)}
-          prevHref={prevHref}
-          nextHref={nextHref}
+          chapterTitle={chapter.title}
           hidden={hidden}
+          contentRef={contentRef}
+          inert={gated}
         />
-        <main className="px-4 pt-20 pb-16" inert={gated}>
+        <ReaderControls variant="bar" {...controls} />
+        <ReaderControls variant="rail" {...controls} />
+        <main className="px-4 pt-[76px] pb-28 lg:pt-[84px] lg:pb-16" inert={gated}>
           <div className="reader-column">
-            <header className="mb-10 flex flex-col gap-2 font-sans">
-              <a
-                href={canonicalPath({ kind: 'story', ...story })}
-                className="text-sm text-reader-muted underline-offset-4 hover:underline"
-              >
-                {story.title}
-              </a>
-              <p className="text-sm text-reader-muted">
-                {m.reader_by_author({ name: story.authorDisplayName })}
-              </p>
-              {/* Focus target once the 18+ screen goes away. */}
-              <h1
-                tabIndex={-1}
-                className="font-serif text-2xl leading-snug font-semibold outline-none"
-              >
-                {m.reader_chapter_label({ number: chapter.number })}
-                {chapter.title ? `: ${chapter.title}` : null}
-              </h1>
-            </header>
+            <ChapterHeader chapter={chapter} />
             <ChapterContent
               html={chapter.html}
               nextHref={nextHref}
@@ -129,8 +123,10 @@ function ReaderPage() {
               contentRef={contentRef}
             />
             <ChapterEnd
+              prevHref={prevHref}
               nextHref={nextHref}
               authorNote={chapter.authorNote}
+              authorName={story.authorDisplayName}
               reportTarget={{
                 type: 'chapter',
                 storyPublicId: story.publicId,
@@ -139,6 +135,18 @@ function ReaderPage() {
             />
           </div>
         </main>
+        <ChapterTocSheet
+          story={story}
+          current={chapter.number}
+          open={openPanel === 'toc'}
+          onOpenChange={onOpenChange('toc')}
+          trigger={trigger}
+        />
+        <ReaderSettingsSheet
+          open={openPanel === 'settings'}
+          onOpenChange={onOpenChange('settings')}
+          trigger={trigger}
+        />
       </div>
       {/* Outside the reading area, so the site colours apply rather than the reader preset's. */}
       {story.isMature ? (

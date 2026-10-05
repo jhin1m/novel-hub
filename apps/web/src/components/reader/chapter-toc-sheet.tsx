@@ -20,8 +20,8 @@ interface StoryRef {
 }
 
 /**
- * Table of contents in a side sheet, fetched the first time it opens. Opened from the reading
- * controls (`trigger`), which hold the open state.
+ * Table of contents: a bottom sheet on small screens, a left-hand panel from `lg` up; fetched the
+ * first time it opens. Opened from the reading controls (`trigger`), which hold the open state.
  */
 export function ChapterTocSheet({
   story,
@@ -46,9 +46,9 @@ export function ChapterTocSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="gap-0" {...panelFocus}>
-        <SheetHeader>
-          <SheetTitle>{m.reader_toc()}</SheetTitle>
+      <SheetContent side="adaptive-left" className="gap-0" {...panelFocus}>
+        <SheetHeader className="pr-12">
+          <SheetTitle className="text-lg font-extrabold">{m.reader_toc()}</SheetTitle>
           <SheetDescription asChild>
             {/* Full page load: the story page is public, cached HTML. */}
             <a
@@ -74,8 +74,9 @@ export function ChapterTocSheet({
                       href={canonicalPath({ kind: 'chapter', ...story, number: chapter.number })}
                       aria-current={isCurrent ? 'page' : undefined}
                       className={cn(
-                        'flex gap-2 rounded-md px-2 py-2 text-sm hover:bg-accent',
-                        isCurrent && 'font-semibold text-primary',
+                        'flex min-h-11 items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-accent',
+                        isCurrent &&
+                          'bg-primary-soft font-semibold text-primary hover:bg-primary-soft',
                       )}
                     >
                       <span className="shrink-0">

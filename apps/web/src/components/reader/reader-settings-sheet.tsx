@@ -1,17 +1,12 @@
 import {
   READER_ALIGNS,
-  READER_FONTS,
   READER_RANGES,
-  READER_THEMES,
   READER_WIDTHS,
   type ReaderAlign,
-  type ReaderFont,
-  type ReaderRange,
-  type ReaderTheme,
   type ReaderWidth,
 } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
-import { type ReactNode, type RefObject, useId } from 'react';
+import type { RefObject } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -22,23 +17,7 @@ import {
 } from '@/components/ui/sheet';
 import { useReaderSettings } from '@/lib/reader/use-reader-settings';
 import { usePanelTrigger } from '@/lib/reader/use-panel-trigger';
-import { cn } from '@/lib/utils';
-
-const THEME_LABELS: Record<ReaderTheme, () => string> = {
-  white: m.reader_settings_theme_white,
-  ivory: m.reader_settings_theme_ivory,
-  sepia: m.reader_settings_theme_sepia,
-  'soft-green': m.reader_settings_theme_soft_green,
-  'dark-gray': m.reader_settings_theme_dark_gray,
-  'oled-black': m.reader_settings_theme_oled_black,
-};
-
-const FONT_LABELS: Record<ReaderFont, () => string> = {
-  'source-serif-4': m.reader_settings_font_source_serif_4,
-  literata: m.reader_settings_font_literata,
-  'noto-serif': m.reader_settings_font_noto_serif,
-  'plus-jakarta-sans': m.reader_settings_font_plus_jakarta_sans,
-};
+import { ChoiceGroup, FontChoices, RangeField, ThemeSwatches } from './reader-settings-controls';
 
 const WIDTH_LABELS: Record<ReaderWidth, () => string> = {
   narrow: m.reader_settings_width_narrow,
@@ -52,9 +31,12 @@ const ALIGN_LABELS: Record<ReaderAlign, () => string> = {
 };
 
 /**
- * Display settings panel. Not modal: the page stays visible and undimmed behind it, so every
- * change previews on the chapter text right away. Opened from the reading controls (`trigger`),
- * which hold the open state.
+ * Display settings panel: a bottom sheet on small screens, a right-hand panel from `lg` up. Modal
+ * (focus trapped, page scroll locked, a click outside closes it) but over a transparent overlay,
+ * so every change previews on the chapter text right away; on wide screens the route moves the
+ * text column left so the panel never covers it (below ~1280px that also narrows the column, so a
+ * wider column setting only shows once the panel closes). Opened from the reading controls
+ * (`trigger`), which hold the open state.
  */
 export function ReaderSettingsSheet({
   open,
@@ -66,45 +48,23 @@ export function ReaderSettingsSheet({
   trigger: RefObject<HTMLButtonElement | null>;
 }) {
   const { settings, update, reset } = useReaderSettings();
-  const panelFocus = usePanelTrigger(trigger, false);
+  const panelFocus = usePanelTrigger(trigger, true);
 
   return (
-    <Sheet modal={false} open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="gap-0 overflow-y-auto" {...panelFocus}>
-        <SheetHeader>
-          <SheetTitle>{m.reader_settings()}</SheetTitle>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="adaptive-right"
+        overlayClassName="bg-transparent"
+        className="gap-0 overflow-y-auto"
+        {...panelFocus}
+      >
+        <SheetHeader className="pr-12">
+          <SheetTitle className="text-lg font-extrabold">{m.reader_settings()}</SheetTitle>
           <SheetDescription>{m.reader_settings_description()}</SheetDescription>
         </SheetHeader>
         <div className="flex flex-col gap-6 px-4 pb-6">
-          <ChoiceGroup
-            legend={m.reader_settings_theme()}
-            options={READER_THEMES}
-            value={settings.theme}
-            labels={THEME_LABELS}
-            onChange={(theme) => update({ theme })}
-            renderOption={(theme, label) => (
-              <span className="flex flex-col items-center gap-1 text-xs">
-                {/* The preset's own colours: `data-reader-theme` scopes them to the swatch. */}
-                <span
-                  data-reader-theme={theme}
-                  aria-hidden
-                  className="flex size-11 items-center justify-center rounded-md border bg-reader-bg font-serif text-base text-reader-fg"
-                >
-                  Aa
-                </span>
-                {label}
-              </span>
-            )}
-            className="grid grid-cols-3 gap-3"
-          />
-          <ChoiceGroup
-            legend={m.reader_settings_font()}
-            options={READER_FONTS}
-            value={settings.font}
-            labels={FONT_LABELS}
-            onChange={(font) => update({ font })}
-            className="grid grid-cols-2 gap-2"
-          />
+          <ThemeSwatches value={settings.theme} onChange={(theme) => update({ theme })} />
+          <FontChoices value={settings.font} onChange={(font) => update({ font })} />
           <RangeField
             label={m.reader_settings_font_size()}
             range={READER_RANGES.fontSize}
@@ -132,7 +92,8 @@ export function ReaderSettingsSheet({
             value={settings.width}
             labels={WIDTH_LABELS}
             onChange={(width) => update({ width })}
-            className="grid grid-cols-3 gap-2"
+            variant="segment"
+            className="grid grid-cols-3"
             fieldsetClassName="hidden lg:flex"
           />
           <ChoiceGroup
@@ -141,108 +102,14 @@ export function ReaderSettingsSheet({
             value={settings.align}
             labels={ALIGN_LABELS}
             onChange={(align) => update({ align })}
-            className="grid grid-cols-2 gap-2"
+            variant="segment"
+            className="grid grid-cols-2"
           />
-          <Button variant="outline" onClick={reset} className="self-start">
+          <Button variant="outline" onClick={reset} className="w-full">
             {m.reader_settings_reset()}
           </Button>
         </div>
       </SheetContent>
     </Sheet>
-  );
-}
-
-/** A row of radio buttons styled as segments; arrow keys move between them natively. */
-function ChoiceGroup<T extends string>({
-  legend,
-  options,
-  value,
-  labels,
-  onChange,
-  renderOption,
-  className,
-  fieldsetClassName,
-}: {
-  legend: string;
-  options: readonly T[];
-  value: T | undefined;
-  labels: Record<T, () => string>;
-  onChange: (value: T) => void;
-  renderOption?: (option: T, label: string) => ReactNode;
-  className?: string;
-  fieldsetClassName?: string;
-}) {
-  const name = useId();
-  return (
-    <fieldset className={cn('flex flex-col gap-2', fieldsetClassName)}>
-      <legend className="mb-2 text-sm font-medium">{legend}</legend>
-      <div className={className}>
-        {options.map((option) => {
-          const label = labels[option]();
-          return (
-            <label key={option} className="cursor-pointer">
-              <input
-                type="radio"
-                name={name}
-                value={option}
-                checked={value === option}
-                onChange={() => onChange(option)}
-                className="peer sr-only"
-              />
-              <span
-                className={cn(
-                  'flex h-full items-center justify-center rounded-md border px-2 py-1.5 text-sm',
-                  'peer-checked:border-primary peer-checked:ring-1 peer-checked:ring-primary',
-                  'peer-focus-visible:ring-[3px] peer-focus-visible:ring-ring/70',
-                )}
-              >
-                {renderOption ? renderOption(option, label) : label}
-              </span>
-            </label>
-          );
-        })}
-      </div>
-    </fieldset>
-  );
-}
-
-/** A slider; values are rounded so float steps (0.1) never store `1.7000000000000002`. */
-function RangeField({
-  label,
-  range,
-  value,
-  unit = '',
-  onChange,
-}: {
-  label: string;
-  range: ReaderRange;
-  value: number;
-  unit?: string;
-  onChange: (value: number) => void;
-}) {
-  const id = useId();
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between text-sm">
-        <label htmlFor={id} className="font-medium">
-          {label}
-        </label>
-        <output htmlFor={id} className="text-muted-foreground tabular-nums">
-          {value}
-          {unit}
-        </output>
-      </div>
-      <input
-        id={id}
-        type="range"
-        min={range.min}
-        max={range.max}
-        step={range.step}
-        value={value}
-        aria-valuetext={`${value}${unit}`}
-        onChange={(event) => onChange(Math.round(Number(event.target.value) * 100) / 100)}
-        className="w-full accent-primary"
-      />
-    </div>
   );
 }

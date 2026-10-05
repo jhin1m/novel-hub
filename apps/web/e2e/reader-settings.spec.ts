@@ -90,6 +90,20 @@ test.describe('reader settings', () => {
     await expect(settings.getByText('Độ rộng cột chữ')).toBeHidden();
   });
 
+  test('opening the panel downloads none of the optional reader fonts', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const fonts: string[] = [];
+    page.on('request', (req) => {
+      if (req.resourceType() === 'font') fonts.push(req.url());
+    });
+    await gotoHydrated(page, story.chapterPath(1));
+    const settings = await openSettings(page);
+    await expect(settings.getByRole('radio', { name: 'Literata', exact: true })).toBeAttached();
+    await page.waitForLoadState('networkidle');
+    expect(fonts.some((url) => url.includes('source-serif-4'))).toBe(true);
+    expect(fonts.filter((url) => /literata|noto-serif/.test(url))).toEqual([]);
+  });
+
   test('a signed-in reader gets their settings on another device', async ({ page, browser }) => {
     await signUp(page);
     await gotoHydrated(page, story.chapterPath(1));

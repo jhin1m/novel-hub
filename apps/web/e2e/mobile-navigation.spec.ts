@@ -144,6 +144,14 @@ test.describe('chapter reading controls', () => {
     mature = await createPublishedStory({ isMature: true });
   });
 
+  /** Where a sheet ends up once its slide-in animation is over. */
+  async function settledBox(sheet: Locator) {
+    await sheet.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)));
+    const box = await sheet.boundingBox();
+    if (!box) throw new Error('sheet not laid out');
+    return box;
+  }
+
   /** Tabs through the page; nothing behind the 18+ screen ever takes focus or opens a panel. */
   async function expectGateKeepsFocus(page: Page) {
     await gotoHydrated(page, mature.chapterPath(1));
@@ -177,6 +185,21 @@ test.describe('chapter reading controls', () => {
         book.chapterPath(2),
       );
       await expectNoHorizontalScroll(page);
+    });
+
+    test('the settings panel is a bottom sheet', async ({ page }) => {
+      await gotoHydrated(page, book.chapterPath(1));
+      await page
+        .getByRole('navigation', CHAPTER_NAV)
+        .getByRole('button', { name: 'Cài đặt hiển thị' })
+        .click();
+      const settings = page.getByRole('dialog', { name: 'Cài đặt hiển thị' });
+      await expect(settings).toBeVisible();
+      const box = await settledBox(settings);
+      expect(box.y).toBeGreaterThan(0);
+      expect(box.y + box.height).toBeCloseTo(800, 0);
+      expect(box.x).toBe(0);
+      expect(box.width).toBe(360);
     });
 
     test('the 18+ screen keeps keyboard focus off the reading controls', async ({ page }) => {
@@ -213,7 +236,7 @@ test.describe('chapter reading controls', () => {
       await expect(toc).toHaveAttribute('aria-expanded', 'false');
     });
 
-    test('closing the settings panel by clicking the text leaves focus off its button', async ({
+    test('the settings panel is modal: a click on the text closes it, focus goes back', async ({
       page,
     }) => {
       await gotoHydrated(page, book.chapterPath(1));
@@ -222,9 +245,35 @@ test.describe('chapter reading controls', () => {
         .getByRole('button', { name: 'Cài đặt hiển thị' });
       await settings.click();
       await expect(page.getByRole('dialog', { name: 'Cài đặt hiển thị' })).toBeVisible();
-      await page.locator('.reader-content').click({ position: { x: 10, y: 10 } });
+      // The transparent overlay takes the click, not the text under it.
+      const text = await page.locator('.reader-content').boundingBox();
+      if (!text) throw new Error('chapter text not laid out');
+      await page.mouse.click(text.x + 10, text.y + 10);
       await expect(page.getByRole('dialog')).toHaveCount(0);
-      await expect(settings).not.toBeFocused();
+      await expect(settings).toBeFocused();
+    });
+
+    test('settings open on the right beside the text; the contents open on the left', async ({
+      page,
+    }) => {
+      await gotoHydrated(page, book.chapterPath(1));
+      const nav = page.getByRole('navigation', CHAPTER_NAV);
+      await nav.getByRole('button', { name: 'Cài đặt hiển thị' }).click();
+      const settings = page.getByRole('dialog', { name: 'Cài đặt hiển thị' });
+      await expect(settings).toBeVisible();
+      const panel = await settledBox(settings);
+      expect(panel.x).toBeGreaterThan(640);
+      // The text column moved left: the panel covers none of it.
+      const paragraph = await page.locator('.reader-content p').first().boundingBox();
+      if (!paragraph) throw new Error('chapter text not laid out');
+      expect(paragraph.x + paragraph.width).toBeLessThanOrEqual(panel.x);
+      await page.keyboard.press('Escape');
+      await expect(page.getByRole('dialog')).toHaveCount(0);
+
+      await nav.getByRole('button', { name: 'Mục lục' }).click();
+      const toc = page.getByRole('dialog', { name: 'Mục lục' });
+      await expect(toc).toBeVisible();
+      expect((await settledBox(toc)).x).toBe(0);
     });
 
     test('the 18+ screen keeps keyboard focus off the reading controls', async ({ page }) => {

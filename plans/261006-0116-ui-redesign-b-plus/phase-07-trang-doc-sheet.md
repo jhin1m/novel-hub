@@ -1,7 +1,7 @@
 ---
 phase: 7
 title: "Trang đọc: sheet cài đặt và mục lục"
-status: pending
+status: completed
 priority: P1
 effort: "0.5d"
 dependencies: [6]
@@ -74,9 +74,9 @@ Không có hàm thuần mới (chỉ JSX + class); không thêm unit test.
 
 ## Function/interface checklist
 
-- [ ] `ReaderSettingsSheet({ open, onOpenChange })` (modal mặc định, `side="adaptive-right"`, `overlayClassName="bg-transparent"`)
-- [ ] `ChapterTocSheet({ story, current, open, onOpenChange })` (`side="adaptive-left"`)
-- [ ] `ThemeSwatches({ value, onChange })`, `FontChoices({ value, onChange })`, `RangeField(props hiện có)`, `ChoiceGroup(props hiện có)` trong `reader-settings-controls.tsx`
+- [x] `ReaderSettingsSheet({ open, onOpenChange })` (modal mặc định, `side="adaptive-right"`, `overlayClassName="bg-transparent"`)
+- [x] `ChapterTocSheet({ story, current, open, onOpenChange })` (`side="adaptive-left"`)
+- [x] `ThemeSwatches({ value, onChange })`, `FontChoices({ value, onChange })`, `RangeField(props hiện có)`, `ChoiceGroup(props hiện có)` trong `reader-settings-controls.tsx`
 
 ## Dependency map
 
@@ -103,11 +103,11 @@ Không key mới (dùng lại `reader_settings_*`, `reader_toc`, `reader_toc_cur
 
 ## Success Criteria
 
-- [ ] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
-- [ ] `reader-settings-sheet.tsx` < 200 dòng, `reader-settings-controls.tsx` ≤ 200; `rg -n 'modal=\{false\}' apps/web/src/components/reader` rỗng
-- [ ] `rg -l 'ring-ring/70|outline-ring/70' apps/web/src` rỗng
-- [ ] `rg -n 'fontFamily' apps/web/src/components/reader/reader-settings-controls.tsx` rỗng (nhãn font không render bằng font đó)
-- [ ] Chỉ một dialog cài đặt trong DOM khi mở; ở 1280 cột chữ không bị panel che (e2e)
+- [x] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
+- [x] `reader-settings-sheet.tsx` < 200 dòng, `reader-settings-controls.tsx` ≤ 200; `rg -n 'modal=\{false\}' apps/web/src/components/reader` rỗng
+- [x] `rg -l 'ring-ring/70|outline-ring/70' apps/web/src` rỗng
+- [x] `rg -n 'fontFamily' apps/web/src/components/reader/reader-settings-controls.tsx` rỗng (nhãn font không render bằng font đó)
+- [x] Chỉ một dialog cài đặt trong DOM khi mở; ở 1280 cột chữ không bị panel che (e2e)
 
 ## Risk Assessment
 
@@ -115,7 +115,7 @@ Không key mới (dùng lại `reader_settings_*`, `reader_toc`, `reader_toc_cur
 | --- | --- | --- |
 | Modal khoá cuộn/con trỏ làm vỡ e2e settings | L × M | e2e chỉ thao tác trong dialog; chạy `reader-settings.spec` sau bước 2 |
 | Panel ghim nhầm cạnh ở ≥ lg | M × M | class tách theo cạnh từ phase 2; e2e `boundingBox` |
-| `lg:pr-96` làm cột chữ nhảy khi mở/đóng | M × L | chủ ý (xem trước trên chữ); `--reader-column` theo `ch`, không đổi |
+| `lg:pr-96` làm cột chữ nhảy khi mở/đóng | M × L | chủ ý (xem trước trên chữ). Ở 1024–1279px (và cỡ chữ lớn ở 1280) cột bị co dưới `--reader-column` khi panel mở → chọn "Vừa"/"Rộng" chỉ thấy khác sau khi đóng; chấp nhận, ghi trong docblock `ReaderSettingsSheet` |
 | Bỏ trap focus khi tách control | L × M | chỉ di chuyển JSX; Radix modal giữ focus |
 
 **Rollback:** revert 3 file reader + route (`lg:pr-96`); xoá `reader-settings-controls.tsx`; e2e mới xoá cùng.
@@ -123,3 +123,14 @@ Không key mới (dùng lại `reader_settings_*`, `reader_toc`, `reader_toc_cur
 ## Ngoài phạm vi phase
 
 Không nút −/+ cỡ chữ, không modal giữa màn hình, không bảng chọn màu tự do, không xem trước font bằng chính font, không đổi logic/lưu cài đặt, không đổi khung đọc (phase 6).
+
+## Kết quả cook (2026-10-06)
+
+- `reader-settings-sheet.tsx` 244 → 115 dòng; `reader-settings-controls.tsx` 196 dòng (`ChoiceGroup` thêm `variant` tile/segment/bare, `renderOption` nhận `checked`).
+- Sheet cài đặt: modal mặc định, `adaptive-right`, overlay trong suốt, `usePanelTrigger(trigger, true)` (đóng bằng click ngoài → focus về nút).
+- e2e: thay test cũ "click chữ đóng panel, focus không về nút" (hành vi non-modal) bằng test modal (click ngoài đóng, focus về nút); thêm vị trí panel 1280/360, không tải Literata/Noto Serif (kèm khẳng định có tải source-serif-4).
+- Gate (tester): typecheck, lint, format:check, test 672/672, test:int 301 (+1 skip), e2e 89/89. Sau sửa review: chạy lại reader-settings + mobile-navigation + reader 30/30.
+- Review: `reports/code-reviewer-261006-phase-07-reader-sheets.md`, `reports/tester-261006-phase-07-reader-sheets-gate.md`.
+- [auto] Review M1 (cột co ở 1024–1279px khi panel mở): chấp nhận, sửa docblock + dòng rủi ro, không đổi sang `xl:pr-96`. Lý do: yêu cầu cứng là chữ không bị che; phương án Recommended của reviewer.
+- [auto] Review L1/L3: pill chọn thêm `ring-1 ring-border`, cao `h-10`. Lý do: tương phản bg-card/bg-secondary ~1.2:1, sửa nhỏ không đổi thiết kế.
+- [auto] Review L5 (viền ô "Sáng" mờ): không sửa. Lý do: nhãn và "Aa" đã nhận diện; đổi màu viền là quyết định thiết kế.

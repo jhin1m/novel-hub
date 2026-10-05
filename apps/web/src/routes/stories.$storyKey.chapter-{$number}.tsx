@@ -22,6 +22,7 @@ import { useReadingProgress } from '../lib/reader/use-reading-progress';
 import { useResumeScroll } from '../lib/reader/use-resume-scroll';
 import { useViewBeacon } from '../lib/reader/use-view-beacon';
 import { useMe } from '../lib/me';
+import { cn } from '../lib/utils';
 import { getChapterPage } from '../server-fns/reader';
 
 export const Route = createFileRoute('/stories/$storyKey/chapter-{$number}')({
@@ -113,7 +114,14 @@ function ReaderPage() {
         />
         <ReaderControls variant="bar" {...controls} />
         <ReaderControls variant="rail" {...controls} />
-        <main className="px-4 pt-[76px] pb-28 lg:pt-[84px] lg:pb-16" inert={gated}>
+        {/* On wide screens the settings panel sits beside the text: the column moves left of it. */}
+        <main
+          className={cn(
+            'px-4 pt-[76px] pb-28 lg:pt-[84px] lg:pb-16',
+            openPanel === 'settings' && 'lg:pr-96',
+          )}
+          inert={gated}
+        >
           <div className="reader-column">
             <ChapterHeader chapter={chapter} />
             <ChapterContent

@@ -23,7 +23,7 @@ Spec checkbox: `Tạo và sửa truyện: tiêu đề, giới thiệu, bìa (upl
 - `packages/shared`: `LIMITS`, Zod schema truyện, `parseStoryKey`/`storyKey`, `coverImageUrl`, `s3EnvSchema`.
 - `packages/core`: `stories` (tạo, sửa, đọc cho tác giả, tag), `policies/story`, `storage` (S3 qua `aws4fetch`), `images` (pipeline bìa bằng `sharp`), `Result` dùng chung.
 - `packages/api`: sub-app `stories`, `tags`, mở rộng `me`; `validate()` bọc `zValidator`; ánh xạ mã lỗi core → HTTP; `makeTestApiDeps(overrides)` (subpath test-only `@novel-hub/api/testing`) cho mọi test dựng `createApp`.
-- `apps/web`: tách `server/infra.ts`; khu tác giả `/viet`, `/viet/truyen/moi`, `/viet/truyen/$publicId`.
+- `apps/web`: tách `server/infra.ts`; khu tác giả `/write`, `/write/stories/new`, `/write/stories/$publicId`.
 - Truyện mới luôn `visibility = draft`; chuyển `published` làm ở phase 5 theo câu trả lời câu hỏi mở #3.
 
 ## Key Insights
@@ -37,7 +37,7 @@ Spec checkbox: `Tạo và sửa truyện: tiêu đề, giới thiệu, bìa (upl
 - Tag người dùng chọn có thể là tag đã gộp (`canonical_id`): quy về tag chuẩn rồi dedupe trước khi đếm. Tag chính phải là `genre` sau khi quy đổi. `story_tags` chứa cả tag chính (khớp seed).
 - Không có công cụ tạo tag ở Giai đoạn 1: tag đến từ seed. Production lấy tag ban đầu qua lệnh `pnpm db:seed-tags` (idempotent, danh sách từ fixture seed hiện có, **không** qua guard localhost của `db:seed` vì phải chạy được ở production). <!-- Updated: Validation Session 1 - seed-tags -->
 - `PATCH` không được dùng schema có `.default()` (Zod 4 vẫn điền default cho field vắng mặt trong một số trường hợp `.partial()`), nên schema sửa khai báo riêng, mọi field `optional()` không default.
-- Route file tác giả: trang sửa truyện là `viet/truyen/$publicId/index.tsx` (không phải `$publicId.tsx`) để phase 4 thêm `viet/truyen/$publicId/chuong/$number.tsx` mà không lồng vào layout của trang sửa. `moi` không thể là `publicId` (bảng chữ bỏ `o`, `i`).
+- Route file tác giả: trang sửa truyện là `write/stories/$publicId/index.tsx` (không phải `$publicId.tsx`) để phase 4 thêm `write/stories/$publicId/chapters/$number.tsx` mà không lồng vào layout của trang sửa. `new` không thể là `publicId` (`publicId` luôn đúng 8 ký tự).
 
 ## Requirements
 
@@ -50,11 +50,11 @@ Spec checkbox: `Tạo và sửa truyện: tiêu đề, giới thiệu, bìa (upl
 - `GET /api/v1/me/stories` → danh sách truyện của tôi (mới sửa trước); `GET /api/v1/me/stories/:publicId` → `{ story }` đầy đủ cho trang sửa.
 - Lỗi: 401 `UNAUTHENTICATED`, 403 `EMAIL_NOT_VERIFIED`/`FORBIDDEN`, 404 `NOT_FOUND` (cả `publicId` sai định dạng), 400 `VALIDATION_ERROR`, 422 `UNKNOWN_TAG`/`MAIN_TAG_NOT_GENRE`/`TOO_MANY_TAGS`/`IMAGE_TOO_SMALL`/`IMAGE_TOO_LARGE`, 413 `FILE_TOO_LARGE`, 415 `UNSUPPORTED_IMAGE`, 503 `STORAGE_UNAVAILABLE`.
 - Web:
-  - `/viet`: danh sách truyện của tôi (tiêu đề, badge trạng thái hiển thị, số chương, sửa lần cuối), nút "Tạo truyện mới";
-  - `/viet/truyen/moi`: form tạo; thành công → chuyển tới trang sửa;
-  - `/viet/truyen/$publicId`: form sửa + khu bìa (chọn file, xem trước, tải lên, gỡ bìa).
+  - `/write`: danh sách truyện của tôi (tiêu đề, badge trạng thái hiển thị, số chương, sửa lần cuối), nút "Tạo truyện mới";
+  - `/write/stories/new`: form tạo; thành công → chuyển tới trang sửa;
+  - `/write/stories/$publicId`: form sửa + khu bìa (chọn file, xem trước, tải lên, gỡ bìa).
   - Khách thấy link đăng nhập; email chưa xác thực thấy thông báo + nút gửi lại mail (`WriterGate`).
-  - Header (phase 1) thêm link "Viết truyện" → `/viet`. Các trang `/viet*` có `robots: noindex`.
+  - Header (phase 1) thêm link "Viết truyện" → `/write`. Các trang `/write*` có `robots: noindex`.
 
 **Non-functional**
 
@@ -182,7 +182,7 @@ export function makeTestApiDeps(overrides?: Partial<ApiDeps>): ApiDeps; // db m�
 | `eslint.config.js` | modify | thêm `apps/web/src/server-fns/**` vào `ignores` của rule chặn import |
 | `apps/web/src/lib/{stories,api-errors}.ts` | create | hook TanStack Query; `readApiError`, `apiErrorMessage(code)` |
 | `apps/web/src/components/{writer-gate,story-form,tag-picker,cover-upload}.tsx` | create | |
-| `apps/web/src/routes/viet/index.tsx`, `viet/truyen/moi.tsx`, `viet/truyen/$publicId/index.tsx` | create | |
+| `apps/web/src/routes/write/index.tsx`, `write/stories/new.tsx`, `write/stories/$publicId/index.tsx` | create | |
 | `apps/web/src/components/site-layout.tsx` | modify | link "Viết truyện" |
 | `packages/shared/messages/vi.json` | modify | |
 | `apps/web/e2e/helpers/accounts.ts`, `e2e/global-setup.ts`, `e2e/stories.spec.ts` | create/modify | `signUpVerified`; global setup gọi `seedTags` |
@@ -242,15 +242,15 @@ export function makeTestApiDeps(overrides?: Partial<ApiDeps>): ApiDeps; // db m�
 | High | `parseStoryKey`: `kiem-dao-k7m2xq9p`, `k7m2xq9p`, `abc-` → null, `x-0000000o` → null | unit |
 | Medium | `s3EnvSchema`: thiếu một trong 5 biến → lỗi; `S3_REGION`/`S3_FORCE_PATH_STYLE` vắng → dùng default | unit |
 | Critical | S3 thật: put → GET public URL 200 → delete → 404; thiếu `S3_*` → báo SKIPPED rõ, checkbox chưa được đánh | int |
-| Critical | User đã xác thực tạo truyện (tiêu đề, giới thiệu, tag chính + 1 tag, 18+) → trang sửa → `/viet` có truyện, badge "Nháp" → sửa tiêu đề thành công | e2e |
-| High | Tiêu đề 1 ký tự → báo lỗi ở form, không gửi request; user chưa xác thực ở `/viet/truyen/moi` thấy thông báo xác thực | e2e |
+| Critical | User đã xác thực tạo truyện (tiêu đề, giới thiệu, tag chính + 1 tag, 18+) → trang sửa → `/write` có truyện, badge "Nháp" → sửa tiêu đề thành công | e2e |
+| High | Tiêu đề 1 ký tự → báo lỗi ở form, không gửi request; user chưa xác thực ở `/write/stories/new` thấy thông báo xác thực | e2e |
 | Critical | Upload bìa thật trên UI với MinIO bucket dev | thủ công (step 13) |
 
 ## Dependency Map
 
 - Cần: phase 1 (component ui, `SiteLayout`), Giai đoạn 0 (auth, `requireVerifiedEmail`, schema).
-- Phase 3 dùng: `AuthorStoryView.coverUrl`, `mainTag.slug`, `coverImageUrl`, trang `/viet` để gắn `StoryCover`.
-- Phase 4/5/6 dùng: `loadOwnedStory`, `canEditStory`, `Result`, `validate`, `coreError`, `LIMITS`, trang `/viet/truyen/$publicId`.
+- Phase 3 dùng: `AuthorStoryView.coverUrl`, `mainTag.slug`, `coverImageUrl`, trang `/write` để gắn `StoryCover`.
+- Phase 4/5/6 dùng: `loadOwnedStory`, `canEditStory`, `Result`, `validate`, `coreError`, `LIMITS`, trang `/write/stories/$publicId`.
 - Phase 5 sửa: `updateStory`/`setStoryCover`/`removeStoryCover` ghi outbox `recordContentChanges(tx, [{ entity: 'story', action: 'updated', storyId, previousSlug }])` trong transaction (chữ ký giữ nguyên).
 - Phase 7/10/16 dùng: `parseStoryKey`, `storyKey`, `getInfra()` từ server function. Phase 9/11 dùng `loadOptionalEnv` cho `CF_*`, `MEILI_*`.
 - Mọi phase thêm route dùng `makeTestApiDeps` trong test.
@@ -294,4 +294,4 @@ Rollback: không có migration. Revert commit; file ảnh đã tải lên còn t
 
 ## Next Steps
 
-Phase 3: `StoryCover` dùng `coverUrl` và `mainTag.slug`, gắn vào `/viet` và trang sửa truyện.
+Phase 3: `StoryCover` dùng `coverUrl` và `mainTag.slug`, gắn vào `/write` và trang sửa truyện.

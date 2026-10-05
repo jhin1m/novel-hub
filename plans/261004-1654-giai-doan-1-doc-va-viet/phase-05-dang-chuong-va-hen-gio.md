@@ -185,7 +185,7 @@ export function registerPublishingSchedulers(queue: Queue): Promise<void>; // up
 | `apps/worker/src/{content-router,content-worker,publishing-worker}.ts`, `processors/{sweep-scheduled-chapters,drain-content-events}.ts` | create | |
 | `apps/worker/src/publishing-worker.int.test.ts` | create | |
 | `apps/web/src/components/editor/{publish-dialog,schedule-banner}.tsx`, `components/chapter-list.tsx` | create/modify | |
-| `apps/web/src/lib/{chapters,api-errors}.ts`, `routes/viet/truyen/$publicId/chuong/$number.tsx` | modify | |
+| `apps/web/src/lib/{chapters,api-errors}.ts`, `routes/write/stories/$publicId/chapters/$number.tsx` | modify | |
 | `packages/auth/src/scripts/seed.ts`, `packages/db/src/seed/seed.ts` | modify | tuỳ chọn `renderContent` (step 11) |
 | `packages/shared/messages/vi.json` | modify | |
 | `apps/web/e2e/publish.spec.ts` | create | |

@@ -27,14 +27,14 @@ Spec checkbox: `Tủ truyện và lịch sử đọc, nút đọc tiếp.`
   - `continueReading`: chương + `scroll_pct` để đọc tiếp.
 - **Hono:** sub-app `library` (mới); mở rộng sub-app `reading` của phase 9: `GET` tiến độ, lịch sử, xoá lịch sử.
 - **Web:**
-  - `/tu-truyen`: tab 4 kệ + "Lịch sử";
+  - `/library`: tab 4 kệ + "Lịch sử";
   - trang truyện thêm nút "Thêm vào tủ" và nút "Đọc tiếp chương N" (client, cá nhân hoá);
   - mở chương từ "Đọc tiếp" thì khôi phục vị trí cuộn.
 
 ## Key Insights
 
 - **Trang truyện giữ cache công khai:** SSR luôn render "Đọc từ đầu" (phase 10); client có user + tiến độ thì đổi thành "Đọc tiếp chương N"; nút tủ truyện SSR ở trạng thái trung tính, client tải trạng thái thật.
-- **Điều hướng tới trang công khai là tải tài liệu** (`reloadDocument`, quy tắc phase 7/10): mục trong `/tu-truyen`, lịch sử và nút "Đọc tiếp" đều mở trang truyện/chương bằng điều hướng tài liệu để đi qua HTML cache CDN. <!-- Red Team: link tài liệu thường -->
+- **Điều hướng tới trang công khai là tải tài liệu** (`reloadDocument`, quy tắc phase 7/10): mục trong `/library`, lịch sử và nút "Đọc tiếp" đều mở trang truyện/chương bằng điều hướng tài liệu để đi qua HTML cache CDN. <!-- Red Team: link tài liệu thường -->
 - **Khôi phục vị trí cuộn:**
   - không dùng query string trên URL chương: `assertCanonical` của phase 7 sẽ 301 bỏ query, và URL chia sẻ không được mang vị trí; <!-- Red Team: canonical query -->
   - dùng handoff `sessionStorage['nh:resume'] = { publicId, number, scrollPct, at }` (sessionStorage còn qua điều hướng tài liệu trong cùng tab);
@@ -61,8 +61,8 @@ Spec checkbox: `Tủ truyện và lịch sử đọc, nút đọc tiếp.`
   - `GET /api/v1/reading/progress/:publicId` → `{ progress: { chapterNumber, chapterTitle, scrollPct, updatedAt } | null }` (đã quy về chương đọc được);
   - `GET /api/v1/reading/history?cursor=` → `{ items: [{ story: StoryCardDto, chapterNumber, chapterTitle, scrollPct, updatedAt }], nextCursor }`, 20 mục/trang;
   - `DELETE /api/v1/reading/history/:publicId` → 204 (xoá dòng `reading_progress`).
-- **`/tu-truyen`:** tab Đang đọc, Dự định, Đã xong, Bỏ dở, Lịch sử; tab trong search param `ke` (`validateSearch` + `.catch('reading')`); mỗi mục có `StoryCard` gọn + "Đọc tiếp chương N" (nếu có tiến độ) + menu đổi kệ/bỏ khỏi tủ; lịch sử có "Xoá khỏi lịch sử" + "Tải thêm"; khách → lời mời đăng nhập. Header `NO_STORE`, meta `noindex`.
-- **Trang truyện (phase 10):** nút tủ: chưa có → "Thêm vào tủ" (kệ Đang đọc), có → nhãn kệ + dropdown đổi kệ/bỏ; khách bấm → `/dang-nhap` (có `redirect` quay lại nếu auth đã hỗ trợ, không thì về trang chủ); "Đọc tiếp chương N" thay "Đọc từ đầu" khi có tiến độ.
+- **`/library`:** tab Đang đọc, Dự định, Đã xong, Bỏ dở, Lịch sử; tab trong search param `shelf` (`validateSearch` + `.catch('reading')`); mỗi mục có `StoryCard` gọn + "Đọc tiếp chương N" (nếu có tiến độ) + menu đổi kệ/bỏ khỏi tủ; lịch sử có "Xoá khỏi lịch sử" + "Tải thêm"; khách → lời mời đăng nhập. Header `NO_STORE`, meta `noindex`.
+- **Trang truyện (phase 10):** nút tủ: chưa có → "Thêm vào tủ" (kệ Đang đọc), có → nhãn kệ + dropdown đổi kệ/bỏ; khách bấm → `/sign-in` (có `redirect` quay lại nếu auth đã hỗ trợ, không thì về trang chủ); "Đọc tiếp chương N" thay "Đọc từ đầu" khi có tiến độ.
 - **Trang chương (phase 7):** khôi phục vị trí từ handoff; không có handoff thì từ đầu chương.
 - Header site: link "Tủ truyện" khi đã đăng nhập (trang cá nhân, điều hướng SPA được).
 
@@ -83,7 +83,7 @@ Trang truyện (SSR cache) ── client ──▶ useMe → có user:
 Trang chương (phase 7) ── mount ──▶ takeResumeHandoff(publicId, number)
         → chờ layout + rAF (+ document.fonts.ready ≤ 500 ms) → window.scrollTo(pctToScrollY(contentEl, scrollPct))
 
-/tu-truyen?ke=reading ──▶ useQuery GET /api/v1/library?shelf=…  |  useInfiniteQuery GET /api/v1/reading/history
+/library?shelf=reading ──▶ useQuery GET /api/v1/library?shelf=…  |  useInfiniteQuery GET /api/v1/reading/history
 
 packages/api routes/library.ts (mới), routes/reading.ts (phase 9, thêm GET/DELETE)
   → sessionMiddleware → requireAuth → validate() → core/library | core/reading → Result → coreError()
@@ -133,9 +133,9 @@ Cursor lịch sử dùng `publicId` thay `story_id`: so `(rp.updated_at, s.publi
 | `apps/web/src/lib/reader/use-reading-progress.ts` (phase 9) | modify | bỏ qua sự kiện cuộn do code khôi phục |
 | `apps/web/src/lib/library.ts` | create | query key + `useShelf`, `useContinueReading`, mutation |
 | `apps/web/src/components/library/library-button.tsx`, `continue-reading-button.tsx`, `library-item.tsx`, `history-list.tsx` | create | link tới trang công khai `reloadDocument` |
-| `apps/web/src/routes/truyen.$storyKey.index.tsx` (phase 10) | modify | gắn 2 nút |
+| `apps/web/src/routes/stories.$storyKey.index.tsx` (phase 10) | modify | gắn 2 nút |
 | route trang chương (phase 7) | modify | gọi `takeResumeHandoff` |
-| `apps/web/src/routes/tu-truyen.tsx` | create | |
+| `apps/web/src/routes/library.tsx` | create | |
 | `apps/web/src/components/site-layout.tsx` | modify | link "Tủ truyện" |
 | `packages/shared/messages/vi.json` | modify | key `library_*`, `history_*`, `continue_*`, `shelf_*` |
 | `apps/web/e2e/library.spec.ts` | create | |
@@ -161,7 +161,7 @@ Cursor lịch sử dùng `publicId` thay `story_id`: so `(rp.updated_at, s.publi
    - client có tiến độ → "Đọc tiếp chương N"; onClick ghi handoff rồi `location.assign(url)` (điều hướng tài liệu);
    - `LibraryButton`: `DropdownMenu` phase 1; optimistic update + rollback khi lỗi.
 9. **Trang chương:** `useLayoutEffect` đọc handoff → `requestAnimationFrame` (+ `document.fonts.ready` tối đa 500 ms) → `scrollTo`, đặt sau khi `ChapterContent` có trong DOM; `useReadingProgress` (phase 9) bỏ qua sự kiện cuộn đầu tiên do code gây ra để không ghi đè `scrollPct` về 0.
-10. **`/tu-truyen`:** `validateSearch({ ke: z.enum([...SHELVES, 'lich-su']).catch('reading') })`; tab là `Link` đổi `ke` (SPA, cùng trang cá nhân); `useQuery` cho kệ, `useInfiniteQuery` cho lịch sử; mục mở trang truyện/chương bằng `reloadDocument`; trạng thái rỗng có link về trang chủ; `headers: NO_STORE`, `noindex`.
+10. **`/library`:** `validateSearch({ shelf: z.enum([...SHELVES, 'history']).catch('reading') })`; tab là `Link` đổi `shelf` (SPA, cùng trang cá nhân); `useQuery` cho kệ, `useInfiniteQuery` cho lịch sử; mục mở trang truyện/chương bằng `reloadDocument`; trạng thái rỗng có link về trang chủ; `headers: NO_STORE`, `noindex`.
 11. **Header:** link "Tủ truyện" khi `useMe` có user (client).
 12. **i18n:** `shelf_reading`, `shelf_plan`, `shelf_done`, `shelf_dropped`, `library_title`, `library_add`, `library_remove`, `library_move`, `library_empty`, `history_title`, `history_remove`, `history_load_more`, `history_empty`, `continue_reading`, `start_reading`, `library_sign_in`; `pnpm i18n:compile`.
 13. **E2E `library.spec.ts`** (ma trận). Dữ liệu qua helper core; đăng nhập bằng UI hoặc `storageState` của helper sẵn có.
@@ -174,7 +174,7 @@ Cursor lịch sử dùng `publicId` thay `story_id`: so `(rp.updated_at, s.publi
 - [ ] `listHistory`, `removeFromHistory`, `getContinueReading`, `resolveReadableChapter`
 - [ ] `createLibraryRoutes(deps)`; 3 route mới trong `createReadingRoutes` (phase 9)
 - [ ] `pctToScrollY`, `setResumeHandoff`, `takeResumeHandoff`
-- [ ] `LibraryButton`, `ContinueReadingButton`, `LibraryItem`, `HistoryList`; route `/tu-truyen`
+- [ ] `LibraryButton`, `ContinueReadingButton`, `LibraryItem`, `HistoryList`; route `/library`
 
 ## Test Scenario Matrix
 
@@ -185,7 +185,7 @@ Cursor lịch sử dùng `publicId` thay `story_id`: so `(rp.updated_at, s.publi
 | Critical | Tiến độ trỏ chương đã xoá mềm → "đọc tiếp" lùi về chương đọc được gần nhất, `scrollPct = 0` | int |
 | Critical | Khách gọi mọi route `library`/`reading` → 401; không trả UUID | unit (api) |
 | Critical | Đọc chương 2 cuộn ~50% → trang truyện hiện "Đọc tiếp chương 2" → bấm → trang chương (tải tài liệu, URL không query) mở ở khoảng 50% (± 10%) | e2e |
-| High | `/tu-truyen`: thêm truyện từ trang truyện → thấy ở tab Đang đọc; đổi kệ → chuyển tab; bỏ khỏi tủ → biến mất | e2e |
+| High | `/library`: thêm truyện từ trang truyện → thấy ở tab Đang đọc; đổi kệ → chuyển tab; bỏ khỏi tủ → biến mất | e2e |
 | High | Lịch sử: 3 truyện theo thứ tự mới nhất; xoá một mục → còn 2 | e2e |
 | High | Keyset: 45 dòng, 10 dòng trùng `updated_at` → duyệt hết 3 trang không trùng không sót | int |
 | High | Trang truyện vẫn `cache-control: public`, không `set-cookie` sau khi thêm nút cá nhân hoá | e2e |
@@ -203,12 +203,12 @@ Cursor lịch sử dùng `publicId` thay `story_id`: so `(rp.updated_at, s.publi
   - phase 9: `reading_progress` được ghi, `routes/reading.ts`, `computeScrollPct`, `useReadingProgress`;
   - phase 10: trang truyện, `StoryCardDto`/`storyCardColumns`, `publicStoryWhere`, `StoryCard`.
 - **Phase sau dùng:**
-  - phase 16: `noindex` cho `/tu-truyen` (đã đặt);
+  - phase 16: `noindex` cho `/library` (đã đặt);
   - Giai đoạn 2: `reading_progress` là nguồn tỷ lệ bỏ dở.
 
 ## Success Criteria
 
-- [ ] Thêm/đổi kệ/bỏ khỏi tủ chạy ở trang truyện và `/tu-truyen`
+- [ ] Thêm/đổi kệ/bỏ khỏi tủ chạy ở trang truyện và `/library`
 - [ ] Lịch sử đọc mới nhất trước, có xoá mục và tải thêm
 - [ ] "Đọc tiếp" mở đúng chương và khôi phục vị trí cuộn, URL chương không có query
 - [ ] Trang truyện vẫn cache công khai, không cookie
@@ -224,13 +224,13 @@ Cursor lịch sử dùng `publicId` thay `story_id`: so `(rp.updated_at, s.publi
 | Nháy nút "Đọc từ đầu" → "Đọc tiếp" | Cao × Thấp | Chấp nhận (trang cache công khai); giữ cùng kích thước nút |
 | Truyện ẩn biến mất khỏi tủ làm người đọc khó hiểu | Thấp × Thấp | Chấp nhận ở giai đoạn 1; câu hỏi mở 2 |
 
-Rollback: không migration; gỡ route `library`, 3 route mới của `reading`, trang `/tu-truyen` và 2 nút là về trạng thái phase 11.
+Rollback: không migration; gỡ route `library`, 3 route mới của `reading`, trang `/library` và 2 nút là về trạng thái phase 11.
 
 ## Security Considerations
 
 - Mọi route lọc theo `userId` của phiên; không có tham số user từ client nên không đọc được tủ/lịch sử người khác (IDOR).
 - Route ghi (`PUT`/`DELETE`) đi qua CSRF `/api/v1`, `no-store`.
-- `/tu-truyen` SSR không chứa dữ liệu cá nhân (tải ở client), `noindex`.
+- `/library` SSR không chứa dữ liệu cá nhân (tải ở client), `noindex`.
 - Handoff ở `sessionStorage` chỉ chứa `publicId`, số chương, phần trăm.
 
 ## Câu hỏi mở (đã chốt — Validation Session 1, 2026-10-05)

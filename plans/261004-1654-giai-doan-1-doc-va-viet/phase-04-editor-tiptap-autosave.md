@@ -16,7 +16,7 @@ Spec checkbox: `Editor Tiptap: autosave vào chapter_drafts (debounce ~2 giây),
 - Spec mục 4 (`chapters`, `chapter_drafts`; `number` tăng dần, không dùng lại kể cả khi xoá mềm), mục 8 "Khu viết" (nền trơn, trạng thái lưu nhỏ ở góc, chế độ tập trung che mọi thứ trừ chữ)
 - `plan.md`: Editor (Tiptap 3 ghim cùng version, `@novel-hub/shared/editor`, route `ssr: false`), Đếm chữ, Autosave; câu hỏi mở #4 (heading, gạch ngang)
 - `plans/reports/researcher-261004-2352-editor-content-pipeline-report.md` mục 1, 3, 5, 7
-- Phase 2: `loadOwnedStory`, `Result`, `validate`, `coreError`, `LIMITS`, `WriterGate`, trang `/viet/truyen/$publicId/index.tsx`
+- Phase 2: `loadOwnedStory`, `Result`, `validate`, `coreError`, `LIMITS`, `WriterGate`, trang `/write/stories/$publicId/index.tsx`
 - Code: `packages/db/src/schema/chapters.ts` (`chapter_drafts.updated_at` dùng `updatedAt()` → `defaultNow()` micro giây khi insert), `packages/db/src/seed/seed.ts` (`countWords` riêng, pid `p1…`)
 
 ## Overview
@@ -57,7 +57,7 @@ Spec checkbox: `Editor Tiptap: autosave vào chapter_drafts (debounce ~2 giây),
 - `PATCH .../chapters/:number` body `{ title?, authorNote? }` (null = xoá; ≤ 150 / ≤ 1.000 ký tự) → `{ chapter }`.
 - `GET /api/v1/me/stories/:publicId/chapters` → `{ chapters: AuthorChapterView[] }` không gồm chương xoá mềm, sắp theo `number`.
 - Mọi route chương: đăng nhập + email đã xác thực + `canEditChapter`; chương xoá mềm/không tồn tại → 404.
-- Web `/viet/truyen/$publicId/chuong/$number` (`ssr: false`, `noindex`):
+- Web `/write/stories/$publicId/chapters/$number` (`ssr: false`, `noindex`):
   - thanh trên: quay lại trang truyện, ô tên chương, trạng thái lưu, số chữ, nút chế độ tập trung; thanh công cụ định dạng; vùng soạn thảo font serif, cột ~70ch; ô "Lời nhắn tác giả" dưới editor;
   - tên chương và lời nhắn lưu khi blur (PATCH), lỗi hiện tại chỗ.
 - Trạng thái lưu: `Đã lưu lúc HH:mm` / `Chưa lưu` / `Đang lưu…` / `Lỗi, thử lại sau Ns` (backoff 2→4→8→16→30 giây) / `Xung đột` (banner: "Chương đang được sửa ở nơi khác" + "Tải bản mới nhất" + "Giữ bản của tôi").
@@ -167,8 +167,8 @@ export function createAutosave(opts: AutosaveOptions): {
 | `apps/web/src/lib/{autosave,draft-mirror,chapters}.ts` (+ `autosave.test.ts`, `draft-mirror.test.ts`) | create | |
 | `apps/web/src/components/editor/{chapter-editor,editor-toolbar,save-status,focus-toggle,draft-restore-banner,conflict-banner}.tsx` | create | |
 | `apps/web/src/components/chapter-list.tsx` | create | |
-| `apps/web/src/routes/viet/truyen/$publicId/chuong/$number.tsx` | create | `ssr: false` |
-| `apps/web/src/routes/viet/truyen/$publicId/index.tsx` | modify | danh sách chương + "Thêm chương" |
+| `apps/web/src/routes/write/stories/$publicId/chapters/$number.tsx` | create | `ssr: false` |
+| `apps/web/src/routes/write/stories/$publicId/index.tsx` | modify | danh sách chương + "Thêm chương" |
 | `eslint.config.js` | modify | gộp nhóm `@tiptap/*`, `@novel-hub/shared/editor` vào `patterns` của block hiện có (hằng dùng chung), khu editor vào `ignores` + block riêng dùng lại hằng |
 | `apps/web/src/lint-boundaries.test.ts` | create | ESLint API `lintText`: `routes/index.tsx` import `@novel-hub/core` và `@tiptap/react` → lỗi; file editor import `@tiptap/react` → không lỗi, import `@novel-hub/core` → lỗi |
 | `packages/shared/messages/vi.json` | modify | `editor_*`, `chapter_*` |

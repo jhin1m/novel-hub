@@ -16,14 +16,14 @@ Spec checkbox: `Bìa mặc định dạng chữ khi tác giả không có bìa.`
 - Spec mục 8 "Khu khám phá": bìa tỷ lệ 2:3; bìa mặc định gồm tên truyện, bút danh, màu nền sinh từ tag chính; lưới toàn bìa mặc định vẫn phải chỉnh tề
 - Spec mục 4: bìa lưu WebP 600×900 và 300×450
 - Phase 1: `apps/web/src/styles/tokens.css`, `token-values.ts` (`TOKEN_VALUES`), `tokens.test.ts` (`CONTRAST_PAIRS`, đối chiếu chuỗi, không parse CSS), `lib/contrast.ts`, `--font-serif`
-- Phase 2: `AuthorStoryView` (`coverUrl`, `mainTag.slug`), `coverImageUrl()` ở `packages/shared/src/cover.ts`, trang `/viet` và `/viet/truyen/$publicId`
+- Phase 2: `AuthorStoryView` (`coverUrl`, `mainTag.slug`), `coverImageUrl()` ở `packages/shared/src/cover.ts`, trang `/write` và `/write/stories/$publicId`
 
 ## Overview
 
 - Một component `StoryCover` dùng cho mọi nơi hiện bìa (phase 10 dùng trong `StoryCard`, trang truyện).
 - Có `coverUrl` → `<img>` với `srcset` 300w/600w. Không có → bìa chữ SSR thuần CSS, không JS, không ảnh.
 - Màu nền chọn từ bảng màu khai báo trong tokens, theo hash ổn định của slug tag chính.
-- Gắn vào `/viet` (lưới truyện của tôi) và khu bìa của trang sửa truyện.
+- Gắn vào `/write` (lưới truyện của tôi) và khu bìa của trang sửa truyện.
 
 ## Key Insights
 
@@ -48,7 +48,7 @@ Spec checkbox: `Bìa mặc định dạng chữ khi tác giả không có bìa.`
   - một đường kẻ mảnh trang trí;
   - bút danh font sans, cỡ nhỏ, 1 dòng, cắt `…`;
   - `role="img"` + `aria-label` = `m.cover_alt({ title })`, phần chữ bên trong `aria-hidden`.
-- `/viet`: lưới thẻ (2 cột mobile, 4–5 cột desktop) dùng `StoryCover`; trang sửa: `CoverUpload` (phase 2) hiện `StoryCover` hiện tại khi chưa chọn file mới.
+- `/write`: lưới thẻ (2 cột mobile, 4–5 cột desktop) dùng `StoryCover`; trang sửa: `CoverUpload` (phase 2) hiện `StoryCover` hiện tại khi chưa chọn file mới.
 
 **Non-functional**
 
@@ -106,7 +106,7 @@ Bảng màu dùng chung cho light và dark (bìa là "vật thể", không đổ
 | `apps/web/src/lib/cover-palette.ts` (+ `.test.ts`) | create | |
 | `apps/web/src/components/story-cover.tsx` (+ `.test.tsx`) | create | test bằng `renderToStaticMarkup` |
 | `apps/web/src/components/cover-upload.tsx` | modify | hiện `StoryCover` khi chưa chọn file |
-| `apps/web/src/routes/viet/index.tsx` | modify | lưới bìa |
+| `apps/web/src/routes/write/index.tsx` | modify | lưới bìa |
 | `packages/shared/messages/vi.json` | modify | `cover_alt` |
 | `apps/web/e2e/stories.spec.ts` | modify | kiểm bìa chữ |
 | `docs/design-guidelines.md` | modify | mục "Bìa mặc định": bảng màu, quy tắc chọn màu, cách thêm màu |
@@ -122,8 +122,8 @@ Bảng màu dùng chung cho light và dark (bìa là "vật thể", không đổ
    - có `coverUrl` → `srcset` chứa `-300.webp 300w` và `-600.webp 600w`, có `width="600"`;
    - tiêu đề chứa `<b>` → bị escape.
    Nếu Vitest không biên dịch được TSX với cấu hình hiện tại, thêm `oxc`/`esbuild` `jsx: 'automatic'` vào `vitest.config.ts` (thay đổi cấu hình test, ghi vào báo cáo cook).
-6. Gắn vào `/viet` và `CoverUpload`. Chuỗi `cover_alt` vào `vi.json`, `pnpm i18n:compile`.
-7. E2E: trong `stories.spec.ts`, truyện vừa tạo (chưa có bìa) hiện `getByRole('img', { name: 'Bìa truyện <tiêu đề>' })` ở `/viet` và chứa chữ tiêu đề.
+6. Gắn vào `/write` và `CoverUpload`. Chuỗi `cover_alt` vào `vi.json`, `pnpm i18n:compile`.
+7. E2E: trong `stories.spec.ts`, truyện vừa tạo (chưa có bìa) hiện `getByRole('img', { name: 'Bìa truyện <tiêu đề>' })` ở `/write` và chứa chữ tiêu đề.
 8. Duyệt mắt: đăng nhập tài khoản seed có nhiều truyện (hoặc tạo 8 truyện với tiêu đề dài/ngắn khác nhau), xem lưới ở 375px và 1280px, light và dark; tiêu đề 150 ký tự không tràn khung; chụp màn hình gửi user nếu cần.
 9. Gate: `pnpm typecheck && pnpm lint && pnpm test && pnpm test:int && pnpm test:e2e`. Đánh `[x]` checkbox 2 của Giai đoạn 1 trong spec.
 
@@ -143,12 +143,12 @@ Bảng màu dùng chung cho light và dark (bìa là "vật thể", không đổ
 | High | Không ảnh → bìa chữ đúng màu, có tiêu đề, bút danh, không `<img>`; có ảnh → `srcset` 2 cỡ, `width/height` | unit (render tĩnh) |
 | High | Tiêu đề chứa HTML bị escape | unit |
 | Medium | `coverTitleClass` 4 nấc theo độ dài | unit |
-| High | `/viet` hiện bìa chữ của truyện mới tạo (role `img`, tên đúng) | e2e |
+| High | `/write` hiện bìa chữ của truyện mới tạo (role `img`, tên đúng) | e2e |
 | Medium | Lưới toàn bìa chữ chỉnh tề ở mobile/desktop, tiêu đề dài không tràn | thủ công |
 
 ## Dependency Map
 
-- Cần: phase 1 (tokens, test tương phản, font), phase 2 (`AuthorStoryView`, `coverImageUrl`, `/viet`).
+- Cần: phase 1 (tokens, test tương phản, font), phase 2 (`AuthorStoryView`, `coverImageUrl`, `/write`).
 - Phase 10 dùng `StoryCover` trong `StoryCard`, trang truyện, trang tác giả, trang tag, trang chủ (`priority` cho hàng đầu).
 - Phase 12 dùng trong tủ truyện; phase 11 trong kết quả tìm kiếm.
 - Phase 16: OG image của truyện không có bìa dùng ảnh OG mặc định, không render bìa chữ thành ảnh (ngoài phạm vi).
@@ -169,7 +169,7 @@ Bảng màu dùng chung cho light và dark (bìa là "vật thể", không đổ
 | Vitest không biên dịch TSX | Trung bình × Thấp | Step 5: thêm tuỳ chọn JSX vào cấu hình test |
 | Hydrate lệch do hash khác | Thấp × Trung bình | Hash thuần số nguyên 32-bit, cùng code server/client; có test giá trị cố định |
 
-Rollback: chỉ component và token; revert commit, `/viet` quay về danh sách chữ của phase 2.
+Rollback: chỉ component và token; revert commit, `/write` quay về danh sách chữ của phase 2.
 
 ## Security Considerations
 

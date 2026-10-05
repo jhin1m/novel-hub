@@ -13,7 +13,7 @@ Spec checkbox: `Tìm kiếm Meilisearch: truyện và tác giả, lọc theo tag
 
 ## Context Links
 
-- Spec mục 2 (Meilisearch: có dấu/không dấu, gõ sai), mục 3 (việc nặng qua hàng đợi), mục 4 (URL `/tim-kiem?q=...`), mục 7 (18+ không vào tìm kiếm khi chưa bật; tác giả bị ban: nội dung ẩn), mục 11 (Meilisearch không backup, dựng lại bằng reindex)
+- Spec mục 2 (Meilisearch: có dấu/không dấu, gõ sai), mục 3 (việc nặng qua hàng đợi), mục 4 (URL `/search?q=...`), mục 7 (18+ không vào tìm kiếm khi chưa bật; tác giả bị ban: nội dung ẩn), mục 11 (Meilisearch không backup, dựng lại bằng reindex)
 - [plan.md](./plan.md) — "Tìm kiếm", "Hàng đợi"
 - `plans/reports/researcher-261004-2352-storage-search-infra-report.md` mục 0, 4
 - `plans/reports/researcher-261004-2352-tanstack-start-ssr-ui-report.md` mục 8 (`validateSearch`, `loaderDeps`)
@@ -25,7 +25,7 @@ Spec checkbox: `Tìm kiếm Meilisearch: truyện và tác giả, lọc theo tag
 - **Core `search`:** client Meilisearch; hai index `stories`, `authors` có tiền tố lấy từ `QUEUE_PREFIX`; settings; map document; `syncStory`/`syncAuthor`/`syncUserContent` idempotent; `reindexAll` đơn giản (upsert toàn bộ + xoá doc không còn công khai); `searchCatalog`.
 - **Đồng bộ qua outbox:** `jobsForChange` (phase 5) map event story/chapter/user → job `search-sync` trên queue `content`; processor trong `content-router.ts`. <!-- Red Team: outbox thay afterContentChanged -->
 - **Hai key:** web dùng search-only key `MEILI_SEARCH_KEY`; worker và lệnh reindex giữ `MEILI_MASTER_KEY`. <!-- Red Team: X7 -->
-- `GET /api/v1/search`; trang `/tim-kiem` (shell SSR, kết quả tải ở client); link tìm kiếm ở header.
+- `GET /api/v1/search`; trang `/search` (shell SSR, kết quả tải ở client); link tìm kiếm ở header.
 - Lệnh `pnpm search:reindex` dựng lại index từ Postgres.
 
 ## Key Insights
@@ -58,9 +58,9 @@ Spec checkbox: `Tìm kiếm Meilisearch: truyện và tác giả, lọc theo tag
   - trả `{ stories: { hits: StoryCardDto[], page, totalPages, totalHits }, authors: AuthorHit[] }`; `authors` chỉ khi `q` không rỗng và `page = 1`, tối đa 5;
   - `q` rỗng → duyệt theo bộ lọc, sắp `lastChapterAt:desc`;
   - search ctx `null` (thiếu env) hoặc Meilisearch lỗi/timeout → 503 `SEARCH_UNAVAILABLE`; `no-store`.
-- **`/tim-kiem`:** `validateSearch` bằng schema shared (mọi trường `.catch`), `loaderDeps`; loader chỉ lấy tag thể loại cho bộ lọc; form: ô tìm, tag, trạng thái, khoảng số chữ (`< 50k`, `50k–200k`, `200k–500k`, `> 500k`); submit → `navigate({ search })`; kết quả `useQuery`; phân trang; rỗng/lỗi/đang tải. Header `LIST_CACHE`, meta `noindex`. Shell không phụ thuộc query nên route này **không** áp allowlist canonical của phase 7 (query là nội dung); vẫn 301 khi path chữ hoa.
+- **`/search`:** `validateSearch` bằng schema shared (mọi trường `.catch`), `loaderDeps`; loader chỉ lấy tag thể loại cho bộ lọc; form: ô tìm, tag, trạng thái, khoảng số chữ (`< 50k`, `50k–200k`, `200k–500k`, `> 500k`); submit → `navigate({ search })`; kết quả `useQuery`; phân trang; rỗng/lỗi/đang tải. Header `LIST_CACHE`, meta `noindex`. Shell không phụ thuộc query nên route này **không** áp allowlist canonical của phase 7 (query là nội dung); vẫn 301 khi path chữ hoa.
 - Link từ kết quả tới trang truyện/tác giả là `<Link reloadDocument>` (quy tắc phase 7/10).
-- Header site: ô/link tìm kiếm dẫn tới `/tim-kiem?q=`.
+- Header site: ô/link tìm kiếm dẫn tới `/search?q=`.
 - `pnpm search:reindex`: dựng lại hai index từ DB, in số document upsert/xoá, exit code ≠ 0 khi lỗi.
 
 **Non-functional**
@@ -77,7 +77,7 @@ content-router.ts#routeContentJob ─▶ processSearchSync (master key)
   await ensureSearchReady()   (lười: tạo index nếu thiếu + updateSettings + chờ task)
   story → syncStory(storyId) + syncAuthor(authorId)     user → syncUserContent(userId)
 
-browser /tim-kiem?q=kiem+dao&tag=tien-hiep ── useQuery ──▶ GET /api/v1/search (hc)
+browser /search?q=kiem+dao&tag=tien-hiep ── useQuery ──▶ GET /api/v1/search (hc)
   api: sessionMiddleware → validate('query') → includeMature = prefs.showMature (khách: false)
        → deps.search ?? 503 → core.searchCatalog(ctx(search key), query, { includeMature })
             multiSearch([{ indexUid: stories, q, filter: [...], page, hitsPerPage: 20 }, { indexUid: authors, q, limit: 5 }])
@@ -138,7 +138,7 @@ export function reindexAll(db, ctx, log?: (m: string) => void): Promise<{ upsert
 | `makeTestApiDeps` (packages/api, phase 2) | modify | mặc định `search: null` |
 | `apps/web/src/server/infra.ts` (phase 2) | modify | `loadOptionalEnv(meiliWebEnvSchema, process.env, 'meili')`; `null` → `search: null` |
 | `apps/web/src/server-fns/catalog.ts` (phase 10) | modify | `getSearchFilters()` |
-| `apps/web/src/routes/tim-kiem.tsx` | create | |
+| `apps/web/src/routes/search.tsx` | create | |
 | `apps/web/src/components/search/search-form.tsx`, `search-results.tsx` | create | |
 | `apps/web/src/components/site-layout.tsx` | modify | ô/link tìm kiếm |
 | `apps/worker/src/processors/search-sync.ts` (+ test) | create | |
@@ -166,7 +166,7 @@ export function reindexAll(db, ctx, log?: (m: string) => void): Promise<{ upsert
 10. **Worker:** processor `search-sync` parse payload, `ensureSearchReady` lười; lỗi mạng/timeout → throw để BullMQ retry; thêm case trong `content-router.ts`; `index.ts` dựng ctx bằng master key và `env.QUEUE_PREFIX`; ctx `null` (dev thiếu env) → processor log rồi bỏ qua (reindex là đường cứu).
 11. **Script reindex:** `tsx src/scripts/reindex-search.ts` (env worker + DB); in tiến độ; đóng pool/Redis rồi thoát.
 12. **API `routes/search.ts`:** `.get('/', sessionMiddleware, validate('query', searchQuerySchema), handler)`; `includeMature` qua `getPreferences` (phase 7); `deps.search` null hoặc lỗi Meilisearch → 503 `SEARCH_UNAVAILABLE` qua `coreError()` (log chi tiết ở server). Test dựng app bằng `makeTestApiDeps`.
-13. **Web:** `infra.ts` dựng search ctx bằng `MEILI_SEARCH_KEY`; route `tim-kiem.tsx` (`validateSearch`, `loaderDeps`, loader tag lọc, `headers: LIST_CACHE`, `noindex`); `SearchForm`, `SearchResults` (`useQuery(['search', search])`, `StoryGrid`, khối "Tác giả", phân trang); header thêm ô tìm kiếm.
+13. **Web:** `infra.ts` dựng search ctx bằng `MEILI_SEARCH_KEY`; route `apps/web/src/routes/search.tsx` (`validateSearch`, `loaderDeps`, loader tag lọc, `headers: LIST_CACHE`, `noindex`); `SearchForm`, `SearchResults` (`useQuery(['search', search])`, `StoryGrid`, khối "Tác giả", phân trang); header thêm ô tìm kiếm.
 14. **Int test tiếng Việt** (ma trận; thiếu `MEILI_URL`/`MEILI_MASTER_KEY` → fail với thông báo rõ, Meilisearch luôn có sau `pnpm infra:up`): test lỗi với `đ` → bật phương án `*Folded`, chạy lại.
 15. **E2E `search.spec.ts`:** helper tạo truyện + gọi `syncStory` trực tiếp bằng master key, tiền tố `e2e` (e2e không chạy worker); tìm "kiem dao" thấy truyện; lọc trạng thái; truyện 18+ không hiện với khách.
 16. **Gate:** `pnpm typecheck && pnpm lint && pnpm test && pnpm test:int && pnpm test:e2e`. Đánh `[x]` checkbox "Tìm kiếm Meilisearch: truyện và tác giả, lọc theo tag, trạng thái, số chữ." trong spec.
@@ -179,7 +179,7 @@ export function reindexAll(db, ctx, log?: (m: string) => void): Promise<{ upsert
 - [ ] `loadStoryDoc`, `loadAuthorDoc`, `syncStory`, `syncAuthor`, `syncUserContent`
 - [ ] `buildStoryFilter`, `searchCatalog`, `reindexAll`
 - [ ] `jobsForChange` case `search-sync`; processor `search-sync`; script `reindex-search.ts`
-- [ ] `createSearchRoutes(deps)`; route `/tim-kiem`, `SearchForm`, `SearchResults`
+- [ ] `createSearchRoutes(deps)`; route `/search`, `SearchForm`, `SearchResults`
 
 ## Test Scenario Matrix
 
@@ -200,8 +200,8 @@ export function reindexAll(db, ctx, log?: (m: string) => void): Promise<{ upsert
 | High | `loadOptionalEnv`: production thiếu `MEILI_SEARCH_KEY` (web) / `MEILI_MASTER_KEY` (worker) → throw; dev thiếu → `null`; `assertMeiliMasterKeyStrength`: 8 ký tự ở dev hợp lệ, ở production lỗi | unit |
 | Medium | Tác giả mất truyện công khai cuối → doc author bị xoá | int |
 | Medium | `searchIndexNames('a:b')` → throw | unit |
-| Medium | `/tim-kiem?page=abc&status=xyz` → trang không lỗi, dùng mặc định | e2e |
-| High | E2E: tìm thấy truyện, link tới `/truyen/...`; khối tác giả hiện khi khớp tên | e2e |
+| Medium | `/search?page=abc&status=xyz` → trang không lỗi, dùng mặc định | e2e |
+| High | E2E: tìm thấy truyện, link tới `/stories/...`; khối tác giả hiện khi khớp tên | e2e |
 
 ## Dependency Map
 
@@ -213,7 +213,7 @@ export function reindexAll(db, ctx, log?: (m: string) => void): Promise<{ upsert
   - phase 10: `StoryCardDto`, `storyCardColumns`, `publicStoryWhere`, `StoryGrid`, header.
 - **Phase sau dùng:**
   - phase 15: ẩn/khôi phục, ban/bỏ ban ghi event vào outbox → `search-sync` tự chạy; gộp tag → chạy `reindexAll` hoặc ghi event story cho truyện bị ảnh hưởng;
-  - phase 16: `/tim-kiem` `noindex` (đã đặt);
+  - phase 16: `/search` `noindex` (đã đặt);
   - phase 17: runbook restore ghi `pnpm search:reindex`.
 
 ## Success Criteria
@@ -238,7 +238,7 @@ export function reindexAll(db, ctx, log?: (m: string) => void): Promise<{ upsert
 | `QUEUE_PREFIX` có ký tự không hợp lệ cho index uid | Thấp × Thấp | `searchIndexNames` throw lúc boot |
 | API `meilisearch` 0.x đổi tên hàm | Trung bình × Thấp | Ghim 0.62.0; đọc type đã cài |
 
-Rollback: gỡ mount `/search`, route `/tim-kiem`, case `jobsForChange`/`content-router`; xoá index trên Meilisearch. Không migration. Event cũ trong outbox chỉ còn tạo job khác (purge), không lỗi.
+Rollback: gỡ mount `/search`, route `/search`, case `jobsForChange`/`content-router`; xoá index trên Meilisearch. Không migration. Event cũ trong outbox chỉ còn tạo job khác (purge), không lỗi.
 
 ## Security Considerations
 
@@ -255,4 +255,4 @@ Rollback: gỡ mount `/search`, route `/tim-kiem`, case `jobsForChange`/`content
 
 ## Next Steps
 
-Phase 12: tủ truyện và lịch sử đọc (nút "Đọc tiếp" ở trang truyện, `/tu-truyen`).
+Phase 12: tủ truyện và lịch sử đọc (nút "Đọc tiếp" ở trang truyện, `/library`).

@@ -183,7 +183,7 @@ Rollback: migration chỉ thêm cột có default, cột nullable và index — 
 
 ## Next Steps
 
-Phase 15: báo cáo của người dùng, hàng chờ `/kiem-duyet` (hiện cả báo cáo `duplicate`), hành động mod; đánh `[x]` checkbox 11 khi xong.
+Phase 15: báo cáo của người dùng, hàng chờ `/moderation` (hiện cả báo cáo `duplicate`), hành động mod; đánh `[x]` checkbox 11 khi xong.
 
 ## Câu hỏi mở (đã chốt — Validation Session 1, 2026-10-05)
 

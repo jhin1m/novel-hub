@@ -53,7 +53,7 @@ Spec checkbox: `Trang đọc chương theo mục 6 và mục 8.` — **đánh `[
 - **Purge** — `urlsFor(db, change, appUrl)`:
   - `chapter`: chương đó + chương đọc được liền trước/liền sau (trạng thái hiện tại) + trang truyện;
   - `story`: trang truyện + mọi chương có `published_at IS NOT NULL`; có `previousSlug` thì thêm bộ URL với slug cũ;
-  - `user`: `/tac-gia/{username}` + mọi truyện của tác giả như nhánh `story`;
+  - `user`: `/authors/{username}` + mọi truyện của tác giả như nhánh `story`;
   - path dựng bằng `canonicalPath` (phase 7), URL tuyệt đối `new URL(path, appUrl)`, khử trùng lặp; phase 10 mở rộng (trang chủ, tag, tác giả cho event truyện).
 - Purger: chunk 100 URL/request; thiếu cấu hình → no-op (log debug một lần); non-2xx hoặc `success: false` → throw (BullMQ retry theo `DEFAULT_JOB_OPTIONS`).
 - `pnpm cdn:purge -- --story <publicId>`: purge đồng bộ (không qua queue) trang truyện + mọi chương `published_at IS NOT NULL`, in số URL; thiếu `CF_*` → exit 1 có thông báo.
@@ -138,7 +138,7 @@ export function flushViewCounters(redis: Redis, db: Db, prefix: string, dates: s
 | `packages/api/src/{app.ts,deps.ts}`, `makeTestApiDeps` (phase 2) | modify | mount `/reading`; `viewCounter` (mặc định test `null`) |
 | `apps/web/src/server/infra.ts` | modify | lộ `producerRedis` (kết nối producer đang dùng cho queue), dựng `viewCounter`; phase 13 dùng lại kết nối này |
 | `apps/web/src/lib/reader/{scroll,use-reading-progress,use-view-beacon}.ts` (+ `scroll.test.ts`) | create | `computeScrollPct`; phase 12 thêm hàm ngược |
-| `apps/web/src/routes/truyen.$storyKey.chuong-{$number}.tsx` | modify | gắn 2 hook |
+| `apps/web/src/routes/stories.$storyKey.chapter-{$number}.tsx` | modify | gắn 2 hook |
 | `apps/worker/src/env.ts`, `env.test.ts` | không sửa | CF không ghép vào `workerEnvSchema` (đọc riêng ở `index.ts`), nên `toEqual` ở `env.test.ts:16-17` và ca production `:26-29` giữ nguyên |
 | `apps/worker/src/{content-router,content-worker,publishing-worker,index}.ts` (file của phase 5) | modify | `content-router`: route `purge-urls`; `publishing-worker`: route `flush-view-counters`, `registerPublishingSchedulers` thêm scheduler thứ 3, deps thêm `statsRedis`; `index.ts`: `loadOptionalEnv(cdnEnvSchema, …)` → `createCdnPurger`, tạo `statsRedis` (`createWorkerConnection`), đóng khi tắt |
 | `apps/worker/src/processors/{purge-urls,flush-view-counters}.ts` (+ int test) | create | |

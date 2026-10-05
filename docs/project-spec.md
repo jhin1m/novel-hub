@@ -111,11 +111,13 @@ Các bảng `badges`, `featured_slots`, `ratings`, `comments` thuộc giai đo�
 
 | Trang | URL |
 | --- | --- |
-| Truyện | `/truyen/{slug}-{public_id}` (ví dụ `/truyen/kiem-dao-doc-ton-k7m2xq9p`) |
-| Chương | `/truyen/{slug}-{public_id}/chuong-{number}` |
-| Tác giả | `/tac-gia/{username}` |
-| Tag | `/the-loai/{tag-slug}` |
-| Tìm kiếm | `/tim-kiem?q=...` (search params có type) |
+| Truyện | `/stories/{slug}-{public_id}` (ví dụ `/stories/kiem-dao-doc-ton-k7m2xq9p`) |
+| Chương | `/stories/{slug}-{public_id}/chapter-{number}` |
+| Tác giả | `/authors/{username}` |
+| Tag | `/tags/{tag-slug}` |
+| Tìm kiếm | `/search?q=...` (search params có type) |
+
+URL và tên file route đều tiếng Anh (user chốt 2026-10-05); slug truyện/tag vẫn sinh từ tiêu đề tiếng Việt không dấu.
 
 - Truyện được tra theo `public_id` (đoạn sau dấu `-` cuối cùng); slug chỉ để đọc cho đẹp và SEO.
 - `public_id`: 8 ký tự ngẫu nhiên từ bảng chữ thường + số, bỏ ký tự dễ nhầm (0/o, 1/l/i); sinh bằng `crypto.getRandomValues`, gặp trùng thì sinh lại. Không suy ra từ UUID (UUIDv7 dài và lộ thời điểm tạo).

@@ -51,7 +51,7 @@ Spec checkbox: không có (user thêm ngày 2026-10-04 để có tokens trước
 - Component `apps/web/src/components/ui/`: `button`, `input`, `textarea`, `label`, `checkbox`, `select`, `dialog`, `sheet`, `dropdown-menu`, `badge`.
 - `SiteLayout({ children })`: `<header>` (tên site link về `/`, vùng tài khoản: khách → "Đăng nhập", "Đăng ký"; đã đăng nhập → dropdown tên hiển thị + "Đăng xuất"), `<main>`, `<footer>` (tên site + năm; link điều khoản/quy định do phase 10 thêm khi có trang).
 - Router: `defaultNotFoundComponent` (trang 404 trong `SiteLayout`, link về trang chủ), `defaultErrorComponent` tối giản, `defaultStaleTime: 30_000`, `defaultPreloadStaleTime: 30_000`.
-- Trang auth (`dang-ky`, `dang-nhap`, `quen-mat-khau`, `dat-lai-mat-khau`) và `/` tạm thời dùng `Button`, `Input`, `Label` mới, bọc `SiteLayout`; giữ nguyên label/tên nút để e2e auth hiện có không đổi.
+- Trang auth (`sign-up`, `sign-in`, `forgot-password`, `reset-password`) và `/` tạm thời dùng `Button`, `Input`, `Label` mới, bọc `SiteLayout`; giữ nguyên label/tên nút để e2e auth hiện có không đổi.
 - `docs/design-guidelines.md`: link Design System và mockup (để trống "chưa có" nếu user chưa cung cấp), nguyên tắc mục 8, bảng token và ý nghĩa, ánh xạ "màu nhấn" = `--primary`, cách thêm component shadcn, danh sách preset trang đọc, quy tắc tương phản AA.
 
 **Non-functional**
@@ -138,7 +138,7 @@ Test: với mỗi scope (`light`, `dark` = light + dark, từng preset = light +
 | `apps/web/src/components/site-layout.tsx` | create | `SiteLayout`, `AccountMenu` |
 | `apps/web/src/components/not-found.tsx` | create | `NotFoundPage`, `ErrorPage` |
 | `apps/web/src/components/auth-ui.tsx` | modify | dùng `Input`, `Label`, `Button`; `AuthPage` bọc `SiteLayout` |
-| `apps/web/src/routes/{index,dang-ky,dang-nhap,quen-mat-khau,dat-lai-mat-khau}.tsx` | modify | thay nút/link sang component mới; không đổi chuỗi |
+| `apps/web/src/routes/{index,sign-up,sign-in,forgot-password,reset-password}.tsx` | modify | thay nút/link sang component mới; không đổi chuỗi |
 | `apps/web/src/routes/__root.tsx` | modify | preload font |
 | `apps/web/src/router.tsx` | modify | not-found, error, stale time |
 | `packages/shared/messages/vi.json` | modify | `layout_*`, `notfound_*`, `error_page_*` |
@@ -165,7 +165,7 @@ Test: với mỗi scope (`light`, `dark` = light + dark, từng preset = light +
 10. Restyle `auth-ui.tsx` và 5 route: giữ nguyên `getByLabel`/`getByRole` mà `e2e/auth.spec.ts` dùng. `FormMessage` giữ `role="alert"`, màu `text-destructive`.
 11. Thêm chuỗi vào `vi.json`, `pnpm i18n:compile`.
 12. `docs/design-guidelines.md` (mục Requirements). Ghi rõ: khi Design System và repo lệch nhau, `tokens.css` là chuẩn.
-13. `e2e/layout.spec.ts` (mục Test). Chạy thủ công: `pnpm dev`, xem `/`, `/dang-nhap`, `/khong-co` ở mobile 375px và desktop, light và dark (DevTools emulate `prefers-color-scheme`); kiểm Network chỉ tải Literata/Be Vietnam Pro, không tải Noto Serif/Inter.
+13. `e2e/layout.spec.ts` (mục Test). Chạy thủ công: `pnpm dev`, xem `/`, `/sign-in`, `/khong-co` ở mobile 375px và desktop, light và dark (DevTools emulate `prefers-color-scheme`); kiểm Network chỉ tải Literata/Be Vietnam Pro, không tải Noto Serif/Inter.
 14. Gate: `pnpm typecheck && pnpm lint && pnpm test && pnpm test:int && pnpm test:e2e`. Không đánh checkbox spec nào; cập nhật bảng phase trong `plan.md` do người cook làm theo quy trình chung.
 
 ## Function / Interface Checklist

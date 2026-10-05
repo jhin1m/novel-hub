@@ -34,6 +34,10 @@ Claude luôn nói rõ **một lệnh tiếp theo** cho user, cụ thể:
 - Xong một phase: đưa lệnh `/ak:cook` cho phase kế tiếp, kèm đường dẫn tuyệt đối.
 - Xong checkbox cuối của một giai đoạn: nhắc chạy `/ak:plan --deep docs/project-spec.md` cho giai đoạn kế tiếp. Không tự lên plan khi user chưa yêu cầu.
 
+## Quy chuẩn code
+
+- Nguồn chuẩn: `docs/code-standards.md`. Tóm tắt: mọi thứ trong code là tiếng Anh (tên file kể cả file route, URL, identifier, key i18n, DB, comment, tên test, commit); tiếng Việt chỉ ở chuỗi hiển thị qua Paraglide, slug nội dung và `docs/`/`plans/`.
+
 ## Thiết kế
 
 - Nguồn chuẩn: `docs/design-guidelines.md` (link Design System và mockup) và file tokens trong `apps/web/src/styles/`. Chưa có thì không tự bịa màu, font; theo mục 8 của spec.

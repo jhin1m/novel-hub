@@ -29,7 +29,7 @@ Spec checkbox: `Kiểm tra trùng lặp khi đăng chương, báo cáo vi phạm
 - Core `reports` (người dùng báo cáo truyện/chương/tài khoản) và `moderation` (ẩn/khôi phục, mute, ban, gộp tag, xử lý báo cáo).
 - **Mọi hành động mod**: đổi trạng thái + ghi `moderation_actions` + `recordContentChanges` (khi ảnh hưởng nội dung công khai) trong **cùng một transaction**. <!-- Red Team: outbox -->
 - **Ban một cơ chế:** đổi `status` + xoá session + outbox `{ entity: 'user', action: 'banned' }`; lọc hiển thị nằm sẵn ở `canReadChapter`/`publicStoryWhere`. Không ẩn truyện hàng loạt, không note `ban:`. Bỏ ban tương tự. <!-- Red Team: ban mechanism -->
-- Hono `reports`, `moderation`; web: nút báo cáo ở trang truyện/chương/tác giả, trang `/kiem-duyet`.
+- Hono `reports`, `moderation`; web: nút báo cáo ở trang truyện/chương/tác giả, trang `/moderation`.
 
 ## Key Insights
 
@@ -70,8 +70,8 @@ Spec checkbox: `Kiểm tra trùng lặp khi đăng chương, báo cáo vi phạm
 - Gộp tag: cùng `kind`, nguồn ≠ đích, đích `canonical_id IS NULL`; chuyển `story_tags` (bỏ trùng) và `stories.main_tag_id` sang đích; tag đã gộp vào nguồn trỏ sang đích; nguồn `canonical_id = đích`.
 - Mọi hành động ghi `moderation_actions` (`target_type ∈ story|chapter|user|tag|report`, `action` = tên hành động, `note` là ghi chú tự do của mod).
 - Web:
-  - `ReportButton` ở trang truyện, cuối trang chương, trang tác giả; khách bấm → `/dang-nhap?redirect=…`; dialog chọn lý do + mô tả (đếm ký tự), gửi xong "Đã gửi báo cáo".
-  - `/kiem-duyet` (`ssr: false`, `validateSearch` status + reason + page): danh sách kèm ngữ cảnh, nút hành động, xác nhận trước khi ban/gộp tag; tab "Gộp tag". Không phải mod/admin → API 403, UI báo không có quyền. `noindex`.
+  - `ReportButton` ở trang truyện, cuối trang chương, trang tác giả; khách bấm → `/sign-in?redirect=…`; dialog chọn lý do + mô tả (đếm ký tự), gửi xong "Đã gửi báo cáo".
+  - `/moderation` (`ssr: false`, `validateSearch` status + reason + page): danh sách kèm ngữ cảnh, nút hành động, xác nhận trước khi ban/gộp tag; tab "Gộp tag". Không phải mod/admin → API 403, UI báo không có quyền. `noindex`.
   - Header: link "Kiểm duyệt" chỉ hiện ở client cho mod/admin.
 
 **Non-functional**
@@ -133,7 +133,7 @@ export function unbanUser(tx: Tx, actor: CurrentUser, targetUserId: string, note
 | `apps/web/src/components/report/{report-button,report-dialog}.tsx` | create | `useMutation` + `hc` |
 | trang truyện, chương, tác giả (phase 7/10) | modify | gắn `ReportButton` |
 | header site (phase 1) | modify | link "Kiểm duyệt" client-only |
-| `apps/web/src/routes/kiem-duyet.tsx` + `components/moderation/*` | create | |
+| `apps/web/src/routes/moderation.tsx` + `components/moderation/*` | create | |
 | `packages/shared/messages/vi.json` | modify | nhãn lý do, trạng thái, hành động, xác nhận |
 | `apps/web/e2e/moderation.spec.ts` (+ helper seed) | create | |
 | `docs/moderation-guide.md` | create | hướng dẫn mod ngắn: ý nghĩa hành động, giới hạn dò trùng (copy < ~50% không bắt được), bỏ ban kéo theo chương hẹn giờ quá hạn |
@@ -148,8 +148,8 @@ Không migration, không env mới, không dependency mới.
 3. **`createReport`:** tra target theo khoá công khai (Requirements), advisory lock, kiểm `open` trùng, insert. **`listReports`:** join + dịch ngữ cảnh; `duplicate` parse `detail` bằng `duplicateReportDetail` (phase 14), tra chương khớp → `{ storyPublicId, slug, number, title }`; `detail` hỏng → bỏ phần khớp, không throw.
 4. **Moderation core:** mỗi hành động một hàm nhỏ, `applyModerationAction` mở transaction, kiểm `canModerate`, khoá theo thứ tự ở Key Insights, kiểm trạng thái nguồn, update, ghi `moderation_actions`, resolve báo cáo nếu có `reportId`, `recordContentChanges(tx, …)` theo bảng. `ban_user`: `UPDATE users SET status = 'banned', updated_at = now()` (SQL thô phải tự đặt `updated_at`), `DELETE FROM sessions WHERE user_id = $1`, log, outbox — không đụng `stories`. `unban_user`: status `active`, log, outbox. `merge_tag` trả danh sách truyện bị ảnh hưởng để sinh event.
 5. **Hono:** `reports` (`POST /`), `moderation` (`GET /reports`, `POST /actions`), chain, `validate()`, `coreError()` (`NOT_FOUND` 404, `INVALID_STATE` 409, `FORBIDDEN` 403); không trả UUID ngoài `reportId`. Test dựng app qua `makeTestApiDeps`.
-6. **Web:** `ReportButton` + `ReportDialog`; `/kiem-duyet` dùng TanStack Query + `useMutation` rồi invalidate; dialog xác nhận cho ban/gộp tag; head `noindex`; link header client-only.
-7. **E2E `moderation.spec.ts`:** helper seed (gọi core/DB trực tiếp) truyện có chương đã đăng của tác giả A, user B, mod M → B báo cáo chương → M mở `/kiem-duyet`, thấy báo cáo, bấm "Ẩn chương" → trang chương trả 404 (e2e chạy `vite dev`, không CDN), báo cáo `resolved`, có dòng `content_events` chưa xử lý cho chương (e2e không chạy worker).
+6. **Web:** `ReportButton` + `ReportDialog`; `/moderation` dùng TanStack Query + `useMutation` rồi invalidate; dialog xác nhận cho ban/gộp tag; head `noindex`; link header client-only.
+7. **E2E `moderation.spec.ts`:** helper seed (gọi core/DB trực tiếp) truyện có chương đã đăng của tác giả A, user B, mod M → B báo cáo chương → M mở `/moderation`, thấy báo cáo, bấm "Ẩn chương" → trang chương trả 404 (e2e chạy `vite dev`, không CDN), báo cáo `resolved`, có dòng `content_events` chưa xử lý cho chương (e2e không chạy worker).
 8. **`docs/moderation-guide.md`** ngắn gọn, tiếng Việt.
 9. Smoke thủ công với worker chạy: ban tác giả có truyện đã đăng → trang truyện/chương/tác giả 404, kết quả tìm kiếm không còn truyện; bỏ ban → trở lại.
 10. Gate: `pnpm typecheck && pnpm lint && pnpm test && pnpm test:int && pnpm test:e2e`. Đánh `[x]` checkbox "Kiểm tra trùng lặp khi đăng chương, báo cáo vi phạm, trang hàng chờ cho mod" trong spec (phase 14 đã xong).
@@ -161,7 +161,7 @@ Không migration, không env mới, không dependency mới.
 - [ ] `createReport`, `listReports`
 - [ ] `applyModerationAction`, `banUser`, `unbanUser`, mute/unmute, hide/restore story/chapter, `mergeTag`, resolve/dismiss
 - [ ] Route `POST /api/v1/reports`, `GET /api/v1/moderation/reports`, `POST /api/v1/moderation/actions`
-- [ ] `ReportButton`, `ReportDialog`, route `/kiem-duyet`
+- [ ] `ReportButton`, `ReportDialog`, route `/moderation`
 
 ## Test Scenario Matrix
 
@@ -185,13 +185,13 @@ Không migration, không env mới, không dependency mới.
 ## Dependency Map
 
 - Cần: phase 5 (outbox, `recomputeStoryCounters`, khoá story → chapter, chặn nội dung `hidden_by_mod`, sweeper bỏ tác giả bị ban), phase 7 (`canReadChapter`, trang chương), phase 9 (purge theo event user/story/chapter), phase 10 (`publicStoryWhere`, trang truyện/tác giả), phase 11 (search-sync theo event user), phase 13 (`rateLimit`), phase 14 (báo cáo `duplicate`).
-- Phase 16: `noindex` cho `/kiem-duyet` (kiểm lại), sitemap dùng `publicStoryWhere` nên tự loại tác giả bị ban và nội dung bị ẩn.
+- Phase 16: `noindex` cho `/moderation` (kiểm lại), sitemap dùng `publicStoryWhere` nên tự loại tác giả bị ban và nội dung bị ẩn.
 - Giai đoạn 2: target `comment`, áp `muted` cho bình luận.
 
 ## Success Criteria
 
 - [ ] Người dùng báo cáo truyện/chương/tài khoản với 5 lý do; có rate limit
-- [ ] `/kiem-duyet` lọc theo trạng thái và lý do, hiện cả báo cáo `duplicate`; hành động một cú bấm: ẩn, khôi phục, mute, ban, gộp tag
+- [ ] `/moderation` lọc theo trạng thái và lý do, hiện cả báo cáo `duplicate`; hành động một cú bấm: ẩn, khôi phục, mute, ban, gộp tag
 - [ ] Mọi hành động có `moderation_actions` + outbox trong cùng transaction; ban xoá session cùng transaction, không ẩn truyện hàng loạt
 - [ ] Ban/bỏ ban làm nội dung biến mất/trở lại ở trang, tìm kiếm (qua outbox)
 - [ ] Gate xanh; checkbox 11 `[x]`
@@ -206,7 +206,7 @@ Không migration, không env mới, không dependency mới.
 | Mod bấm nhầm ban | TB × TB | Dialog xác nhận; bỏ ban đảo được hoàn toàn (không đổi `stories`) |
 | Bỏ ban làm chương hẹn giờ quá hạn đăng dồn | Thấp × Thấp | Ghi trong `docs/moderation-guide.md` |
 
-Rollback: không migration; gỡ sub-app `reports`/`moderation`, route `/kiem-duyet`, nút báo cáo. Trạng thái do mod đổi có nhật ký để đảo tay.
+Rollback: không migration; gỡ sub-app `reports`/`moderation`, route `/moderation`, nút báo cáo. Trạng thái do mod đổi có nhật ký để đảo tay.
 
 ## Security Considerations
 

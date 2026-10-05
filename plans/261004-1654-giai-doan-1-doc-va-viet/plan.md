@@ -55,13 +55,14 @@ Phụ thuộc tuyến tính 1 → 17.
 
 - **User (2026-10-04):** HOLD SCOPE (đúng 13 checkbox, không thêm không cắt); thêm phase 1 dựng tokens, màu nhấn do user chọn ở bước validate.
 - **User (2026-10-05, sau red team):** áp dụng cả 15 finding; tách checkbox 6 thành phase 7–9 và checkbox 11 thành phase 14–15; giữ đếm lượt đọc ở phase 9 (mục 6).
+- **User (2026-10-05):** URL công khai và tên file route tiếng Anh (bảng đổi trong docs/code-standards.md); slug nội dung vẫn tiếng Việt không dấu; query phân trang `page`.
 - **Kiến trúc dữ liệu cho UI:**
   - Trang công khai: loader gọi `createServerFn({ method: 'GET' })` trong `apps/web/src/server-fns/` → `core`. Không TanStack Query cho dữ liệu công khai.
   - **Liên kết giữa các trang công khai là link tài liệu thường (`reloadDocument`)**, prefetch chương sau bằng `<link rel="prefetch">` HTML: mọi lượt xem đi qua HTML cache CDN, không gọi server fn từ browser (server fn GET không có cache header). <!-- Red Team: CDN bypass -->
   - Dữ liệu cá nhân và mọi thao tác ghi: Hono `/api/v1/*` + `hc` + TanStack Query ở browser (như `useMe`), `no-store`.
   - `apps/web/src/server/infra.ts` (tách từ `api-app.ts`) giữ pool/Redis/queue dùng chung cho Hono và server fn (phase 2). Hệ phụ tuỳ chọn (S3, Meilisearch, CDN) parse riêng, thiếu cấu hình thì degrade về `null` (endpoint của nó trả 503), không kéo sập trang đọc. <!-- Red Team: env singleton -->
   - Cache header SSR đặt bằng route option `headers` ở route lá; 404 cache ngắn; 301 bằng `redirect({ statusCode: 301 })`; không route công khai nào đụng session/cookie.
-  - **URL chuẩn duy nhất:** route công khai 301 về URL chuẩn khi path không viết thường hoặc có query ngoài allowlist (tag chỉ cho `trang`). Cloudflare Cache Rule chỉ cho HTML công khai, loại `/api/*`, `/_serverFn/*`; cache key **giữ** query string (nếu bỏ, phản hồi 301 của biến thể bị cache dưới key URL chuẩn → vòng redirect); biến thể chỉ cache phản hồi 301 nên purge không cần chạm (ghi ở docs, áp khi deploy). <!-- Red Team: cache variants -->
+  - **URL chuẩn duy nhất:** route công khai 301 về URL chuẩn khi path không viết thường hoặc có query ngoài allowlist (tag chỉ cho `page`). Cloudflare Cache Rule chỉ cho HTML công khai, loại `/api/*`, `/_serverFn/*`; cache key **giữ** query string (nếu bỏ, phản hồi 301 của biến thể bị cache dưới key URL chuẩn → vòng redirect); biến thể chỉ cache phản hồi 301 nên purge không cần chạm (ghi ở docs, áp khi deploy). <!-- Red Team: cache variants -->
   - `parseStoryKey` (`{slug}-{publicId}`) và `canonicalPath(target)` (hàm dựng URL chuẩn duy nhất, dùng cho 301, canonical, purge, sitemap; phase 7 tạo, phase 9/10/12/16 dùng) ở `packages/shared`.
 - **Hono:** mỗi domain một sub-app chain, validate bằng `@hono/zod-validator` qua helper `validate()`, lỗi core dịch bằng `coreError()`, schema Zod ở `packages/shared` dùng chung với form. Quyền qua `core/policies`, quyền đọc qua `core/access.canReadChapter()`. Test dựng app qua `makeTestApiDeps()`.
 - **Giới hạn nội dung** (`LIMITS`) và tier rate limit khai báo ở `packages/shared`.
@@ -72,7 +73,7 @@ Phụ thuộc tuyến tính 1 → 17.
 - **Outbox và hàng đợi:** mọi thay đổi trạng thái nội dung ghi `content_events` trong cùng transaction (`recordContentChanges`); worker quét outbox định kỳ (job `drain-content-events` trên queue `publishing`), `jobsForChange` sinh job (queue `content`) purge CDN (phase 9), đồng bộ Meilisearch (phase 11), fingerprint (phase 14; job backfill chạy trên queue `publishing`). Không đặt `jobId` cố định; mọi processor idempotent. Sweeper hẹn giờ chạy ở queue `publishing` riêng (DB là nguồn chuẩn, `FOR UPDATE SKIP LOCKED`, bỏ qua tác giả bị ban). Mọi fetch ra ngoài có timeout 10s. <!-- Red Team: lost side effects -->
 - **Purge CDN:** sự kiện truyện purge mọi chương từng đăng (bất kể trạng thái hiện tại); sự kiện user (đổi tên, ban) purge trang tác giả và mọi truyện/chương của họ. `CF_*` bắt buộc ở production; có lệnh `pnpm cdn:purge`.
 - **Ảnh:** `sharp` (kiểm magic bytes và kích thước từ metadata trước khi decode, trần ~24 MP, ≥ 600×900, `rotate()`, WebP 600×900 và 300×450, tối đa 1–2 job đồng thời), key có hash nội dung → `immutable`; không xoá bìa cũ ở năm đầu. Checkbox 1 chỉ `[x]` sau khi thử upload MinIO thật.
-- **Tìm kiếm:** job đồng bộ đọc row hiện tại rồi upsert/delete; chỉ index truyện `published` của tác giả không bị ban; `minWordSizeForTypos` hạ cho từ tiếng Việt ngắn; tiền tố index từ `QUEUE_PREFIX`; web dùng search-only key, worker giữ master key; server luôn thêm `is_mature = false` khi người dùng chưa bật 18+. Trang `/tim-kiem` lấy kết quả ở client qua `/api/v1/search`.
+- **Tìm kiếm:** job đồng bộ đọc row hiện tại rồi upsert/delete; chỉ index truyện `published` của tác giả không bị ban; `minWordSizeForTypos` hạ cho từ tiếng Việt ngắn; tiền tố index từ `QUEUE_PREFIX`; web dùng search-only key, worker giữ master key; server luôn thêm `is_mature = false` khi người dùng chưa bật 18+. Trang `/search` lấy kết quả ở client qua `/api/v1/search`.
 - **Rate limit:** fixed window bằng một Lua script, một cơ chế duy nhất: Hono middleware (cả `/api/auth/*`, Better Auth limiter tắt); khoá chặt theo (email, IP) và IP, giới hạn theo email toàn cục chỉ đếm thất bại với ngưỡng cao (không để người khác khoá tài khoản); tier chặt hơn cho tài khoản mới. IP chỉ tin `CF-Connecting-IP` khi `TRUST_CF_IP=true`.
 - **Trùng lặp:** MinHash 128 + LSH 16×8 + lọc Jaccard ≥ 0,7, SimHash 64-bit; cột `lsh_keys integer[]` + GIN; backfill cho chương thiếu fingerprint. Không tự ẩn, chỉ tạo `report`.
 - **Ban:** một cơ chế — lọc `users.status <> 'banned'` ở mọi truy vấn công khai (`canReadChapter`, `publicStoryWhere`, sitemap, search); ban = đổi status + xoá session + outbox trong một transaction; không ẩn truyện hàng loạt. <!-- Red Team: ban mechanism -->
@@ -120,7 +121,7 @@ Phụ thuộc tuyến tính 1 → 17.
 Đã chốt hết ở Validation Session 1 (xem `## Validation Log`). Còn chờ user, không chặn cook:
 - Tạo bucket dev + key trên MinIO có sẵn trước bước 13 phase 2 (checkbox 1 chờ tới khi thử S3 thật).
 - VPS + bucket R2 cho backup (phase 17 thử trên homelab, checkbox 13 chờ VPS).
-- Duyệt bản nháp `/dieu-khoan`, `/quy-dinh-noi-dung` trước khi mở public.
+- Duyệt bản nháp `/terms`, `/content-policy` trước khi mở public.
 
 ## Red Team Review
 
@@ -178,7 +179,7 @@ Phụ thuộc tuyến tính 1 → 17.
 5. **[Assumptions]** "Truyện mới đáng chú ý" tính thế nào khi chưa có lượt đọc?
    - Options: Tiêu chí tối thiểu (30 ngày, ≥ 3 chương, ≥ 10.000 chữ, 12 truyện, bù truyện mới) | Chỉ truyện mới nhất | Mod chọn tay
    - **Answer:** Tiêu chí tối thiểu
-6. **[Scope]** Nội dung `/dieu-khoan`, `/quy-dinh-noi-dung` lấy từ đâu?
+6. **[Scope]** Nội dung `/terms`, `/content-policy` lấy từ đâu?
    - Options: Claude viết nháp, user duyệt | User cung cấp
    - **Answer:** Claude viết nháp, user duyệt
 7. **[Risks]** Hạ tầng ngoài đã sẵn sàng chưa? (multi)

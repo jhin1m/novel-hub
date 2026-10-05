@@ -24,7 +24,7 @@ Spec checkbox: `Trang đọc chương theo mục 6 và mục 8.` — **chưa đ�
 - Bảng tuỳ chỉnh đọc (Sheet mở từ nút cài đặt trên `ReaderNav`), xem trước ngay khi chỉnh.
 - `BOOT_SCRIPT` mở rộng: áp cài đặt từ `localStorage['nh:reader']` lên `<html>` trước khi vẽ.
 - Đồng bộ `users.preferences.reader` cho người đã đăng nhập qua `PATCH /api/v1/me/preferences`.
-- Hoàn tất `MatureGate`: người đã đăng nhập bật 18+ ngay trên màn cảnh báo (checkbox xác nhận + nút bật). Phase 10 dùng chung endpoint cho `/cai-dat`.
+- Hoàn tất `MatureGate`: người đã đăng nhập bật 18+ ngay trên màn cảnh báo (checkbox xác nhận + nút bật). Phase 10 dùng chung endpoint cho `/settings`.
 
 ## Key Insights
 
@@ -166,7 +166,7 @@ export function pickNewer(a: ReaderSettings | null, b: ReaderSettings | null): '
 - **Cần:** phase 1 (preset, font, `Sheet`, tương phản AA), phase 2 (`validate`, `coreError`, `Result`, `makeTestApiDeps`), phase 7 (`ReaderNav`, `BOOT_SCRIPT`, `MatureGate`, `getPreferences`, `GET /me` có `preferences`).
 - **Phase sau dùng:**
   - phase 9: không phụ thuộc trực tiếp (tiến độ/lượt đọc gắn vào route chương);
-  - phase 10: `PATCH /me/preferences` cho `/cai-dat`, `useMe().preferences.showMature` cho danh sách 18+;
+  - phase 10: `PATCH /me/preferences` cho `/settings`, `useMe().preferences.showMature` cho danh sách 18+;
   - phase 11: `includeMature` theo `preferences` server đọc.
 
 ## Success Criteria

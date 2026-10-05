@@ -58,7 +58,7 @@ Spec checkbox: `Khôi phục từ revision cũ.`
 ## Architecture
 
 ```
-Editor (/viet/truyen/$publicId/chuong/$number, ssr:false)
+Editor (/write/stories/$publicId/chapters/$number, ssr:false)
   └─ RevisionHistorySheet
        ├─ useQuery GET  .../revisions        → danh sách
        ├─ useQuery GET  .../revisions/:key   → html xem trước
@@ -107,7 +107,7 @@ export function restoreRevision(db: Db, actor: StoryActor, publicId: string, num
 | `packages/api/src/routes/revisions.int.test.ts` | create | DB thật, `makeTestApiDeps` (phase 2) |
 | `apps/web/src/components/editor/revision-history-sheet.tsx` | create | Sheet, danh sách, xem trước, dialog xác nhận |
 | `apps/web/src/lib/chapters.ts` | modify | query/mutation revision qua `hc` |
-| `apps/web/src/routes/viet/truyen/$publicId/chuong/$number.tsx` | modify | nút "Lịch sử", truyền `editor` + `autosave` vào sheet |
+| `apps/web/src/routes/write/stories/$publicId/chapters/$number.tsx` | modify | nút "Lịch sử", truyền `editor` + `autosave` vào sheet |
 | `packages/shared/messages/vi.json` | modify | `revision_*` |
 | `apps/web/e2e/revision.spec.ts` | create | luồng khôi phục |
 | `apps/web/e2e/helpers/stories.ts` (phase 4) | modify | `publishChapterViaApi(page, publicId, number, text)`: PUT draft rồi POST publish (endpoint phase 5) |

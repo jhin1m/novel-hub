@@ -21,21 +21,21 @@ Spec checkbox: `Trang đọc chương theo mục 6 và mục 8.` — **chưa đ�
 
 ## Overview
 
-- **A. Đọc + cache:** `core/access.canReadChapter`, core `reader`, server fn `getChapterPage`, route `/truyen/$storyKey/chuong-$n`; header cache công khai, 301 về URL chuẩn (slug, chữ hoa, query lạ), 404 cache ngắn; tài liệu Cloudflare Cache Rule.
+- **A. Đọc + cache:** `core/access.canReadChapter`, core `reader`, server fn `getChapterPage`, route `/stories/$storyKey/chapter-$n`; header cache công khai, 301 về URL chuẩn (slug, chữ hoa, query lạ), 404 cache ngắn; tài liệu Cloudflare Cache Rule.
 - **B. UI đọc:** thanh điều hướng ẩn/hiện, mục lục, chương trước/sau bằng link tài liệu, phím ←/→, prefetch HTML chương sau ở ~70%, cuối chương, màn cảnh báo 18+ (chỉ phần hiển thị; nút bật 18+ ở phase 8).
 - Ngoài phạm vi (phase sau): bảng tuỳ chỉnh đọc + `PATCH /me/preferences` (phase 8); tiến độ đọc, purge CDN, đếm lượt đọc (phase 9).
 
 ## Key Insights
 
-- **Bất biến cache:** mọi response 200 có nội dung chương nằm đúng URL chuẩn `/truyen/{slug}-{publicId}/chuong-{n}` (chữ thường, không query, không `/` cuối). Mọi biến thể khác → 301 hoặc 404, không bao giờ 200. Purge chỉ chạm URL chuẩn, nên biến thể không được giữ nội dung. <!-- Red Team: X1 query-string/case variants -->
-- **Cache key giữ query string (mặc định của Cloudflare), không bỏ qua.** Nếu bỏ query thì 301 của `/x?a=1` bị cache dưới key của `/x` → vòng redirect, và `?trang=2` của trang tag nhận nhầm trang 1. Giữ query trong key thì biến thể chỉ cache phản hồi 301 (không chứa nội dung), purge không cần chạm tới. <!-- Red Team: X1 — sửa theo coordinator: không bỏ query khỏi cache key -->
+- **Bất biến cache:** mọi response 200 có nội dung chương nằm đúng URL chuẩn `/stories/{slug}-{publicId}/chapter-{n}` (chữ thường, không query, không `/` cuối). Mọi biến thể khác → 301 hoặc 404, không bao giờ 200. Purge chỉ chạm URL chuẩn, nên biến thể không được giữ nội dung. <!-- Red Team: X1 query-string/case variants -->
+- **Cache key giữ query string (mặc định của Cloudflare), không bỏ qua.** Nếu bỏ query thì 301 của `/x?a=1` bị cache dưới key của `/x` → vòng redirect, và `?page=2` của trang tag nhận nhầm trang 1. Giữ query trong key thì biến thể chỉ cache phản hồi 301 (không chứa nội dung), purge không cần chạm tới. <!-- Red Team: X1 — sửa theo coordinator: không bỏ query khỏi cache key -->
 - **301 nào được cache:** chỉ cache 301 (`REDIRECT_CACHE`) khi `lowercase(path)` khác URL chuẩn (sai slug — key khác hẳn URL chuẩn); chỉ khác chữ hoa hoặc chỉ khác query → `NO_STORE`. Phòng thủ thêm: không phụ thuộc việc Cloudflare phân biệt hoa/thường trong key, và vẫn an toàn nếu sau này ai đó bật bỏ query; biến thể kiểu này hiếm nên tốn origin không đáng kể.
 - **Liên kết giữa các trang công khai là link tài liệu** (`<Link reloadDocument>`, phím ← → dùng `location.assign`): mọi lượt xem đi qua HTML đã cache ở CDN, không chạy loader phía client (không RPC `/_serverFn` lách cache). <!-- Red Team: X1 -->
 - **Prefetch** bằng `<link rel="prefetch" href>` tới URL chuẩn chương sau (làm ấm cache CDN và trình duyệt), không `router.preloadRoute`. <!-- Red Team: X1 -->
 - **HTML không phụ thuộc cookie:** route đọc và server fn không gọi `getSession`; mọi thứ cá nhân chạy ở client qua `/api/v1/*`. E2E kiểm không có `Set-Cookie`.
 - **Một hàm dựng URL chuẩn** `canonicalPath` ở `packages/shared` (core và web cùng import): đích 301, URL purge, canonical, sitemap không bao giờ lệch nhau. <!-- Red Team: consistency sweep — hàm URL chuẩn dùng chung cho phase 9, 10, 12, 16 -->
 - Header cache đặt ở **route lá** bằng option `headers` đọc `loaderData` (research mục 1). Hằng ở `apps/web/src/lib/cache-headers.ts`; phase 10 dùng lại.
-- **Route chương:** thử prefix param `truyen.$storyKey.chuong-{$number}.tsx`; không chạy thì fallback `truyen.$storyKey.$chapterSlug.tsx` + `parseChapterSegment`. Số sai dạng (có số 0 đầu, không phải số) → `notFound()`.
+- **Route chương:** thử prefix param `stories.$storyKey.chapter-{$number}.tsx`; không chạy thì fallback `stories.$storyKey.$chapterSlug.tsx` + `parseChapterSegment`. Số sai dạng (có số 0 đầu, không phải số) → `notFound()`.
 - **Tác giả bị ban:** một cơ chế duy nhất — `canReadChapter`/`isStoryPubliclyVisible` lọc `users.status != 'banned'`; phase 15 ban chỉ đổi status, không ẩn truyện hàng loạt. Phase 10 `publicStoryWhere` cùng điều kiện. <!-- Red Team: S6/X5 một cơ chế ban -->
 - **18+:** SSR luôn render màn cảnh báo đè lên nội dung truyện `is_mature`; client gỡ khi `useMe().preferences.showMature`. Script boot đọc cờ `localStorage['nh:mature']` → `data-mature-ok` trên `<html>` để người đã bật không bị nháy. Cờ chỉ là gợi ý hiển thị, không phải kiểm soát truy cập.
 - Bỏ bước ESLint chặn `@tiptap/*`: phase 4 đã gộp vào block `no-restricted-imports` hiện có. Phase này không sửa `eslint.config.js`. <!-- Red Team: S3 -->
@@ -45,7 +45,7 @@ Spec checkbox: `Trang đọc chương theo mục 6 và mục 8.` — **chưa đ�
 **Functional**
 
 - `canReadChapter(user, chapter)` đọc được khi: chương `published`, `deleted_at IS NULL`; truyện `visibility = 'published'`; tác giả `status != 'banned'`. Trả `{ readable: true, publicCache: true } | { readable: false }`; `user` chưa dùng (giữ chỗ paywall).
-- `GET /truyen/{slug}-{publicId}/chuong-{n}`:
+- `GET /stories/{slug}-{publicId}/chapter-{n}`:
   - 200: HTML chương trong SSR, `Cache-Control: public, s-maxage=86400, stale-while-revalidate=3600`; <!-- Red Team: X1 giảm SWR -->
   - sai slug hoặc có `/` cuối (path đã lowercase vẫn khác URL chuẩn) → 301 tới URL chuẩn, `public, s-maxage=3600`;
   - chỉ khác chữ hoa hoặc chỉ khác query → 301 tới URL chuẩn, `no-store`;
@@ -69,7 +69,7 @@ Spec checkbox: `Trang đọc chương theo mục 6 và mục 8.` — **chưa đ�
 ## Architecture
 
 ```
-Browser ─GET /truyen/kiem-dao-k7m2xq9p/chuong-3─▶ CDN (Cache Rule) ─miss─▶ Start route (SSR)
+Browser ─GET /stories/kiem-dao-k7m2xq9p/chapter-3─▶ CDN (Cache Rule) ─miss─▶ Start route (SSR)
   loader({ params, location }):
     parseStoryKey(lowercase) → parseChapterSegment → getChapterPage({ publicId, number })  [server-fns/reader.ts]
        └▶ core/reader.getChapterForReading(db, publicId, number)
@@ -113,8 +113,8 @@ export type CanonicalTarget =
   | { kind: 'story'; slug: string; publicId: string }
   | { kind: 'chapter'; slug: string; publicId: string; number: number }
   | { kind: 'author'; username: string }
-  | { kind: 'tag'; slug: string; page?: number }            // page > 1 → `?trang=N`, còn lại không query
-  | { kind: 'static'; path: '/dieu-khoan' | '/quy-dinh-noi-dung' };
+  | { kind: 'tag'; slug: string; page?: number }            // page > 1 → `?page=N`, còn lại không query
+  | { kind: 'static'; path: '/terms' | '/content-policy' };
 export function canonicalPath(t: CanonicalTarget): string;
 // apps/web/src/lib/canonical.ts — phase 10 dùng lại
 export function assertCanonical(location: { pathname: string; searchStr: string }, canonical: string): void; // canonical = canonicalPath(...); khác → throw redirect 301
@@ -139,7 +139,7 @@ export const PUBLIC_CACHE, NOT_FOUND_CACHE, REDIRECT_CACHE, NO_STORE: Record<str
 | `apps/web/src/lib/boot-script.ts` (+ test) | create | `BOOT_SCRIPT` chuỗi tĩnh: cờ `nh:mature`; phase 8 mở rộng |
 | `apps/web/src/lib/reader/{use-arrow-keys,use-prefetch-next,use-nav-visibility}.ts` | create | |
 | `apps/web/src/components/reader/{reader-nav,chapter-toc-sheet,chapter-content,chapter-end,mature-gate}.tsx` | create | `MatureGate` phase 10 dùng lại |
-| `apps/web/src/routes/truyen.$storyKey.chuong-{$number}.tsx` | create | hoặc fallback `$chapterSlug` |
+| `apps/web/src/routes/stories.$storyKey.chapter-{$number}.tsx` | create | hoặc fallback `$chapterSlug` |
 | `apps/web/src/routes/__root.tsx` | modify | `BOOT_SCRIPT` đầu `<head>`, `<html suppressHydrationWarning>` |
 | `apps/web/src/styles/reader.css` (import trong `app.css`) | create | `.reader-content`, cột chữ, ẩn `MatureGate` khi `[data-mature-ok]` |
 | `apps/web/src/lib/me.ts` | modify | type có `preferences`; đặt/xoá cờ `nh:mature` |
@@ -149,8 +149,8 @@ export const PUBLIC_CACHE, NOT_FOUND_CACHE, REDIRECT_CACHE, NO_STORE: Record<str
 
 ## Implementation Steps
 
-1. **Spike 30 phút:** prefix param `chuong-{$number}`; `redirect({ href, statusCode: 301, headers })` trong loader SSR; `location.searchStr` có trong loader ctx. Ghi kết quả vào báo cáo cook; prefix không chạy → fallback `$chapterSlug`.
-2. **Shared:** `parseChapterSegment('chuong-12') → 12 | null` (từ chối `0`, số 0 đầu, > 2^31); `canonicalPath` đủ 6 `kind` (tag `page` 1/undefined → không query, 2 → `?trang=2`). Unit test biên.
+1. **Spike 30 phút:** prefix param `chapter-{$number}`; `redirect({ href, statusCode: 301, headers })` trong loader SSR; `location.searchStr` có trong loader ctx. Ghi kết quả vào báo cáo cook; prefix không chạy → fallback `$chapterSlug`.
+2. **Shared:** `parseChapterSegment('chapter-12') → 12 | null` (từ chối `0`, số 0 đầu, > 2^31); `canonicalPath` đủ 6 `kind` (tag `page` 1/undefined → không query, 2 → `?page=2`). Unit test biên.
 3. **Core `access`:** `isStoryPubliclyVisible`, `canReadChapter`; unit test đủ tổ hợp (status × deleted × visibility × authorStatus).
 4. **Core `reader`:**
    - `getChapterForReading`: một truy vấn join lấy facts + nội dung; `canReadChapter`; prev/next = `max(number) < n` / `min(number) > n` với cùng điều kiện đọc được (index `(story_id, status, number)`);
@@ -173,10 +173,10 @@ export const PUBLIC_CACHE, NOT_FOUND_CACHE, REDIRECT_CACHE, NO_STORE: Record<str
 9. **18+:** `BOOT_SCRIPT` (try/catch, đọc `nh:mature` → `data-mature-ok`) chèn đầu `<head>`; `MatureGate` SSR render overlay + `aria-hidden` cho nội dung; client `useMe` → `preferences.showMature` thì gỡ và đặt `nh:mature=1`, khách hoặc tắt thì xoá cờ.
 10. **i18n:** `reader_prev`, `reader_next`, `reader_toc`, `reader_toc_story`, `reader_end_next`, `reader_end_latest`, `reader_author_note`, `mature_title`, `mature_warning_tags`, `mature_sign_in`, `mature_enable_hint`; `pnpm i18n:compile`.
 11. **Tài liệu Cloudflare** `docs/deployment-cloudflare.md`:
-    - Cache Rule "Eligible for cache" chỉ cho HTML route công khai (`/`, `/truyen/*`, `/tac-gia/*`, `/the-loai/*`, `/dieu-khoan`, `/quy-dinh-noi-dung`);
-    - Edge TTL: dùng header origin; cache key: **giữ mặc định (query string nằm trong key), không bật "Ignore query string"** — ghi rõ lý do (vòng 301, `?trang=2` nhận nhầm trang 1);
-    - loại trừ `/api/*`, `/_serverFn/*`, `/viet/*`, `/kiem-duyet*`, `/tu-truyen*`, `/cai-dat*`, trang auth;
-    - kiểm tra sau khi áp: `curl -I` URL chuẩn hai lần thấy `cf-cache-status: HIT`; `?utm=x` trả 301 về URL chuẩn (không phải 200); `/the-loai/x?trang=2` khác nội dung trang 1.
+    - Cache Rule "Eligible for cache" chỉ cho HTML route công khai (`/`, `/stories/*`, `/authors/*`, `/tags/*`, `/terms`, `/content-policy`);
+    - Edge TTL: dùng header origin; cache key: **giữ mặc định (query string nằm trong key), không bật "Ignore query string"** — ghi rõ lý do (vòng 301, `?page=2` nhận nhầm trang 1);
+    - loại trừ `/api/*`, `/_serverFn/*`, `/write/*`, `/moderation*`, `/library*`, `/settings*`, trang auth;
+    - kiểm tra sau khi áp: `curl -I` URL chuẩn hai lần thấy `cf-cache-status: HIT`; `?utm=x` trả 301 về URL chuẩn (không phải 200); `/tags/x?page=2` khác nội dung trang 1.
 12. **E2E `reader.spec.ts`** theo ma trận. Header kiểm bằng `request.get(url, { maxRedirects: 0 })`. Kiểm thủ công header trên bản build (`pnpm --filter @novel-hub/web build` + start) một lần, ghi vào báo cáo cook.
 13. **Gate:** `pnpm typecheck && pnpm lint && pnpm test && pnpm test:int && pnpm test:e2e`. **Không** đánh `[x]` checkbox 6 (đánh ở phase 9).
 
@@ -199,7 +199,7 @@ export const PUBLIC_CACHE, NOT_FOUND_CACHE, REDIRECT_CACHE, NO_STORE: Record<str
 | Critical | Tắt JS → HTML có nội dung chương (đoạn có `data-pid`) | e2e |
 | Critical | 200 có `cache-control` chứa `s-maxage=86400`, không có `set-cookie` (khách và khi gửi kèm cookie phiên) | e2e |
 | Critical | Biến thể `?a=1`, `?utm_source=x`, path chữ hoa → 301 tới URL chuẩn với `cache-control: no-store`; `/` cuối → 301 `s-maxage=3600`; không biến thể nào trả 200 | e2e + unit `assertCanonical` |
-| Critical | Sai slug → 301 `s-maxage=3600`; chương nháp/không tồn tại/số `chuong-03` → 404 `s-maxage=60` | e2e |
+| Critical | Sai slug → 301 `s-maxage=3600`; chương nháp/không tồn tại/số `chapter-03` → 404 `s-maxage=60` | e2e |
 | High | Truyện 18+: khách thấy màn cảnh báo + tag warning + `noindex` (meta và header); user có `showMature` (đặt qua helper DB) thấy nội dung | e2e |
 | High | `GET /me` có `preferences.showMature`; khách 401 | unit api |
 | High | Phím → sang chương tiếp (document mới); khi mở sheet mục lục thì không chuyển | e2e |
@@ -232,7 +232,7 @@ export const PUBLIC_CACHE, NOT_FOUND_CACHE, REDIRECT_CACHE, NO_STORE: Record<str
 |---|---|---|
 | Biến thể URL giữ nội dung đã ẩn quá TTL | Trung bình × Cao | `assertCanonical` (biến thể chỉ nhận 301/404); e2e bảng biến thể <!-- Red Team: X1 --> |
 | 301 cache dưới key URL chuẩn → vòng redirect | Thấp × Cao | Cache key giữ query (không bật bỏ query); 301 do query/chữ hoa trả `no-store`; e2e kiểm header |
-| Prefix param `chuong-{$number}` không chạy | Trung bình × Thấp | Spike bước 1; fallback `$chapterSlug` |
+| Prefix param `chapter-{$number}` không chạy | Trung bình × Thấp | Spike bước 1; fallback `$chapterSlug` |
 | Header cache khác giữa `vite dev` và bản build | Trung bình × Cao | Kiểm thủ công bản build, ghi báo cáo cook |
 | `location.pathname` đã decode → bỏ sót biến thể percent-encode | Thấp × Trung bình | Biến thể lạ chỉ sinh 301/404 (không bao giờ 200 vì so khớp chuỗi tuyệt đối); e2e thử `%2D` |
 | Trình duyệt dùng SWR 1 giờ cho trang đã xem | Thấp × Thấp | SWR chỉ 1 giờ; chấp nhận |

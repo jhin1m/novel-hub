@@ -98,7 +98,9 @@ test.describe('library and reading history', () => {
     expect(html.headers()['cache-control']).toBe(PAGE_CACHE);
     expect(html.headers()['set-cookie']).toBeUndefined();
 
-    await page.getByRole('link', { name: 'Tủ truyện' }).click();
+    // On a narrow screen the library link sits in the account menu.
+    await page.getByRole('button', { name: /^Tài khoản: / }).click();
+    await page.getByRole('menuitem', { name: 'Tủ truyện' }).click();
     await expect(page).toHaveURL('/library?shelf=reading&page=1');
     const title = page.getByRole('link', { name: story.title });
     await expect(title).toBeVisible();

@@ -1,7 +1,14 @@
 import { SEARCH_QUERY_MAX_LENGTH, canonicalPath } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { Link } from '@tanstack/react-router';
-import { ChevronDownIcon, LibraryBigIcon, SearchIcon, SettingsIcon } from 'lucide-react';
+import {
+  ChevronDownIcon,
+  LibraryBigIcon,
+  LogOutIcon,
+  PenLineIcon,
+  SearchIcon,
+  SettingsIcon,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +16,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useMe, useSignOut } from '@/lib/me';
@@ -28,20 +36,25 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Mobile-first: below `sm` the header holds only the logo, search and the account controls, so it
+ * fits a 360px screen; writing and the library move into the account menu there, settings below `lg`.
+ */
 function SiteHeader() {
   return (
     <header className="border-b">
-      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4">
+      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 px-4 sm:gap-4">
         {/* Public pages link with full document loads so every view is served from CDN-cached HTML. */}
-        <Link to="/" reloadDocument className="font-serif text-lg font-semibold">
+        <Link to="/" reloadDocument className="shrink-0 font-serif text-lg font-semibold">
           {m.app_name()}
         </Link>
-        <div className="flex items-center gap-1">
+        <div className="flex min-w-0 items-center gap-1">
           <HeaderSearch />
-          <Button asChild variant="ghost">
+          {/* Signed-in users also reach it from the account menu; guests only find a sign-in invite there. */}
+          <Button asChild variant="ghost" className="hidden lg:inline-flex">
             <Link to="/settings">
               <SettingsIcon aria-hidden />
-              <span className="sr-only sm:not-sr-only">{m.layout_settings()}</span>
+              {m.layout_settings()}
             </Link>
           </Button>
           <AccountMenu />
@@ -104,26 +117,47 @@ function AccountMenu() {
 
   return (
     <>
-      <Button asChild variant="ghost">
+      <Button asChild variant="ghost" className="hidden sm:inline-flex">
         <Link to="/library" search={{ shelf: 'reading', page: 1 }}>
           <LibraryBigIcon aria-hidden />
-          <span className="sr-only sm:not-sr-only">{m.layout_library()}</span>
+          {m.layout_library()}
         </Link>
       </Button>
-      <Button asChild variant="ghost">
+      <Button asChild variant="ghost" className="hidden sm:inline-flex">
         <Link to="/write">{m.layout_write()}</Link>
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="max-w-48">
+          <Button variant="ghost" className="max-w-40 sm:max-w-48">
             {/* Prefix instead of aria-label so the accessible name still contains the visible name. */}
             <span className="sr-only">{m.layout_account_menu()}: </span>
             <span className="truncate">{user.displayName}</span>
             <ChevronDownIcon aria-hidden />
           </Button>
         </DropdownMenuTrigger>
+        {/* The header links are repeated here so they stay reachable when hidden on narrow screens. */}
         <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <Link to="/write">
+              <PenLineIcon aria-hidden />
+              {m.layout_write()}
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/library" search={{ shelf: 'reading', page: 1 }}>
+              <LibraryBigIcon aria-hidden />
+              {m.layout_library()}
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/settings">
+              <SettingsIcon aria-hidden />
+              {m.layout_settings()}
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem disabled={signOut.isPending} onSelect={() => signOut.mutate()}>
+            <LogOutIcon aria-hidden />
             {m.layout_sign_out()}
           </DropdownMenuItem>
         </DropdownMenuContent>

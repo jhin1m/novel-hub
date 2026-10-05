@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "Phase 1: Design tokens và nền UI"
-status: pending
+status: completed
 priority: P1
 effort: "1.5d"
 dependencies: []
@@ -170,12 +170,12 @@ Test: với mỗi scope (`light`, `dark` = light + dark, từng preset = light +
 
 ## Function / Interface Checklist
 
-- [ ] `cn(...inputs: ClassValue[]): string`
-- [ ] `contrastRatio(a: string, b: string): number`; `parseHex(hex: string): [r, g, b]`
-- [ ] `SiteLayout({ children }: { children: ReactNode })`
-- [ ] `NotFoundPage()`, `ErrorPage()`
-- [ ] `useSignOut()` (tách từ `routes/index.tsx` vào `lib/me.ts`)
-- [ ] 10 component `@/components/ui/*`
+- [x] `cn(...inputs: ClassValue[]): string`
+- [x] `contrastRatio(a: string, b: string): number`; `parseHex(hex: string): [r, g, b]`
+- [x] `SiteLayout({ children }: { children: ReactNode })`
+- [x] `NotFoundPage()`, `ErrorPage()`
+- [x] `useSignOut()` (tách từ `routes/index.tsx` vào `lib/me.ts`)
+- [x] 10 component `@/components/ui/*`
 
 ## Test Scenario Matrix
 
@@ -201,12 +201,12 @@ Test: với mỗi scope (`light`, `dark` = light + dark, từng preset = light +
 
 ## Success Criteria
 
-- [ ] `tokens.css` có đủ token light/dark/6 preset, giá trị đã được user duyệt; test tương phản xanh
-- [ ] 10 component shadcn chạy với tokens, không có bóng đổ, không có chuỗi tiếng Anh hiển thị
-- [ ] Font self-host, preload đúng 4 file; Noto Serif/Inter không tải ở trang thường
-- [ ] Trang 404 trả status 404, có giao diện; auth e2e vẫn xanh
-- [ ] `docs/design-guidelines.md` có link Design System (hoặc ghi "chưa có") và bảng token
-- [ ] Gate 5 lệnh xanh
+- [x] `tokens.css` có đủ token light/dark/6 preset, giá trị đã được user duyệt; test tương phản xanh
+- [x] 10 component shadcn chạy với tokens, không có bóng đổ, không có chuỗi tiếng Anh hiển thị
+- [x] Font self-host, preload đúng 4 file; Noto Serif/Inter không tải ở trang thường
+- [x] Trang 404 trả status 404, có giao diện; auth e2e vẫn xanh
+- [x] `docs/design-guidelines.md` có link Design System (hoặc ghi "chưa có") và bảng token
+- [x] Gate 5 lệnh xanh
 
 ## Risk Assessment
 

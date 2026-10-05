@@ -1,0 +1,110 @@
+/*
+ * Source of truth for design tokens. When the Design System and the repo disagree, this file wins.
+ * Colours are hex, one `--name: #hex;` per line: `tokens.test.ts` matches them verbatim against
+ * `token-values.ts` and checks WCAG AA contrast. Change a value in both places.
+ *
+ * Names follow shadcn/ui: `--primary` is the single accent colour (terracotta);
+ * `--accent` is only the component hover background, not the accent colour.
+ */
+
+:root {
+  --background: #fbf8f3;
+  --foreground: #2a2724;
+  --card: #fbf8f3;
+  --card-foreground: #2a2724;
+  --popover: #fbf8f3;
+  --popover-foreground: #2a2724;
+  --primary: #a8432a;
+  --primary-foreground: #fbf8f3;
+  --secondary: #f2eee7;
+  --secondary-foreground: #2a2724;
+  --muted: #f2eee7;
+  --muted-foreground: #6b645c;
+  --accent: #f2eee7;
+  --accent-foreground: #2a2724;
+  --destructive: #a3342b;
+  --border: #e4ded4;
+  --input: #8a8278;
+  --ring: #a8432a;
+
+  /* Reader default when no preset is chosen: ivory (`nga`). */
+  --reader-bg: #fbf6ec;
+  --reader-fg: #2b2722;
+  --reader-muted: #675f55;
+
+  --radius: 0.375rem;
+
+  --font-ui: 'Be Vietnam Pro', system-ui, sans-serif;
+  --font-content: 'Literata Variable', Georgia, serif;
+  --font-reader-noto-serif: 'Noto Serif Variable', Georgia, serif;
+  --font-reader-inter: 'Inter Variable', system-ui, sans-serif;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #1c1a18;
+    --foreground: #ece6dd;
+    --card: #1c1a18;
+    --card-foreground: #ece6dd;
+    --popover: #1c1a18;
+    --popover-foreground: #ece6dd;
+    --primary: #d9825f;
+    --primary-foreground: #1c1a18;
+    --secondary: #2a2724;
+    --secondary-foreground: #ece6dd;
+    --muted: #2a2724;
+    --muted-foreground: #a89f94;
+    --accent: #2a2724;
+    --accent-foreground: #ece6dd;
+    --destructive: #e5806f;
+    --border: #3a3632;
+    --input: #6f675e;
+    --ring: #d9825f;
+
+    /* Reader default when no preset is chosen: dark grey (`xam-toi`). */
+    --reader-bg: #2b2b2b;
+    --reader-fg: #d6d3ce;
+    --reader-muted: #a3a09b;
+
+    color-scheme: dark;
+  }
+}
+
+/* Reader background presets, selected by setting `data-reader-theme` on the root element. */
+[data-reader-theme='sang'] {
+  --reader-bg: #ffffff;
+  --reader-fg: #1f1f1f;
+  --reader-muted: #5f5f5f;
+}
+
+[data-reader-theme='nga'] {
+  --reader-bg: #fbf6ec;
+  --reader-fg: #2b2722;
+  --reader-muted: #675f55;
+}
+
+[data-reader-theme='sepia'] {
+  --reader-bg: #f4ecd8;
+  --reader-fg: #3b2f22;
+  --reader-muted: #6a5a47;
+}
+
+[data-reader-theme='xanh-diu'] {
+  --reader-bg: #e6efe4;
+  --reader-fg: #22302a;
+  --reader-muted: #4e5f55;
+}
+
+[data-reader-theme='xam-toi'] {
+  --reader-bg: #2b2b2b;
+  --reader-fg: #d6d3ce;
+  --reader-muted: #a3a09b;
+}
+
+[data-reader-theme='den-oled'] {
+  --reader-bg: #000000;
+  --reader-fg: #c9c5be;
+  --reader-muted: #8f8b85;
+}

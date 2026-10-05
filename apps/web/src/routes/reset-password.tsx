@@ -2,18 +2,24 @@ import { m } from '@novel-hub/shared/messages';
 import { useMutation } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
-import { AuthPage, FormMessage, SubmitButton, TextField } from '../components/auth-ui';
+import {
+  AuthPage,
+  FormMessage,
+  SubmitButton,
+  TextField,
+  textLinkClass,
+} from '../components/auth-ui';
 import { authClient } from '../lib/auth-client';
 import { authErrorMessage, throwIfAuthError } from '../lib/auth-errors';
 import { formText } from '../lib/form-text';
 
-// Better Auth chuyển hướng về đây kèm `?token=` (link hợp lệ) hoặc `?error=INVALID_TOKEN`.
+// Better Auth redirects here with `?token=` (valid link) or `?error=INVALID_TOKEN`.
 const searchSchema = z.object({
   token: z.string().optional().catch(undefined),
   error: z.string().optional().catch(undefined),
 });
 
-export const Route = createFileRoute('/dat-lai-mat-khau')({
+export const Route = createFileRoute('/reset-password')({
   validateSearch: searchSchema,
   head: () => ({ meta: [{ title: m.reset_title() }] }),
   component: ResetPasswordPage,
@@ -35,7 +41,9 @@ function ResetPasswordPage() {
     return (
       <AuthPage title={m.reset_title()}>
         <FormMessage>{m.reset_invalid_link()}</FormMessage>
-        <Link to="/quen-mat-khau">{m.forgot_title()}</Link>
+        <Link to="/forgot-password" className={textLinkClass}>
+          {m.forgot_title()}
+        </Link>
       </AuthPage>
     );
   }
@@ -44,8 +52,10 @@ function ResetPasswordPage() {
     <AuthPage title={m.reset_title()}>
       {reset.isSuccess ? (
         <>
-          <FormMessage>{m.reset_done()}</FormMessage>
-          <Link to="/dang-nhap">{m.sign_in_title()}</Link>
+          <FormMessage tone="info">{m.reset_done()}</FormMessage>
+          <Link to="/sign-in" className={textLinkClass}>
+            {m.sign_in_title()}
+          </Link>
         </>
       ) : (
         <form

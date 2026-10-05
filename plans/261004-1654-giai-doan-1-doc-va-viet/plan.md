@@ -31,7 +31,7 @@ Giai đoạn 0 xong (`plans/261004-1255-giai-doan-0-nen-mong`). Spec `docs/proje
 
 | # | Phase | Checkbox spec | Status |
 |---|-------|---------------|--------|
-| 1 | [Design tokens và nền UI](./phase-01-start.md) | (không, user thêm) | Pending |
+| 1 | [Design tokens và nền UI](./phase-01-start.md) | (không, user thêm) | Completed |
 | 2 | [Tạo và sửa truyện](./phase-02-tao-va-sua-truyen.md) | 1 | Pending |
 | 3 | [Bìa mặc định dạng chữ](./phase-03-bia-mac-dinh-dang-chu.md) | 2 | Pending |
 | 4 | [Editor Tiptap và autosave](./phase-04-editor-tiptap-autosave.md) | 3 | Pending |
@@ -266,7 +266,8 @@ Phụ thuộc tuyến tính 1 → 17.
 
 - Đã xong: scope challenge, research (3), viết plan, red team (15 finding, áp toàn bộ), tách phase, consistency sweep.
 - Đã validate (Session 1, 2026-10-05): mọi câu hỏi mở đã chốt.
-- Tiếp: cook phase 1.
+- Phase 1 xong (2026-10-05): gate 5 lệnh xanh; review `../reports/code-reviewer-261005-1010-phase-01-design-tokens-review-report.md` (8/10, đã sửa M1–M3, L1, L2, L4, L5).
+- Tiếp: cook phase 2.
 - Nhắc trước khi mở public: backup Postgres ra ngoài VPS + thử restore (phase 17).
 
 <!-- slug: giai-doan-1-doc-va-viet -->

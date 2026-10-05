@@ -11,7 +11,7 @@ export const users = pgTable(
   'users',
   {
     id: uuidPk(),
-    /** Không bao giờ đổi được; nằm trong URL `/tac-gia/{username}`. */
+    /** Không bao giờ đổi được; nằm trong URL `/authors/{username}`. */
     username: text().notNull(),
     displayName: text().notNull(),
     email: text().notNull(),

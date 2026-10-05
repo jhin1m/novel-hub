@@ -1,40 +1,37 @@
 import { m } from '@novel-hub/shared/messages';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
-import { FormMessage } from '../components/auth-ui';
+import { Button } from '@/components/ui/button';
+import { FormMessage, textLinkClass } from '../components/auth-ui';
+import { SiteLayout } from '../components/site-layout';
 import { authClient } from '../lib/auth-client';
 import { authErrorMessage, throwIfAuthError } from '../lib/auth-errors';
-import { meQueryKey, useMe } from '../lib/me';
+import { useMe, useSignOut } from '../lib/me';
 
 export const Route = createFileRoute('/')({
   component: HomePage,
 });
 
-/** Tạm thời chỉ hiện trạng thái đăng nhập; trang chủ thật làm ở Giai đoạn 1. */
+/** Placeholder that only shows the sign-in state until the real home page is built. */
 function HomePage() {
   return (
-    <main className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-12">
-      <h1 className="text-2xl font-semibold">{m.app_name()}</h1>
-      <AccountStatus />
-    </main>
+    <SiteLayout>
+      <div className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-12">
+        <h1 className="font-serif text-2xl font-semibold">{m.app_name()}</h1>
+        <AccountStatus />
+      </div>
+    </SiteLayout>
   );
 }
 
 function AccountStatus() {
-  const queryClient = useQueryClient();
   const me = useMe();
-  const signOut = useMutation({
-    mutationFn: async () => {
-      const { error } = await authClient.signOut();
-      throwIfAuthError(error);
-    },
-    onSuccess: () => queryClient.setQueryData(meQueryKey, null),
-  });
-  // Lấy email từ session chỉ khi bấm gửi lại: `/api/v1/me` không trả email.
+  const signOut = useSignOut();
+  // Read the email from the session only on resend: `/api/v1/me` does not return it.
   const resend = useMutation({
     mutationFn: async () => {
       const { data } = await authClient.getSession();
-      if (!data) throw new Error('Không có phiên');
+      if (!data) throw new Error('No active session');
       const { error } = await authClient.sendVerificationEmail({
         email: data.user.email,
         callbackURL: '/',
@@ -52,8 +49,12 @@ function AccountStatus() {
       <section className="flex flex-col gap-2">
         <p>{m.home_guest()}</p>
         <nav className="flex gap-4">
-          <Link to="/dang-nhap">{m.home_sign_in()}</Link>
-          <Link to="/dang-ky">{m.home_sign_up()}</Link>
+          <Link to="/sign-in" className={textLinkClass}>
+            {m.home_sign_in()}
+          </Link>
+          <Link to="/sign-up" className={textLinkClass}>
+            {m.home_sign_up()}
+          </Link>
         </nav>
       </section>
     );
@@ -69,28 +70,30 @@ function AccountStatus() {
         <div className="flex flex-col gap-2">
           <p>{m.home_email_unverified()}</p>
           {resend.isSuccess ? (
-            <FormMessage>{m.home_verification_sent()}</FormMessage>
+            <FormMessage tone="info">{m.home_verification_sent()}</FormMessage>
           ) : (
-            <button
+            <Button
               type="button"
-              className="self-start rounded border px-3 py-2"
+              variant="outline"
+              className="self-start"
               disabled={resend.isPending}
               onClick={() => resend.mutate()}
             >
               {m.home_resend_verification()}
-            </button>
+            </Button>
           )}
           {resend.isError ? <FormMessage>{authErrorMessage(resend.error)}</FormMessage> : null}
         </div>
       )}
-      <button
+      <Button
         type="button"
-        className="self-start rounded border px-3 py-2"
+        variant="outline"
+        className="self-start"
         disabled={signOut.isPending}
         onClick={() => signOut.mutate()}
       >
         {m.home_sign_out()}
-      </button>
+      </Button>
     </section>
   );
 }

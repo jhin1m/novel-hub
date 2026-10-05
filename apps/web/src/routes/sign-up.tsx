@@ -1,13 +1,19 @@
 import { m } from '@novel-hub/shared/messages';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { AuthPage, FormMessage, SubmitButton, TextField } from '../components/auth-ui';
+import {
+  AuthPage,
+  FormMessage,
+  SubmitButton,
+  TextField,
+  textLinkClass,
+} from '../components/auth-ui';
 import { authClient } from '../lib/auth-client';
 import { authErrorMessage, throwIfAuthError } from '../lib/auth-errors';
 import { formText } from '../lib/form-text';
 import { meQueryKey } from '../lib/me';
 
-export const Route = createFileRoute('/dang-ky')({
+export const Route = createFileRoute('/sign-up')({
   head: () => ({ meta: [{ title: m.sign_up_title() }] }),
   component: SignUpPage,
 });
@@ -66,7 +72,9 @@ function SignUpPage() {
         {signUp.isError ? <FormMessage>{authErrorMessage(signUp.error)}</FormMessage> : null}
         <SubmitButton pending={signUp.isPending}>{m.sign_up_submit()}</SubmitButton>
       </form>
-      <Link to="/dang-nhap">{m.sign_up_have_account()}</Link>
+      <Link to="/sign-in" className={textLinkClass}>
+        {m.sign_up_have_account()}
+      </Link>
     </AuthPage>
   );
 }

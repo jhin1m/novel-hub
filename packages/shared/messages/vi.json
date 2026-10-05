@@ -50,5 +50,17 @@
   "email_reset_subject": "Đặt lại mật khẩu",
   "email_reset_body": "Chào {name},\n\nBấm vào link dưới đây để đặt lại mật khẩu (link có hạn 1 giờ):\n{url}\n\nNếu bạn không yêu cầu, hãy bỏ qua thư này.",
   "error_google_disabled": "Đăng nhập bằng Google chưa được bật.",
-  "nav_home": "Trang chủ"
+  "nav_home": "Trang chủ",
+  "layout_close": "Đóng",
+  "layout_sign_in": "Đăng nhập",
+  "layout_sign_up": "Đăng ký",
+  "layout_sign_out": "Đăng xuất",
+  "layout_account_menu": "Tài khoản",
+  "layout_footer_copyright": "© {year} {name}",
+  "notfound_title": "Không tìm thấy trang",
+  "notfound_description": "Trang bạn tìm không tồn tại hoặc đã bị gỡ.",
+  "notfound_home": "Về trang chủ",
+  "error_page_title": "Có lỗi xảy ra",
+  "error_page_description": "Trang không tải được. Hãy thử tải lại sau ít phút.",
+  "error_page_retry": "Tải lại trang"
 }

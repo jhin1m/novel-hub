@@ -1,6 +1,6 @@
 const MAX_SLUG_LENGTH = 60;
 
-/** Slug dự phòng khi tiêu đề không còn ký tự hợp lệ nào, tránh URL dạng `/truyen/-abc`. */
+/** Slug dự phòng khi tiêu đề không còn ký tự hợp lệ nào, tránh URL dạng `/stories/-abc`. */
 const FALLBACK_SLUG = 'truyen';
 
 /**

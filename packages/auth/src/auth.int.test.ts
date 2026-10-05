@@ -419,7 +419,7 @@ describe('xác thực email', () => {
 describe('đặt lại mật khẩu', () => {
   async function requestReset(email: string): Promise<string> {
     const res = await call('/auth/request-password-reset', {
-      body: { email, redirectTo: '/dat-lai-mat-khau' },
+      body: { email, redirectTo: '/reset-password' },
     });
     expect(res.status).toBe(200);
     const mail = await waitForMail('reset', email);
@@ -466,7 +466,7 @@ describe('đặt lại mật khẩu', () => {
 
   it('email không tồn tại → vẫn 200, không gửi mail', async () => {
     const res = await call('/auth/request-password-reset', {
-      body: { email: 'khong-co@example.com', redirectTo: '/dat-lai-mat-khau' },
+      body: { email: 'khong-co@example.com', redirectTo: '/reset-password' },
     });
     expect(res.status).toBe(200);
     expect(mails).toHaveLength(0);

@@ -10,10 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DangKyRouteImport } from './routes/dang-ky'
-import { Route as DangNhapRouteImport } from './routes/dang-nhap'
-import { Route as DatLaiMatKhauRouteImport } from './routes/dat-lai-mat-khau'
-import { Route as QuenMatKhauRouteImport } from './routes/quen-mat-khau'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -21,24 +21,24 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DangKyRoute = DangKyRouteImport.update({
-  id: '/dang-ky',
-  path: '/dang-ky',
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DangNhapRoute = DangNhapRouteImport.update({
-  id: '/dang-nhap',
-  path: '/dang-nhap',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DatLaiMatKhauRoute = DatLaiMatKhauRouteImport.update({
-  id: '/dat-lai-mat-khau',
-  path: '/dat-lai-mat-khau',
+const SignInRoute = SignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
   getParentRoute: () => rootRouteImport,
 } as any)
-const QuenMatKhauRoute = QuenMatKhauRouteImport.update({
-  id: '/quen-mat-khau',
-  path: '/quen-mat-khau',
+const SignUpRoute = SignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
@@ -49,62 +49,62 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dang-ky': typeof DangKyRoute
-  '/dang-nhap': typeof DangNhapRoute
-  '/dat-lai-mat-khau': typeof DatLaiMatKhauRoute
-  '/quen-mat-khau': typeof QuenMatKhauRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
   '/api/$': typeof ApiSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dang-ky': typeof DangKyRoute
-  '/dang-nhap': typeof DangNhapRoute
-  '/dat-lai-mat-khau': typeof DatLaiMatKhauRoute
-  '/quen-mat-khau': typeof QuenMatKhauRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
   '/api/$': typeof ApiSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/dang-ky': typeof DangKyRoute
-  '/dang-nhap': typeof DangNhapRoute
-  '/dat-lai-mat-khau': typeof DatLaiMatKhauRoute
-  '/quen-mat-khau': typeof QuenMatKhauRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
   '/api/$': typeof ApiSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/dang-ky'
-    | '/dang-nhap'
-    | '/dat-lai-mat-khau'
-    | '/quen-mat-khau'
+    | '/forgot-password'
+    | '/reset-password'
+    | '/sign-in'
+    | '/sign-up'
     | '/api/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/dang-ky'
-    | '/dang-nhap'
-    | '/dat-lai-mat-khau'
-    | '/quen-mat-khau'
+    | '/forgot-password'
+    | '/reset-password'
+    | '/sign-in'
+    | '/sign-up'
     | '/api/$'
   id:
     | '__root__'
     | '/'
-    | '/dang-ky'
-    | '/dang-nhap'
-    | '/dat-lai-mat-khau'
-    | '/quen-mat-khau'
+    | '/forgot-password'
+    | '/reset-password'
+    | '/sign-in'
+    | '/sign-up'
     | '/api/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DangKyRoute: typeof DangKyRoute
-  DangNhapRoute: typeof DangNhapRoute
-  DatLaiMatKhauRoute: typeof DatLaiMatKhauRoute
-  QuenMatKhauRoute: typeof QuenMatKhauRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  SignInRoute: typeof SignInRoute
+  SignUpRoute: typeof SignUpRoute
   ApiSplatRoute: typeof ApiSplatRoute
 }
 
@@ -117,32 +117,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dang-ky': {
-      id: '/dang-ky'
-      path: '/dang-ky'
-      fullPath: '/dang-ky'
-      preLoaderRoute: typeof DangKyRouteImport
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dang-nhap': {
-      id: '/dang-nhap'
-      path: '/dang-nhap'
-      fullPath: '/dang-nhap'
-      preLoaderRoute: typeof DangNhapRouteImport
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dat-lai-mat-khau': {
-      id: '/dat-lai-mat-khau'
-      path: '/dat-lai-mat-khau'
-      fullPath: '/dat-lai-mat-khau'
-      preLoaderRoute: typeof DatLaiMatKhauRouteImport
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/quen-mat-khau': {
-      id: '/quen-mat-khau'
-      path: '/quen-mat-khau'
-      fullPath: '/quen-mat-khau'
-      preLoaderRoute: typeof QuenMatKhauRouteImport
+    '/sign-up': {
+      id: '/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof SignUpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/$': {
@@ -157,10 +157,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DangKyRoute: DangKyRoute,
-  DangNhapRoute: DangNhapRoute,
-  DatLaiMatKhauRoute: DatLaiMatKhauRoute,
-  QuenMatKhauRoute: QuenMatKhauRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
+  SignInRoute: SignInRoute,
+  SignUpRoute: SignUpRoute,
   ApiSplatRoute: ApiSplatRoute,
 }
 export const routeTree = rootRouteImport

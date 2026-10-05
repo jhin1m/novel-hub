@@ -1,12 +1,18 @@
 import { m } from '@novel-hub/shared/messages';
 import { useMutation } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
-import { AuthPage, FormMessage, SubmitButton, TextField } from '../components/auth-ui';
+import {
+  AuthPage,
+  FormMessage,
+  SubmitButton,
+  TextField,
+  textLinkClass,
+} from '../components/auth-ui';
 import { authClient } from '../lib/auth-client';
 import { authErrorMessage, throwIfAuthError } from '../lib/auth-errors';
 import { formText } from '../lib/form-text';
 
-export const Route = createFileRoute('/quen-mat-khau')({
+export const Route = createFileRoute('/forgot-password')({
   head: () => ({ meta: [{ title: m.forgot_title() }] }),
   component: ForgotPasswordPage,
 });
@@ -16,7 +22,7 @@ function ForgotPasswordPage() {
     mutationFn: async (form: FormData) => {
       const { error } = await authClient.requestPasswordReset({
         email: formText(form, 'email'),
-        redirectTo: '/dat-lai-mat-khau',
+        redirectTo: '/reset-password',
       });
       throwIfAuthError(error);
     },
@@ -25,7 +31,7 @@ function ForgotPasswordPage() {
   return (
     <AuthPage title={m.forgot_title()}>
       {request.isSuccess ? (
-        <FormMessage>{m.forgot_sent()}</FormMessage>
+        <FormMessage tone="info">{m.forgot_sent()}</FormMessage>
       ) : (
         <form
           method="post"
@@ -47,7 +53,9 @@ function ForgotPasswordPage() {
           <SubmitButton pending={request.isPending}>{m.forgot_submit()}</SubmitButton>
         </form>
       )}
-      <Link to="/dang-nhap">{m.sign_in_title()}</Link>
+      <Link to="/sign-in" className={textLinkClass}>
+        {m.sign_in_title()}
+      </Link>
     </AuthPage>
   );
 }

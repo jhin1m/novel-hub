@@ -16,7 +16,7 @@ async function gotoHydrated(page: Page, path: string) {
 }
 
 test('đăng ký → thấy trạng thái đăng nhập → đăng xuất → đăng nhập lại', async ({ page }) => {
-  await gotoHydrated(page, '/dang-ky');
+  await gotoHydrated(page, '/sign-up');
   await page.getByLabel('Tên hiển thị').fill(account.name);
   await page.getByLabel('Tên người dùng').fill(account.username);
   await page.getByLabel('Email').fill(account.email);
@@ -33,7 +33,7 @@ test('đăng ký → thấy trạng thái đăng nhập → đăng xuất → đ
   await page.getByRole('button', { name: 'Đăng xuất' }).click();
   await expect(page.getByText('Bạn chưa đăng nhập.')).toBeVisible();
 
-  await gotoHydrated(page, '/dang-nhap');
+  await gotoHydrated(page, '/sign-in');
   await page.getByLabel('Email').fill(account.email);
   await page.getByLabel('Mật khẩu').fill(account.password);
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
@@ -43,11 +43,11 @@ test('đăng ký → thấy trạng thái đăng nhập → đăng xuất → đ
 });
 
 test('sai mật khẩu → báo lỗi, vẫn ở trang đăng nhập', async ({ page }) => {
-  await gotoHydrated(page, '/dang-nhap');
+  await gotoHydrated(page, '/sign-in');
   await page.getByLabel('Email').fill(account.email);
   await page.getByLabel('Mật khẩu').fill('sai-mat-khau-999');
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
 
   await expect(page.getByRole('alert')).toHaveText('Email hoặc mật khẩu không đúng.');
-  await expect(page).toHaveURL('/dang-nhap');
+  await expect(page).toHaveURL('/sign-in');
 });

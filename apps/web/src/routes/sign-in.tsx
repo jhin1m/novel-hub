@@ -1,13 +1,20 @@
 import { m } from '@novel-hub/shared/messages';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { AuthPage, FormMessage, SubmitButton, TextField } from '../components/auth-ui';
+import {
+  AuthPage,
+  FormMessage,
+  SubmitButton,
+  TextField,
+  textLinkClass,
+} from '../components/auth-ui';
+import { Button } from '@/components/ui/button';
 import { authClient } from '../lib/auth-client';
 import { authErrorMessage, throwIfAuthError } from '../lib/auth-errors';
 import { formText } from '../lib/form-text';
 import { meQueryKey } from '../lib/me';
 
-export const Route = createFileRoute('/dang-nhap')({
+export const Route = createFileRoute('/sign-in')({
   head: () => ({ meta: [{ title: m.sign_in_title() }] }),
   component: SignInPage,
 });
@@ -28,7 +35,7 @@ function SignInPage() {
       await navigate({ to: '/' });
     },
   });
-  // Thành công thì browser chuyển sang Google; chỉ cần xử lý lỗi.
+  // On success the browser leaves for Google, so only errors need handling.
   const google = useMutation({
     mutationFn: async () => {
       const { error } = await authClient.signIn.social({ provider: 'google', callbackURL: '/' });
@@ -58,17 +65,21 @@ function SignInPage() {
         {error ? <FormMessage>{authErrorMessage(error)}</FormMessage> : null}
         <SubmitButton pending={signIn.isPending}>{m.sign_in_submit()}</SubmitButton>
       </form>
-      <button
+      <Button
         type="button"
-        className="rounded border px-3 py-2"
+        variant="outline"
         disabled={google.isPending}
         onClick={() => google.mutate()}
       >
         {m.sign_in_google()}
-      </button>
+      </Button>
       <nav className="flex flex-col gap-2">
-        <Link to="/quen-mat-khau">{m.sign_in_forgot()}</Link>
-        <Link to="/dang-ky">{m.sign_in_no_account()}</Link>
+        <Link to="/forgot-password" className={textLinkClass}>
+          {m.sign_in_forgot()}
+        </Link>
+        <Link to="/sign-up" className={textLinkClass}>
+          {m.sign_in_no_account()}
+        </Link>
       </nav>
     </AuthPage>
   );

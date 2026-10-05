@@ -11,7 +11,7 @@ Controller cập nhật cột Trạng thái (`todo` / `doing` / `done <commit>` 
 | # | Bước | Worker prompt | Trạng thái |
 |---|------|---------------|------------|
 | Q1 | Canvas: /write và editor, mobile + desktop | xem "Q1" bên dưới | done (canvas + report) |
-| Q2 | Report brainstorm cuối (redesign B+) | xem "Q2" | todo |
+| Q2 | Report brainstorm cuối (redesign B+) | xem "Q2" | done |
 | Q3 | Plan redesign | `/ak:plan --deep plans/reports/brainstorm-261006-ui-redesign-b-plus-final-report.md` + [chế độ tự động] | todo |
 | Q4 | Validate plan redesign | `/ak:plan validate <plan-dir redesign>` + [chế độ tự động] | todo |
 | Q5 | Cook từng phase redesign | `/ak:cook <plan-dir>/phase-XX-*.md --auto`, mỗi phase một worker | todo |

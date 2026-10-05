@@ -30,7 +30,8 @@ Nguồn: brainstorm §5, §8 (header/layout); scout-01 mục P3; research-02 Q3 
   Lý do: `/library`, `/settings` trả `NO_STORE` (`routes/library.tsx:33`, `routes/settings.tsx:28`), `/write` là trang cá nhân → `<a>` thường sẽ boot lại app, mất cache React Query; header đi tới cùng đích bằng `Link`. Tab đang chọn: `aria-current="page"`, icon trong pill 52×28 `bg-primary-soft`, chữ `text-primary` 11/700; tab khác `text-muted-foreground` 11/500. `grid grid-cols-5` (5 × 72 = 360, vừa khít).
 - Tab active tính bằng hàm thuần theo `pathname`: `/` exact → home; `/search*` → explore; `/library*` → library; `/write*` → write; `/settings*`, `/sign-in*` → me; còn lại không tab nào.
 - **SiteLayout** prop `bottomInset?: 'tabBar' | 'cta' | 'none'` (mặc định `'tabBar'`). <!-- Updated: Validation 2026-10-06 - định nghĩa bottomInset ngay phase 3, bỏ đổi tên prop ở phase 5 --> `'tabBar'` = render `MobileTabBar` + khung (không phải `main`, vì footer nằm sau `main`) chừa `pb-[calc(72px+env(safe-area-inset-bottom))] md:pb-0`; `'cta'` = không thanh tab, giữ cùng padding (chỗ cho CTA dính đáy phase 5); `'none'` = không gì. Trang truyện (`routes/stories.$storyKey.index.tsx`) truyền `bottomInset="cta"` ngay phase này. Trang đọc, editor không dùng `SiteLayout` nên tự không có thanh tab.
-- **Footer:** container 1240, 13px muted: "© 2026 Novel Hub" | `nav aria-label="Thông tin"`: "Điều khoản" `/terms`, "Quy định nội dung".
+<!-- Updated: Validation Session 2 - năm footer giữ động -->
+- **Footer:** container 1240, 13px muted: "© {năm} Novel Hub" (giữ `{year}` tính động + `suppressHydrationWarning` như code hiện tại, không hardcode 2026) | `nav aria-label="Thông tin"`: "Điều khoản" `/terms`, "Quy định nội dung".
 - SSR giống nhau cho mọi người: header/tab "Tôi" render bản khách ở SSR, đổi sau `useMe()` như `AccountMenu` hiện tại; `aria-current` chỉ theo path.
 - Giữ menu tài khoản song song tab "Tôi".
 

@@ -1,10 +1,11 @@
 # Overnight 261006: đang chạy
-Cập nhật: 2026-10-06 02:28
-Đang làm: Q4
+Cập nhật: 2026-10-06 02:34
+Đang làm: Q5 / phase-01
 ## Đã xong
 - Q1 canvas /write + editor (artboard F-* trên https://claude.ai/artifact/X7w7oUBxruy6Y47oQ4HdAo), đặc tả ở plans/reports/design-261006-write-editor-screens-report.md
 - Q2 report brainstorm cuối: plans/reports/brainstorm-261006-ui-redesign-b-plus-final-report.md
 - Q3 plan redesign: plans/261006-0116-ui-redesign-b-plus (12 phase, red-team 33/34 finding)
+- Q4 validate redesign (Session 2: 15 lệch đã sửa)
 
 ## Quyết định [auto] (sáng cần duyệt)
 - Q1: 8 quyết định [auto] trong design-261006-write-editor-screens-report.md
@@ -13,6 +14,7 @@ Cập nhật: 2026-10-06 02:28
 - Controller: NAS không có namespace /ak:*; dùng /ck:plan, /ck:cook, /ck:fix (cùng flag --deep/validate/--auto) thay thế
 - Q3: hero trang chủ đổi nhãn 'Biên tập chọn' → 'Mới đáng chú ý' tới khi có featured_slots (chạm quyết định user đã chốt)
 - Q3: người đọc đã lưu font literata giữ Literata; 12 phase thay vì 9; còn lại xem Quyết định đã chốt + Validation Log trong plan.md
+- Q4: 6 câu [auto] ở Validation Log Session 2 plan redesign; đáng xem: thứ tự cuối chương (lời nhắn → Chương tiếp → Chương trước) sửa spec §8 ở phase 12
 
 ## Chặn / lỗi
 - Q3 (nhẹ): 'ck plan add-phase --after' lỗi afterId.toLowerCase; worker đổi tên phase bằng tay, 'ck plan validate' xác nhận

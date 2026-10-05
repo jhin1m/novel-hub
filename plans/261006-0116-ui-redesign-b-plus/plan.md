@@ -72,7 +72,7 @@ Plan riêng do user thêm (không ứng với checkbox nào ở mục 5 spec), c
 - [auto] Sheet cài đặt: giữ `modal` mặc định Radix, overlay trong suốt, một instance, responsive bằng class CSS. Lý do: research Q1 sai (`modal={false}` không trap focus/khoá cuộn); route đọc SSR nên không matchMedia.
 - [auto] Phần tử trùng theo viewport ẩn bằng `display:none` (`hidden md:flex` ở header/trang truyện; `hidden lg:flex`/`lg:hidden` ở trang đọc: một mốc `lg` cho rail, thanh dưới, panel, red team #12). Lý do: Playwright strict mode.
 <!-- Updated: Red Team 2026-10-06 - hero Mới đáng chú ý -->
-- [auto] Hero trang chủ nhãn "Mới đáng chú ý" (không "Biên tập chọn"), truyện = truyện đầu trong `notable` SSR có `chapterCount > 0`, không có thì không render hero; không giới thiệu, nút "Xem truyện" thay "Đọc chương 1", lọc hero theo `publicId`. Lý do: chưa có `featured_slots`, không ai chọn tay; `listNotable` lấp chỗ không lọc số chương (`packages/core/src/catalog/home.ts:68-72`); chương 1 có thể đã xoá mềm (red team #10).
+- [auto] Hero trang chủ nhãn "Mới đáng chú ý" (không "Biên tập chọn"), truyện = truyện đầu trong `notable` SSR có `chapterCount > 0`, không có thì không render hero; không giới thiệu, nút "Xem truyện" thay "Đọc chương 1", lọc hero theo `publicId`. Lý do: chưa có `featured_slots`, không ai chọn tay; `listNotable` lấp chỗ không lọc số chương (`packages/core/src/catalog/home.ts:70-75`); chương 1 có thể đã xoá mềm (red team #10).
 <!-- Updated: Red Team 2026-10-06 - Đọc tiếp chỉ Chương X -->
 - [auto] "Đọc tiếp" trang chủ chỉ ghi "Chương X" (+ " · tên chương" từ `HistoryItemDto.chapterTitle`, `packages/core/src/reading/history.ts:16`), không mẫu số, không số chương còn lại, không thanh tiến độ; lọc 18+ theo `me.preferences.showMature` ở client, có e2e. Lý do: số chương có khoảng trống (xoá mềm/nháp) → "Chương 9 / 7", nhất quán với `/library`; API lịch sử trả cả 18+ (red team #4, #15).
 - [auto] Thời gian trong HTML cache dùng `formatDate()`. Lý do: quy ước `lib/format.ts`.
@@ -191,3 +191,77 @@ Phase docs tách ra phase 12 (phase 11 chỉ còn trang phụ) để phase 11 đ
 - Decision deltas checked: 8
 - Reconciled stale references: 10 (prop `tabBar` → `bottomInset` ở phase 3, 5, plan.md)
 - Unresolved contradictions: 0
+
+### Session 2 — 2026-10-06 (tự động qua đêm, mọi câu `[auto]` chọn Recommended)
+**Trigger:** `/ck:plan validate` (hàng đợi Q4 overnight). Session 1 bỏ qua fact-check theo guard; phiên này fact-check độc lập toàn plan với code hiện tại (3 agent Explore, mỗi agent 4 phase).
+**Questions asked:** 6 (tự trả lời, không hỏi user)
+
+### Verification Results
+- **Tier:** Full (12 phase), Fact Checker + Contract Verifier + cross-phase check.
+- **Claims checked:** 242
+- **Verified:** 218 | **Failed:** 15 | **Unverified:** 9
+- Unverified (9): đều là file/token/key do phase trước trong plan tạo (`mobile-navigation.spec.ts` ← P3, `adaptive-right` ← P2, `--primary-soft`/`--band` ← P1, `status-badges.tsx` …), tên file font trong package chưa cài (P1 bước 1 `ls` kiểm), đếm "13 h1 lặp" (P11) — không chặn.
+
+#### Failures (đã xử lý)
+1. [Fact] P6: key mới `reader_back_to_story` trùng nghĩa key có sẵn `reader_toc_story` "Về trang truyện" (`vi.json:241`) → câu 2.
+2. [Contract] P6: link "Chương trước" ở thanh dưới/rail và ở cuối chương cùng hiện → strict mode cho e2e mới → câu 1.
+3. [Fact] P6/P12: spec §8 `project-spec.md:268` liệt kê "nút chương tiếp, lời nhắn tác giả, bình luận"; P6 đặt lời nhắn trước "Chương tiếp" (theo brainstorm), P12 không sửa dòng 268 → câu 3.
+4. [Fact] P3: footer ghi cứng "© 2026"; code hiện tính năm động (`{year}` + `suppressHydrationWarning`) → câu 4.
+5. [Fact] P10: "test `wordCountInRange`/`toLocalInputValue`/`saveStatusText` có từ trước" sai — chưa có unit test nào → câu 5.
+6. [Fact] Lệch số dòng (10 chỗ) → câu 6: `home.ts:68-72` → 70-75 (P4, plan.md); `create-chapter.ts:30-35` → 29-36 (P4); `layout.spec.ts` font test 44 → 45 (P1, P7); `library.spec.ts:64-74` → `:64` + `:93-94` (P5); `reader-settings.spec.ts:146-148` → 141-144 (P7); `library.tsx:65-87` → 65-89 (P11); `TabItem` ở `moderation.tsx:99-104` nằm ngoài 107–142 → di chuyển 99–142 (P11, ảnh hưởng thật khi tách file); `ReportCard` cần import `Viewer` từ `report-actions.ts` (P11); `components/library/*` 370 → 360 (P11); mẫu badge cũ 4 → 2 nơi (P11); `design-guidelines.md` 103 → 104 (P12).
+- **Rejected (1):** "P2 và P8 lệch variant `StoryVisibilityBadge`". Không lệch: P2 định nghĩa `default` = `bg-primary-soft text-primary` ("soft") và `destructive` = viền + chữ `--destructive` ("viền destructive"), đúng như P8 mô tả (verified by `phase-02` mục Badge).
+- Ghi chú P7: `ThemeSwatches` gói lại từ callback `renderOption` (`reader-settings-sheet.tsx:81-93`), không phải di chuyển nguyên văn — đã ghi vào bước 1.
+
+#### Questions & Answers
+
+1. **[Risks]** Hai link tên "Chương trước" (ô điều hướng + link cuối chương) cùng hiện ở mọi viewport. Xử lý thế nào?
+   - Options: Giữ cả hai tên, e2e mới luôn giới hạn locator trong nav "Điều hướng chương" hoặc `footer` (Recommended) | Đổi tên link cuối chương (vd. "Quay lại chương trước") | Bỏ link "Chương trước" ở cuối chương
+   - **Answer:** [auto] Giữ tên, scope locator
+   - **Rationale:** Cả hai đúng ngữ nghĩa; không e2e hiện có nào dùng tên này; đổi tên/bỏ link chạm thiết kế brainstorm.
+2. **[Architecture]** Aria-label "Về trang truyện" ở thanh trên: thêm key `reader_back_to_story` hay dùng lại `reader_toc_story` (cùng chuỗi)?
+   - Options: Dùng lại `reader_toc_story` (Recommended) | Thêm key mới
+   - **Answer:** [auto] Dùng lại
+   - **Rationale:** DRY, không key trùng nghĩa trong `vi.json`.
+3. **[Scope]** Thứ tự cuối chương (lời nhắn → "Chương tiếp" → "Chương trước") khác cách liệt kê ở spec §8 dòng 268. Làm gì?
+   - Options: Giữ thứ tự brainstorm, P12 sửa dòng 268 cho khớp (Recommended) | Đổi P6 theo thứ tự spec ("Chương tiếp" trước lời nhắn)
+   - **Answer:** [auto] Giữ brainstorm, P12 sửa §8 dòng 268
+   - **Rationale:** User đã cho phép redesign sửa §8; thứ tự này nằm trong brainstorm cuối đã chốt.
+4. **[Assumptions]** Footer: ghi cứng "© 2026" hay giữ năm động như code hiện tại?
+   - Options: Giữ năm động (Recommended) | Ghi cứng 2026
+   - **Answer:** [auto] Giữ năm động
+   - **Rationale:** Không lùi hành vi đang có; ghi cứng sẽ sai từ 2027.
+5. **[Assumptions]** P10 nói đã có unit test cho `wordCountInRange`/`toLocalInputValue`; thực tế chưa có. Thêm test?
+   - Options: Không thêm, sửa câu cho đúng; e2e `publish.spec` bao (Recommended) | Thêm unit test cho hai hàm
+   - **Answer:** [auto] Không thêm
+   - **Rationale:** YAGNI; phase không đổi logic hai hàm, chỉ đổi giao diện.
+6. **[Assumptions]** Sửa 10 tham chiếu dòng lệch (mục Failures 6) trực tiếp trong phase file?
+   - Options: Sửa ngay (Recommended) | Để nguyên, worker cook tự grep
+   - **Answer:** [auto] Sửa ngay
+   - **Rationale:** Worker cook context sạch, đọc plan theo nghĩa đen; `TabItem` ngoài khoảng dòng sẽ làm tách file thiếu type.
+
+#### Confirmed Decisions
+- "Chương trước" hai nơi: giữ tên, e2e scope locator — `[auto]`.
+- Aria-label thanh trên: `reader_toc_story` — DRY.
+- Cuối chương: lời nhắn → Chương tiếp → Chương trước; P12 sửa spec §8 dòng 268 — `[auto]`, sáng user duyệt cùng các sửa §8 khác.
+- Footer năm động.
+- Không thêm unit test cho hàm không đổi logic.
+- Tham chiếu dòng đã cập nhật theo code hiện tại.
+
+#### Action Items
+- [x] P6: i18n dùng lại `reader_toc_story`; thêm dòng rủi ro trùng tên "Chương trước".
+- [x] P12: thêm dòng 268 vào danh sách sửa §8 (Requirements + File inventory); `design-guidelines` 103 → 104.
+- [x] P3: footer năm động.
+- [x] P10: sửa câu về test có sẵn.
+- [x] P1, P4, P5, P7, P11, plan.md: sửa số dòng; P11 `TabItem` 99–142 + import `Viewer`.
+
+#### Impact on Phases
+- Phase 1, 4, 5, 7, 11: chỉ số dòng/ghi chú di chuyển code.
+- Phase 3: footer. Phase 6: key i18n + rủi ro locator. Phase 10: câu test. Phase 12: thêm dòng 268 của spec.
+- Không đổi phạm vi, thứ tự phase, dependency, effort.
+
+### Whole-Plan Consistency Sweep (Session 2)
+- Files reread: plan.md, phase-01 … phase-12 (grep toàn plan).
+- Decision deltas checked: 6 (+1 rejected).
+- Reconciled stale references: 21 chỗ sửa ở 10 file; grep lại `reader_back_to_story`, `107–142`, `44-57`, `68-72`, `© 2026`, `146-148`, `4 nơi`, `30-35`, `65-87`, `64-74`, `370` → 0 kết quả.
+- Unresolved contradictions: 0.
+- Sáng cần user duyệt (cùng danh sách Session 1): `[auto]` câu 3 (sửa spec §8 dòng 268 theo thứ tự cuối chương của brainstorm).

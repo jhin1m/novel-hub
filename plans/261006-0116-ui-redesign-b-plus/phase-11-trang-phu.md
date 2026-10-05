@@ -20,7 +20,7 @@ Nguồn: brainstorm §6.6, §8; scout-03 mục P9; quyết định [auto] `/sear
 
 - **Khung trang chuẩn** (`components/page-shell.tsx`): `PageShell` = container `mx-auto w-full max-w-[1240px] px-4 py-8 md:px-8 md:py-10` (prop `width?: 'default' | 'narrow'` cho form ~ `max-w-[560px]`); `PageTitle` = `<h1>` sans 28/800 `tracking-tight` (`text-[28px] leading-tight font-extrabold`). Thay 13 `h1` lặp + container `max-w-sm/xl/2xl/3xl/5xl/6xl` ở các trang phụ. Khối form/nội dung chính trên thẻ `bg-card border rounded-3xl` (24).
 <!-- Updated: Red Team 2026-10-06 - không SegmentedLinks; restyle tại chỗ, giữ Link typed -->
-- **Tab dạng link (không component chung):** restyle **tại chỗ** `LibraryTabs` (`routes/library.tsx:65-87`) và `TabLinks` (`routes/moderation.tsx:107-142`) bằng class dùng chung trong `components/segmented-link-classes.ts`: `SEGMENTED_LIST_CLASS` (`inline-flex bg-secondary p-1 rounded-full`), `segmentedLinkClass(current: boolean, small?: boolean)` (pill; chọn `bg-card font-bold`; `small` = chip `flex-wrap` cho hàng lọc trạng thái/lý do ở `/moderation`). **Giữ** `<Link to="/library" search={{ shelf, page: 1 }}>` và `<Link to="/moderation" search={item.search}>` (search params có type, điều hướng client), giữ `aria-current="page"` thủ công, giữ nhánh `small` xuống dòng (hàng lý do nhiều mục không tràn 360). Lý do: `SegmentedLinks({ href })` mất type search params TanStack và đổi sang tải lại toàn trang ở trang `ssr:false`.
+- **Tab dạng link (không component chung):** restyle **tại chỗ** `LibraryTabs` (`routes/library.tsx:65-89`) và `TabLinks` (`routes/moderation.tsx:99-142`, gồm `interface TabItem` ở 99–104) bằng class dùng chung trong `components/segmented-link-classes.ts`: `SEGMENTED_LIST_CLASS` (`inline-flex bg-secondary p-1 rounded-full`), `segmentedLinkClass(current: boolean, small?: boolean)` (pill; chọn `bg-card font-bold`; `small` = chip `flex-wrap` cho hàng lọc trạng thái/lý do ở `/moderation`). **Giữ** `<Link to="/library" search={{ shelf, page: 1 }}>` và `<Link to="/moderation" search={item.search}>` (search params có type, điều hướng client), giữ `aria-current="page"` thủ công, giữ nhánh `small` xuống dòng (hàng lý do nhiều mục không tràn 360). Lý do: `SegmentedLinks({ href })` mất type search params TanStack và đổi sang tải lại toàn trang ở trang `ssr:false`.
 - `/search`: giữ `Select` lọc + nút "Tìm" (chỉ style từ phase 2); kết quả truyện dùng `StoryRowList` (một `<a>` mỗi thẻ, phase 2), tiêu đề mục `SectionHeading` với `id="search-stories"`/`"search-authors"` (region "Truyện"/"Tác giả" lấy tên từ h2); không chip lọc.
 - `/tags/{slug}`: `PageTitle` tên tag + `Badge` kind; `StoryGrid`; `Pagination` pill (`components/story/pagination.tsx`, nút `rounded-full`, trang hiện tại `bg-primary text-primary-foreground`).
 - `/authors/{username}`: khối tác giả (chữ cái đầu tròn 64px `bg-primary-soft text-primary` `aria-hidden`, tên h1, `@username`, bio nếu có) + `StoryGrid`; không hero màu.
@@ -36,8 +36,8 @@ Nguồn: brainstorm §6.6, §8; scout-03 mục P9; quyết định [auto] `/sear
 <!-- Updated: Red Team 2026-10-06 - tách cố định 4 file theo scout-03 -->
 - **Tách cố định** (theo scout-03 mục P9.5, không điều kiện):
   1. `routes/settings.tsx` (207) → `components/settings/mature-setting.tsx` (`MatureSetting`, dòng 134–207).
-  2. `routes/moderation.tsx` (203) → `components/moderation/moderation-tab-links.tsx` (`TabLinks` + type `TabItem`, dòng 107–142), restyle trong file mới.
-  3. `components/moderation/report-card.tsx` (335) → `components/moderation/report-actions.ts` (`ACTION_LABELS`, `DistributiveOmit`, `CardAction`, `storyActions`, `userActions`, `canActOn`, `actionsFor`, type `Viewer` nếu khai báo ở đây; dòng 27–123) + `components/moderation/report-target-context.tsx` (`StoryLine`, `ChapterLine`, `UserStatusBadge`, `TargetContext`; dòng 125–227); `ReportCard` và `REPORT_STATUS_LABELS` ở lại. Viết `report-actions.test.ts` **trước** khi di chuyển (export tạm từ file cũ, test xanh, rồi di chuyển và chỉ đổi import của test).
+  2. `routes/moderation.tsx` (203) → `components/moderation/moderation-tab-links.tsx` (`TabLinks` + `interface TabItem`, dòng 99–142) <!-- Updated: Validation Session 2 - TabItem ở 99-104 -->, restyle trong file mới.
+  3. `components/moderation/report-card.tsx` (335) → `components/moderation/report-actions.ts` (`ACTION_LABELS`, `DistributiveOmit`, `CardAction`, `storyActions`, `userActions`, `canActOn`, `actionsFor`, type `Viewer` nếu khai báo ở đây; dòng 27–123) + `components/moderation/report-target-context.tsx` (`StoryLine`, `ChapterLine`, `UserStatusBadge`, `TargetContext`; dòng 125–227); `ReportCard` và `REPORT_STATUS_LABELS` ở lại; `ReportCard` import type `Viewer` (dòng 81) từ `report-actions.ts`. Viết `report-actions.test.ts` **trước** khi di chuyển (export tạm từ file cũ, test xanh, rồi di chuyển và chỉ đổi import của test).
   4. `components/story-form.tsx` (202) → xoá `STATUS_LABELS` trùng (dòng 37), Select tình trạng dùng `STORY_STATUS_LABELS` từ `story/story-labels.ts` (~196). Trước khi xoá: `rg -n '\bSTATUS_LABELS\b' apps/web/src` chỉ còn định nghĩa trong `story-form.tsx` (phase 8 đã đổi import ở `routes/write/index.tsx`).
 
 ## Architecture
@@ -63,7 +63,7 @@ routes/settings.tsx ── components/settings/mature-setting.tsx
 | `routes/search.tsx` / `search/search-form.tsx` / `search/search-results.tsx` | 52 / 161 / 94 | khung; style; `StoryRowList` + `SectionHeading` |
 | `routes/tags.$tagSlug.tsx` / `story/pagination.tsx` | 84 / 43 | khung; pill |
 | `routes/authors.$username.tsx` | 81 | khối tác giả |
-| `routes/library.tsx` + `components/library/*` | 150 + 370 | tab restyle tại chỗ; class; badge |
+| `routes/library.tsx` + `components/library/*` | 150 + 360 | tab restyle tại chỗ; class; badge |
 | `routes/settings.tsx` | 207 | thẻ; tách `MatureSetting` → < 200 |
 | `components/settings/mature-setting.tsx` | mới | `MatureSetting` (~75) |
 | `components/auth-ui.tsx` | 70 | `AuthPage` thẻ |
@@ -136,7 +136,7 @@ Không key mới (không thanh tiến độ tủ truyện, không chip lọc, ta
 - [ ] `routes/settings.tsx`, `routes/moderation.tsx`, `components/moderation/report-card.tsx`, `components/story-form.tsx` và mọi file mới ≤ 200 dòng
 <!-- Updated: Red Team 2026-10-06 - tiêu chí font-serif theo danh sách file nội dung, loại app.css -->
 - [ ] `rg -l 'font-serif' apps/web/src --glob '*.tsx'` chỉ còn file chứa **nội dung truyện/văn bản đọc** hoặc dấu thương hiệu: `components/story/story-synopsis.tsx` (giới thiệu), `components/reader/chapter-header.tsx` (h1 chương), `components/reader/chapter-end.tsx` (thân lời nhắn), `components/reader/reader-settings-controls.tsx` (ô "Aa"), `components/editor/chapter-editor.tsx` (nội dung), `components/editor/chapter-meta-field.tsx` (ô tên chương), file xem trước revision (`revision-history-sheet.tsx` hoặc `revision-preview.tsx`), `components/static-page.tsx` (thân bài), `components/site-header.tsx` (ô chữ "N" `aria-hidden`). Không tính `styles/app.css` (comment + `--font-serif`). Mỗi hit còn lại phải là phần tử nội dung, không phải h1/h2/h3/nhãn UI
-- [ ] `rg -n "status === 'published' \? 'default'" apps/web/src` rỗng (mẫu badge lặp cũ ở 4 nơi đã thay bằng `status-badges.tsx`, scout-03 mục P7.5)
+- [ ] `rg -n "status === 'published' \? 'default'" apps/web/src` rỗng (mẫu badge lặp cũ ở 2 nơi: `chapter-editor.tsx:390`, `chapter-list.tsx:87`; đã thay bằng `status-badges.tsx`, scout-03 mục P7.5)
 - [ ] `rg -n '\bSTATUS_LABELS\b|SegmentedLinks' apps/web/src` rỗng
 - [ ] Không file nào trong `packages/` (trừ `messages/vi.json` nếu cần) đổi; không route/URL/head đổi
 

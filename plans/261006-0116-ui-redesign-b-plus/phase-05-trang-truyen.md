@@ -90,7 +90,7 @@ currentNumber = useContinueReading(publicId, !!me.data).data?.chapterNumber ?? n
 | `link 'Tiên hiệp'.first()` → `/tags/tien-hiep` | e2e | `catalog.spec.ts:103` | giữ |
 | 18+: `alertdialog` "Truyện có nội dung 18+", nút "Hiện nội dung 18+", "Đăng nhập để đọc"; noindex | e2e | `catalog.spec.ts`, `reader.spec.ts:168` | giữ |
 | <!-- Updated: Red Team 2026-10-06 - e2e màn 18+ che kín --> Khách mở trang truyện 18+ và trang chương 18+: `document.elementFromPoint(innerWidth/2, innerHeight/2)` nằm trong `[role=alertdialog]`; nền lớp ngoài có alpha = 1 (`getComputedStyle(...).backgroundColor` không `rgba(…, <1)`) | e2e | `catalog.spec.ts` | mới |
-| <!-- Updated: Red Team 2026-10-06 - library.spec chạy 390×600 nên kiểm CTA dính --> `link 'Đọc tiếp chương 2'` strict → handoff; `button 'Thêm vào tủ'` → `'Trong tủ: Đang đọc'` strict. Describe chạy **390×600** (`library.spec.ts:35-38`): link đọc là bản **CTA dính đáy**, nút tủ là bản trong hero | e2e | `library.spec.ts:64-74` | giữ |
+| <!-- Updated: Red Team 2026-10-06 - library.spec chạy 390×600 nên kiểm CTA dính --> `link 'Đọc tiếp chương 2'` strict → handoff; `button 'Thêm vào tủ'` → `'Trong tủ: Đang đọc'` strict. Describe chạy **390×600** (`library.spec.ts:35-38`): link đọc là bản **CTA dính đáy**, nút tủ là bản trong hero | e2e | `library.spec.ts:64` (link đọc), `:93-94` (nút tủ) | giữ |
 | Meta/canonical/og/title | e2e | `seo.spec.ts` | giữ |
 | 360: CTA dính đáy hiện link "Đọc từ đầu" đúng 1 lần; thanh tab ẩn; không tràn ngang với tên truyện dài | e2e | `mobile-navigation.spec.ts` | mới/sửa |
 | 360: cuộn xuống đáy, `contentinfo` link "Điều khoản" `click()` (không `force`) → `/terms` | e2e | `mobile-navigation.spec.ts` | mới |

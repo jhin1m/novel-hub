@@ -20,7 +20,7 @@ Nguồn: brainstorm §7 (sửa spec), §2–§5, §8; scout-03 mục P9.7 (bản
 
 - **`docs/project-spec.md`** (đã kiểm số dòng lúc lập plan; grep lại khi cook):
   - §2: thêm hàng **Font** sau dòng 36 (hàng "UI styling"): `@fontsource-variable/plus-jakarta-sans` (giao diện), `@fontsource-variable/source-serif-4` (nội dung), `@fontsource-variable/literata`, `@fontsource-variable/noto-serif` (tuỳ chọn trang đọc); self-host, subset tiếng Việt.
-  - §8 theo brainstorm §7: dòng 246 (hướng "ấm, như một ứng dụng đọc"; hero trang chủ là truyện nổi bật mới, nhãn "Mới đáng chú ý", không phải banner), 250 (nền ngà ấm + thẻ trắng, một nhấn mòng két; light/dark theo OS), 251 (Source Serif 4 nội dung / Plus Jakarta Sans giao diện), 253 (bo góc mềm, nút/chip viên, bóng chỉ ở bìa nổi + lớp nổi; vẫn không gradient), 263 (Source Serif 4 mặc định, Literata, Noto Serif, Plus Jakarta Sans; **giữ** câu "Font khác mặc định chỉ tải khi người đọc chọn" — phase 7 làm đúng), 267 (thanh điều hướng thêm tên truyện nhỏ + thanh tiến độ mảnh; < 1024px thanh trên + thanh dưới, ≥ 1024px rail; cài đặt ≥ 1024px là panel phải), 273–275 (bìa gáy sách + chữ cái mờ; chip thể loại, hero, dải `--band`, thanh tab 5 mục; trang truyện dải màu tag + nút đọc dính đáy mobile), 279–280 (giữ ý + "/write có dải số liệu nhỏ; dashboard đầy đủ ở Giai đoạn 2"). Không đổi ý ngắt cảnh (trang đọc giữ `* * *`).
+  - §8 theo brainstorm §7: dòng 246 (hướng "ấm, như một ứng dụng đọc"; hero trang chủ là truyện nổi bật mới, nhãn "Mới đáng chú ý", không phải banner), 250 (nền ngà ấm + thẻ trắng, một nhấn mòng két; light/dark theo OS), 251 (Source Serif 4 nội dung / Plus Jakarta Sans giao diện), 253 (bo góc mềm, nút/chip viên, bóng chỉ ở bìa nổi + lớp nổi; vẫn không gradient), 263 (Source Serif 4 mặc định, Literata, Noto Serif, Plus Jakarta Sans; **giữ** câu "Font khác mặc định chỉ tải khi người đọc chọn" — phase 7 làm đúng), 267 (thanh điều hướng thêm tên truyện nhỏ + thanh tiến độ mảnh; < 1024px thanh trên + thanh dưới, ≥ 1024px rail; cài đặt ≥ 1024px là panel phải), 273–275 (bìa gáy sách + chữ cái mờ; chip thể loại, hero, dải `--band`, thanh tab 5 mục; trang truyện dải màu tag + nút đọc dính đáy mobile), 268 (cuối chương theo thứ tự: lời nhắn tác giả → nút "Chương tiếp" thật to → "Chương trước"; bình luận ở Giai đoạn 2) <!-- Updated: Validation Session 2 - thêm dòng 268 -->, 279–280 (giữ ý + "/write có dải số liệu nhỏ; dashboard đầy đủ ở Giai đoạn 2"). Không đổi ý ngắt cảnh (trang đọc giữ `* * *`).
   - Không đánh/bỏ `[x]` checkbox nào.
 - **`docs/design-guidelines.md`** (108 dòng) viết lại theo code thật (đối chiếu `apps/web/src/styles/{tokens.css,app.css,reader.css}` sau phase 11, file tokens là chuẩn khi lệch):
   - Nguồn: Mockup = canvas `https://claude.ai/artifact/X7w7oUBxruy6Y47oQ4HdAo` (trang "Vòng 3 · B+ đã chốt").
@@ -55,8 +55,8 @@ red team (purge) ───────────────▶ docs/deploymen
 
 | Path | Dòng | Việc |
 | --- | --- | --- |
-| `docs/project-spec.md` | — | +1 hàng §2 (sau dòng 36); sửa §8 dòng 246, 250, 251, 253, 263, 267, 273–275, 279–280 |
-| `docs/design-guidelines.md` | 108 | viết lại (dòng 9–10, 16–18, 25–36, 41–53, 72, 86, 103, 108 theo scout-03 + mục mới) |
+| `docs/project-spec.md` | — | +1 hàng §2 (sau dòng 36); sửa §8 dòng 246, 250, 251, 253, 263, 267, 268, 273–275, 279–280 |
+| `docs/design-guidelines.md` | 108 | viết lại (dòng 9–10, 16–18, 25–36, 41–53, 72, 86, 104, 108 theo scout-03 + mục mới) |
 | `docs/deployment-cloudflare.md` | — | +1 đoạn trong "Purge cache (worker)" |
 
 ## Test scenario matrix

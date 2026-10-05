@@ -69,7 +69,7 @@ Luồng dữ liệu font: localStorage `nh:reader` / `users.preferences.reader` 
 | `packages/api/src/routes/me.int.test.ts` | — | dòng 94 `font: 'inter'` → `'plus-jakarta-sans'` |
 | `apps/web/src/components/reader/reader-settings-sheet.tsx` | 244 | chỉ `FONT_LABELS` dòng 37–42 (không tách ở phase này; tách ở phase 7) |
 | `packages/shared/messages/vi.json` | 478 | dòng 258–261 font labels |
-| `apps/web/e2e/layout.spec.ts` | 57 | test preload (dòng 26–42), test font tuỳ chọn (dòng 44–57) |
+| `apps/web/e2e/layout.spec.ts` | 57 | test preload (dòng 26–42), test font tuỳ chọn (dòng 45–57) |
 | `apps/web/package.json` | 53 | +2 font, −2 font |
 
 ## Test scenario matrix

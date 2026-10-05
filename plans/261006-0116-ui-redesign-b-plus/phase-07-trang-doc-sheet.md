@@ -64,8 +64,8 @@ useReaderSettings / applyReaderSettings / localStorage nh:reader / PATCH prefs: 
 | --- | --- | --- | --- |
 | `button 'Cài đặt hiển thị'` strict 1280/375; dialog cùng tên; radio trong `label`; slider "Cỡ chữ" + phím mũi tên không đổi chương; reset 19px; 60ch/68ch; "Độ rộng cột chữ" ẩn 375; đồng bộ thiết bị khác | e2e | `reader-settings.spec.ts` | giữ |
 | `button 'Mục lục'` strict (1280) → dialog có đúng 3 link `/^Chương \d/`, `aria-current=page`; ←/→ không chạy khi TOC mở | e2e | `reader.spec.ts:120-129` | giữ |
-| Ẩn trước khi vẽ (`data-mature-ok`), h1 focus sau bật 18+ | e2e | `reader-settings.spec.ts:134,146-148` | giữ |
-| <!-- Updated: Red Team 2026-10-06 - e2e không tải font khi mở panel --> Trang chương (1280, khách, chưa chọn font): mở "Cài đặt hiển thị", chờ dialog hiện; không request nào khớp `/literata\|noto-serif/` (bắt bằng `page.on('request')` như `layout.spec.ts:44-57`) | e2e | `reader-settings.spec.ts` | mới |
+| Ẩn trước khi vẽ (`data-mature-ok`), h1 focus sau bật 18+ | e2e | `reader-settings.spec.ts:134,141-144` | giữ |
+| <!-- Updated: Red Team 2026-10-06 - e2e không tải font khi mở panel --> Trang chương (1280, khách, chưa chọn font): mở "Cài đặt hiển thị", chờ dialog hiện; không request nào khớp `/literata\|noto-serif/` (bắt bằng `page.on('request')` như `layout.spec.ts:45-57`) | e2e | `reader-settings.spec.ts` | mới |
 | <!-- Updated: Red Team 2026-10-06 - e2e vị trí panel ở 1280 --> 1280: mở cài đặt → `dialog 'Cài đặt hiển thị'` `boundingBox().x > 640`; mép phải đoạn đầu `.reader-content p` ≤ `x` của dialog (cột chữ không bị che); mở mục lục → dialog `x` = 0 (`< 640`) | e2e | `mobile-navigation.spec.ts` (describe 1280) | mới |
 | 360: mở cài đặt → dialog nằm đáy (`boundingBox().y > 0`, `y + height` ≈ 800) | e2e | `mobile-navigation.spec.ts` | mới |
 | Khách ở chương 18+: không dialog nào mở (từ phase 6) | e2e | `mobile-navigation.spec.ts` | giữ |
@@ -85,7 +85,7 @@ Không có hàm thuần mới (chỉ JSX + class); không thêm unit test.
 
 ## Implementation Steps
 
-1. Tách `reader-settings-sheet.tsx`: chuyển nguyên `ChoiceGroup`, `RangeField` (+ JSX ô màu, ô font thành `ThemeSwatches`, `FontChoices`) sang `reader-settings-controls.tsx`, chưa đổi giao diện; chạy `pnpm typecheck` + `pnpm test:e2e -- reader-settings`.
+1. Tách `reader-settings-sheet.tsx`: chuyển nguyên `ChoiceGroup`, `RangeField` (+ JSX ô màu, ô font thành `ThemeSwatches`, `FontChoices`; ô màu hiện là callback `renderOption` của `ChoiceGroup` ở `reader-settings-sheet.tsx:81-93` nên đây là gói lại thành component, giữ nguyên markup/tên radio) <!-- Updated: Validation Session 2 - ThemeSwatches gói từ renderOption --> sang `reader-settings-controls.tsx`, chưa đổi giao diện; chạy `pnpm typecheck` + `pnpm test:e2e -- reader-settings`.
 2. Bỏ `modal={false}`; `side="adaptive-right"`, `overlayClassName="bg-transparent"`; sửa docblock (panel modal, nền không tối, cột dời sang trái ở màn rộng). Chạy `reader-settings.spec` ngay (modal khoá con trỏ ngoài dialog).
 3. Route: `main` thêm `lg:pr-96` khi `openPanel === 'settings'`.
 4. Restyle control: ô màu, font (nhãn font giao diện), slider, tab group pill, nút reset; `ring-ring/70` → `ring-ring`.

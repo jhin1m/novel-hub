@@ -130,7 +130,7 @@ Link "Về trang truyện"; nút "Mục lục"; nút "Cài đặt hiển thị";
 
 | Key | Giá trị | Ghi chú |
 | --- | --- | --- |
-| `reader_back_to_story` | Về trang truyện | mới (aria-label thanh trên) |
+| `reader_toc_story` | Về trang truyện | **đã có** (`vi.json:241`), dùng lại cho aria-label thanh trên, không thêm key trùng <!-- Updated: Validation Session 2 - dùng lại reader_toc_story --> |
 | `reader_bar_chapter` | Ch. {number} | mới |
 | `reader_prev_short` / `reader_next_short` | Trước / Sau | mới (chữ hiển thị) |
 | `reader_settings_short` | Cài đặt | mới (chữ hiển thị) |
@@ -159,6 +159,7 @@ Link "Về trang truyện"; nút "Mục lục"; nút "Cài đặt hiển thị";
 | `h1` đổi nội dung với chương có tên (bỏ tiền tố "Chương N:") | M × L | pill ngay trên h1; e2e chỉ kiểm chương không tên |
 | Thanh dưới che nút cuối chương ở < lg | M × L | `pb-28` dưới lg |
 | Tablet 768–1023 dùng thanh dưới thay rail | L × L | chủ ý: một mốc `lg` cho mọi panel |
+| <!-- Updated: Validation Session 2 - trùng tên link Chương trước --> Hai link "Chương trước" cùng hiện (ô trên thanh dưới/rail + link cuối chương) → strict mode ở e2e mới | M × M | giữ cả hai tên (đúng ngữ nghĩa); e2e mới **luôn** giới hạn locator trong `getByRole('navigation', { name: 'Điều hướng chương' })` hoặc `footer` cuối chương; e2e hiện có không dùng tên này |
 
 **Rollback:** revert route + `components/reader/*` + `reader.css`; khôi phục `reader-nav.tsx` từ git.
 

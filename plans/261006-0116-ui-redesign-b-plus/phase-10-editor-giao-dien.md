@@ -86,7 +86,8 @@ lib/autosave.ts, lib/draft-mirror.ts, lib/chapters.ts, use-editor-autosave.ts, u
 | nút "Lịch sử"; dialog "Lịch sử phiên bản"; `li` count 2/3, mỗi `li` 1 nút; "Đang đăng"; `.chapter-preview-content`; "Khôi phục vào bản nháp"; dialog "Khôi phục phiên bản này?"; "Khôi phục" exact; notice `/^Đã khôi phục bản lúc …$/`; "Giữ bản của tôi" | e2e | `revision.spec.ts` | giữ |
 | 390: toolbar "Định dạng" hiện, nút "Đăng" hiện, không tràn ngang | e2e | `mobile-navigation.spec.ts` | mới |
 
-Không viết lại test cho `wordCountInRange`/`toLocalInputValue`/`saveStatusText` (có từ trước, không đổi logic).
+<!-- Updated: Validation Session 2 - sửa claim test có sẵn -->
+Không thêm unit test cho `wordCountInRange`/`toLocalInputValue` (hiện **chưa** có unit test; logic không đổi, `publish.spec.ts` đã bao luồng). `SaveStatusText`/`saveStatusTone` có test mới ở bảng trên.
 
 ## Function/interface checklist
 

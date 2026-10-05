@@ -308,6 +308,11 @@ describe('publishChapter', () => {
       ok: false,
       error: 'CHAPTER_HIDDEN_BY_MOD',
     });
+    expect(await deleteChapter(db, s.author, s.publicId, 1)).toEqual({
+      ok: false,
+      error: 'CHAPTER_HIDDEN_BY_MOD',
+    });
+    expect((await chapterRow(1)).deletedAt).toBeNull();
     // The private draft is still editable.
     await saveAs(s, 1, base, wordsDoc(310));
 

@@ -94,3 +94,34 @@ export function createClientIpResolver(opts: ClientIpOptions): (request: Request
     return ip;
   };
 }
+
+/**
+ * Production behind Cloudflare without `TRUST_CF_IP` sees only Cloudflare edge addresses, so every
+ * visitor shares a few rate limit buckets and read caps. Not fatal (an origin reached directly is
+ * a valid setup), so this is a warning for the startup log rather than a refusal to start.
+ */
+export function untrustedCfIpWarning(env: {
+  NODE_ENV: string;
+  TRUST_CF_IP: boolean;
+}): string | null {
+  if (env.NODE_ENV !== 'production' || env.TRUST_CF_IP) return null;
+  return (
+    '[rate-limit] TRUST_CF_IP=false in production: behind Cloudflare every visitor shares the ' +
+    'Cloudflare edge IPs, so IP rate limits and read caps hit everyone together. Set ' +
+    'TRUST_CF_IP=true once the origin firewall accepts Cloudflare IP ranges only.'
+  );
+}
+
+/**
+ * Logs `untrustedCfIpWarning` the first time only: `state` lives as long as the process, so a
+ * start that failed and is retried does not log it again.
+ */
+export function warnUntrustedCfIpOnce(
+  env: { NODE_ENV: string; TRUST_CF_IP: boolean },
+  state: { warned?: boolean },
+): void {
+  const warning = untrustedCfIpWarning(env);
+  if (!warning || state.warned) return;
+  state.warned = true;
+  console.warn(warning);
+}

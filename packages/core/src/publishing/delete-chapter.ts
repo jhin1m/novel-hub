@@ -10,6 +10,7 @@ import { recomputeStoryCounters } from './counters';
 /**
  * Soft delete. The number stays taken (URLs depend on it), so the story shows a gap. Deleting a
  * public chapter updates the story counters and queues the purge of its page through the outbox.
+ * A chapter a moderator hid stays put: deleting it would erase the evidence the report points at.
  */
 export async function deleteChapter(
   db: Db,
@@ -17,11 +18,12 @@ export async function deleteChapter(
   publicId: string,
   number: number,
   opts: { now?: Date } = {},
-): Promise<Result<void, 'NOT_FOUND' | 'FORBIDDEN'>> {
+): Promise<Result<void, 'NOT_FOUND' | 'FORBIDDEN' | 'CHAPTER_HIDDEN_BY_MOD'>> {
   return db.transaction(async (tx) => {
     const owned = await loadOwnedChapter(tx, actor, publicId, number, { forUpdate: true });
     if (!owned.ok) return err(owned.error);
     const { story, chapter } = owned.value;
+    if (chapter.status === 'hidden_by_mod') return err('CHAPTER_HIDDEN_BY_MOD');
     await tx
       .update(chapters)
       .set({ deletedAt: opts.now ?? new Date() })

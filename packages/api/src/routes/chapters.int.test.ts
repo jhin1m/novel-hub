@@ -231,4 +231,17 @@ describe('chapter routes', () => {
     const badNumber = await call(`/stories/${publicId}/chapters/abc/draft`, { cookie: author });
     expect(badNumber.status).toBe(400);
   });
+
+  it('refuses to delete a chapter a moderator hid with 409 CHAPTER_HIDDEN_BY_MOD', async () => {
+    const cookie = await signedIn('author');
+    const publicId = await createdStory(cookie);
+    await call(`/stories/${publicId}/chapters`, { method: 'POST', cookie });
+    await db.update(chapters).set({ status: 'hidden_by_mod' });
+
+    const res = await call(`/stories/${publicId}/chapters/1`, { method: 'DELETE', cookie });
+    expect(res.status).toBe(409);
+    expect(await errorCode(res)).toBe('CHAPTER_HIDDEN_BY_MOD');
+    const [row] = await db.select().from(chapters);
+    expect(row?.deletedAt).toBeNull();
+  });
 });

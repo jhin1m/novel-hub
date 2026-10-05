@@ -175,7 +175,7 @@
   "chapter_status_hidden_by_mod": "Bị ẩn",
   "error_word_count_out_of_range": "Chương khi đăng cần từ 300 đến 20.000 chữ.",
   "error_invalid_schedule_time": "Giờ đăng phải sau thời điểm hiện tại ít nhất 5 phút và trong vòng 365 ngày.",
-  "error_chapter_hidden_by_mod": "Chương đã bị kiểm duyệt viên ẩn, không đăng hay sửa thông tin được.",
+  "error_chapter_hidden_by_mod": "Chương đã bị kiểm duyệt viên ẩn, không đăng, sửa thông tin hay xoá được.",
   "error_already_published": "Chương đã đăng nên không hẹn giờ được nữa.",
   "error_not_scheduled": "Chương không còn được hẹn giờ.",
   "error_draft_conflict": "Bản nháp vừa được lưu ở nơi khác. Hãy tải lại trang rồi thử lại.",

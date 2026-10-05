@@ -11,7 +11,13 @@ import { canonicalTagSlug } from '../catalog/tag-page';
 import type { SearchCtx } from './client';
 import { type AuthorDoc, type StoryDoc, storyDocToCard } from './documents';
 
-export type AuthorHit = AuthorDoc;
+/** An author as a search shows it: `storyCount` counts what this reader may see. */
+export interface AuthorHit {
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+  storyCount: number;
+}
 
 export interface SearchResult {
   stories: { hits: StoryCardDto[]; page: number; totalPages: number; totalHits: number };
@@ -35,6 +41,14 @@ export function buildStoryFilter(
   if (q.minWords !== undefined) filter.push(`wordCount >= ${q.minWords}`);
   if (q.maxWords !== undefined) filter.push(`wordCount <= ${q.maxWords}`);
   return filter;
+}
+
+/**
+ * Meilisearch filter for the authors index: without 18+, an author with no other public story is
+ * left out, so a search never leads a guest to a page of 18+ stories only.
+ */
+export function buildAuthorFilter(o: ListOptions): string[] {
+  return o.includeMature ? [] : ['storyCount > 0'];
 }
 
 /**
@@ -63,7 +77,12 @@ export async function searchCatalog(
     },
   ];
   if (withAuthors) {
-    queries.push({ indexUid: ctx.names.authors, q: query.q, limit: SEARCH_AUTHOR_LIMIT });
+    queries.push({
+      indexUid: ctx.names.authors,
+      q: query.q,
+      filter: buildAuthorFilter(o),
+      limit: SEARCH_AUTHOR_LIMIT,
+    });
   }
   const { results } = await ctx.client.multiSearch({ queries });
   const [storyResult, authorResult] = results;
@@ -76,17 +95,20 @@ export async function searchCatalog(
       totalHits: storyResult.totalHits ?? storyResult.estimatedTotalHits ?? 0,
     },
     authors: withAuthors
-      ? ((authorResult?.hits ?? []) as unknown as AuthorDoc[]).map(toAuthorHit)
+      ? ((authorResult?.hits ?? []) as unknown as AuthorDoc[]).map((doc) => toAuthorHit(doc, o))
       : [],
   };
 }
 
-/** Only the doc fields, whatever else Meilisearch adds to a hit. */
-function toAuthorHit(doc: AuthorDoc): AuthorHit {
+/**
+ * Only the doc fields, whatever else Meilisearch adds to a hit. A doc indexed before
+ * `matureStoryCount` existed lacks it until the next sync or reindex, hence the fallback.
+ */
+export function toAuthorHit(doc: AuthorDoc, o: ListOptions): AuthorHit {
   return {
     username: doc.username,
     displayName: doc.displayName,
     avatarUrl: doc.avatarUrl,
-    storyCount: doc.storyCount,
+    storyCount: doc.storyCount + (o.includeMature ? (doc.matureStoryCount ?? 0) : 0),
   };
 }

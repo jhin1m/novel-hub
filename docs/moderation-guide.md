@@ -19,7 +19,7 @@ Mọi hành động ghi vào `moderation_actions` (ai, lúc nào, mục nào, gh
 | Ẩn chương | Chương trả 404, bộ đếm chương/chữ của truyện tính lại; tác giả không đăng lại được chương này | Khôi phục chương |
 | Cấm bình luận | Chưa có tác dụng ở Giai đoạn 1 (bình luận thuộc Giai đoạn 2) | Bỏ cấm bình luận |
 | Khoá tài khoản | Đăng xuất ngay mọi phiên, không đăng nhập lại được; mọi truyện, chương, trang tác giả biến mất khỏi trang và tìm kiếm. Không sửa dữ liệu truyện | Mở khoá tài khoản |
-| Gộp tag | Tab "Gộp tag": mọi truyện gắn tag cũ chuyển sang tag mới, URL tag cũ chuyển hướng 301 sang tag mới | Không có nút hoàn tác |
+| Gộp tag | Tab "Gộp tag": mọi truyện gắn tag cũ chuyển sang tag mới, URL tag cũ chuyển hướng 301 sang tag mới | Không có nút hoàn tác; sửa tay theo mục "Hoàn tác gộp tag thủ công" |
 | Bỏ qua / Đánh dấu đã xử lý | Đóng một báo cáo mà không đổi nội dung | — |
 
 Quyền: mod tác động lên reader và author; admin thêm cả mod. Không ai khoá được admin hay tự xử mình. Luật này áp cả cho nội dung: mod không ẩn/khôi phục truyện, chương của mod khác hay của admin (để admin làm), không ai xử truyện của chính mình. Báo cáo về nội dung của mod/admin khác vẫn đóng được (bỏ qua, đánh dấu đã xử lý); báo cáo về chính mình hoặc nội dung của mình thì không. Mod bị cấm bình luận hoặc bị khoá thì mất quyền kiểm duyệt. Trang chỉ hiện các nút được phép.
@@ -32,3 +32,52 @@ Trang công khai được Cloudflare cache: sau khi ẩn hoặc khoá, worker pu
 - **Gộp tag:** chọn đúng tag đích trước khi xác nhận. Tag nào đã gộp vào tag nguồn trước đó cũng chuyển thẳng sang tag đích (không tạo chuỗi chuyển hướng nhiều bước). Gộp tag phổ biến sinh nhiều job purge, worker xử lý dần. Tag nguồn không còn truyện nào thì trang tag cũ có thể còn trong cache CDN tới khi hết hạn.
 - **Báo cáo trùng lặp tự động:** chỉ bắt được chương chép gần nguyên văn (độ giống ước tính từ 70%). Chép rồi sửa nhiều (giống dưới khoảng 50%) gần như không bị phát hiện, cần người đọc báo cáo. Báo cáo tự động hiện "Giống N% với chương này" kèm link chương gốc. Bỏ qua một cặp trùng thì lần đăng lại có sửa nhẹ của cùng cặp sẽ không bị báo lại.
 - Mô tả của người báo và ghi chú của mod là văn bản thuần, không ai ngoài mod/admin thấy. Tác giả không biết ai đã báo cáo.
+
+## Hoàn tác gộp tag thủ công
+
+Gộp tag là thao tác một chiều trên giao diện. Nếu gộp nhầm, admin có quyền vào Postgres sửa tay dựa trên bản ghi trong `moderation_actions`: với `action = 'merge_tag'`, cột `note` là JSON ghi đủ những gì đã đổi (ghi chú của mod nằm trong trường `note` của JSON).
+
+| Trường | Ý nghĩa |
+| --- | --- |
+| `source`, `target` | Tag nguồn và tag đích (`id`, `slug`) |
+| `repointedTags` | Các tag bị trỏ sang tag đích: tag nguồn (`previousCanonicalId = null`) và các tag đã gộp vào tag nguồn trước đó (`previousCanonicalId` = id tag nguồn) |
+| `storyIds` | Mọi truyện bị đổi tag hoặc tag chính |
+| `removedStoryTags` | Các dòng `story_tags` đã xoá (`storyId`, `tagId` cũ) |
+| `addedTargetStoryIds` | Truyện được thêm tag đích do gộp (truyện không có ở đây đã có sẵn tag đích từ trước) |
+| `mainTagChanges` | Truyện bị đổi `main_tag_id`, kèm giá trị cũ (`previousMainTagId`) |
+
+Các bước, chạy trong **một transaction** (`begin; ... commit;`), thay `:log_id` bằng id dòng log:
+
+```sql
+begin;
+-- Bản ghi gộp
+create temp table m on commit drop as
+  select note::jsonb as r from moderation_actions where id = :log_id and action = 'merge_tag';
+
+-- 1. Trả các tag về chỗ cũ (tag nguồn thành tag chuẩn lại, tag con trỏ về tag nguồn)
+update tags t set canonical_id = (x->>'previousCanonicalId')::uuid
+  from m, jsonb_array_elements(m.r->'repointedTags') x where t.id = (x->>'id')::uuid;
+
+-- 2. Gỡ tag đích khỏi truyện chỉ có nó nhờ gộp
+delete from story_tags st using m, jsonb_array_elements_text(m.r->'addedTargetStoryIds') s
+  where st.story_id = s::uuid and st.tag_id = (m.r->'target'->>'id')::uuid;
+
+-- 3. Gắn lại tag cũ
+insert into story_tags (story_id, tag_id)
+  select (x->>'storyId')::uuid, (x->>'tagId')::uuid from m, jsonb_array_elements(m.r->'removedStoryTags') x
+  on conflict do nothing;
+
+-- 4. Trả tag chính
+update stories st set main_tag_id = (x->>'previousMainTagId')::uuid
+  from m, jsonb_array_elements(m.r->'mainTagChanges') x where st.id = (x->>'storyId')::uuid;
+commit;
+```
+
+Sau đó:
+
+- Ghi lại việc đã hoàn tác (ai, lúc nào, log id nào) ngoài hệ thống; hiện chưa có hành động mod "hoàn tác gộp tag" để ghi vào `moderation_actions`.
+- Chạy `pnpm search:reindex` để tài liệu tìm kiếm của các truyện trong `storyIds` lấy lại tag cũ.
+- Purge cache CDN: `pnpm cdn:purge -- --story <publicId>` cho từng truyện bị ảnh hưởng (lấy `public_id` từ `stories` theo `storyIds`), và purge trang `/tags/<slug>` của tag nguồn, tag đích, các tag con trên dashboard Cloudflare (trang tag nguồn đang cache phản hồi 301).
+
+Truyện mà tác giả đã sửa tag sau khi gộp: kiểm tra từng truyện trước khi chạy bước 2–4, vì các bước trên ghi đè lựa chọn mới của tác giả. Một truyện vượt quá 10 tag sau bước 3 thì sửa tay.
+

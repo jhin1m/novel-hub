@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { clientIp, createClientIpResolver, normalizeIp } from './client-ip';
+import {
+  clientIp,
+  createClientIpResolver,
+  normalizeIp,
+  untrustedCfIpWarning,
+  warnUntrustedCfIpOnce,
+} from './client-ip';
 
 /** A request as srvx hands it over: the TCP peer on `ip`. */
 function requestFrom(peer: unknown, headers: Record<string, string> = {}): Request {
@@ -78,5 +84,34 @@ describe('createClientIpResolver', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     createClientIpResolver({ trustCf: false })(new Request('http://x/'));
     expect(warn).toHaveBeenCalledWith('[rate-limit] client IP source: none');
+  });
+});
+
+describe('untrustedCfIpWarning', () => {
+  it('warns in production when CF-Connecting-IP is not trusted', () => {
+    const warning = untrustedCfIpWarning({ NODE_ENV: 'production', TRUST_CF_IP: false });
+    expect(warning).toMatch(/TRUST_CF_IP=false/);
+    expect(warning).toMatch(/Cloudflare/);
+  });
+
+  it('stays quiet when trusted or outside production', () => {
+    expect(untrustedCfIpWarning({ NODE_ENV: 'production', TRUST_CF_IP: true })).toBeNull();
+    expect(untrustedCfIpWarning({ NODE_ENV: 'development', TRUST_CF_IP: false })).toBeNull();
+    expect(untrustedCfIpWarning({ NODE_ENV: 'test', TRUST_CF_IP: false })).toBeNull();
+  });
+});
+
+describe('warnUntrustedCfIpOnce', () => {
+  it('warns once per state, and never when there is nothing to warn about', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const state = {};
+    warnUntrustedCfIpOnce({ NODE_ENV: 'production', TRUST_CF_IP: false }, state);
+    warnUntrustedCfIpOnce({ NODE_ENV: 'production', TRUST_CF_IP: false }, state);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0]?.[0]).toMatch(/TRUST_CF_IP=false/);
+
+    warnUntrustedCfIpOnce({ NODE_ENV: 'production', TRUST_CF_IP: true }, {});
+    warnUntrustedCfIpOnce({ NODE_ENV: 'development', TRUST_CF_IP: false }, {});
+    expect(warn).toHaveBeenCalledTimes(1);
   });
 });

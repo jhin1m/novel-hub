@@ -123,6 +123,43 @@ describe('filters and 18+', () => {
     expect((await titlesFor('truyen', true)).sort()).toEqual(['Truyện Người Lớn', 'Truyện Thường']);
   });
 
+  it('hides an author whose public stories are all 18+ unless 18+ is allowed', async () => {
+    const author = await makeAuthor(db, 'chi_nguoi_lon');
+    const first = await makePublishedStory(db, author, 1, 'Một');
+    const second = await makePublishedStory(db, author, 1, 'Hai');
+    await setStory(first.storyId, { isMature: true });
+    await syncStoryAndAuthor(db, ctx, first.storyId);
+    await syncStoryAndAuthor(db, ctx, second.storyId);
+
+    const authorsFor = async (includeMature: boolean) =>
+      (
+        await searchCatalog(db, ctx, searchQuerySchema.parse({ q: 'chi nguoi lon' }), {
+          includeMature,
+        })
+      ).authors;
+    expect(await authorsFor(false)).toMatchObject([{ username: 'chi_nguoi_lon', storyCount: 1 }]);
+    expect(await authorsFor(true)).toMatchObject([{ username: 'chi_nguoi_lon', storyCount: 2 }]);
+
+    // The last general story turns 18+: the story sync also resyncs its author.
+    await setStory(second.storyId, { isMature: true });
+    await syncStoryAndAuthor(db, ctx, second.storyId);
+    expect(await authorsFor(false)).toEqual([]);
+    expect(await authorsFor(true)).toMatchObject([{ username: 'chi_nguoi_lon', storyCount: 2 }]);
+
+    // A reindex rebuilds the same doc.
+    await ctx.client.index(ctx.names.authors).deleteAllDocuments().waitTask();
+    await reindexAll(db, ctx);
+    expect(await authorsFor(false)).toEqual([]);
+    expect(await authorsFor(true)).toMatchObject([{ username: 'chi_nguoi_lon', storyCount: 2 }]);
+
+    // Back to general once a moderator hides the 18+ one and a general story remains.
+    await setStory(second.storyId, { isMature: false });
+    await setStory(first.storyId, { visibility: 'hidden_by_mod' });
+    await syncStoryAndAuthor(db, ctx, first.storyId);
+    expect(await authorsFor(false)).toMatchObject([{ username: 'chi_nguoi_lon', storyCount: 1 }]);
+    expect(await authorsFor(true)).toMatchObject([{ username: 'chi_nguoi_lon', storyCount: 1 }]);
+  });
+
   it('filters by tag (a merged tag as its canonical tag), status and word count', async () => {
     const author = await makeAuthor(db);
     const a = await makePublishedStory(db, author, 1, 'Alpha');

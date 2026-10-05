@@ -23,6 +23,7 @@ import {
   createSearchCtx,
   createViewCounter,
   s3ConfigFromEnv,
+  warnUntrustedCfIpOnce,
   withTimeout,
 } from '@novel-hub/core';
 import { type Db, createDb } from '@novel-hub/db';
@@ -87,10 +88,12 @@ const QUEUE_CLOSE_WAIT_MS = 2_000;
 const globalState = globalThis as typeof globalThis & {
   __novelHubInfra?: Promise<Infra>;
   __novelHubSignalsRegistered?: boolean;
+  __novelHubCfIpWarning?: { warned?: boolean };
 };
 
 async function createInfra(): Promise<Infra> {
   const env = loadServerEnv(serverEnvSchema);
+  warnUntrustedCfIpOnce(env, (globalState.__novelHubCfIpWarning ??= {}));
   // `loadServerEnv` has loaded `.env` into `process.env` by now.
   const s3Env = loadOptionalEnv(s3EnvSchema, process.env, 's3');
   const storage = s3Env ? createS3Storage(s3ConfigFromEnv(s3Env)) : null;

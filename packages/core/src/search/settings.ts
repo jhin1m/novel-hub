@@ -27,6 +27,7 @@ export const STORY_INDEX_SETTINGS: Settings = {
 
 export const AUTHOR_INDEX_SETTINGS: Settings = {
   searchableAttributes: ['displayName', 'username'],
+  filterableAttributes: ['storyCount'],
   sortableAttributes: ['storyCount'],
   typoTolerance: TYPO_TOLERANCE,
 };

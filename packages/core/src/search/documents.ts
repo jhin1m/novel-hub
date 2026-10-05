@@ -35,8 +35,13 @@ export interface AuthorDoc {
   username: string;
   displayName: string;
   avatarUrl: string | null;
-  /** Public stories a guest can see (18+ left out). */
+  /**
+   * Public stories a guest can see (18+ left out). An author whose public stories are all 18+ has
+   * 0 and is filtered out of searches that leave 18+ out.
+   */
   storyCount: number;
+  /** Public 18+ stories, added to the count shown to a reader who turned 18+ on. */
+  matureStoryCount: number;
 }
 
 /** A story as loaded for indexing: `doc` is `null` when it must not be in the index. */
@@ -167,6 +172,7 @@ export async function loadAuthorDocs(db: Db, where: SQL, limit: number): Promise
       status: users.status,
       published: count(stories.id),
       general: sql<number>`count(*) filter (where ${stories.isMature} = false)`.mapWith(Number),
+      mature: sql<number>`count(*) filter (where ${stories.isMature} = true)`.mapWith(Number),
     })
     .from(users)
     .leftJoin(stories, and(eq(stories.authorId, users.id), eq(stories.visibility, 'published')))
@@ -184,6 +190,7 @@ export async function loadAuthorDocs(db: Db, where: SQL, limit: number): Promise
             displayName: row.displayName,
             avatarUrl: row.avatarUrl,
             storyCount: row.general,
+            matureStoryCount: row.mature,
           }
         : null,
   }));

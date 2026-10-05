@@ -205,6 +205,7 @@ export {
   createClientIpResolver,
   normalizeIp,
   resolveClientIp,
+  warnUntrustedCfIpOnce,
 } from './rate-limit/client-ip';
 export {
   type CreateRateLimiterOptions,

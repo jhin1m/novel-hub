@@ -92,7 +92,10 @@ export function ChapterList({ publicId }: { publicId: string }) {
                   date: dateFormat.format(new Date(chapter.draftUpdatedAt ?? chapter.updatedAt)),
                 })}
               </span>
-              <DeleteChapterButton publicId={publicId} chapter={chapter} />
+              {/* The API refuses to delete a chapter a moderator hid. */}
+              {chapter.status === 'hidden_by_mod' ? null : (
+                <DeleteChapterButton publicId={publicId} chapter={chapter} />
+              )}
             </li>
           ))}
         </ol>

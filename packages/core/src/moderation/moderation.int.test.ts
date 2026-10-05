@@ -25,7 +25,7 @@ import { addChapter, makeAuthor, makePublishedStory } from '../testing/story-fix
 import type { CurrentUser } from '../users/current-user';
 import { applyModerationAction } from './apply-action';
 import { setChapterHidden, setStoryHidden } from './content-visibility';
-import { mergeTag } from './merge-tag';
+import { type MergeTagRecord, mergeTag } from './merge-tag';
 import { banUser } from './user-status';
 
 const { db, pool } = createTestDb();
@@ -524,6 +524,53 @@ describe('merge_tag', () => {
     expect(await logRows()).toMatchObject([
       { targetType: 'tag', targetId: (await tagRow('tien-hiep')).id, action: 'merge_tag' },
     ]);
+  });
+
+  it('logs everything a manual undo needs, the overwritten values included', async () => {
+    const { author, story, mod } = await setup();
+    const source = await tagRow('tien-hiep');
+    const child = await tagRow('tu-tien');
+    const target = await tagRow('huyen-huyen');
+    // `story`: main tag and tag tien-hiep. `other`: main tag do-thi, tags tu-tien and the target.
+    const other = await makePublishedStory(db, author, 1, 'Truyện Thứ Hai');
+    const doThi = await tagRow('do-thi');
+    await db.update(stories).set({ mainTagId: doThi.id }).where(eq(stories.id, other.storyId));
+    await db.delete(storyTags).where(eq(storyTags.storyId, other.storyId));
+    await db.insert(storyTags).values([
+      { storyId: other.storyId, tagId: child.id },
+      { storyId: other.storyId, tagId: target.id },
+    ]);
+    const before = await db.select().from(storyTags);
+
+    await apply(mod, {
+      action: 'merge_tag',
+      sourceSlug: 'tien-hiep',
+      targetSlug: 'huyen-huyen',
+      note: 'trùng',
+    });
+
+    const [row] = await logRows();
+    const record = JSON.parse(row?.note ?? '') as MergeTagRecord;
+    const byStory = (a: { storyId: string }, b: { storyId: string }) =>
+      a.storyId.localeCompare(b.storyId);
+    expect(record).toEqual({
+      note: 'trùng',
+      source: { id: source.id, slug: 'tien-hiep' },
+      target: { id: target.id, slug: 'huyen-huyen' },
+      repointedTags: [
+        { id: source.id, slug: 'tien-hiep', previousCanonicalId: null },
+        { id: child.id, slug: 'tu-tien', previousCanonicalId: source.id },
+      ],
+      storyIds: [story.storyId, other.storyId].sort(),
+      removedStoryTags: expect.any(Array) as unknown,
+      addedTargetStoryIds: [story.storyId],
+      mainTagChanges: [{ storyId: story.storyId, previousMainTagId: source.id }],
+    });
+    // Exactly the rows on the old tags, so re-inserting them restores the story tags.
+    const onOldTags = before
+      .filter((r) => r.tagId === source.id || r.tagId === child.id)
+      .map((r) => ({ storyId: r.storyId, tagId: r.tagId }));
+    expect([...record.removedStoryTags].sort(byStory)).toEqual(onOldTags.sort(byStory));
   });
 });
 

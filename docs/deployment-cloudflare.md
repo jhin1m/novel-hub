@@ -90,7 +90,20 @@ Mọi chỗ cần IP (rate limit đăng ký/đăng nhập/viết, giới hạn l
 
 Khi đặt origin sau Cloudflare: bật firewall như trên rồi đặt `TRUST_CF_IP=true`. Lần đầu nhận request, log web in một dòng `[rate-limit] client IP source: <cf-connecting-ip|peer|none>` (không in IP) để kiểm; `none` nghĩa là mọi người chung một bucket, phải xử lý trước khi mở public.
 
+`NODE_ENV=production` mà `TRUST_CF_IP=false` thì web vẫn khởi động nhưng log một cảnh báo `[rate-limit] TRUST_CF_IP=false in production: ...` (một lần mỗi process, khi web nạp env lúc nhận request đầu tiên). Origin nhận kết nối trực tiếp không qua Cloudflare thì bỏ qua cảnh báo này; đứng sau Cloudflare thì phải bật như trên.
+
 `RATE_LIMIT_FACTOR` chỉ dùng cho test; production khác 1 thì web không khởi động.
+
+### Rủi ro đã chấp nhận: khoá chủ tài khoản tới 24 giờ
+
+Giới hạn theo email toàn cục (mọi IP cộng lại, `RATE_LIMITS` trong `packages/shared/src/rate-limits.ts`) chặn dò mật khẩu và spam email phân tán, nhưng kẻ xấu biết email của ai đó có thể dùng nó để khoá chính chủ:
+
+- Gửi đủ 10 yêu cầu quên mật khẩu/ngày cho email đó (`forgotPassword.emailGlobal`, đếm cả yêu cầu thành công): chủ không nhận được link đặt lại mật khẩu tới khi hết cửa sổ 24 giờ.
+- Liên tục đăng nhập sai quá 50 lần/giờ (`signIn.emailGlobal`, chỉ đếm lần sai): đăng nhập bằng mật khẩu bị chặn với mọi IP, kể cả chủ nhập đúng.
+
+Gộp lại, chủ tài khoản dùng mật khẩu có thể bị khoá tới 24 giờ. Chủ có liên kết Google OAuth vẫn đăng nhập được (OAuth không đi qua giới hạn theo email). Phiên đang đăng nhập không bị đăng xuất.
+
+Chấp nhận cho năm đầu (ít người dùng, chưa có giá trị để nhắm). **Xem lại khi có người dùng thật**: theo dõi log 429 của `/sign-in/email` và `/request-password-reset`; hướng xử lý khi cần là bỏ qua giới hạn email toàn cục cho thiết bị đã từng đăng nhập thành công, hoặc thêm CAPTCHA (Turnstile) sau vài lần sai.
 
 ## Kiểm tra sau khi áp
 

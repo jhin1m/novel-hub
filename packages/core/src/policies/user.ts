@@ -3,7 +3,7 @@ import type { userRole, userStatus } from '@novel-hub/db';
 export type UserRole = (typeof userRole.enumValues)[number];
 export type UserStatus = (typeof userStatus.enumValues)[number];
 
-/** Phần thông tin user mà mọi quyết định quyền cần tới. */
+/** The part of a user every permission decision needs. */
 export interface PolicyUser {
   role: UserRole;
   status: UserStatus;
@@ -14,17 +14,17 @@ export function hasAnyRole(user: PolicyUser, roles: readonly UserRole[]): boolea
   return roles.includes(user.role);
 }
 
-/** Đăng truyện, chương, bình luận đòi email đã xác thực (đăng nhập thì không). */
+/** Publishing stories, chapters and comments needs a verified email (signing in does not). */
 export function isEmailVerified(user: PolicyUser): boolean {
   return user.emailVerified;
 }
 
 /**
- * User bị ban không đăng nhập được và session cũ bị coi như khách.
+ * A banned user cannot sign in and an old session counts as a guest.
  *
- * Bất biến: ban ⇒ xoá mọi session của user. `banUser()` (cùng công cụ mod, Giai đoạn 1)
- * phải làm cả hai trong một transaction; các kiểm tra `isBanned` ở middleware chỉ là lớp
- * chặn thêm, không thay cho việc xoá session.
+ * Invariant: ban ⇒ every session of the user is deleted. `banUser()`
+ * (`moderation/user-status.ts`) does both in one transaction; the `isBanned` checks in the
+ * middleware are only an extra guard, not a substitute for deleting the sessions.
  */
 export function isBanned(user: Pick<PolicyUser, 'status'>): boolean {
   return user.status === 'banned';

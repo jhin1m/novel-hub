@@ -7,7 +7,9 @@ import { noStore } from './middleware/no-store';
 import { createHealthRoutes } from './routes/health';
 import { createLibraryRoutes } from './routes/library';
 import { createMeRoutes } from './routes/me';
+import { createModerationRoutes } from './routes/moderation';
 import { createReadingRoutes } from './routes/reading';
+import { createReportRoutes } from './routes/reports';
 import { createSearchRoutes } from './routes/search';
 import { createStoryRoutes } from './routes/stories';
 import { createTagRoutes } from './routes/tags';
@@ -19,7 +21,9 @@ function createV1Routes(deps: ApiDeps) {
     .route('/health', createHealthRoutes(deps))
     .route('/library', createLibraryRoutes(deps))
     .route('/me', createMeRoutes(deps))
+    .route('/moderation', createModerationRoutes(deps))
     .route('/reading', createReadingRoutes(deps))
+    .route('/reports', createReportRoutes(deps))
     .route('/search', createSearchRoutes(deps))
     .route('/stories', createStoryRoutes(deps))
     .route('/tags', createTagRoutes(deps));

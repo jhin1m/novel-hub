@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ContentPolicyRouteImport } from './routes/content-policy'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LibraryRouteImport } from './routes/library'
+import { Route as ModerationRouteImport } from './routes/moderation'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -47,6 +48,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
 const LibraryRoute = LibraryRouteImport.update({
   id: '/library',
   path: '/library',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ModerationRoute = ModerationRouteImport.update({
+  id: '/moderation',
+  path: '/moderation',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/content-policy': typeof ContentPolicyRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/library': typeof LibraryRoute
+  '/moderation': typeof ModerationRoute
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
@@ -154,6 +161,7 @@ export interface FileRoutesByTo {
   '/content-policy': typeof ContentPolicyRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/library': typeof LibraryRoute
+  '/moderation': typeof ModerationRoute
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/content-policy': typeof ContentPolicyRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/library': typeof LibraryRoute
+  '/moderation': typeof ModerationRoute
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/content-policy'
     | '/forgot-password'
     | '/library'
+    | '/moderation'
     | '/reset-password'
     | '/search'
     | '/settings'
@@ -220,6 +230,7 @@ export interface FileRouteTypes {
     | '/content-policy'
     | '/forgot-password'
     | '/library'
+    | '/moderation'
     | '/reset-password'
     | '/search'
     | '/settings'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/content-policy'
     | '/forgot-password'
     | '/library'
+    | '/moderation'
     | '/reset-password'
     | '/search'
     | '/settings'
@@ -263,6 +275,7 @@ export interface RootRouteChildren {
   ContentPolicyRoute: typeof ContentPolicyRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LibraryRoute: typeof LibraryRoute
+  ModerationRoute: typeof ModerationRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
@@ -308,6 +321,13 @@ declare module '@tanstack/react-router' {
       path: '/library'
       fullPath: '/library'
       preLoaderRoute: typeof LibraryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/moderation': {
+      id: '/moderation'
+      path: '/moderation'
+      fullPath: '/moderation'
+      preLoaderRoute: typeof ModerationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -423,6 +443,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContentPolicyRoute: ContentPolicyRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LibraryRoute: LibraryRoute,
+  ModerationRoute: ModerationRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,

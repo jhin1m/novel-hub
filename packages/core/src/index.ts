@@ -224,3 +224,16 @@ export { normalizeForDedupe, shingles } from './dedupe/normalize';
 export { jaccardEstimate, minhash } from './dedupe/minhash';
 export { hamming64, simhash } from './dedupe/simhash';
 export { lshKeys } from './dedupe/lsh';
+export { canModerate, canModerateUser } from './policies/moderation';
+export { type ResolvedTarget, createReport } from './reports/create-report';
+export {
+  type ReportDto,
+  type ReportListPage,
+  type ReportTargetDto,
+  listReports,
+} from './reports/list-reports';
+export { type ChapterContext, type StoryContext, type UserContext } from './reports/report-context';
+export { applyModerationAction } from './moderation/apply-action';
+export { type ModerationError, type ModerationTarget } from './moderation/log-action';
+export { banUser, moderateUser, unbanUser } from './moderation/user-status';
+export { mergeTag } from './moderation/merge-tag';

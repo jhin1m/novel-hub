@@ -4,6 +4,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { Badge } from '@/components/ui/badge';
 import { ContinueReadingButton } from '../components/library/continue-reading-button';
 import { LibraryButton } from '../components/library/library-button';
+import { ReportButton } from '../components/report/report-button';
 import { NotFoundPage } from '../components/not-found';
 import { MatureGate, useMatureAllowed } from '../components/reader/mature-gate';
 import { SiteLayout } from '../components/site-layout';
@@ -110,6 +111,10 @@ function StoryPage() {
                     <ContinueReadingButton story={story} firstChapterNumber={first.number} />
                   ) : null}
                   <LibraryButton publicId={story.publicId} />
+                  <ReportButton
+                    target={{ type: 'story', storyPublicId: story.publicId }}
+                    className="self-center"
+                  />
                 </div>
               </div>
             </header>

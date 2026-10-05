@@ -64,6 +64,7 @@ const MESSAGES: Record<string, () => string> = {
   CHAPTER_HIDDEN_BY_MOD: m.error_chapter_hidden_by_mod,
   ALREADY_PUBLISHED: m.error_already_published,
   NOT_SCHEDULED: m.error_not_scheduled,
+  INVALID_STATE: m.error_invalid_state,
 };
 
 /** User-facing message for an API error code; anything unknown gets the generic message. */

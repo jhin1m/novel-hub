@@ -45,7 +45,7 @@ Giai đoạn 0 xong (`plans/261004-1255-giai-doan-0-nen-mong`). Spec `docs/proje
 | 12 | [Tủ truyện và lịch sử đọc](./phase-12-tu-truyen-lich-su-doc.md) | 9 | Completed |
 | 13 | [Rate limit Redis](./phase-13-rate-limit-redis.md) | 10 | Completed |
 | 14 | [Kiểm tra trùng lặp](./phase-14-kiem-tra-trung-lap.md) | 11 (phần 1/2) | Completed |
-| 15 | [Báo cáo vi phạm và hàng chờ mod](./phase-15-bao-cao-hang-cho-mod.md) | 11 (đánh `[x]`) | Pending |
+| 15 | [Báo cáo vi phạm và hàng chờ mod](./phase-15-bao-cao-hang-cho-mod.md) | 11 (đánh `[x]`) | Completed |
 | 16 | [SEO: metadata, OG, sitemap, canonical](./phase-16-seo-metadata-sitemap.md) | 12 | Pending |
 | 17 | [Backup offsite và thử restore](./phase-17-backup-offsite-restore.md) | 13 | Pending |
 
@@ -57,6 +57,7 @@ Phụ thuộc tuyến tính 1 → 17.
 - **User (2026-10-05, sau red team):** áp dụng cả 15 finding; tách checkbox 6 thành phase 7–9 và checkbox 11 thành phase 14–15; giữ đếm lượt đọc ở phase 9 (mục 6).
 - **User (2026-10-05):** URL công khai và tên file route tiếng Anh (bảng đổi trong docs/code-standards.md); slug nội dung vẫn tiếng Việt không dấu; query phân trang `page`.
 - **User (2026-10-05, sau phase 6):** đảo câu 11 của Validation Log sang phương án B — khôi phục revision tự chụp nháp hiện tại thành một revision (khi khác revision mới nhất) trước khi thay, tính trong giới hạn 20. Lý do: mirror localStorage bị xoá sau mỗi lần autosave thành công và khi khôi phục, nên không phải lớp bảo vệ. Làm thành việc riêng sau phase 7.
+- **User (2026-10-05, sau phase 14):** (a) chặn tác giả xoá chương đang `hidden_by_mod`; (b) chương hẹn giờ quét trễ giữ `published_at` = giờ quét thật; (c) tìm kiếm ẩn tác giả chỉ có truyện 18+ với khách và người chưa bật 18+; (d) khoá tài khoản tối đa 24 giờ do giới hạn email toàn cục: chấp nhận cho năm đầu, ghi vào tài liệu deploy; (e) production mà `TRUST_CF_IP=false` thì log cảnh báo khi khởi động. Làm (a), (c), (d), (e) thành một lượt sửa sau phase 15.
 - **Kiến trúc dữ liệu cho UI:**
   - Trang công khai: loader gọi `createServerFn({ method: 'GET' })` trong `apps/web/src/server-fns/` → `core`. Không TanStack Query cho dữ liệu công khai.
   - **Liên kết giữa các trang công khai là link tài liệu thường (`reloadDocument`)**, prefetch chương sau bằng `<link rel="prefetch">` HTML: mọi lượt xem đi qua HTML cache CDN, không gọi server fn từ browser (server fn GET không có cache header). <!-- Red Team: CDN bypass -->
@@ -277,7 +278,8 @@ Phụ thuộc tuyến tính 1 → 17.
 - Phase 10 xong (2026-10-05): gate 5 lệnh xanh; checkbox 7 `[x]`. Review `../reports/code-reviewer-261005-1440-phase-10-catalog-pages-review-report.md` (8/10, đã sửa M1, M2, L2, L3, một phần L4). Report: `../reports/cook-261005-1438-phase-10-catalog-pages-report.md`. Lệch plan: link công khai là `<a href>`; `StoryChapterList`; `canonicalPageParam` trả số; sửa `useSignOut`; event truyện thêm `previousTagSlugs`. Chờ user duyệt bản nháp `/terms`, `/content-policy`.
 - Phase 11 xong (2026-10-05): gate 5 lệnh xanh; checkbox 8 `[x]`. Review `../reports/code-reviewer-261005-1454-phase-11-search-review-report.md` (8/10, đã sửa M1–M3, L1, L4, L5). Report: `../reports/cook-261005-1524-phase-11-search-report.md`. Lệch plan: không cần trường `*Folded` (`đ` đã khớp), `searchCatalog` nhận `db`, sync đọc lại tới khi ổn định, query lạ ở `/search` nhận 307 của router.
 - Phase 12 xong (2026-10-05): gate 5 lệnh xanh; checkbox 9 `[x]`. Review `../reports/code-reviewer-261005-1536-phase-12-library-history-review-report.md` (8/10, đã sửa M1–M3, L1). Report: `../reports/cook-261005-1602-phase-12-library-history-report.md`. Lệch plan: cursor lịch sử theo µs, LATERAL `resumeChapter` thay `resolveReadableChapter`, `bodyLimit` reading chỉ cho route có body.
-- Tiếp: cook phase 13.
+- Phase 15 xong (2026-10-05): gate 5 lệnh xanh; checkbox 11 `[x]`. Review `../reports/code-reviewer-261005-1747-phase-15-moderation-review-report.md` (7.5/10, đã sửa H1, M1, M2, L1, L2, L5, L6). Report: `../reports/cook-261005-1747-phase-15-moderation-report.md`. Lệch plan: khách bấm báo cáo → `/sign-in` không kèm redirect; luật quyền mod áp cả cho nội dung của mod/admin; chưa smoke worker thật (bước 9).
+- Tiếp: cook phase 16.
 - Nhắc trước khi mở public: backup Postgres ra ngoài VPS + thử restore (phase 17).
 
 <!-- slug: giai-doan-1-doc-va-viet -->

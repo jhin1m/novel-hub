@@ -114,7 +114,15 @@ function ReaderPage() {
             onClick={onReadingAreaClick}
             contentRef={contentRef}
           />
-          <ChapterEnd nextHref={nextHref} authorNote={chapter.authorNote} />
+          <ChapterEnd
+            nextHref={nextHref}
+            authorNote={chapter.authorNote}
+            reportTarget={{
+              type: 'chapter',
+              storyPublicId: story.publicId,
+              number: chapter.number,
+            }}
+          />
         </div>
       </main>
       {story.isMature ? (

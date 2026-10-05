@@ -2,6 +2,7 @@ import { canonicalPath, usernameParamSchema } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { createFileRoute } from '@tanstack/react-router';
 import { NotFoundPage } from '../components/not-found';
+import { ReportButton } from '../components/report/report-button';
 import { SiteLayout } from '../components/site-layout';
 import { StoryGrid } from '../components/story/story-grid';
 import { publicPageHeaders } from '../lib/cache-headers';
@@ -56,6 +57,10 @@ function AuthorPage() {
               {author.bio}
             </p>
           ) : null}
+          <ReportButton
+            target={{ type: 'user', username: author.username }}
+            className="self-start"
+          />
         </header>
         <section aria-labelledby="author-stories" className="flex flex-col gap-4">
           <h2 id="author-stories" className="font-serif text-xl font-semibold">

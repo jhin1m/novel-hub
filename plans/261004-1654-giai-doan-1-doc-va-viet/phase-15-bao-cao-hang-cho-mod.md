@@ -1,7 +1,7 @@
 ---
 phase: 15
 title: "Phase 15: Báo cáo vi phạm và hàng chờ mod"
-status: pending
+status: completed
 priority: P1
 effort: "2d"
 dependencies: [14]
@@ -156,12 +156,12 @@ Không migration, không env mới, không dependency mới.
 
 ## Function / Interface Checklist
 
-- [ ] `reportCreateSchema`, `moderationActionSchema`, `reportListQuerySchema`, `MODERATION_ACTIONS`
-- [ ] `canModerate`, `canModerateUser`
-- [ ] `createReport`, `listReports`
-- [ ] `applyModerationAction`, `banUser`, `unbanUser`, mute/unmute, hide/restore story/chapter, `mergeTag`, resolve/dismiss
-- [ ] Route `POST /api/v1/reports`, `GET /api/v1/moderation/reports`, `POST /api/v1/moderation/actions`
-- [ ] `ReportButton`, `ReportDialog`, route `/moderation`
+- [x] `reportCreateSchema`, `moderationActionSchema`, `reportListQuerySchema`, `MODERATION_ACTIONS`
+- [x] `canModerate`, `canModerateUser`
+- [x] `createReport`, `listReports`
+- [x] `applyModerationAction`, `banUser`, `unbanUser`, mute/unmute, hide/restore story/chapter, `mergeTag`, resolve/dismiss
+- [x] Route `POST /api/v1/reports`, `GET /api/v1/moderation/reports`, `POST /api/v1/moderation/actions`
+- [x] `ReportButton`, `ReportDialog`, route `/moderation`
 
 ## Test Scenario Matrix
 
@@ -190,11 +190,11 @@ Không migration, không env mới, không dependency mới.
 
 ## Success Criteria
 
-- [ ] Người dùng báo cáo truyện/chương/tài khoản với 5 lý do; có rate limit
-- [ ] `/moderation` lọc theo trạng thái và lý do, hiện cả báo cáo `duplicate`; hành động một cú bấm: ẩn, khôi phục, mute, ban, gộp tag
-- [ ] Mọi hành động có `moderation_actions` + outbox trong cùng transaction; ban xoá session cùng transaction, không ẩn truyện hàng loạt
-- [ ] Ban/bỏ ban làm nội dung biến mất/trở lại ở trang, tìm kiếm (qua outbox)
-- [ ] Gate xanh; checkbox 11 `[x]`
+- [x] Người dùng báo cáo truyện/chương/tài khoản với 5 lý do; có rate limit
+- [x] `/moderation` lọc theo trạng thái và lý do, hiện cả báo cáo `duplicate`; hành động một cú bấm: ẩn, khôi phục, mute, ban, gộp tag
+- [x] Mọi hành động có `moderation_actions` + outbox trong cùng transaction; ban xoá session cùng transaction, không ẩn truyện hàng loạt
+- [x] Ban/bỏ ban làm nội dung biến mất/trở lại ở trang, tìm kiếm (qua outbox) — phủ bằng test; smoke worker thật (bước 9) chưa chạy
+- [x] Gate xanh; checkbox 11 `[x]`
 
 ## Risk Assessment
 

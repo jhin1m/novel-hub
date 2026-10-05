@@ -1,13 +1,20 @@
+import type { ReportTarget } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { Button } from '@/components/ui/button';
+import { ReportButton } from '../report/report-button';
 
-/** After the text: a large next-chapter button, then the author's note. Comments come later. */
+/**
+ * After the text: a large next-chapter button, the author's note, then a quiet report button.
+ * Comments come later.
+ */
 export function ChapterEnd({
   nextHref,
   authorNote,
+  reportTarget,
 }: {
   nextHref: string | null;
   authorNote: string | null;
+  reportTarget: ReportTarget;
 }) {
   return (
     <footer className="mt-16 flex flex-col gap-10 border-t pt-10">
@@ -27,6 +34,7 @@ export function ChapterEnd({
           <p className="whitespace-pre-line">{authorNote}</p>
         </section>
       ) : null}
+      <ReportButton target={reportTarget} className="self-center text-reader-muted" />
     </footer>
   );
 }

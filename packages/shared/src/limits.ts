@@ -25,6 +25,10 @@ export const LIMITS = {
   schedule: { minLeadMs: 5 * 60_000, maxAheadMs: 365 * 86_400_000 },
   /** Request body cap for saving a draft; about 20,000 words of JSON with plenty of headroom. */
   draftMaxBytes: 2_000_000,
+  /** Free-text description a reader adds to a report. */
+  reportDetailMax: 1_000,
+  /** Free-text note a moderator adds to an action. */
+  modNoteMax: 500,
 } as const;
 
 /**

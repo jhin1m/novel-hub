@@ -8,6 +8,7 @@ import {
   PenLineIcon,
   SearchIcon,
   SettingsIcon,
+  ShieldCheckIcon,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
@@ -92,7 +93,7 @@ function HeaderSearch() {
 
 /**
  * Account state is only known once `useMe()` runs in the browser; SSR always renders a placeholder.
- * Writing is offered to signed-in accounts only.
+ * Writing is offered to signed-in accounts only, the moderation queue to moderators and admins.
  */
 function AccountMenu() {
   const me = useMe();
@@ -102,6 +103,7 @@ function AccountMenu() {
   if (me.isPending) return <div aria-hidden className="h-9 w-32" />;
 
   const user = me.data;
+  const canModerate = user?.role === 'mod' || user?.role === 'admin';
   if (!user) {
     return (
       <nav className="flex items-center gap-1">
@@ -137,6 +139,14 @@ function AccountMenu() {
         </DropdownMenuTrigger>
         {/* The header links are repeated here so they stay reachable when hidden on narrow screens. */}
         <DropdownMenuContent align="end">
+          {canModerate ? (
+            <DropdownMenuItem asChild>
+              <Link to="/moderation" search={{ status: 'open', page: 1 }}>
+                <ShieldCheckIcon aria-hidden />
+                {m.layout_moderation()}
+              </Link>
+            </DropdownMenuItem>
+          ) : null}
           <DropdownMenuItem asChild>
             <Link to="/write">
               <PenLineIcon aria-hidden />

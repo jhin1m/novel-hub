@@ -16,8 +16,12 @@ export {
   usernameSchema,
 } from './schemas/user';
 export {
+  CONTENT_JOBS,
+  type ContentJobName,
   MAIL_JOBS,
   type MailJobName,
+  PUBLISHING_JOBS,
+  type PublishingJobName,
   QUEUES,
   type SendAuthEmailPayload,
   sendAuthEmailPayload,
@@ -52,7 +56,11 @@ export {
   type ChapterMetaInput,
   type ChapterStatus,
   type DraftSaveInput,
+  type PublishChapterInput,
+  type ScheduleChapterInput,
   chapterMetaSchema,
   chapterNumberParamSchema,
   draftSaveSchema,
+  publishChapterSchema,
+  scheduleChapterSchema,
 } from './schemas/chapter';

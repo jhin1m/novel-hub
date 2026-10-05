@@ -5,6 +5,7 @@ import { createDb } from './client';
 import {
   chapterContents,
   chapters,
+  contentEvents,
   featuredSlots,
   ratings,
   readingProgress,
@@ -69,12 +70,12 @@ async function insertStoryGraph() {
 }
 
 describe('migration', () => {
-  it('tạo đủ 24 bảng trong schema public', async () => {
+  it('creates all 25 tables in the public schema', async () => {
     const { rows } = await db.execute<{ count: number }>(sql`
       select count(*)::int as count from information_schema.tables
       where table_schema = 'public' and table_type = 'BASE TABLE'
     `);
-    expect(rows[0]?.count).toBe(24);
+    expect(rows[0]?.count).toBe(25);
   });
 
   it('insert không truyền id → UUID version 7', async () => {
@@ -92,6 +93,13 @@ describe('migration', () => {
     });
     expect(story).toMatchObject({ visibility: 'draft', status: 'ongoing', synopsis: '' });
     expect(chapter.status).toBe('draft');
+  });
+
+  it('content_events: defaults to pending with zero attempts and keeps the payload', async () => {
+    const payload = { entity: 'story', action: 'updated', storyId: 'x' };
+    const [row] = await db.insert(contentEvents).values({ payload }).returning();
+    expect(row).toMatchObject({ payload, processedAt: null, attempts: 0 });
+    expect(row?.id).toMatch(UUID_V7);
   });
 
   it('pool đặt statement_timeout 15 giây', async () => {

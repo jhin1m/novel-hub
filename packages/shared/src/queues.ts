@@ -6,7 +6,31 @@ import { z } from 'zod';
 
 export const QUEUES = {
   mail: 'mail',
+  /** Side effects of content changes (CDN purge, search sync, fingerprints), fed by the outbox. */
+  content: 'content',
+  /** Internal periodic jobs only, so slow I/O on `content` never delays scheduled publishing. */
+  publishing: 'publishing',
 } as const;
+
+/** Repeatable jobs on the `publishing` queue. BullMQ forbids `:` in scheduler ids, hence `-`. */
+export const PUBLISHING_JOBS = {
+  sweepScheduledChapters: 'sweep-scheduled-chapters',
+  drainContentEvents: 'drain-content-events',
+} as const;
+
+export type PublishingJobName = (typeof PUBLISHING_JOBS)[keyof typeof PUBLISHING_JOBS];
+
+/**
+ * Jobs on the `content` queue, each with its own payload schema. Payloads carry ids only and
+ * every processor re-reads the current state, because the outbox delivers at least once.
+ */
+export const CONTENT_JOBS = {} as const;
+
+// No content job exists yet, so the union would be `never`; `string` keeps the queue usable
+// until the first job is declared.
+export type ContentJobName = [keyof typeof CONTENT_JOBS] extends [never]
+  ? string
+  : (typeof CONTENT_JOBS)[keyof typeof CONTENT_JOBS];
 
 export const MAIL_JOBS = {
   sendAuthEmail: 'send-auth-email',

@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
-import { type Db, stories } from '@novel-hub/db';
+import { type Db, type StoryRow, type Tx, stories } from '@novel-hub/db';
 import { eq } from 'drizzle-orm';
+import { recordContentChanges } from '../content/outbox';
 import { type CoverImageError, processCoverImage } from '../images/cover';
 import { type Result, err, ok } from '../lib/result';
 import { SemaphoreFullError, createSemaphore } from '../lib/semaphore';
@@ -22,6 +23,22 @@ const runImageJob = createSemaphore(2, 8);
 
 /** Keys embed a content hash, so a URL never changes meaning and can be cached forever. */
 const IMMUTABLE = 'public, max-age=31536000, immutable';
+
+/** Sets `cover_url` and, for a story that already has public pages, records the outbox event. */
+async function writeCoverUrl(db: Db, storyId: string, coverUrl: string | null): Promise<StoryRow> {
+  return db.transaction(async (tx: Tx) => {
+    const [row] = await tx
+      .update(stories)
+      .set({ coverUrl })
+      .where(eq(stories.id, storyId))
+      .returning();
+    if (!row) throw new Error('Story disappeared while changing its cover');
+    if (row.visibility !== 'draft') {
+      await recordContentChanges(tx, [{ entity: 'story', action: 'updated', storyId: row.id }]);
+    }
+    return row;
+  });
+}
 
 /**
  * Replaces the story cover. Old files are kept on purpose: CDN-cached HTML and database restores
@@ -59,12 +76,11 @@ export async function setStoryCover(
     }),
   ]);
 
-  const [row] = await deps.db
-    .update(stories)
-    .set({ coverUrl: deps.storage.publicUrl(`${base}-600.webp`) })
-    .where(eq(stories.id, owned.value.id))
-    .returning();
-  if (!row) throw new Error('Story disappeared during cover upload');
+  const row = await writeCoverUrl(
+    deps.db,
+    owned.value.id,
+    deps.storage.publicUrl(`${base}-600.webp`),
+  );
   return ok(await toAuthorStoryView(deps.db, row));
 }
 
@@ -76,11 +92,6 @@ export async function removeStoryCover(
 ): Promise<Result<AuthorStoryView, OwnedStoryError>> {
   const owned = await loadOwnedStory(deps.db, actor, publicId);
   if (!owned.ok) return err(owned.error);
-  const [row] = await deps.db
-    .update(stories)
-    .set({ coverUrl: null })
-    .where(eq(stories.id, owned.value.id))
-    .returning();
-  if (!row) throw new Error('Story disappeared during cover removal');
+  const row = await writeCoverUrl(deps.db, owned.value.id, null);
   return ok(await toAuthorStoryView(deps.db, row));
 }

@@ -21,6 +21,8 @@ export const LIMITS = {
   },
   avatar: { maxBytes: 2 * 1024 * 1024, size: 256 },
   revisionsKept: 20,
+  /** A scheduled publish time must be at least 5 minutes and at most 365 days ahead. */
+  schedule: { minLeadMs: 5 * 60_000, maxAheadMs: 365 * 86_400_000 },
   /** Request body cap for saving a draft; about 20,000 words of JSON with plenty of headroom. */
   draftMaxBytes: 2_000_000,
 } as const;

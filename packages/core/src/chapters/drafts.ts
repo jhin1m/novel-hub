@@ -1,6 +1,7 @@
 import { type Db, chapterContents, chapterDrafts } from '@novel-hub/db';
 import { type EditorDocJson, emptyDraftDoc, parseEditorDoc } from '@novel-hub/shared/editor';
 import { and, eq, sql } from 'drizzle-orm';
+import { renderPublishedContent } from '../content/render';
 import { type Result, err, ok } from '../lib/result';
 import type { StoryActor } from '../policies/story';
 import type { OwnedStoryError } from '../stories/load-owned-story';
@@ -13,6 +14,12 @@ export interface DraftView {
   doc: EditorDocJson;
   /** Draft version to send back as `baseUpdatedAt` on the next save. */
   updatedAt: string;
+  /**
+   * The draft would render differently from the stored published or scheduled content. Compared
+   * by content, not timestamps, so an edit that is reverted does not count. Always false for a
+   * chapter that has no stored content.
+   */
+  hasUnpublishedChanges: boolean;
 }
 
 /**
@@ -52,10 +59,19 @@ export async function getDraft(
     [draft] = await read();
     if (!draft) throw new Error('Chapter draft was not created');
   }
+  const [stored] = await db
+    .select({ contentHash: chapterContents.contentHash })
+    .from(chapterContents)
+    .where(eq(chapterContents.chapterId, chapter.id));
+  // Rendering a full chapter takes a few milliseconds; valid pids are kept, so an unchanged
+  // draft renders to the stored HTML byte for byte.
+  const rendered = stored ? renderPublishedContent(draft.doc) : null;
   return ok({
     chapter: toAuthorChapterView(chapter, draft.updatedAt),
     doc: draft.doc as EditorDocJson,
     updatedAt: draft.updatedAt.toISOString(),
+    hasUnpublishedChanges:
+      stored !== undefined && (!rendered?.ok || rendered.value.contentHash !== stored.contentHash),
   });
 }
 

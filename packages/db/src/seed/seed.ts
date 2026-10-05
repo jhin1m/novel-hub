@@ -15,7 +15,19 @@ export interface SeedOptions {
   password?: string;
   /** Base timestamp for computing publish/schedule dates. Defaults to the run time. */
   now?: Date;
+  /**
+   * The publish pipeline (`renderPublishedContent` from core, which this package cannot import).
+   * When given, published and scheduled chapters get exactly the HTML a real publish would store;
+   * otherwise a minimal `<p data-pid>` rendering is used.
+   */
+  renderContent?: RenderContent;
 }
+
+export type RenderContent = (doc: unknown) => {
+  html: string;
+  paragraphIds: string[];
+  contentHash: string;
+};
 
 export interface SeedSummary {
   users: number;
@@ -39,7 +51,7 @@ function escapeHtml(text: string): string {
  * Builds simple published chapter content: an editor doc and `<p data-pid>` HTML, with pids in
  * the same format the editor generates.
  */
-function buildContent(paragraphs: string[]) {
+function buildContent(paragraphs: string[], render?: RenderContent) {
   const paragraphIds = paragraphs.map(() => generatePid());
   const docJson = {
     type: 'doc',
@@ -49,6 +61,7 @@ function buildContent(paragraphs: string[]) {
       content: [{ type: 'text', text }],
     })),
   };
+  if (render) return { docJson, ...render(docJson) };
   const html = paragraphs
     .map((text, i) => `<p data-pid="${paragraphIds[i]}">${escapeHtml(text)}</p>`)
     .join('');
@@ -72,6 +85,7 @@ async function seedStory(
   fixture: StoryFixture,
   ids: { users: Map<string, string>; tags: Map<string, string> },
   now: Date,
+  render?: RenderContent,
 ): Promise<number> {
   const published = fixture.chapters.filter((c) => c.status === 'published');
   const timeline = new Map<ChapterFixture, Date>(
@@ -125,7 +139,7 @@ async function seedStory(
       // Scheduled chapters get their HTML built at scheduling time and just wait for the publish time.
       await tx
         .insert(chapterContents)
-        .values({ chapterId: row.id, ...buildContent(chapter.paragraphs) });
+        .values({ chapterId: row.id, ...buildContent(chapter.paragraphs, render) });
     }
   }
   return fixture.chapters.length;
@@ -209,7 +223,13 @@ export async function seedDatabase(db: Db, opts: SeedOptions = {}): Promise<Seed
 
     let chapterCount = 0;
     for (const story of STORIES) {
-      chapterCount += await seedStory(tx, story, { users: userIds, tags: tagIds }, now);
+      chapterCount += await seedStory(
+        tx,
+        story,
+        { users: userIds, tags: tagIds },
+        now,
+        opts.renderContent,
+      );
     }
 
     return {

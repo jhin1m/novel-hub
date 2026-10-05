@@ -50,3 +50,18 @@ export const chapterMetaSchema = z
   });
 
 export type ChapterMetaInput = z.output<typeof chapterMetaSchema>;
+
+/** Publishing always renders the stored draft; `baseUpdatedAt` pins the version the author saw. */
+export const publishChapterSchema = z.object({
+  baseUpdatedAt: z.iso.datetime(),
+});
+
+export type PublishChapterInput = z.output<typeof publishChapterSchema>;
+
+/** `scheduledAt` comes from a `datetime-local` field converted with the browser's offset. */
+export const scheduleChapterSchema = z.object({
+  baseUpdatedAt: z.iso.datetime(),
+  scheduledAt: z.iso.datetime({ offset: true }),
+});
+
+export type ScheduleChapterInput = z.output<typeof scheduleChapterSchema>;

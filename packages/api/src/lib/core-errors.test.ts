@@ -16,6 +16,11 @@ const expected: [CoreErrorCode, number][] = [
   ['DRAFT_CONFLICT', 409],
   ['INVALID_DOCUMENT', 422],
   ['DRAFT_TOO_LARGE', 413],
+  ['WORD_COUNT_OUT_OF_RANGE', 422],
+  ['INVALID_SCHEDULE_TIME', 422],
+  ['CHAPTER_HIDDEN_BY_MOD', 409],
+  ['ALREADY_PUBLISHED', 409],
+  ['NOT_SCHEDULED', 409],
 ];
 
 describe('coreError', () => {

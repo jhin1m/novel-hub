@@ -2,4 +2,10 @@
 export { describeDbError } from '../errors';
 export { truncatePublicTables } from '../truncate';
 export { assertSeedAllowed } from './guard';
-export { type SeedOptions, type SeedSummary, seedDatabase, seedTags } from './seed';
+export {
+  type RenderContent,
+  type SeedOptions,
+  type SeedSummary,
+  seedDatabase,
+  seedTags,
+} from './seed';

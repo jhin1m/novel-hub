@@ -18,11 +18,14 @@
     "drizzle-orm": "0.45.3",
     "ioredis": "^5.11.1",
     "nodemailer": "^8.0.11",
-    "sharp": "^0.35.5"
+    "sanitize-html": "^2.18.0",
+    "sharp": "^0.35.5",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@types/node": "catalog:",
     "@types/nodemailer": "^8.0.2",
+    "@types/sanitize-html": "^2.16.2",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

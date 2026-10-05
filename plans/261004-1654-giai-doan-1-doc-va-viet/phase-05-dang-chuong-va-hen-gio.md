@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Phase 5: Đăng chương và hẹn giờ"
-status: pending
+status: completed
 priority: P1
 effort: "3.5d"
 dependencies: [4]
@@ -212,13 +212,13 @@ export function registerPublishingSchedulers(queue: Queue): Promise<void>; // up
 
 ## Function / Interface Checklist
 
-- [ ] `contentEvents` + migration `0001_content_events`
-- [ ] `renderPublishedContent`, `renderChapterHtml`, `CHAPTER_SANITIZE`, `normalizePids`
-- [ ] `ContentChange`, `contentChangeSchema`, `ContentJob`, `jobsForChange`, `recordContentChanges`, `drainContentEvents`, `createContentQueue`
-- [ ] `publishChapter`, `scheduleChapter`, `unscheduleChapter`, `deleteChapter`, `publishDueChapters`, `recomputeStoryCounters`, `validateScheduleTime`
-- [ ] `QUEUES.content`, `QUEUES.publishing`, `PUBLISHING_JOBS`, `CONTENT_JOBS`, `publishChapterSchema`, `scheduleChapterSchema`, `LIMITS.schedule`
-- [ ] `routeContentJob`, `createContentWorker`, `createPublishingWorker`, `registerPublishingSchedulers`
-- [ ] `PublishDialog`, `ScheduleBanner`
+- [x] `contentEvents` + migration `0001_content_events`
+- [x] `renderPublishedContent`, `renderChapterHtml`, `CHAPTER_SANITIZE`, `normalizePids`
+- [x] `ContentChange`, `contentChangeSchema`, `ContentJob`, `jobsForChange`, `recordContentChanges`, `drainContentEvents`, `createContentQueue`
+- [x] `publishChapter`, `scheduleChapter`, `unscheduleChapter`, `deleteChapter`, `publishDueChapters`, `recomputeStoryCounters`, `validateScheduleTime`
+- [x] `QUEUES.content`, `QUEUES.publishing`, `PUBLISHING_JOBS`, `CONTENT_JOBS`, `publishChapterSchema`, `scheduleChapterSchema`, `LIMITS.schedule`
+- [x] `routeContentJob`, `createContentWorker`, `createPublishingWorker`, `registerPublishingSchedulers`
+- [x] `PublishDialog`, `ScheduleBanner`
 
 ## Test Scenario Matrix
 
@@ -256,11 +256,11 @@ export function registerPublishingSchedulers(queue: Queue): Promise<void>; // up
 
 ## Success Criteria
 
-- [ ] HTML đã sanitize có `data-pid` ổn định, revision (giữ 20), đếm chữ, bộ đếm truyện đúng
-- [ ] Hẹn giờ đăng ≤ 1 phút sau giờ hẹn, chịu worker khởi động lại, bỏ qua tác giả bị ban
-- [ ] Mọi thay đổi công khai có dòng `content_events` trong cùng transaction; Redis chết lúc đăng không mất job phụ
-- [ ] Không nhận HTML từ client; không mất phím gõ khi đăng; chương `hidden_by_mod` không đăng lại được
-- [ ] Gate 5 lệnh xanh; checkbox 4 Giai đoạn 1 = `[x]`
+- [x] HTML đã sanitize có `data-pid` ổn định, revision (giữ 20), đếm chữ, bộ đếm truyện đúng
+- [x] Hẹn giờ đăng ≤ 1 phút sau giờ hẹn, chịu worker khởi động lại, bỏ qua tác giả bị ban
+- [x] Mọi thay đổi công khai có dòng `content_events` trong cùng transaction; Redis chết lúc đăng không mất job phụ
+- [x] Không nhận HTML từ client; không mất phím gõ khi đăng; chương `hidden_by_mod` không đăng lại được
+- [x] Gate 5 lệnh xanh; checkbox 4 Giai đoạn 1 = `[x]`
 
 ## Risk Assessment
 
@@ -288,6 +288,14 @@ Rollback: migration chỉ thêm bảng `content_events` (để nguyên khi rever
 2. Hẹn giờ tối thiểu 5 phút, tối đa 365 ngày, trễ ≤ 1 phút.
 3. Truyện đã `published` mà xoá hết chương: giữ `published`.
 4. Bỏ `@tiptap/static-renderer`, dùng walker tự viết (đã chốt sau red team).
+
+## Kết quả (2026-10-05)
+
+- Gate 5 lệnh xanh: unit 292, integration 137 (1 skip S3 có sẵn), e2e 16.
+- Code review: không Critical/High; đã sửa #1–#6, #8, #9 (hẹn lại cùng giờ bỏ qua 5 phút; `hasUnpublishedChanges` so theo hash nội dung thay vì mốc thời gian; `setEditable(x, false)`; `min` của ô giờ hẹn; invalidate truyện khi xoá; resync khi 409 do race; lỗi map từng event không chặn outbox; `removeOnFail: { count: 100 }`).
+- Để lại cho phase 9/11: dọn `content_events` mỗi 5 giây chưa có index `processed_at` (bảng nhỏ); chương hẹn giờ thiếu nội dung bị log mỗi phút (API không tạo được trạng thái này); pool worker `max: 5` < tổng concurrency 6.
+- Lệch nhỏ so với plan: `ContentJobName` là `string` khi `CONTENT_JOBS` rỗng (tự thành union khi phase 9 thêm job); route editor không cần sửa (logic nằm trong `ChapterEditor`); `core` thêm `zod` (catalog) cho `contentChangeSchema`, worker thêm `@novel-hub/db` (workspace).
+- Báo cáo review: `plans/reports/code-reviewer-261005-1139-phase-05-publish-chapter-report.md`.
 
 ## Next Steps
 

@@ -6,6 +6,7 @@ const base = {
   NODE_ENV: 'development',
   APP_URL: 'http://localhost:3000',
   REDIS_URL: 'redis://localhost:6379/0',
+  DATABASE_URL: 'postgres://novelhub:secret@localhost:5432/novel_hub',
 };
 
 function load(env: NodeJS.ProcessEnv) {
@@ -13,8 +14,12 @@ function load(env: NodeJS.ProcessEnv) {
 }
 
 describe('workerEnvSchema', () => {
-  it('dev không cần biến DB, auth hay SMTP; QUEUE_PREFIX có mặc định', () => {
+  it('dev needs no auth or SMTP variables; QUEUE_PREFIX has a default', () => {
     expect(load(base)).toEqual({ ...base, QUEUE_PREFIX: 'novelhub', SMTP_PORT: 587 });
+  });
+
+  it('requires DATABASE_URL', () => {
+    expect(() => load({ ...base, DATABASE_URL: undefined })).toThrow(/DATABASE_URL \(thiếu\)/);
   });
 
   it('production thiếu SMTP → lỗi', () => {

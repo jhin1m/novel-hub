@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@novel-hub/core": "workspace:*",
+    "@novel-hub/db": "workspace:*",
     "@novel-hub/shared": "workspace:*",
     "bullmq": "^6.3.11",
     "ioredis": "^5.11.1"

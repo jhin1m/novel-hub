@@ -26,6 +26,20 @@ beforeEach(async () => {
 });
 
 describe('seedDatabase', () => {
+  it('renders published content through the given pipeline', async () => {
+    const seen: unknown[] = [];
+    await seedDatabase(db, {
+      now: NOW,
+      renderContent: (doc) => {
+        seen.push(doc);
+        return { html: '<p>rendered</p>', paragraphIds: ['k7m2xq9p'], contentHash: 'h' };
+      },
+    });
+    const contents = await db.select().from(chapterContents);
+    expect(contents.length).toBe(seen.length);
+    expect(contents.every((c) => c.html === '<p>rendered</p>' && c.contentHash === 'h')).toBe(true);
+  });
+
   it('loads into an empty DB', async () => {
     const summary = await seedDatabase(db, { now: NOW });
     expect(summary).toEqual({ users: 5, accounts: 0, tags: 13, stories: 3, chapters: 8 });

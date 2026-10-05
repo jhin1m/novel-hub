@@ -16,6 +16,11 @@ const CORE_ERROR_STATUS = {
   DRAFT_CONFLICT: 409,
   INVALID_DOCUMENT: 422,
   DRAFT_TOO_LARGE: 413,
+  WORD_COUNT_OUT_OF_RANGE: 422,
+  INVALID_SCHEDULE_TIME: 422,
+  CHAPTER_HIDDEN_BY_MOD: 409,
+  ALREADY_PUBLISHED: 409,
+  NOT_SCHEDULED: 409,
 } as const;
 
 export type CoreErrorCode = keyof typeof CORE_ERROR_STATUS;
@@ -35,6 +40,11 @@ const CORE_ERROR_MESSAGES: Record<CoreErrorCode, string> = {
   DRAFT_CONFLICT: 'The draft was saved elsewhere since it was loaded',
   INVALID_DOCUMENT: 'The document does not match the editor schema',
   DRAFT_TOO_LARGE: 'Draft is larger than 2 MB',
+  WORD_COUNT_OUT_OF_RANGE: 'A published chapter must have 300 to 20,000 words',
+  INVALID_SCHEDULE_TIME: 'The publish time must be 5 minutes to 365 days ahead',
+  CHAPTER_HIDDEN_BY_MOD: 'The chapter was hidden by a moderator',
+  ALREADY_PUBLISHED: 'The chapter has already been published',
+  NOT_SCHEDULED: 'The chapter is not scheduled',
 };
 
 export function coreError<C extends CoreErrorCode>(c: Context, code: C) {

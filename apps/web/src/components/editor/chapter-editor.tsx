@@ -1,17 +1,30 @@
 import { LIMITS, countWords, docToText, type EditorDocJson } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { editorExtensions } from '@novel-hub/shared/editor';
+import { useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { ArrowLeft } from 'lucide-react';
 import { type FocusEvent, useEffect, useId, useRef, useState } from 'react';
 import { FormMessage } from '@/components/auth-ui';
+import { CHAPTER_STATUS_LABELS } from '@/components/chapter-list';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { apiErrorMessage } from '@/lib/api-errors';
+import { ApiError, apiErrorMessage } from '@/lib/api-errors';
 import { type Autosave, type SaveStatus, createAutosave } from '@/lib/autosave';
-import { type DraftView, fetchDraft, saveDraftRequest, useUpdateChapterMeta } from '@/lib/chapters';
+import {
+  type AuthorChapterView,
+  type DraftView,
+  type PublishResponse,
+  fetchDraft,
+  publishRequest,
+  saveDraftRequest,
+  scheduleRequest,
+  unscheduleRequest,
+  useUpdateChapterMeta,
+} from '@/lib/chapters';
 import {
   type DraftMirror,
   browserStorage,
@@ -21,12 +34,15 @@ import {
   readMirror,
   sameDoc,
 } from '@/lib/draft-mirror';
+import { myStoriesQueryKey } from '@/lib/stories';
 import { cn } from '@/lib/utils';
 import { ConflictBanner } from './conflict-banner';
 import { DraftRestoreBanner } from './draft-restore-banner';
 import { EditorToolbar } from './editor-toolbar';
 import { FocusToggle, useFocusMode } from './focus-toggle';
+import { PublishDialog } from './publish-dialog';
 import { SaveStatusText } from './save-status';
+import { ScheduleBanner } from './schedule-banner';
 
 const WORD_COUNT_DELAY_MS = 500;
 
@@ -58,6 +74,18 @@ export function ChapterEditor({
   });
   const [resolving, setResolving] = useState(false);
   const [resolveError, setResolveError] = useState(false);
+  const [chapter, setChapter] = useState<AuthorChapterView>(draft.chapter);
+  const [unpublished, setUnpublished] = useState(draft.hasUnpublishedChanges);
+  const [publishing, setPublishing] = useState(false);
+  // Errors show where the action started: in the dialog or above the editor (banner actions).
+  const [publishError, setPublishError] = useState<{
+    message: string;
+    from: 'dialog' | 'banner';
+  } | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  // Status, counters and story visibility shown in the writing area changed with the chapter.
+  const refreshStories = () => void queryClient.invalidateQueries({ queryKey: myStoriesQueryKey });
   // The draft as loaded; later refetches must not rebuild autosave on a version it never saw.
   const loadedRef = useRef(draft);
   const autosaveRef = useRef<Autosave | null>(null);
@@ -91,6 +119,7 @@ export function ChapterEditor({
       save: (doc, base, opts) => saveDraftRequest(publicId, number, doc, base, opts),
       onStatus: setStatus,
       onSaved: (json) => {
+        setUnpublished(true);
         // Drop the local copy only if it holds exactly what the server now has.
         mirror.flush();
         const current = readMirror(storage, key);
@@ -166,6 +195,104 @@ export function ChapterEditor({
     }
   };
 
+  /**
+   * Shared by publish, schedule and reschedule. The editor is read-only and autosave paused for
+   * the whole request, so no keystroke can land between the last save and the server rendering
+   * it, and none is lost when the server sends back a draft with rewritten paragraph ids.
+   */
+  /**
+   * These codes mean the chapter changed state elsewhere (the sweeper published it, a moderator
+   * hid it); reload its view so the banner and buttons match the server again.
+   */
+  const resyncAfter = (error: unknown) => {
+    const stale = ['NOT_SCHEDULED', 'ALREADY_PUBLISHED', 'CHAPTER_HIDDEN_BY_MOD'];
+    if (!(error instanceof ApiError) || !error.code || !stale.includes(error.code)) return;
+    fetchDraft(publicId, number).then(
+      (latest) => setChapter(latest.chapter),
+      () => {},
+    );
+  };
+
+  const runPublish = async (
+    from: 'dialog' | 'banner',
+    send: (base: string) => Promise<PublishResponse>,
+    doneMessage: (result: PublishResponse) => string,
+  ): Promise<boolean> => {
+    const autosave = autosaveRef.current;
+    if (!editor || !autosave) return false;
+    setPublishing(true);
+    setPublishError(null);
+    setNotice(null);
+    // `false`: toggling editability is not an edit and must not wake autosave.
+    editor.setEditable(false, false);
+    try {
+      const saved = await autosave.pause();
+      if (saved.kind !== 'saved') {
+        setPublishError({ message: m.publish_save_first(), from });
+        return false;
+      }
+      const result = await send(autosave.getBase());
+      if (result.draft.doc) {
+        editor.commands.setContent(result.draft.doc, { emitUpdate: false });
+        // The local copy holds the old ids; the server now has everything it had.
+        mirrorRef.current?.cancel();
+        clearMirror(browserStorage(), mirrorKey(publicId, number));
+      }
+      autosave.rebase(result.draft.updatedAt, JSON.stringify(editor.getJSON()));
+      setChapter(result.chapter);
+      setUnpublished(false);
+      setNotice(doneMessage(result));
+      refreshStories();
+      return true;
+    } catch (error) {
+      setPublishError({ message: apiErrorMessage(error), from });
+      resyncAfter(error);
+      return false;
+    } finally {
+      autosave.resume();
+      editor.setEditable(true, false);
+      setPublishing(false);
+    }
+  };
+
+  const publishNow = () =>
+    runPublish(
+      'dialog',
+      (base) => publishRequest(publicId, number, base),
+      (result) =>
+        result.unchanged
+          ? m.publish_unchanged()
+          : chapter.status === 'published'
+            ? m.publish_updated()
+            : m.publish_done(),
+    );
+
+  const schedule = (at: Date, from: 'dialog' | 'banner' = 'dialog') =>
+    runPublish(
+      from,
+      (base) => scheduleRequest(publicId, number, base, at),
+      () => m.schedule_done(),
+    );
+
+  const unschedule = async () => {
+    setPublishing(true);
+    setPublishError(null);
+    setNotice(null);
+    try {
+      setChapter(await unscheduleRequest(publicId, number));
+      setNotice(m.schedule_cancelled());
+      refreshStories();
+    } catch (error) {
+      setPublishError({ message: apiErrorMessage(error), from: 'banner' });
+      resyncAfter(error);
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const showUnpublished =
+    unpublished && (chapter.status === 'published' || chapter.status === 'scheduled');
+
   const applyRestore = () => {
     if (editor && restore) {
       // A normal update: autosave sends it on top of the current server version.
@@ -202,11 +329,26 @@ export function ChapterEditor({
             <span className="text-sm font-medium">
               {m.editor_chapter_heading({ number: String(number) })}
             </span>
+            <Badge variant={chapter.status === 'published' ? 'default' : 'secondary'}>
+              {CHAPTER_STATUS_LABELS[chapter.status]()}
+            </Badge>
+            {showUnpublished ? (
+              <Badge variant="outline">{m.publish_unpublished_changes()}</Badge>
+            ) : null}
             <div className="ml-auto flex items-center gap-3">
               <SaveStatusText status={status} />
               <span className="text-xs text-muted-foreground">
                 {m.editor_word_count({ count: words.toLocaleString('vi-VN') })}
               </span>
+              <PublishDialog
+                number={number}
+                status={chapter.status}
+                words={words}
+                pending={publishing}
+                error={publishError?.from === 'dialog' ? publishError.message : null}
+                onPublish={publishNow}
+                onSchedule={schedule}
+              />
               <FocusToggle focus={focus} onChange={setFocus} />
             </div>
           </div>
@@ -227,6 +369,20 @@ export function ChapterEditor({
           />
         ) : null}
         {resolveError ? <FormMessage>{m.editor_action_failed()}</FormMessage> : null}
+        {chapter.status === 'scheduled' && chapter.scheduledAt ? (
+          <ScheduleBanner
+            scheduledAt={chapter.scheduledAt}
+            pending={publishing}
+            onUnschedule={() => void unschedule()}
+            onReschedule={() => void schedule(new Date(chapter.scheduledAt ?? ''), 'banner')}
+          />
+        ) : null}
+        {notice ? (
+          <p role="status" className="text-sm text-muted-foreground">
+            {notice}
+          </p>
+        ) : null}
+        {publishError?.from === 'banner' ? <FormMessage>{publishError.message}</FormMessage> : null}
         {restore && status.kind !== 'conflict' ? (
           <DraftRestoreBanner
             savedAt={restore.savedAt}

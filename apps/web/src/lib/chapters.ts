@@ -119,6 +119,65 @@ export async function saveDraftRequest(
   return { ok: false, kind: 'fatal' };
 }
 
+/** Answer of publish and schedule; `draft.doc` is set when the server rewrote paragraph ids. */
+export interface PublishResponse {
+  chapter: AuthorChapterView;
+  draft: { updatedAt: string; doc: EditorDocJson | null };
+  unchanged: boolean;
+}
+
+export async function publishRequest(
+  publicId: string,
+  number: number,
+  baseUpdatedAt: string,
+): Promise<PublishResponse> {
+  const res = await chapters[':number'].publish.$post({
+    param: { publicId, number: String(number) },
+    json: { baseUpdatedAt },
+  });
+  if (!res.ok) throw await readApiError(res);
+  return res.json();
+}
+
+export async function scheduleRequest(
+  publicId: string,
+  number: number,
+  baseUpdatedAt: string,
+  scheduledAt: Date,
+): Promise<PublishResponse> {
+  const res = await chapters[':number'].schedule.$put({
+    param: { publicId, number: String(number) },
+    json: { baseUpdatedAt, scheduledAt: scheduledAt.toISOString() },
+  });
+  if (!res.ok) throw await readApiError(res);
+  return res.json();
+}
+
+export async function unscheduleRequest(
+  publicId: string,
+  number: number,
+): Promise<AuthorChapterView> {
+  const res = await chapters[':number'].schedule.$delete({
+    param: { publicId, number: String(number) },
+  });
+  if (!res.ok) throw await readApiError(res);
+  return (await res.json()).chapter;
+}
+
+export function useDeleteChapter(publicId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (number: number) => {
+      const res = await chapters[':number'].$delete({
+        param: { publicId, number: String(number) },
+      });
+      if (!res.ok) throw await readApiError(res);
+    },
+    // The story (counters, last update) changes with the chapter list.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: myStoryQueryKey(publicId) }),
+  });
+}
+
 export function useUpdateChapterMeta(publicId: string, number: number) {
   const queryClient = useQueryClient();
   return useMutation({

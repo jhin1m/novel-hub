@@ -45,6 +45,13 @@ const MESSAGES: Record<string, () => string> = {
   IMAGE_TOO_LARGE: m.error_image_too_large,
   STORAGE_UNAVAILABLE: m.error_storage_unavailable,
   UPLOAD_BUSY: m.error_upload_busy,
+  DRAFT_CONFLICT: m.error_draft_conflict,
+  INVALID_DOCUMENT: m.error_invalid_document,
+  WORD_COUNT_OUT_OF_RANGE: m.error_word_count_out_of_range,
+  INVALID_SCHEDULE_TIME: m.error_invalid_schedule_time,
+  CHAPTER_HIDDEN_BY_MOD: m.error_chapter_hidden_by_mod,
+  ALREADY_PUBLISHED: m.error_already_published,
+  NOT_SCHEDULED: m.error_not_scheduled,
 };
 
 /** User-facing message for an API error code; anything unknown gets the generic message. */

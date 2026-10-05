@@ -62,3 +62,39 @@ export { createChapter } from './chapters/create-chapter';
 export { type DraftView, type SaveDraftError, getDraft, saveDraft } from './chapters/drafts';
 export { listAuthorChapters } from './chapters/list-chapters';
 export { loadOwnedChapter } from './chapters/load-owned-chapter';
+export {
+  type ContentChange,
+  type ContentJob,
+  contentChangeSchema,
+  jobsForChange,
+} from './content/hooks';
+export {
+  type ContentQueue,
+  type DrainContentEventsDeps,
+  type DrainResult,
+  createContentQueue,
+  drainContentEvents,
+  recordContentChanges,
+} from './content/outbox';
+export { CHAPTER_SANITIZE, sanitizeChapterHtml } from './content/sanitize';
+export { normalizePids } from './content/normalize-pids';
+export {
+  type PublishedContent,
+  hashContent,
+  renderChapterHtml,
+  renderPublishedContent,
+} from './content/render';
+export { recomputeStoryCounters } from './publishing/counters';
+export { deleteChapter } from './publishing/delete-chapter';
+export {
+  type PublishError,
+  type PublishResult,
+  publishChapter,
+} from './publishing/publish-chapter';
+export { publishDueChapters } from './publishing/publish-due';
+export {
+  type ScheduleError,
+  scheduleChapter,
+  unscheduleChapter,
+  validateScheduleTime,
+} from './publishing/schedule-chapter';

@@ -1,5 +1,6 @@
 // CLI seed cho máy dev: `pnpm db:seed [--reset]`. Tạo account mật khẩu (provider
 // `credential`) cho mọi user mẫu, mật khẩu lấy từ `SEED_USER_PASSWORD`.
+import { renderPublishedContent } from '@novel-hub/core';
 import { createDb } from '@novel-hub/db';
 import {
   assertSeedAllowed,
@@ -25,7 +26,17 @@ try {
       await truncatePublicTables(db);
       console.log('[seed] đã xoá dữ liệu cũ (--reset)');
     }
-    const summary = await seedDatabase(db, { hashPassword, password: SEED_USER_PASSWORD });
+    const summary = await seedDatabase(db, {
+      hashPassword,
+      password: SEED_USER_PASSWORD,
+      // Seeded content goes through the real publish pipeline. No outbox events: sample data is
+      // indexed and purged by the manual reindex/purge commands.
+      renderContent: (doc) => {
+        const rendered = renderPublishedContent(doc);
+        if (!rendered.ok) throw new Error('A seed chapter does not match the editor schema');
+        return rendered.value;
+      },
+    });
     console.log('[seed] xong:', summary);
   } finally {
     await pool.end();

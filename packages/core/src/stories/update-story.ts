@@ -1,6 +1,7 @@
 import { type Db, type NewStory, stories, storyTags } from '@novel-hub/db';
 import { type StoryUpdateInput, slugify } from '@novel-hub/shared';
 import { eq } from 'drizzle-orm';
+import { recordContentChanges } from '../content/outbox';
 import { type Result, err, ok } from '../lib/result';
 import type { StoryActor } from '../policies/story';
 import { type OwnedStoryError, loadOwnedStory } from './load-owned-story';
@@ -55,9 +56,18 @@ export async function updateStory(
       .where(eq(stories.id, current.id))
       .returning();
     if (!row) throw new Error('Updated story not found');
-    return ok({
-      story: await toAuthorStoryView(tx, row),
-      previousSlug: row.slug === current.slug ? null : current.slug,
-    });
+    const previousSlug = row.slug === current.slug ? null : current.slug;
+    // A draft story has no public page yet; anything else (hidden included) may be cached.
+    if (row.visibility !== 'draft') {
+      await recordContentChanges(tx, [
+        {
+          entity: 'story',
+          action: 'updated',
+          storyId: row.id,
+          ...(previousSlug ? { previousSlug } : {}),
+        },
+      ]);
+    }
+    return ok({ story: await toAuthorStoryView(tx, row), previousSlug });
   });
 }

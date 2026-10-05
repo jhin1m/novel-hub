@@ -16,6 +16,7 @@
     "db:seed": "pnpm --filter @novel-hub/auth db:seed",
     "db:seed-tags": "pnpm --filter @novel-hub/auth db:seed-tags",
     "cdn:purge": "pnpm --filter @novel-hub/worker cdn:purge",
+    "search:reindex": "pnpm --filter @novel-hub/worker search:reindex",
     "typecheck": "pnpm -r --parallel typecheck",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

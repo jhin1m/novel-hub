@@ -5,17 +5,19 @@
  * - Connections (Postgres pool, Redis) are created once and cached on `globalThis`, so dev HMR does
  *   not open new ones.
  * - A failed start (bad env) clears the cache so the next request retries.
- * - Optional subsystems (S3 storage) parse their env separately: a missing set disables the
+ * - Optional subsystems (S3 storage, search) parse their env separately: a missing set disables the
  *   feature (its endpoints answer 503) instead of taking down everything else.
  */
 import {
   type MailQueue,
+  type SearchCtx,
   type StoragePort,
   type ViewCounter,
   createHealthRedis,
   createMailQueue,
   createProducerConnection,
   createS3Storage,
+  createSearchCtx,
   createViewCounter,
   s3ConfigFromEnv,
   withTimeout,
@@ -26,7 +28,9 @@ import {
   authEnvSchema,
   dbEnvSchema,
   loadOptionalEnv,
+  assertMeiliSearchKeyIsNotMaster,
   loadServerEnv,
+  meiliWebEnvSchema,
   queueEnvSchema,
   redisEnvSchema,
   requireGooglePair,
@@ -56,6 +60,8 @@ export interface Infra {
   viewCounter: ViewCounter;
   /** `null` when `S3_*` is not configured (dev only; production refuses to start). */
   storage: StoragePort | null;
+  /** Search-only Meilisearch client; `null` when `MEILI_SEARCH_KEY` is not set (dev only). */
+  search: SearchCtx | null;
   close: () => Promise<void>;
 }
 
@@ -74,6 +80,18 @@ async function createInfra(): Promise<Infra> {
   // `loadServerEnv` has loaded `.env` into `process.env` by now.
   const s3Env = loadOptionalEnv(s3EnvSchema, process.env, 's3');
   const storage = s3Env ? createS3Storage(s3ConfigFromEnv(s3Env)) : null;
+  // The web only ever holds the search-only key; writes go through the worker's master key.
+  const meiliEnv = loadOptionalEnv(meiliWebEnvSchema, process.env, 'meili');
+  if (meiliEnv) {
+    assertMeiliSearchKeyIsNotMaster(meiliEnv, process.env.MEILI_MASTER_KEY, env.NODE_ENV);
+  }
+  const search = meiliEnv
+    ? createSearchCtx({
+        url: meiliEnv.MEILI_URL,
+        apiKey: meiliEnv.MEILI_SEARCH_KEY,
+        prefix: env.QUEUE_PREFIX,
+      })
+    : null;
   const { db, pool } = createDb(env.DATABASE_URL);
   const healthRedis = createHealthRedis(env.REDIS_URL);
   // Wait for the connection so the first health check does not report a false outage. A dead
@@ -94,7 +112,17 @@ async function createInfra(): Promise<Infra> {
     healthRedis.disconnect();
     await withTimeout(pool.end(), POOL_CLOSE_WAIT_MS, 'pool end').catch(() => {});
   };
-  return { env, db, healthRedis, producerRedis, mailQueue, viewCounter, storage, close };
+  return {
+    env,
+    db,
+    healthRedis,
+    producerRedis,
+    mailQueue,
+    viewCounter,
+    storage,
+    search,
+    close,
+  };
 }
 
 export function getInfra(): Promise<Infra> {

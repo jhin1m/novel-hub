@@ -41,7 +41,7 @@ Giai đoạn 0 xong (`plans/261004-1255-giai-doan-0-nen-mong`). Spec `docs/proje
 | 8 | [Trang đọc: cài đặt hiển thị](./phase-08-cai-dat-trang-doc.md) | 6 (phần 2/3) | Completed |
 | 9 | [Trang đọc: tiến độ, purge CDN, lượt đọc](./phase-09-tien-do-purge-luot-doc.md) | 6 (đánh `[x]`) | Completed |
 | 10 | [Trang truyện, tác giả, tag, trang chủ](./phase-10-trang-truyen-tac-gia-tag-trang-chu.md) | 7 | Completed |
-| 11 | [Tìm kiếm Meilisearch](./phase-11-tim-kiem-meilisearch.md) | 8 | Pending |
+| 11 | [Tìm kiếm Meilisearch](./phase-11-tim-kiem-meilisearch.md) | 8 | Completed |
 | 12 | [Tủ truyện và lịch sử đọc](./phase-12-tu-truyen-lich-su-doc.md) | 9 | Pending |
 | 13 | [Rate limit Redis](./phase-13-rate-limit-redis.md) | 10 | Pending |
 | 14 | [Kiểm tra trùng lặp](./phase-14-kiem-tra-trung-lap.md) | 11 (phần 1/2) | Pending |
@@ -275,7 +275,8 @@ Phụ thuộc tuyến tính 1 → 17.
 - Phase 8 xong (2026-10-05): gate 5 lệnh xanh; checkbox 6 **chưa** đánh (phase 9). Review `../reports/code-reviewer-261005-1314-phase-08-reader-settings-review-report.md` (8.5/10, đã sửa M1, L1, L2, L6, L7). Report: `../reports/cook-261005-1337-phase-08-reader-settings-report.md`. Lệch plan: enum preset/width/align đổi sang tiếng Anh (`white`…`oled-black`, `narrow/medium/wide`, `left/justify`), chi tiết trong phase-08.
 - Phase 9 xong (2026-10-05): gate 5 lệnh xanh; checkbox 6 `[x]`. Review `../reports/code-reviewer-261005-1400-phase-09-progress-purge-views-review-report.md` (8/10, đã sửa H1, M1, M2, L3, L7). Report: `../reports/cook-261005-1408-phase-09-progress-purge-views-report.md`. Chưa smoke `pnpm cdn:purge` với Cloudflare thật (`CF_*` trống).
 - Phase 10 xong (2026-10-05): gate 5 lệnh xanh; checkbox 7 `[x]`. Review `../reports/code-reviewer-261005-1440-phase-10-catalog-pages-review-report.md` (8/10, đã sửa M1, M2, L2, L3, một phần L4). Report: `../reports/cook-261005-1438-phase-10-catalog-pages-report.md`. Lệch plan: link công khai là `<a href>`; `StoryChapterList`; `canonicalPageParam` trả số; sửa `useSignOut`; event truyện thêm `previousTagSlugs`. Chờ user duyệt bản nháp `/terms`, `/content-policy`.
-- Tiếp: cook phase 11.
+- Phase 11 xong (2026-10-05): gate 5 lệnh xanh; checkbox 8 `[x]`. Review `../reports/code-reviewer-261005-1454-phase-11-search-review-report.md` (8/10, đã sửa M1–M3, L1, L4, L5). Report: `../reports/cook-261005-1524-phase-11-search-report.md`. Lệch plan: không cần trường `*Folded` (`đ` đã khớp), `searchCatalog` nhận `db`, sync đọc lại tới khi ổn định, query lạ ở `/search` nhận 307 của router.
+- Tiếp: cook phase 12.
 - Nhắc trước khi mở public: backup Postgres ra ngoài VPS + thử restore (phase 17).
 
 <!-- slug: giai-doan-1-doc-va-viet -->

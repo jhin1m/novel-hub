@@ -44,16 +44,17 @@ Claude luôn nói rõ **một lệnh tiếp theo** cho user, cụ thể:
 
 ## Lệnh
 
-Chạy ở gốc repo. Lần đầu: `cp .env.example .env`, điền `MEILI_MASTER_KEY`, `BETTER_AUTH_SECRET`, `SEED_USER_PASSWORD`, rồi `pnpm install` (tự compile Paraglide).
+Chạy ở gốc repo. Lần đầu: `cp .env.example .env`, điền `MEILI_MASTER_KEY`, `BETTER_AUTH_SECRET`, `SEED_USER_PASSWORD`, rồi `pnpm install` (tự compile Paraglide); sau `pnpm infra:up` điền `MEILI_SEARCH_KEY` (cách lấy ghi trong `.env.example`).
 
 | Lệnh | Việc |
 | --- | --- |
 | `pnpm infra:up` / `infra:down` / `infra:logs` | Postgres, Redis, Meilisearch bằng Docker Compose |
 | `pnpm db:migrate` | Chạy migration Drizzle |
 | `pnpm db:generate` | Sinh migration mới sau khi đổi schema |
-| `pnpm db:seed` | Dữ liệu mẫu (chỉ DB localhost, `NODE_ENV` tường minh) |
+| `pnpm db:seed` | Dữ liệu mẫu (chỉ DB localhost, `NODE_ENV` tường minh); seed không ghi index tìm kiếm, chạy `pnpm search:reindex` sau đó |
 | `pnpm db:seed-tags` | Nạp danh sách tag ban đầu (idempotent, chạy được ở production) |
 | `pnpm cdn:purge -- --story <publicId>` | Purge Cloudflare trang truyện + mọi chương từng đăng (cần `CF_*`) |
+| `pnpm search:reindex` | Dựng lại index Meilisearch (truyện, tác giả) từ Postgres; chạy sau khi restore DB hoặc khi index lệch (cần `MEILI_MASTER_KEY`) |
 | `pnpm dev` | Web (http://localhost:3000) và worker chạy song song; link xác thực/đặt lại mật khẩu ở dev in ra log **worker** |
 | `pnpm --filter @novel-hub/worker dev` / `start` | Chỉ worker (`tsx watch` / `tsx`) |
 | `pnpm --filter @novel-hub/web build` | Build web (Nitro, ra `apps/web/.output`) |

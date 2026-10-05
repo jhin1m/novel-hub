@@ -48,7 +48,7 @@ describe('purge-urls job (real Postgres, fake CDN)', () => {
         name: 'purge-urls',
         data: { entity: 'user', action: 'updated', userId: user.id },
       },
-      { db, cdn: { purge }, appUrl: 'https://truyen.example' },
+      { db, cdn: { purge }, appUrl: 'https://truyen.example', search: null },
     );
     expect(purge).toHaveBeenCalledWith([
       'https://truyen.example/authors/tac_gia',

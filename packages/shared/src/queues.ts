@@ -29,6 +29,8 @@ export type PublishingJobName = (typeof PUBLISHING_JOBS)[keyof typeof PUBLISHING
 export const CONTENT_JOBS = {
   /** Purges the CDN copies of the public pages a change touches; payload is the change itself. */
   purgeUrls: 'purge-urls',
+  /** Re-reads a story (or a user's author doc and stories) and upserts or deletes its search docs. */
+  searchSync: 'search-sync',
 } as const;
 
 export type ContentJobName = (typeof CONTENT_JOBS)[keyof typeof CONTENT_JOBS];

@@ -1,9 +1,10 @@
-import { canonicalPath } from '@novel-hub/shared';
+import { SEARCH_QUERY_MAX_LENGTH, canonicalPath } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { Link } from '@tanstack/react-router';
-import { ChevronDownIcon, SettingsIcon } from 'lucide-react';
+import { ChevronDownIcon, SearchIcon, SettingsIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +37,7 @@ function SiteHeader() {
           {m.app_name()}
         </Link>
         <div className="flex items-center gap-1">
+          <HeaderSearch />
           <Button asChild variant="ghost">
             <Link to="/settings">
               <SettingsIcon aria-hidden />
@@ -46,6 +48,32 @@ function SiteHeader() {
         </div>
       </div>
     </header>
+  );
+}
+
+/**
+ * A plain GET form to `/search`, so it works before hydration and lands on a full document load.
+ * Narrow screens get a link to the search page instead of a field.
+ */
+function HeaderSearch() {
+  return (
+    <>
+      <form action="/search" method="get" role="search" className="hidden md:block">
+        <Input
+          type="search"
+          name="q"
+          maxLength={SEARCH_QUERY_MAX_LENGTH}
+          aria-label={m.layout_search()}
+          placeholder={m.layout_search_placeholder()}
+          className="h-9 w-48 lg:w-64"
+        />
+      </form>
+      <Button asChild variant="ghost" size="icon" className="md:hidden">
+        <a href="/search" aria-label={m.layout_search()}>
+          <SearchIcon aria-hidden />
+        </a>
+      </Button>
+    </>
   );
 }
 

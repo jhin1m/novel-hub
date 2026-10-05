@@ -4,15 +4,23 @@ import {
   createContentQueue,
   createMailer,
   createProducerConnection,
+  createSearchCtx,
   createWorkerConnection,
   logRedisErrors,
   mailerConfigFromEnv,
 } from '@novel-hub/core';
 import { createDb } from '@novel-hub/db';
-import { cdnEnvSchema, loadOptionalEnv, loadServerEnv } from '@novel-hub/shared/env';
+import {
+  assertMeiliMasterKeyStrength,
+  cdnEnvSchema,
+  loadOptionalEnv,
+  loadServerEnv,
+  meiliWorkerEnvSchema,
+} from '@novel-hub/shared/env';
 import { createContentWorker } from './content-worker';
 import { workerEnvSchema } from './env';
 import { createMailWorker } from './mail-worker';
+import { type SearchWriter, createSearchWriter } from './processors/search-sync';
 import {
   type PublishingQueue,
   createPublishingQueue,
@@ -40,6 +48,16 @@ function registerSchedulersInBackground(queue: PublishingQueue): void {
   });
 }
 
+/** Writer for the search indexes, or `null` when `MEILI_*` is missing outside production. */
+function searchWriterFromEnv(prefix: string): SearchWriter | null {
+  const meili = loadOptionalEnv(meiliWorkerEnvSchema, process.env, 'meili');
+  if (!meili) return null;
+  assertMeiliMasterKeyStrength(meili, process.env.NODE_ENV);
+  return createSearchWriter(
+    createSearchCtx({ url: meili.MEILI_URL, apiKey: meili.MEILI_MASTER_KEY, prefix }),
+  );
+}
+
 function main(): void {
   // Env sai (gồm production thiếu SMTP) hoặc mailer không tạo được thì không khởi động.
   const env = loadServerEnv(workerEnvSchema);
@@ -47,6 +65,8 @@ function main(): void {
   // Production without `CF_*` refuses to start (cached pages would never be purged); dev purges
   // nothing. `loadServerEnv` has loaded `.env` into `process.env` by now.
   const cdn = createCdnPurger(cdnConfigFromEnv(loadOptionalEnv(cdnEnvSchema, process.env, 'cdn')));
+  // Same rule for search: production requires the master key, dev without it skips search jobs.
+  const search = searchWriterFromEnv(env.QUEUE_PREFIX);
   // Small pool: one sweep and one drain at a time, plus a few content jobs.
   const { db, pool } = createDb(env.DATABASE_URL, { max: 5 });
   const connection = createWorkerConnection(env.REDIS_URL);
@@ -68,6 +88,7 @@ function main(): void {
     db,
     cdn,
     appUrl: env.APP_URL,
+    search,
   });
   const mailWorker = createMailWorker(connection, env.QUEUE_PREFIX, { mailer });
   registerSchedulersInBackground(publishingQueue);

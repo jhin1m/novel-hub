@@ -1,7 +1,7 @@
 ---
 phase: 11
 title: "Phase 11: Tìm kiếm Meilisearch"
-status: pending
+status: completed
 priority: P1
 effort: "2d"
 dependencies: [10]
@@ -173,13 +173,13 @@ export function reindexAll(db, ctx, log?: (m: string) => void): Promise<{ upsert
 
 ## Function / Interface Checklist
 
-- [ ] `meiliWebEnvSchema`, `meiliWorkerEnvSchema`, `assertMeiliMasterKeyStrength`
-- [ ] `searchQuerySchema`, `WORD_RANGES`, `searchSyncPayload`
-- [ ] `createSearchCtx`, `searchIndexNames`, `ensureSearchSettings`
-- [ ] `loadStoryDoc`, `loadAuthorDoc`, `syncStory`, `syncAuthor`, `syncUserContent`
-- [ ] `buildStoryFilter`, `searchCatalog`, `reindexAll`
-- [ ] `jobsForChange` case `search-sync`; processor `search-sync`; script `reindex-search.ts`
-- [ ] `createSearchRoutes(deps)`; route `/search`, `SearchForm`, `SearchResults`
+- [x] `meiliWebEnvSchema`, `meiliWorkerEnvSchema`, `assertMeiliMasterKeyStrength`
+- [x] `searchQuerySchema`, `WORD_RANGES`, `searchSyncPayload`
+- [x] `createSearchCtx`, `searchIndexNames`, `ensureSearchSettings`
+- [x] `loadStoryDoc`, `loadAuthorDoc`, `syncStory`, `syncAuthor`, `syncUserContent`
+- [x] `buildStoryFilter`, `searchCatalog`, `reindexAll`
+- [x] `jobsForChange` case `search-sync`; processor `search-sync`; script `reindex-search.ts`
+- [x] `createSearchRoutes(deps)`; route `/search`, `SearchForm`, `SearchResults`
 
 ## Test Scenario Matrix
 
@@ -218,11 +218,11 @@ export function reindexAll(db, ctx, log?: (m: string) => void): Promise<{ upsert
 
 ## Success Criteria
 
-- [ ] Tìm truyện và tác giả: có dấu/không dấu/gõ sai (từ đầu, `matchingStrategy: 'all'`) đều ra (int test xanh)
-- [ ] Lọc tag, trạng thái, số chữ; khách không thấy truyện 18+
-- [ ] Đổi trạng thái truyện, ban/bỏ ban, đổi tên tác giả → index cập nhật qua worker; `pnpm search:reindex` dựng lại được
-- [ ] Web chỉ giữ search-only key
-- [ ] Gate 5 lệnh xanh; checkbox spec = `[x]`
+- [x] Tìm truyện và tác giả: có dấu/không dấu/gõ sai (từ đầu, `matchingStrategy: 'all'`) đều ra (int test xanh)
+- [x] Lọc tag, trạng thái, số chữ; khách không thấy truyện 18+
+- [x] Đổi trạng thái truyện, ban/bỏ ban, đổi tên tác giả → index cập nhật qua worker; `pnpm search:reindex` dựng lại được
+- [x] Web chỉ giữ search-only key
+- [x] Gate 5 lệnh xanh; checkbox spec = `[x]`
 
 ## Risk Assessment
 
@@ -252,6 +252,18 @@ Rollback: gỡ mount `/search`, route `/search`, case `jobsForChange`/`content-r
 
 1. `MEILI_SEARCH_KEY` = "Default Search API Key" Meilisearch tự tạo; user copy vào `.env` mỗi môi trường.
 2. Chưa rate limit `GET /api/v1/search` ở năm đầu.
+
+## Kết quả cook (2026-10-05)
+
+Gate 5 lệnh xanh (unit 455, int 227 + 1 skip S3, e2e 53). Review `../reports/code-reviewer-261005-1454-phase-11-search-review-report.md` (8/10; đã sửa M1–M3, L1, L4, L5). Report: `../reports/cook-261005-1524-phase-11-search-report.md`.
+
+Lệch plan:
+- Không cần `titleFolded`/`authorNameFolded`: int test xác nhận `duong` ra "Đường".
+- `searchCatalog(db, ctx, query, o)` nhận thêm `db` để quy tag về canonical (`canonicalTagSlug` ở `catalog/tag-page.ts`); thêm `syncStoryAndAuthor`; mọi sync đọc lại row sau khi ghi và áp lại tới khi ổn định (job chạy song song).
+- Tác giả: doc dựng bằng left join + group by (Drizzle bỏ tiền tố bảng trong subquery một bảng).
+- `/search` có query lạ: router trả 307 về URL đã làm sạch (không phải 200); mặc định (`q=''`, `page=1`) bị lược khỏi URL bằng `stripSearchParams`.
+- Job `search-sync` dùng chung retry 11 lần với purge.
+- Thêm guard production: `MEILI_SEARCH_KEY` không được trùng `MEILI_MASTER_KEY`.
 
 ## Next Steps
 

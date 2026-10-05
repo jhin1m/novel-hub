@@ -107,3 +107,15 @@ export {
   storyListQuery,
   usernameParamSchema,
 } from './schemas/catalog';
+export {
+  SEARCH_AUTHOR_LIMIT,
+  SEARCH_MAX_PAGE,
+  SEARCH_PAGE_SIZE,
+  SEARCH_QUERY_MAX_LENGTH,
+  type SearchQuery,
+  type SearchSyncPayload,
+  WORD_RANGES,
+  type WordRangeKey,
+  searchQuerySchema,
+  searchSyncPayload,
+} from './schemas/search';

@@ -7,7 +7,7 @@ import { routePublishingJob } from './publishing-worker';
 
 const db = {} as Db;
 const cdn: CdnPurger = { purge: () => Promise.resolve() };
-const contentDeps = { db, cdn, appUrl: 'http://localhost:3000' };
+const contentDeps = { db, cdn, appUrl: 'http://localhost:3000', search: null };
 
 describe('job routers', () => {
   it('never retries a job name without a processor', async () => {

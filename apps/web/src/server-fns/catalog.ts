@@ -8,6 +8,7 @@ import {
   getHomePage as loadHomePage,
   getStoryPage as loadStoryPage,
   getTagPage as loadTagPage,
+  listGenres,
 } from '@novel-hub/core';
 import { isValidPublicId, tagSlugSchema, usernameParamSchema } from '@novel-hub/shared';
 import { createServerFn } from '@tanstack/react-start';
@@ -44,4 +45,10 @@ export const getTagPage = createServerFn({ method: 'GET' })
 export const getHomePage = createServerFn({ method: 'GET' }).handler(async () => {
   const { db, env } = await getInfra();
   return { ...(await loadHomePage(db)), appUrl: env.APP_URL };
+});
+
+/** Filters of the search page: the genres to pick from (results load in the browser). */
+export const getSearchFilters = createServerFn({ method: 'GET' }).handler(async () => {
+  const { db } = await getInfra();
+  return { genres: await listGenres(db) };
 });

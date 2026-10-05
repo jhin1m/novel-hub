@@ -1,4 +1,4 @@
-import { CONTENT_JOBS, type ContentJobName } from '@novel-hub/shared';
+import { CONTENT_JOBS, type ContentJobName, type SearchSyncPayload } from '@novel-hub/shared';
 import type { JobsOptions } from 'bullmq';
 import { z } from 'zod';
 
@@ -61,28 +61,35 @@ export interface ContentJob {
 }
 
 /**
- * A purge that gives up leaves hidden content on the CDN until `s-maxage` runs out, so it keeps
- * trying through a CDN outage of a few hours (10 s doubling: last attempt ≈ 2.8 h in).
+ * A purge or search sync that gives up leaves hidden content on the CDN (until `s-maxage` runs out)
+ * or in search (until a reindex), so both keep trying through an outage of a few hours (10 s
+ * doubling: last attempt ≈ 2.8 h in).
  */
-const PURGE_RETRY: ContentJob['opts'] = {
+const OUTAGE_RETRY: ContentJob['opts'] = {
   attempts: 11,
   backoff: { type: 'exponential', delay: 10_000 },
 };
 
+const searchSync = (data: SearchSyncPayload): ContentJob => ({
+  name: CONTENT_JOBS.searchSync,
+  data,
+  opts: OUTAGE_RETRY,
+});
+
 /**
- * The jobs a change needs (CDN purge now; search sync and fingerprints join later). Pure, so the
+ * The jobs a change needs (CDN purge and search sync; fingerprints join later). Pure, so the
  * mapping is unit tested without Redis. Every change touches cached public pages, so every change
- * purges; the job carries the change itself and resolves URLs from the current state.
+ * purges; the job carries the change itself and resolves URLs from the current state. Every change
+ * also resyncs search: a chapter moves its story's counters, a user change their name or ban.
  */
 export function jobsForChange(change: ContentChange): ContentJob[] {
-  const purge: ContentJob = { name: CONTENT_JOBS.purgeUrls, data: change, opts: PURGE_RETRY };
+  const purge: ContentJob = { name: CONTENT_JOBS.purgeUrls, data: change, opts: OUTAGE_RETRY };
   switch (change.entity) {
     case 'story':
-      return [purge];
     case 'chapter':
-      return [purge];
+      return [purge, searchSync({ kind: 'story', storyId: change.storyId })];
     case 'user':
-      return [purge];
+      return [purge, searchSync({ kind: 'user', userId: change.userId })];
     default: {
       const unhandled: never = change;
       throw new Error(`Unhandled content change ${JSON.stringify(unhandled)}`);

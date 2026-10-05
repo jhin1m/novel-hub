@@ -1,4 +1,11 @@
-import type { CurrentUser, Db, HealthReport, StoragePort, ViewCounter } from '@novel-hub/core';
+import type {
+  CurrentUser,
+  Db,
+  HealthReport,
+  SearchCtx,
+  StoragePort,
+  ViewCounter,
+} from '@novel-hub/core';
 
 /** The auth part the API needs; the mount point builds it from Better Auth (`createAuth`, `getCurrentUser`). */
 export interface AuthPort {
@@ -22,4 +29,6 @@ export interface ApiDeps {
   storage: StoragePort | null;
   /** Counts chapter reads in Redis; `null` when unavailable (reads are then not counted). */
   viewCounter: ViewCounter | null;
+  /** Search-only Meilisearch client; `null` when not configured (dev): search answers 503. */
+  search: SearchCtx | null;
 }

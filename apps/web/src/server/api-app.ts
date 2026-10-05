@@ -23,27 +23,30 @@ const ENQUEUE_TIMEOUT_MS = 1_000;
 let appPromise: Promise<App> | undefined;
 
 function buildApp(): Promise<App> {
-  const promise = getInfra().then(({ env, db, healthRedis, mailQueue, storage, viewCounter }) => {
-    // Mail goes through the queue and the worker sends it. `createAuth` calls this port
-    // fire-and-forget with a timeout and logs failures, so a dead Redis never hangs a request.
-    const sendAuthEmail: AuthMailPort = async (msg) => {
-      await enqueueAuthEmail(mailQueue, msg);
-      console.info(`[mail] queued ${msg.kind} mail; the worker will send it`);
-    };
-    const auth = createAuth({ db, env, sendAuthEmail, mailTimeoutMs: ENQUEUE_TIMEOUT_MS });
-    return createApp({
-      appUrl: env.APP_URL,
-      auth: { handler: auth.handler, lookupSession: (headers) => lookupSession(auth, headers) },
-      checkHealth: () =>
-        checkHealth({
-          pingPostgres: () => pingPostgres(db),
-          pingRedis: () => pingRedis(healthRedis),
-        }),
-      db,
-      storage,
-      viewCounter,
-    });
-  });
+  const promise = getInfra().then(
+    ({ env, db, healthRedis, mailQueue, storage, viewCounter, search }) => {
+      // Mail goes through the queue and the worker sends it. `createAuth` calls this port
+      // fire-and-forget with a timeout and logs failures, so a dead Redis never hangs a request.
+      const sendAuthEmail: AuthMailPort = async (msg) => {
+        await enqueueAuthEmail(mailQueue, msg);
+        console.info(`[mail] queued ${msg.kind} mail; the worker will send it`);
+      };
+      const auth = createAuth({ db, env, sendAuthEmail, mailTimeoutMs: ENQUEUE_TIMEOUT_MS });
+      return createApp({
+        appUrl: env.APP_URL,
+        auth: { handler: auth.handler, lookupSession: (headers) => lookupSession(auth, headers) },
+        checkHealth: () =>
+          checkHealth({
+            pingPostgres: () => pingPostgres(db),
+            pingRedis: () => pingRedis(healthRedis),
+          }),
+        db,
+        storage,
+        viewCounter,
+        search,
+      });
+    },
+  );
   promise.catch(() => {
     if (appPromise === promise) appPromise = undefined;
   });

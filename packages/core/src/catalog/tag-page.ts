@@ -108,6 +108,28 @@ export async function getTagPage(
   };
 }
 
+/**
+ * The canonical slug for `slug`: itself, or the tag at the end of its merge chain. `null` for an
+ * unknown tag or a broken chain. Search filters by canonical slugs only.
+ */
+export async function canonicalTagSlug(db: Db, slug: string): Promise<string | null> {
+  const [tag] = await db
+    .select({ slug: tags.slug, canonicalId: tags.canonicalId })
+    .from(tags)
+    .where(eq(tags.slug, slug))
+    .limit(1);
+  if (!tag) return null;
+  if (!tag.canonicalId) return tag.slug;
+  const merged = await db
+    .select({ id: tags.id, canonicalId: tags.canonicalId })
+    .from(tags)
+    .where(isNotNull(tags.canonicalId));
+  const target = followMerges(tag.canonicalId, merged);
+  if (!target) return null;
+  const [row] = await db.select({ slug: tags.slug }).from(tags).where(eq(tags.id, target));
+  return row?.slug ?? null;
+}
+
 type MergedTag = { id: string; canonicalId: string | null };
 
 /** The canonical tag id at the end of a merge chain starting at `id`; `null` past the hop limit. */

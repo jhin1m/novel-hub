@@ -1,7 +1,7 @@
 import { type Db, stories, tags, users } from '@novel-hub/db';
 import type { StoryStatus } from '@novel-hub/shared';
 import { type SQL, and, count, desc, eq, ne, sql } from 'drizzle-orm';
-import { alias } from 'drizzle-orm/pg-core';
+import { type SelectedFields, alias } from 'drizzle-orm/pg-core';
 
 /** A story as every public list shows it (spec section 8). No internal ids. */
 export interface StoryCardDto {
@@ -61,8 +61,13 @@ export const storyCardColumns = {
 
 /** `select … from stories` joined with everything a card needs; callers add where/order/limit. */
 export function selectStoryCards(db: Db) {
+  return selectStoryCardsWith(db, {});
+}
+
+/** `selectStoryCards` plus `extra` columns over the same joins (search documents need a few more). */
+export function selectStoryCardsWith<E extends SelectedFields>(db: Db, extra: E) {
   return db
-    .select(storyCardColumns)
+    .select({ ...storyCardColumns, ...extra })
     .from(stories)
     .innerJoin(users, eq(users.id, stories.authorId))
     .innerJoin(mainTag, eq(mainTag.id, stories.mainTagId))

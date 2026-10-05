@@ -23,7 +23,7 @@ const change = (n: number): ContentChange => ({
   chapterId: STORY,
   chapterNumber: n,
 });
-/** Stands in for the real mapping, which produces no job yet. */
+/** Stands in for the real mapping with exactly one job per change. */
 const oneJobEach = (c: ContentChange): ContentJob[] => [
   { name: 'purge-urls', data: { n: c.entity === 'chapter' ? c.chapterNumber : 0 } },
 ];
@@ -148,12 +148,13 @@ describe('drainContentEvents', () => {
     expect(left.sort()).toEqual([1, 3]);
   });
 
-  it('by default turns every change into a purge job carrying the change', async () => {
+  it('by default turns every change into a purge job and a search sync', async () => {
     await recordContentChanges(db, [change(1)]);
     const addBulk = vi.fn().mockResolvedValue([]);
     await drainContentEvents({ db, contentQueue: { addBulk } });
     expect(addBulk).toHaveBeenCalledWith([
       expect.objectContaining({ name: 'purge-urls', data: change(1) }),
+      expect.objectContaining({ name: 'search-sync', data: { kind: 'story', storyId: STORY } }),
     ]);
   });
 });

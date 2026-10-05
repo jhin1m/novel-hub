@@ -146,7 +146,7 @@ export {
 export { chaptersPerWeek } from './catalog/frequency';
 export { type StoryPageData, getStoryPage } from './catalog/story-page';
 export { type AuthorPageData, getAuthorPage } from './catalog/author-page';
-export { type TagPageResult, getTagPage } from './catalog/tag-page';
+export { type TagPageResult, canonicalTagSlug, getTagPage } from './catalog/tag-page';
 export {
   type HomePageData,
   getHomePage,
@@ -156,3 +156,31 @@ export {
 } from './catalog/home';
 export { catalogUrls } from './catalog/urls';
 export { type StoryList, listStories } from './catalog/lists';
+export {
+  SEARCH_REQUEST_TIMEOUT_MS,
+  type SearchCtx,
+  type SearchIndexNames,
+  createSearchCtx,
+  searchIndexNames,
+} from './search/client';
+export {
+  AUTHOR_INDEX_SETTINGS,
+  STORY_INDEX_SETTINGS,
+  ensureSearchSettings,
+} from './search/settings';
+export {
+  type AuthorDoc,
+  type StoryDoc,
+  loadAuthorDocs,
+  loadStoryDocs,
+  storyDocToCard,
+} from './search/documents';
+export {
+  type SyncOutcome,
+  syncAuthor,
+  syncStory,
+  syncStoryAndAuthor,
+  syncUserContent,
+} from './search/sync';
+export { type AuthorHit, type SearchResult, buildStoryFilter, searchCatalog } from './search/query';
+export { type ReindexResult, reindexAll } from './search/reindex';

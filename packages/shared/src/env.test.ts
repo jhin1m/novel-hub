@@ -5,12 +5,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import {
   appEnvSchema,
+  assertMeiliMasterKeyStrength,
+  assertMeiliSearchKeyIsNotMaster,
   cdnEnvSchema,
   authEnvSchema,
   dbEnvSchema,
   findRepoRoot,
   loadOptionalEnv,
   loadServerEnv,
+  meiliWebEnvSchema,
+  meiliWorkerEnvSchema,
   queueEnvSchema,
   redisEnvSchema,
   requireGooglePair,
@@ -346,5 +350,80 @@ describe('cdnEnvSchema via loadOptionalEnv', () => {
     expect(() =>
       loadOptionalEnv(cdnEnvSchema, { ...env, CF_ZONE_ID: 'example.com' }, 'cdn'),
     ).toThrow(/CF_ZONE_ID/);
+  });
+});
+
+describe('Meilisearch env via loadOptionalEnv', () => {
+  const url = 'http://localhost:7700';
+
+  it('throws in production when the web search key or the worker master key is missing', () => {
+    expect(() =>
+      loadOptionalEnv(meiliWebEnvSchema, { NODE_ENV: 'production', MEILI_URL: url }, 'meili'),
+    ).toThrow(/MEILI_SEARCH_KEY/);
+    expect(() =>
+      loadOptionalEnv(meiliWorkerEnvSchema, { NODE_ENV: 'production', MEILI_URL: url }, 'meili'),
+    ).toThrow(/MEILI_MASTER_KEY/);
+  });
+
+  it('returns null in development when a key is missing', () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(
+      loadOptionalEnv(meiliWebEnvSchema, { NODE_ENV: 'development', MEILI_URL: url }, 'meili'),
+    ).toBeNull();
+    expect(
+      loadOptionalEnv(
+        meiliWorkerEnvSchema,
+        { NODE_ENV: 'development', MEILI_URL: url, MEILI_MASTER_KEY: '' },
+        'meili',
+      ),
+    ).toBeNull();
+  });
+
+  it('keeps only its own key: the web set never carries the master key', () => {
+    const env = {
+      NODE_ENV: 'production',
+      MEILI_URL: url,
+      MEILI_SEARCH_KEY: 's',
+      MEILI_MASTER_KEY: 'm',
+    };
+    expect(loadOptionalEnv(meiliWebEnvSchema, env, 'meili')).toEqual({
+      MEILI_URL: url,
+      MEILI_SEARCH_KEY: 's',
+    });
+  });
+});
+
+describe('assertMeiliMasterKeyStrength', () => {
+  it('accepts a short key outside production', () => {
+    expect(() =>
+      assertMeiliMasterKeyStrength({ MEILI_MASTER_KEY: '12345678' }, 'development'),
+    ).not.toThrow();
+  });
+
+  it('rejects a key under 16 bytes in production without printing it', () => {
+    const err = errorOf(() =>
+      assertMeiliMasterKeyStrength({ MEILI_MASTER_KEY: 'short-secret' }, 'production'),
+    );
+    expect(err.message).toMatch(/MEILI_MASTER_KEY/);
+    expect(err.message).not.toContain('short-secret');
+    expect(() =>
+      assertMeiliMasterKeyStrength({ MEILI_MASTER_KEY: '0123456789abcdef' }, 'production'),
+    ).not.toThrow();
+  });
+});
+
+describe('assertMeiliSearchKeyIsNotMaster', () => {
+  it('rejects the master key as the web key in production only, without printing it', () => {
+    const err = errorOf(() =>
+      assertMeiliSearchKeyIsNotMaster({ MEILI_SEARCH_KEY: 'same-key' }, 'same-key', 'production'),
+    );
+    expect(err.message).toMatch(/MEILI_SEARCH_KEY/);
+    expect(err.message).not.toContain('same-key');
+    expect(() =>
+      assertMeiliSearchKeyIsNotMaster({ MEILI_SEARCH_KEY: 'same-key' }, 'same-key', 'development'),
+    ).not.toThrow();
+    expect(() =>
+      assertMeiliSearchKeyIsNotMaster({ MEILI_SEARCH_KEY: 'search' }, 'master', 'production'),
+    ).not.toThrow();
   });
 });

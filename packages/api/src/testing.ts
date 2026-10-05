@@ -29,6 +29,7 @@ export function makeTestApiDeps(overrides: Partial<ApiDeps> = {}): ApiDeps {
     db: unusedDb,
     storage: null,
     viewCounter: null,
+    search: null,
     ...overrides,
   };
 }

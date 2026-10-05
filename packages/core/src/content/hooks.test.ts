@@ -36,16 +36,32 @@ describe('contentChangeSchema', () => {
   });
 });
 
+const RETRY_OPTS = { attempts: 11, backoff: { type: 'exponential', delay: 10_000 } };
+
 describe('jobsForChange', () => {
-  it.each(CHANGES)('maps $entity.$action to exactly one purge job, without a jobId', (change) => {
-    const jobs = jobsForChange(change);
-    expect(jobs).toEqual([
-      {
-        name: 'purge-urls',
-        data: change,
-        opts: { attempts: 11, backoff: { type: 'exponential', delay: 10_000 } },
-      },
-    ]);
-    expect(jobs[0]?.opts).not.toHaveProperty('jobId');
+  it.each(CHANGES)(
+    'maps $entity.$action to a purge and a search sync, without a jobId',
+    (change) => {
+      const jobs = jobsForChange(change);
+      const sync =
+        change.entity === 'user'
+          ? { kind: 'user', userId: change.userId }
+          : { kind: 'story', storyId: change.storyId };
+      expect(jobs).toEqual([
+        { name: 'purge-urls', data: change, opts: RETRY_OPTS },
+        { name: 'search-sync', data: sync, opts: RETRY_OPTS },
+      ]);
+      for (const job of jobs) {
+        expect(job).not.toHaveProperty('jobId');
+        expect(job.opts ?? {}).not.toHaveProperty('jobId');
+      }
+    },
+  );
+
+  it('maps every user action to a user sync', () => {
+    for (const action of ['updated', 'banned', 'unbanned'] as const) {
+      const [, sync] = jobsForChange({ entity: 'user', action, userId: STORY });
+      expect(sync?.data).toEqual({ kind: 'user', userId: STORY });
+    }
   });
 });

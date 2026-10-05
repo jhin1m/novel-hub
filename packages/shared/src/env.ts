@@ -86,6 +86,47 @@ export const cdnEnvSchema = z.object({
 
 export type CdnEnv = z.infer<typeof cdnEnvSchema>;
 
+/**
+ * Meilisearch for the web app: a search-only key, so a leaked web key only reads what is public
+ * anyway. Parse it with `loadOptionalEnv`; without it `/api/v1/search` answers 503.
+ */
+export const meiliWebEnvSchema = z.object({
+  MEILI_URL: httpUrl,
+  MEILI_SEARCH_KEY: z.string().min(1),
+});
+
+/** Meilisearch for the worker and the reindex command, which write to the indexes. */
+export const meiliWorkerEnvSchema = z.object({
+  MEILI_URL: httpUrl,
+  MEILI_MASTER_KEY: z.string().min(1),
+});
+
+/** Meilisearch refuses to start in production with a master key under 16 bytes; fail first here. */
+export function assertMeiliMasterKeyStrength(
+  cfg: { MEILI_MASTER_KEY: string },
+  nodeEnv: string | undefined,
+): void {
+  if (nodeEnv === 'production' && Buffer.byteLength(cfg.MEILI_MASTER_KEY) < 16) {
+    throw new Error('Invalid environment: MEILI_MASTER_KEY must be at least 16 bytes');
+  }
+}
+
+/**
+ * Production refuses a web search key equal to the master key (a copy-paste slip that would put
+ * write access in the web process).
+ */
+export function assertMeiliSearchKeyIsNotMaster(
+  cfg: { MEILI_SEARCH_KEY: string },
+  masterKey: string | undefined,
+  nodeEnv: string | undefined,
+): void {
+  if (nodeEnv === 'production' && cfg.MEILI_SEARCH_KEY === masterKey) {
+    throw new Error(
+      'Invalid environment: MEILI_SEARCH_KEY must be a search-only key, not MEILI_MASTER_KEY',
+    );
+  }
+}
+
 // Refines are written as functions wrapping the composed schema: Zod 4 does not allow `.extend()` on a schema that already has
 // a refine, and its `.shape` drops the refine.
 

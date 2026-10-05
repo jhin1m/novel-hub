@@ -1,6 +1,7 @@
 import { m } from '@novel-hub/shared/messages';
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { FormMessage, textLinkClass } from '../../../../components/auth-ui';
+import { ChapterList } from '../../../../components/chapter-list';
 import { CoverUpload } from '../../../../components/cover-upload';
 import { SiteLayout } from '../../../../components/site-layout';
 import { StoryForm } from '../../../../components/story-form';
@@ -57,6 +58,7 @@ function EditStory() {
 
   return (
     <div className="flex flex-col gap-10">
+      <ChapterList publicId={story.data.publicId} />
       <CoverUpload story={story.data} authorName={me.data?.displayName ?? ''} />
       <EditStoryForm key={story.data.publicId} story={story.data} tags={tags.data} />
     </div>

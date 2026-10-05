@@ -1,4 +1,4 @@
-import { getAuthorStory, listAuthorStories } from '@novel-hub/core';
+import { getAuthorStory, listAuthorChapters, listAuthorStories } from '@novel-hub/core';
 import { Hono } from 'hono';
 import type { ApiDeps } from '../deps';
 import { coreError } from '../lib/core-errors';
@@ -24,5 +24,10 @@ export function createMeRoutes(deps: Pick<ApiDeps, 'auth' | 'db'>) {
       const result = await getAuthorStory(deps.db, c.var.authUser, c.req.param('publicId'));
       if (!result.ok) return coreError(c, result.error);
       return c.json({ story: result.value }, 200);
+    })
+    .get('/stories/:publicId/chapters', requireAuth, async (c) => {
+      const result = await listAuthorChapters(deps.db, c.var.authUser, c.req.param('publicId'));
+      if (!result.ok) return coreError(c, result.error);
+      return c.json({ chapters: result.value }, 200);
     });
 }

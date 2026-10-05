@@ -18,6 +18,7 @@ import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as WriteIndexRouteImport } from './routes/write/index'
 import { Route as WriteStoriesNewRouteImport } from './routes/write/stories/new'
 import { Route as WriteStoriesPublicIdIndexRouteImport } from './routes/write/stories/$publicId/index'
+import { Route as WriteStoriesPublicIdChaptersNumberRouteImport } from './routes/write/stories/$publicId/chapters/$number'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -65,6 +66,12 @@ const WriteStoriesPublicIdIndexRoute =
     path: '/write/stories/$publicId/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const WriteStoriesPublicIdChaptersNumberRoute =
+  WriteStoriesPublicIdChaptersNumberRouteImport.update({
+    id: '/write/stories/$publicId/chapters/$number',
+    path: '/write/stories/$publicId/chapters/$number',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -76,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/write/': typeof WriteIndexRoute
   '/write/stories/new': typeof WriteStoriesNewRoute
   '/write/stories/$publicId/': typeof WriteStoriesPublicIdIndexRoute
+  '/write/stories/$publicId/chapters/$number': typeof WriteStoriesPublicIdChaptersNumberRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -87,6 +95,7 @@ export interface FileRoutesByTo {
   '/write': typeof WriteIndexRoute
   '/write/stories/new': typeof WriteStoriesNewRoute
   '/write/stories/$publicId': typeof WriteStoriesPublicIdIndexRoute
+  '/write/stories/$publicId/chapters/$number': typeof WriteStoriesPublicIdChaptersNumberRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -99,6 +108,7 @@ export interface FileRoutesById {
   '/write/': typeof WriteIndexRoute
   '/write/stories/new': typeof WriteStoriesNewRoute
   '/write/stories/$publicId/': typeof WriteStoriesPublicIdIndexRoute
+  '/write/stories/$publicId/chapters/$number': typeof WriteStoriesPublicIdChaptersNumberRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -112,6 +122,7 @@ export interface FileRouteTypes {
     | '/write/'
     | '/write/stories/new'
     | '/write/stories/$publicId/'
+    | '/write/stories/$publicId/chapters/$number'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -123,6 +134,7 @@ export interface FileRouteTypes {
     | '/write'
     | '/write/stories/new'
     | '/write/stories/$publicId'
+    | '/write/stories/$publicId/chapters/$number'
   id:
     | '__root__'
     | '/'
@@ -134,6 +146,7 @@ export interface FileRouteTypes {
     | '/write/'
     | '/write/stories/new'
     | '/write/stories/$publicId/'
+    | '/write/stories/$publicId/chapters/$number'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -146,6 +159,7 @@ export interface RootRouteChildren {
   WriteIndexRoute: typeof WriteIndexRoute
   WriteStoriesNewRoute: typeof WriteStoriesNewRoute
   WriteStoriesPublicIdIndexRoute: typeof WriteStoriesPublicIdIndexRoute
+  WriteStoriesPublicIdChaptersNumberRoute: typeof WriteStoriesPublicIdChaptersNumberRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -213,6 +227,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WriteStoriesPublicIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/write/stories/$publicId/chapters/$number': {
+      id: '/write/stories/$publicId/chapters/$number'
+      path: '/write/stories/$publicId/chapters/$number'
+      fullPath: '/write/stories/$publicId/chapters/$number'
+      preLoaderRoute: typeof WriteStoriesPublicIdChaptersNumberRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -226,6 +247,8 @@ const rootRouteChildren: RootRouteChildren = {
   WriteIndexRoute: WriteIndexRoute,
   WriteStoriesNewRoute: WriteStoriesNewRoute,
   WriteStoriesPublicIdIndexRoute: WriteStoriesPublicIdIndexRoute,
+  WriteStoriesPublicIdChaptersNumberRoute:
+    WriteStoriesPublicIdChaptersNumberRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

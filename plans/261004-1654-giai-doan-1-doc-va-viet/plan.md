@@ -34,7 +34,7 @@ Giai đoạn 0 xong (`plans/261004-1255-giai-doan-0-nen-mong`). Spec `docs/proje
 | 1 | [Design tokens và nền UI](./phase-01-start.md) | (không, user thêm) | Completed |
 | 2 | [Tạo và sửa truyện](./phase-02-tao-va-sua-truyen.md) | 1 | Done, chờ thử S3 thật (checkbox chưa `[x]`) |
 | 3 | [Bìa mặc định dạng chữ](./phase-03-bia-mac-dinh-dang-chu.md) | 2 | Completed |
-| 4 | [Editor Tiptap và autosave](./phase-04-editor-tiptap-autosave.md) | 3 | Pending |
+| 4 | [Editor Tiptap và autosave](./phase-04-editor-tiptap-autosave.md) | 3 | Completed |
 | 5 | [Đăng chương và hẹn giờ](./phase-05-dang-chuong-va-hen-gio.md) | 4 | Pending |
 | 6 | [Khôi phục revision](./phase-06-khoi-phuc-revision.md) | 5 | Pending |
 | 7 | [Trang đọc: route, cache, giao diện](./phase-07-trang-doc-route-giao-dien.md) | 6 (phần 1/3) | Pending |
@@ -269,7 +269,8 @@ Phụ thuộc tuyến tính 1 → 17.
 - Phase 1 xong (2026-10-05): gate 5 lệnh xanh; review `../reports/code-reviewer-261005-1010-phase-01-design-tokens-review-report.md` (8/10, đã sửa M1–M3, L1, L2, L4, L5).
 - Phase 2 xong code (2026-10-05): gate 5 lệnh xanh, `s3-storage.int.test.ts` SKIPPED vì `S3_*` trống; checkbox 1 chờ user tạo bucket MinIO dev rồi chạy bước 13. Review `../reports/code-reviewer-261005-1023-phase-02-stories-review-report.md` (8/10, đã sửa M1–M3, L3, L4, L7). Report: `../reports/cook-261005-1049-phase-02-stories-report.md`.
 - Phase 3 xong (2026-10-05): gate 5 lệnh xanh, checkbox 2 `[x]`. Review `../reports/code-review-261005-1054-phase-03-text-cover-report.md` (8.5/10, 0 Critical/High/Medium; đã sửa L2, L3; L1 duyệt mắt dark ổn, không sửa; L4 để user quyết). Report: `../reports/cook-261005-1054-phase-03-text-cover-report.md`.
-- Tiếp: cook phase 4.
+- Phase 4 xong (2026-10-05): gate 5 lệnh xanh, checkbox 3 `[x]`. Review `../reports/code-reviewer-261005-1122-phase-04-editor-autosave-review-report.md` (7.5/10, đã sửa H1, M1–M3, L1, L2). Report: `../reports/cook-261005-1137-phase-04-editor-autosave-report.md`. DB dev cũ cần `pnpm db:seed --reset` (pid `p1`).
+- Tiếp: cook phase 5.
 - Nhắc trước khi mở public: backup Postgres ra ngoài VPS + thử restore (phase 17).
 
 <!-- slug: giai-doan-1-doc-va-viet -->

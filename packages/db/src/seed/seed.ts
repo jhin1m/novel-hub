@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { slugify } from '@novel-hub/shared';
+import { countWords, generatePid, slugify } from '@novel-hub/shared';
 import { inArray } from 'drizzle-orm';
 import type { Db } from '../client';
 import { accounts, users } from '../schema/auth';
@@ -27,10 +27,6 @@ export interface SeedSummary {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-export function countWords(text: string): number {
-  return text.split(/\s+/).filter(Boolean).length;
-}
-
 function escapeHtml(text: string): string {
   return text
     .replaceAll('&', '&amp;')
@@ -40,11 +36,11 @@ function escapeHtml(text: string): string {
 }
 
 /**
- * Builds simple published chapter content: a Tiptap-style doc and `<p data-pid>` HTML.
- * The real sanitize pipeline arrives in Stage 1.
+ * Builds simple published chapter content: an editor doc and `<p data-pid>` HTML, with pids in
+ * the same format the editor generates.
  */
 function buildContent(paragraphs: string[]) {
-  const paragraphIds = paragraphs.map((_, i) => `p${i + 1}`);
+  const paragraphIds = paragraphs.map(() => generatePid());
   const docJson = {
     type: 'doc',
     content: paragraphs.map((text, i) => ({

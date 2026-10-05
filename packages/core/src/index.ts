@@ -46,7 +46,7 @@ export {
 } from './images/cover';
 export { type Result, err, ok } from './lib/result';
 export { SemaphoreFullError, createSemaphore } from './lib/semaphore';
-export { type StoryActor, canEditStory } from './policies/story';
+export { type StoryActor, canEditChapter, canEditStory } from './policies/story';
 export { type S3Config, createS3Storage, s3ConfigFromEnv } from './storage/s3-storage';
 export type { StoragePort } from './storage/storage';
 export { type CoverDeps, removeStoryCover, setStoryCover } from './stories/cover';
@@ -56,3 +56,9 @@ export { getAuthorStory, listAuthorStories, listTags } from './stories/read-stor
 export { type ResolvedTags, type TagError, resolveTags } from './stories/resolve-tags';
 export { type AuthorStoryView, type TagView } from './stories/story-view';
 export { type UpdatedStory, updateStory } from './stories/update-story';
+export { updateChapterMeta } from './chapters/chapter-meta';
+export { type AuthorChapterView, type ChapterRow } from './chapters/chapter-view';
+export { createChapter } from './chapters/create-chapter';
+export { type DraftView, type SaveDraftError, getDraft, saveDraft } from './chapters/drafts';
+export { listAuthorChapters } from './chapters/list-chapters';
+export { loadOwnedChapter } from './chapters/load-owned-chapter';

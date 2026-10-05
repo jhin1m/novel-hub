@@ -16,7 +16,8 @@ export function WriterGate({ children }: { children: ReactNode }) {
   const me = useMe();
 
   if (me.isPending) return <p className="text-muted-foreground">{m.writer_loading()}</p>;
-  if (me.isError) return <FormMessage>{m.error_generic()}</FormMessage>;
+  // A failed background refetch keeps the last known account: unmounting the editor would lose work.
+  if (me.isError && me.data === undefined) return <FormMessage>{m.error_generic()}</FormMessage>;
   if (!me.data) {
     return (
       <div className="flex flex-col items-start gap-3">

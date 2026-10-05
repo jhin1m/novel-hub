@@ -8,6 +8,7 @@ import { errorBody } from '../lib/errors';
 import { validate } from '../lib/validate';
 import { requireVerifiedEmail } from '../middleware/require-auth';
 import { sessionMiddleware } from '../middleware/session';
+import { createChapterRoutes } from './chapters';
 
 /** Multipart overhead on top of the 5 MB file; the exact file size is checked afterwards. */
 const COVER_BODY_LIMIT = Math.round(LIMITS.cover.maxBytes * 1.1);
@@ -71,5 +72,6 @@ export function createStoryRoutes(deps: Pick<ApiDeps, 'auth' | 'db' | 'storage'>
       );
       if (!result.ok) return coreError(c, result.error);
       return c.json({ story: result.value }, 200);
-    });
+    })
+    .route('/:publicId/chapters', createChapterRoutes(deps));
 }

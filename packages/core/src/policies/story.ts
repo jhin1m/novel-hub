@@ -10,3 +10,8 @@ export interface StoryActor extends PolicyUser {
 export function canEditStory(user: StoryActor, story: { authorId: string }): boolean {
   return !isBanned(user) && user.id === story.authorId;
 }
+
+/** Chapters belong to their story: whoever edits the story edits its chapters. */
+export function canEditChapter(user: StoryActor, story: { authorId: string }): boolean {
+  return canEditStory(user, story);
+}

@@ -21,6 +21,8 @@ export const LIMITS = {
   },
   avatar: { maxBytes: 2 * 1024 * 1024, size: 256 },
   revisionsKept: 20,
+  /** Request body cap for saving a draft; about 20,000 words of JSON with plenty of headroom. */
+  draftMaxBytes: 2_000_000,
 } as const;
 
 /** Image types accepted for upload (checked again from magic bytes on the server). */

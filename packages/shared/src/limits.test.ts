@@ -6,6 +6,7 @@ describe('LIMITS', () => {
     expect(LIMITS.storyTitle).toEqual({ min: 2, max: 150 });
     expect(LIMITS.storySynopsisMax).toBe(3_000);
     expect(LIMITS.storyTagsMax).toBe(10);
+    expect(LIMITS.draftMaxBytes).toBe(2_000_000);
     expect(LIMITS.cover.maxBytes).toBe(5 * 1024 * 1024);
     expect(LIMITS.cover.variants.map((v) => `${v.width}x${v.height}`)).toEqual([
       '600x900',

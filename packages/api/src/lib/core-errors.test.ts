@@ -13,6 +13,9 @@ const expected: [CoreErrorCode, number][] = [
   ['FILE_TOO_LARGE', 413],
   ['UNSUPPORTED_IMAGE', 415],
   ['UPLOAD_BUSY', 503],
+  ['DRAFT_CONFLICT', 409],
+  ['INVALID_DOCUMENT', 422],
+  ['DRAFT_TOO_LARGE', 413],
 ];
 
 describe('coreError', () => {

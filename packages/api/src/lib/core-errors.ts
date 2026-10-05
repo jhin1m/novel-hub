@@ -13,6 +13,9 @@ const CORE_ERROR_STATUS = {
   FILE_TOO_LARGE: 413,
   UNSUPPORTED_IMAGE: 415,
   UPLOAD_BUSY: 503,
+  DRAFT_CONFLICT: 409,
+  INVALID_DOCUMENT: 422,
+  DRAFT_TOO_LARGE: 413,
 } as const;
 
 export type CoreErrorCode = keyof typeof CORE_ERROR_STATUS;
@@ -29,6 +32,9 @@ const CORE_ERROR_MESSAGES: Record<CoreErrorCode, string> = {
   FILE_TOO_LARGE: 'File is larger than 5 MB',
   UNSUPPORTED_IMAGE: 'Only JPEG, PNG and WebP images are accepted',
   UPLOAD_BUSY: 'Too many uploads in progress, try again shortly',
+  DRAFT_CONFLICT: 'The draft was saved elsewhere since it was loaded',
+  INVALID_DOCUMENT: 'The document does not match the editor schema',
+  DRAFT_TOO_LARGE: 'Draft is larger than 2 MB',
 };
 
 export function coreError<C extends CoreErrorCode>(c: Context, code: C) {

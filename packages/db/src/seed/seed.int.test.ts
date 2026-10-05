@@ -1,4 +1,4 @@
-import { isValidPublicId, slugify } from '@novel-hub/shared';
+import { PID_PATTERN, isValidPublicId, slugify } from '@novel-hub/shared';
 import { eq, sql } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import {
@@ -12,7 +12,7 @@ import {
   users,
 } from '../schema/index';
 import { createTestDb, truncateAll } from '../testing/index';
-import { countWords, seedDatabase, seedTags } from './seed';
+import { seedDatabase, seedTags } from './seed';
 
 const { db, pool } = createTestDb();
 const NOW = new Date('2026-10-04T12:00:00Z');
@@ -85,12 +85,17 @@ describe('seedDatabase', () => {
     for (const row of rows) {
       if (row.status === 'draft') {
         expect(row.draft).not.toBeNull();
+        const blocks = (row.draft as { content: { attrs: { pid: string } }[] }).content;
+        for (const block of blocks) expect(block.attrs.pid).toMatch(PID_PATTERN);
         expect(row.html).toBeNull();
         continue;
       }
       expect(row.wordCount).toBeGreaterThanOrEqual(300);
       expect(row.paragraphIds?.length).toBeGreaterThan(0);
-      for (const pid of row.paragraphIds ?? []) expect(row.html).toContain(`data-pid="${pid}"`);
+      for (const pid of row.paragraphIds ?? []) {
+        expect(pid).toMatch(PID_PATTERN);
+        expect(row.html).toContain(`data-pid="${pid}"`);
+      }
       if (row.status === 'scheduled')
         expect(row.scheduledAt?.getTime()).toBeGreaterThan(NOW.getTime());
     }
@@ -154,12 +159,5 @@ describe('seedTags', () => {
     expect(await db.select().from(tags)).toHaveLength(13);
     const merged = await db.select().from(tags).where(eq(tags.slug, 'tu-tien'));
     expect(merged[0]?.canonicalId).toBe(first.get('tien-hiep'));
-  });
-});
-
-describe('countWords', () => {
-  it('counts by whitespace, ignoring extra whitespace', () => {
-    expect(countWords('  Lâm   Phong\nngồi xếp bằng ')).toBe(5);
-    expect(countWords('')).toBe(0);
   });
 });

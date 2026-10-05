@@ -39,3 +39,20 @@ export {
   storyUpdateSchema,
   tagSlugSchema,
 } from './schemas/story';
+export { countWords } from './text';
+export {
+  type EditorDocJson,
+  type EditorMarkJson,
+  type EditorNodeJson,
+  docToText,
+} from './editor/doc-json';
+export { PID_PATTERN, generatePid, isValidPid } from './editor/pid';
+export {
+  CHAPTER_STATUSES,
+  type ChapterMetaInput,
+  type ChapterStatus,
+  type DraftSaveInput,
+  chapterMetaSchema,
+  chapterNumberParamSchema,
+  draftSaveSchema,
+} from './schemas/chapter';

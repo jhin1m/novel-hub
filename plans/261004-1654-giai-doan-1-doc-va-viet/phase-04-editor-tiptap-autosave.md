@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Phase 4: Editor Tiptap và autosave"
-status: pending
+status: completed
 priority: P1
 effort: "2.5d"
 dependencies: [3]
@@ -200,12 +200,12 @@ export function createAutosave(opts: AutosaveOptions): {
 
 ## Function / Interface Checklist
 
-- [ ] `countWords`, `docToText`, `generatePid`, `isValidPid`, `PID_PATTERN`, `EditorDocJson`
-- [ ] `editorExtensions`, `editorSchema`, `parseEditorDoc`, `emptyDraftDoc`
-- [ ] `draftSaveSchema`, `chapterMetaSchema`, `chapterNumberParamSchema`, `LIMITS.draftMaxBytes`
-- [ ] `loadOwnedChapter`, `createChapter`, `getDraft`, `saveDraft`, `updateChapterMeta`, `listAuthorChapters`, `canEditChapter`
-- [ ] `createChapterRoutes(deps)`
-- [ ] `createAutosave` (`flush`, `pause`, `resume`, `rebase`), `readMirror`/`writeMirror`/`clearMirror`, `ChapterEditor`, `SaveStatus`, `ChapterList`
+- [x] `countWords`, `docToText`, `generatePid`, `isValidPid`, `PID_PATTERN`, `EditorDocJson`
+- [x] `editorExtensions`, `editorSchema`, `parseEditorDoc`, `emptyDraftDoc`
+- [x] `draftSaveSchema`, `chapterMetaSchema`, `chapterNumberParamSchema`, `LIMITS.draftMaxBytes`
+- [x] `loadOwnedChapter`, `createChapter`, `getDraft`, `saveDraft`, `updateChapterMeta`, `listAuthorChapters`, `canEditChapter`
+- [x] `createChapterRoutes(deps)`
+- [x] `createAutosave` (`flush`, `pause`, `resume`, `rebase`), `readMirror`/`writeMirror`/`clearMirror`, `ChapterEditor`, `SaveStatus`, `ChapterList`
 
 ## Test Scenario Matrix
 
@@ -241,11 +241,11 @@ export function createAutosave(opts: AutosaveOptions): {
 
 ## Success Criteria
 
-- [ ] Viết chương có autosave ~2 giây, trạng thái lưu đúng 5 trạng thái, không mất chữ khi đóng tab (mirror)
-- [ ] Chống ghi đè giữa tab hoạt động; không xung đột giả với nháp có `updated_at` micro giây
-- [ ] Số chương không bao giờ dùng lại, kể cả khi tạo song song
-- [ ] Trang ngoài khu editor không import Tiptap; `core`/`db` vẫn bị chặn ở mọi file web phía browser, kể cả khu editor (test ESLint)
-- [ ] Gate 5 lệnh xanh; checkbox 3 Giai đoạn 1 = `[x]`
+- [x] Viết chương có autosave ~2 giây, trạng thái lưu đúng 5 trạng thái, không mất chữ khi đóng tab (mirror)
+- [x] Chống ghi đè giữa tab hoạt động; không xung đột giả với nháp có `updated_at` micro giây
+- [x] Số chương không bao giờ dùng lại, kể cả khi tạo song song
+- [x] Trang ngoài khu editor không import Tiptap; `core`/`db` vẫn bị chặn ở mọi file web phía browser, kể cả khu editor (test ESLint)
+- [x] Gate 5 lệnh xanh; checkbox 3 Giai đoạn 1 = `[x]`
 
 ## Risk Assessment
 
@@ -272,6 +272,17 @@ Rollback: không có migration. Revert commit; nháp đã lưu vẫn hợp lệ 
 1. Giữ heading h2/h3 và horizontalRule; allowlist sanitize phase 5 đi theo.
 2. `@tiptap/core` 3.31.4: đã duyệt.
 3. Không chặn "Thêm chương" khi chương cuối còn nháp rỗng.
+
+## Kết quả (2026-10-05)
+
+- Gate 5 lệnh xanh (unit 260, int 108 + 1 skip S3, e2e 14). Checkbox 3 Giai đoạn 1 = `[x]`.
+- Spike bước 1: `getSchema` + `Node.fromJSON().check()` chạy trên Node không DOM, không cần tách `schemaExtensions`.
+- Lệch nhỏ so với interface: `AuthorChapterView.draftUpdatedAt` là `string | null` (chương seed đã đăng không có draft); `getDraft` tự tạo draft từ `chapter_contents` khi thiếu; `parseEditorDoc` trả thêm `doc` (JSON đã chuẩn hoá, là bản được lưu); `createAutosave` nhận thêm `initialJson`, `onSaved`, có `hasPendingChanges()`/`getBase()`; `loadOwnedStory` nhận `policy` để chương dùng `canEditChapter`.
+- Phát hiện khi chạy: `jsonb` đổi thứ tự key → so mirror với doc server bằng `sameDoc` (không phụ thuộc thứ tự key); 409 sau khi mất response được đối chiếu với draft server, trùng nội dung thì coi là đã lưu.
+- Bước 11 (thủ công) chạy bằng Playwright tạm rồi xoá: 22.100 chữ gõ 15 ký tự ~117 ms; offline → "thử lại sau 2s/4s" → online tự lưu; đóng tab khi PUT bị chặn → mở lại có banner khôi phục; dán HTML có link/list/ảnh/bảng/code → chỉ còn paragraph + bold.
+- Review: `../reports/code-reviewer-261005-1122-phase-04-editor-autosave-review-report.md` (7.5/10, 0 Critical). Đã sửa H1 (lưu tên chương làm refetch draft → xung đột giả), M1, M2, M3, L1, L2, Esc khi IME. Còn Low không sửa: `rebase()` khi đang có request bay (phase 5/6 luôn gọi sau `pause()`), khôi phục bỏ qua `mirror.baseUpdatedAt`, `beforeunload` không đặt `returnValue`.
+- DB dev seed trước phase này còn pid `p1` → lưu nháp trả 422; chạy `pnpm db:seed --reset`.
+- Report: `../reports/cook-261005-1137-phase-04-editor-autosave-report.md`.
 
 ## Next Steps
 

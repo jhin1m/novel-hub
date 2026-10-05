@@ -15,8 +15,8 @@ export interface SearchWriter {
 }
 
 /**
- * Applies the index settings lazily, once, so a Meilisearch that is down at boot never stops the
- * worker: a failed attempt is forgotten and the next job tries again.
+ * Applies the index settings once (at boot, see `applySearchSettingsAtBoot`), so a Meilisearch that
+ * is down at boot never stops the worker: a failed attempt is forgotten and the next job tries again.
  */
 export function createSearchWriter(ctx: SearchCtx): SearchWriter {
   let ready: Promise<void> | undefined;
@@ -30,6 +30,24 @@ export function createSearchWriter(ctx: SearchCtx): SearchWriter {
       return ready;
     },
   };
+}
+
+/**
+ * Applies the index settings when the worker boots, so a deploy that changes them takes effect
+ * without a manual reindex. Never throws: a Meilisearch that is down or missing only logs, and the
+ * next search job tries again through `ensureReady`.
+ */
+export async function applySearchSettingsAtBoot(search: SearchWriter | null): Promise<void> {
+  if (!search) return;
+  try {
+    await search.ensureReady();
+    console.info('[search] index settings applied');
+  } catch (error) {
+    console.warn(
+      '[search] could not apply index settings at boot; the next search job retries:',
+      error instanceof Error ? error.message : error,
+    );
+  }
 }
 
 export interface SearchSyncDeps {

@@ -54,7 +54,7 @@ Chạy ở gốc repo. Lần đầu: `cp .env.example .env`, điền `MEILI_MAST
 | `pnpm db:seed` | Dữ liệu mẫu (chỉ DB localhost, `NODE_ENV` tường minh); seed không ghi index tìm kiếm, chạy `pnpm search:reindex` sau đó |
 | `pnpm db:seed-tags` | Nạp danh sách tag ban đầu (idempotent, chạy được ở production) |
 | `pnpm cdn:purge -- --story <publicId>` | Purge Cloudflare trang truyện + mọi chương từng đăng (cần `CF_*`) |
-| `pnpm search:reindex` | Dựng lại index Meilisearch (truyện, tác giả) từ Postgres; chạy sau khi restore DB hoặc khi index lệch (cần `MEILI_MASTER_KEY`) |
+| `pnpm search:reindex` | Dựng lại dữ liệu index Meilisearch (truyện, tác giả) từ Postgres; chạy sau khi restore DB, seed, hoặc khi dữ liệu index lệch (cần `MEILI_MASTER_KEY`). Cấu hình index (filter, sort, typo) worker tự áp mỗi lần khởi động, deploy đổi cấu hình không cần reindex |
 | `pnpm dev` | Web (http://localhost:3000) và worker chạy song song; link xác thực/đặt lại mật khẩu ở dev in ra log **worker** |
 | `pnpm --filter @novel-hub/worker dev` / `start` | Chỉ worker (`tsx watch` / `tsx`) |
 | `pnpm --filter @novel-hub/web build` | Build web (Nitro, ra `apps/web/.output`) |

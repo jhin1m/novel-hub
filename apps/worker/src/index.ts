@@ -20,7 +20,11 @@ import {
 import { createContentWorker } from './content-worker';
 import { workerEnvSchema } from './env';
 import { createMailWorker } from './mail-worker';
-import { type SearchWriter, createSearchWriter } from './processors/search-sync';
+import {
+  type SearchWriter,
+  applySearchSettingsAtBoot,
+  createSearchWriter,
+} from './processors/search-sync';
 import {
   type PublishingQueue,
   createPublishingQueue,
@@ -92,6 +96,8 @@ function main(): void {
   });
   const mailWorker = createMailWorker(connection, env.QUEUE_PREFIX, { mailer });
   registerSchedulersInBackground(publishingQueue);
+  // In the background: a slow or down Meilisearch never holds up the other jobs.
+  void applySearchSettingsAtBoot(search);
 
   // Workers first (running jobs finish and may still use the queues and the pool), then the rest.
   registerShutdown(

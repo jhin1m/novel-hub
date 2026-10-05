@@ -1,4 +1,5 @@
 import {
+  STORY_INDEX_SETTINGS,
   type CdnPurger,
   type ContentJob,
   type StoryDoc,
@@ -14,7 +15,7 @@ import { CONTENT_JOBS } from '@novel-hub/shared';
 import { loadServerEnv, meiliWorkerEnvSchema } from '@novel-hub/shared/env';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { routeContentJob } from '../content-router';
-import { createSearchWriter } from './search-sync';
+import { applySearchSettingsAtBoot, createSearchWriter } from './search-sync';
 
 const { db, pool } = createTestDb();
 const meili = loadServerEnv(meiliWorkerEnvSchema);
@@ -89,5 +90,24 @@ describe('search-sync job (outbox → queue → processor, real Meilisearch)', (
     expect(doc.title).toBe('Tên Ba');
     const author = await ctx.client.index(ctx.names.authors).getDocument('tac_gia');
     expect(author).toMatchObject({ username: 'tac_gia', storyCount: 1 });
+  });
+
+  it('restores drifted index settings when the worker boots, idempotently', async () => {
+    await applySearchSettingsAtBoot(createSearchWriter(ctx));
+    // A deploy changed the settings the index was built with.
+    const drift = await ctx.client
+      .index(ctx.names.stories)
+      .updateSettings({ filterableAttributes: ['status'] })
+      .waitTask();
+    expect(drift.status).toBe('succeeded');
+
+    // Each boot gets a fresh writer; applying twice must leave the same settings.
+    await applySearchSettingsAtBoot(createSearchWriter(ctx));
+    await applySearchSettingsAtBoot(createSearchWriter(ctx));
+    const settings = await ctx.client.index(ctx.names.stories).getSettings();
+    expect(settings.filterableAttributes).toEqual(
+      expect.arrayContaining([...(STORY_INDEX_SETTINGS.filterableAttributes ?? [])]),
+    );
+    expect(settings.searchableAttributes).toEqual(STORY_INDEX_SETTINGS.searchableAttributes);
   });
 });

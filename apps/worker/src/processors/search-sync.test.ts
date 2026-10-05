@@ -1,7 +1,7 @@
 import type { Db, SearchCtx } from '@novel-hub/core';
 import { UnrecoverableError } from 'bullmq';
 import { describe, expect, it, vi } from 'vitest';
-import { createSearchWriter, processSearchSync } from './search-sync';
+import { applySearchSettingsAtBoot, createSearchWriter, processSearchSync } from './search-sync';
 
 const db = {} as Db;
 const names = { stories: 't_stories', authors: 't_authors' };
@@ -43,6 +43,36 @@ describe('createSearchWriter', () => {
     await writer.ensureReady();
     await writer.ensureReady();
     // One failed attempt, then one successful run over both indexes, then cached.
+    expect(getIndex).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('applySearchSettingsAtBoot', () => {
+  it('does nothing when search is not configured', async () => {
+    await expect(applySearchSettingsAtBoot(null)).resolves.toBeUndefined();
+  });
+
+  it('applies the settings once, and later jobs reuse the result', async () => {
+    vi.spyOn(console, 'info').mockImplementation(() => {});
+    const getIndex = vi.fn<() => Promise<unknown>>().mockResolvedValue({});
+    const writer = createSearchWriter(fakeCtx(getIndex));
+
+    await applySearchSettingsAtBoot(writer);
+    await writer.ensureReady();
+    expect(getIndex).toHaveBeenCalledTimes(2);
+  });
+
+  it('only warns when Meilisearch is down, and the next job tries again', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const getIndex = vi
+      .fn<() => Promise<unknown>>()
+      .mockRejectedValueOnce(new Error('meilisearch down'))
+      .mockResolvedValue({});
+    const writer = createSearchWriter(fakeCtx(getIndex));
+
+    await expect(applySearchSettingsAtBoot(writer)).resolves.toBeUndefined();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('[search]'), 'meilisearch down');
+    await writer.ensureReady();
     expect(getIndex).toHaveBeenCalledTimes(3);
   });
 });

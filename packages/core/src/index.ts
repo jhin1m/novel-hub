@@ -120,3 +120,16 @@ export {
 } from './reader/get-chapter-for-reading';
 export { getChapterToc } from './reader/toc';
 export { type PreferencesError, getPreferences, updatePreferences } from './users/preferences';
+export { type ReadableChapterRef, findReadableChapterRef } from './reader/readable-chapter-ref';
+export { saveReadingProgress } from './reading/progress';
+export {
+  type CdnConfig,
+  type CdnPurger,
+  PURGE_CHUNK_SIZE,
+  cdnConfigFromEnv,
+  createCdnPurger,
+} from './cdn/purge';
+export { storyUrlsByPublicId, storyUrlsEverPublished, urlsFor } from './cdn/urls-for';
+export { type ViewCounter, type ViewRecord, createViewCounter } from './views/view-counter';
+export { type RecordChapterViewDeps, recordChapterView } from './views/record-chapter-view';
+export { flushViewCounters } from './views/flush';

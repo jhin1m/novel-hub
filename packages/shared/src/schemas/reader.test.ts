@@ -3,11 +3,35 @@ import {
   DEFAULT_READER_SETTINGS,
   READER_RANGES,
   READER_THEMES,
+  chapterViewInput,
   isInReaderRange,
   parseChapterNumber,
   parseChapterSegment,
   readerSettingsSchema,
+  readingProgressInput,
 } from './reader';
+
+describe('reading inputs', () => {
+  it('accepts a chapter reference with a scroll position', () => {
+    const input = { publicId: 'k7m2xq9p', number: 3, scrollPct: 42.5 };
+    expect(readingProgressInput.parse(input)).toEqual(input);
+    expect(chapterViewInput.parse({ publicId: 'k7m2xq9p', number: 1 })).toEqual({
+      publicId: 'k7m2xq9p',
+      number: 1,
+    });
+  });
+
+  it.each([
+    { publicId: 'k7m2xq9p', number: 0, scrollPct: 1 },
+    { publicId: 'k7m2xq9p', number: 1.5, scrollPct: 1 },
+    { publicId: 'k7m2xq9p', number: 1, scrollPct: 100.1 },
+    { publicId: 'k7m2xq9p', number: 1, scrollPct: -1 },
+    { publicId: '', number: 1, scrollPct: 1 },
+    { publicId: 'k7m2xq9p', number: '1', scrollPct: 1 },
+  ])('rejects %o', (input) => {
+    expect(readingProgressInput.safeParse(input).success).toBe(false);
+  });
+});
 
 describe('parseChapterSegment', () => {
   it('reads the number of a canonical segment', () => {

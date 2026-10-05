@@ -88,9 +88,14 @@ export {
   type ReaderSettings,
   type ReaderTheme,
   type ReaderWidth,
+  type ChapterViewInput,
+  type ReadingProgressInput,
+  chapterViewInput,
   isInReaderRange,
   parseChapterNumber,
   parseChapterSegment,
   readerSettingsSchema,
+  readingProgressInput,
 } from './schemas/reader';
+export { STATS_TIMEZONE, VIEW_RULES, statsDate } from './views';
 export { type CanonicalTarget, canonicalPath } from './canonical-path';

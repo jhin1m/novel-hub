@@ -1,4 +1,5 @@
-import type { ContentJobName } from '@novel-hub/shared';
+import { CONTENT_JOBS, type ContentJobName } from '@novel-hub/shared';
+import type { JobsOptions } from 'bullmq';
 import { z } from 'zod';
 
 /**
@@ -52,20 +53,33 @@ export const contentChangeSchema: z.ZodType<ContentChange> = z.discriminatedUnio
 export interface ContentJob {
   name: ContentJobName;
   data: unknown;
+  /** Retry overrides on top of the queue defaults; never a `jobId`. */
+  opts?: Pick<JobsOptions, 'attempts' | 'backoff'>;
 }
 
 /**
- * The jobs a change needs (CDN purge, search sync, fingerprint...). Pure, so the mapping is unit
- * tested without Redis. No content job exists yet, so every change maps to nothing.
+ * A purge that gives up leaves hidden content on the CDN until `s-maxage` runs out, so it keeps
+ * trying through a CDN outage of a few hours (10 s doubling: last attempt ≈ 2.8 h in).
+ */
+const PURGE_RETRY: ContentJob['opts'] = {
+  attempts: 11,
+  backoff: { type: 'exponential', delay: 10_000 },
+};
+
+/**
+ * The jobs a change needs (CDN purge now; search sync and fingerprints join later). Pure, so the
+ * mapping is unit tested without Redis. Every change touches cached public pages, so every change
+ * purges; the job carries the change itself and resolves URLs from the current state.
  */
 export function jobsForChange(change: ContentChange): ContentJob[] {
+  const purge: ContentJob = { name: CONTENT_JOBS.purgeUrls, data: change, opts: PURGE_RETRY };
   switch (change.entity) {
     case 'story':
-      return [];
+      return [purge];
     case 'chapter':
-      return [];
+      return [purge];
     case 'user':
-      return [];
+      return [purge];
     default: {
       const unhandled: never = change;
       throw new Error(`Unhandled content change ${JSON.stringify(unhandled)}`);

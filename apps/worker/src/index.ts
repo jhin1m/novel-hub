@@ -1,12 +1,15 @@
 import {
+  cdnConfigFromEnv,
+  createCdnPurger,
   createContentQueue,
   createMailer,
   createProducerConnection,
   createWorkerConnection,
+  logRedisErrors,
   mailerConfigFromEnv,
 } from '@novel-hub/core';
 import { createDb } from '@novel-hub/db';
-import { loadServerEnv } from '@novel-hub/shared/env';
+import { cdnEnvSchema, loadOptionalEnv, loadServerEnv } from '@novel-hub/shared/env';
 import { createContentWorker } from './content-worker';
 import { workerEnvSchema } from './env';
 import { createMailWorker } from './mail-worker';
@@ -41,6 +44,9 @@ function main(): void {
   // Env sai (gồm production thiếu SMTP) hoặc mailer không tạo được thì không khởi động.
   const env = loadServerEnv(workerEnvSchema);
   const mailer = createMailer(mailerConfigFromEnv(env));
+  // Production without `CF_*` refuses to start (cached pages would never be purged); dev purges
+  // nothing. `loadServerEnv` has loaded `.env` into `process.env` by now.
+  const cdn = createCdnPurger(cdnConfigFromEnv(loadOptionalEnv(cdnEnvSchema, process.env, 'cdn')));
   // Small pool: one sweep and one drain at a time, plus a few content jobs.
   const { db, pool } = createDb(env.DATABASE_URL, { max: 5 });
   const connection = createWorkerConnection(env.REDIS_URL);
@@ -49,12 +55,20 @@ function main(): void {
   const producer = createProducerConnection(env.REDIS_URL);
   const contentQueue = createContentQueue(producer, env.QUEUE_PREFIX);
   const publishingQueue = createPublishingQueue(producer, env.QUEUE_PREFIX);
+  const statsRedis = createWorkerConnection(env.REDIS_URL);
+  logRedisErrors(statsRedis, '[redis:stats]');
 
   const publishingWorker = createPublishingWorker(connection, env.QUEUE_PREFIX, {
     db,
     contentQueue,
+    statsRedis,
+    queuePrefix: env.QUEUE_PREFIX,
   });
-  const contentWorker = createContentWorker(connection, env.QUEUE_PREFIX, { db });
+  const contentWorker = createContentWorker(connection, env.QUEUE_PREFIX, {
+    db,
+    cdn,
+    appUrl: env.APP_URL,
+  });
   const mailWorker = createMailWorker(connection, env.QUEUE_PREFIX, { mailer });
   registerSchedulersInBackground(publishingQueue);
 
@@ -68,6 +82,7 @@ function main(): void {
       () => publishingQueue.close(),
       () => pool.end(),
       () => Promise.resolve(producer.disconnect()),
+      () => Promise.resolve(statsRedis.disconnect()),
       () => Promise.resolve(connection.disconnect()),
     ],
     {

@@ -115,7 +115,8 @@ export async function listReadableChapters(
   return rows.flatMap((r) => (r.publishedAt ? [{ ...r, publishedAt: r.publishedAt }] : []));
 }
 
-async function neighbourNumbers(
+/** Numbers of the readable chapters right before and after `number` in a story. */
+export async function neighbourNumbers(
   db: Db,
   storyId: string,
   number: number,

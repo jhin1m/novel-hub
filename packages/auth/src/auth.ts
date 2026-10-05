@@ -12,6 +12,7 @@ import {
   bannedGuard,
   createSessionCreateBefore,
   createUserCreateBefore,
+  createUserUpdateAfter,
   userUpdateBefore,
 } from './hooks';
 
@@ -145,7 +146,7 @@ export function createAuth({ db, env, sendAuthEmail, mailTimeoutMs }: CreateAuth
     databaseHooks: {
       user: {
         create: { before: createUserCreateBefore(db) },
-        update: { before: userUpdateBefore },
+        update: { before: userUpdateBefore, after: createUserUpdateAfter(db) },
       },
       session: { create: { before: createSessionCreateBefore(db) } },
     },

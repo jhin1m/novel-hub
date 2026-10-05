@@ -1,4 +1,4 @@
-import { type MouseEvent, useRef } from 'react';
+import { type MouseEvent, type RefObject, useRef } from 'react';
 import { usePrefetchNext } from '@/lib/reader/use-prefetch-next';
 
 /**
@@ -10,17 +10,20 @@ export function ChapterContent({
   html,
   nextHref,
   onClick,
+  contentRef,
 }: {
   html: string;
   nextHref: string | null;
   onClick: (event: MouseEvent<HTMLElement>) => void;
+  /** The chapter text, for measuring reading progress. */
+  contentRef?: RefObject<HTMLDivElement | null>;
 }) {
   const sentinel = useRef<HTMLDivElement>(null);
   usePrefetchNext(sentinel, nextHref);
   return (
     // The click only toggles the reading bar; keyboard users have the bar's own controls.
     <article className="relative" onClick={onClick}>
-      <div className="reader-content" dangerouslySetInnerHTML={{ __html: html }} />
+      <div ref={contentRef} className="reader-content" dangerouslySetInnerHTML={{ __html: html }} />
       <div
         ref={sentinel}
         aria-hidden

@@ -13,6 +13,25 @@ export function parseChapterNumber(raw: string): number | null {
   return number <= MAX_CHAPTER_NUMBER ? number : null;
 }
 
+/** A chapter addressed the way public URLs address it; the public id format is checked in `core`. */
+const chapterRefShape = {
+  publicId: z.string().min(1).max(32),
+  number: z.int().min(1).max(MAX_CHAPTER_NUMBER),
+};
+
+/** Where a signed-in reader is in a chapter (`PUT|POST /api/v1/reading/progress`). */
+export const readingProgressInput = z.object({
+  ...chapterRefShape,
+  scrollPct: z.number().min(0).max(100),
+});
+
+export type ReadingProgressInput = z.infer<typeof readingProgressInput>;
+
+/** One counted read of a chapter (`POST /api/v1/reading/view`). */
+export const chapterViewInput = z.object(chapterRefShape);
+
+export type ChapterViewInput = z.infer<typeof chapterViewInput>;
+
 /** Parses a whole `chapter-{number}` path segment. */
 export function parseChapterSegment(segment: string): number | null {
   return segment.startsWith('chapter-')

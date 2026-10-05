@@ -1,4 +1,4 @@
-import type { CurrentUser, Db, HealthReport, StoragePort } from '@novel-hub/core';
+import type { CurrentUser, Db, HealthReport, StoragePort, ViewCounter } from '@novel-hub/core';
 
 /** The auth part the API needs; the mount point builds it from Better Auth (`createAuth`, `getCurrentUser`). */
 export interface AuthPort {
@@ -20,4 +20,6 @@ export interface ApiDeps {
   db: Db;
   /** `null` when S3 is not configured (dev): cover uploads answer 503 `STORAGE_UNAVAILABLE`. */
   storage: StoragePort | null;
+  /** Counts chapter reads in Redis; `null` when unavailable (reads are then not counted). */
+  viewCounter: ViewCounter | null;
 }

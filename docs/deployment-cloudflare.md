@@ -53,6 +53,35 @@ Start tự decode path trước khi tới loader (`%2D` thành `-`), nên origin
 
 Header luôn gửi `stale-while-revalidate=3600` (chốt ở validate 2026-10-05). Gói Cloudflare không hỗ trợ thì bỏ qua phần này; không đổi header theo gói.
 
+## Purge cache (worker)
+
+Mọi thay đổi nội dung công khai (chương, truyện, đổi tên hiển thị, ban) ghi một sự kiện vào outbox `content_events`; worker chuyển thành job `purge-urls` rồi gọi API Cloudflare purge theo URL (100 URL/request, timeout 10 giây, lỗi thì BullMQ retry). URL tính từ trạng thái hiện tại trong DB (`urlsFor`, `packages/core/src/cdn/urls-for.ts`):
+
+- Chương: chương đó, chương đọc được liền trước/sau, trang truyện.
+- Truyện: trang truyện và mọi chương từng đăng (kể cả đã ẩn/xoá mềm); đổi slug thì purge cả bộ URL slug cũ.
+- User: trang tác giả và mọi trang của mọi truyện của họ.
+
+**Token:** tạo API Token với đúng một quyền **Zone → Cache Purge → Purge**, giới hạn ở zone của site. Chỉ worker đọc hai biến:
+
+| Biến | Giá trị |
+| --- | --- |
+| `CF_ZONE_ID` | Zone ID (32 ký tự hex, ở trang Overview của zone) |
+| `CF_API_TOKEN` | Token ở trên |
+
+Production thiếu hoặc chỉ có một biến thì worker không khởi động. Dev/test để trống: purge là no-op (log một lần).
+
+**Purge tay** (khi một lần purge tự động bị lỡ, hoặc sau khi restore DB):
+
+```sh
+pnpm cdn:purge -- --story <publicId>   # trang truyện + mọi chương từng đăng, in số URL
+```
+
+Cần đã đặt `CF_*`, `DATABASE_URL`, `APP_URL`; thiếu `CF_*` thì thoát mã 1. Trường hợp rộng hơn dùng "Purge Everything" trên dashboard.
+
+## IP người đọc và đếm lượt đọc
+
+Giới hạn lượt đọc theo IP (10 lượt/chương/ngày) dùng `request.ip` của srvx. **Sau Cloudflare đó là IP edge**, nên mọi người đọc chung một IP. Trước khi đặt origin sau Cloudflare bắt buộc đã có phần rate limit (phase 13: chỉ tin `CF-Connecting-IP` khi `TRUST_CF_IP=true`).
+
 ## Kiểm tra sau khi áp
 
 Thay `https://example.com` và URL chương thật:

@@ -1,6 +1,7 @@
 import { canonicalPath, parseChapterNumber, parseStoryKey } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { createFileRoute } from '@tanstack/react-router';
+import { useRef } from 'react';
 import { ChapterContent } from '../components/reader/chapter-content';
 import { ChapterEnd } from '../components/reader/chapter-end';
 import { MatureGate, useMatureAllowed } from '../components/reader/mature-gate';
@@ -11,6 +12,9 @@ import { assertCanonical, requestLocation } from '../lib/canonical';
 import { throwNotFound } from '../lib/route-signals';
 import { useArrowKeys } from '../lib/reader/use-arrow-keys';
 import { useNavVisibility } from '../lib/reader/use-nav-visibility';
+import { useReadingProgress } from '../lib/reader/use-reading-progress';
+import { useViewBeacon } from '../lib/reader/use-view-beacon';
+import { useMe } from '../lib/me';
 import { getChapterPage } from '../server-fns/reader';
 
 export const Route = createFileRoute('/stories/$storyKey/chapter-{$number}')({
@@ -61,6 +65,12 @@ function ReaderPage() {
   const matureAllowed = useMatureAllowed();
   const gated = story.isMature && !matureAllowed;
   useArrowKeys(prevHref, nextHref);
+  const me = useMe();
+  const contentRef = useRef<HTMLDivElement>(null);
+  const chapterRef = { publicId: story.publicId, number: chapter.number };
+  // Nothing is recorded while the 18+ screen hides the text.
+  useReadingProgress(contentRef, chapterRef, !!me.data && !gated);
+  useViewBeacon(chapterRef, !gated);
 
   return (
     <div className="reader-page">
@@ -95,7 +105,12 @@ function ReaderPage() {
               {chapter.title ? `: ${chapter.title}` : null}
             </h1>
           </header>
-          <ChapterContent html={chapter.html} nextHref={nextHref} onClick={onReadingAreaClick} />
+          <ChapterContent
+            html={chapter.html}
+            nextHref={nextHref}
+            onClick={onReadingAreaClick}
+            contentRef={contentRef}
+          />
           <ChapterEnd nextHref={nextHref} authorNote={chapter.authorNote} />
         </div>
       </main>

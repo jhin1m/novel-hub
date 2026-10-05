@@ -11,10 +11,12 @@
 import {
   type MailQueue,
   type StoragePort,
+  type ViewCounter,
   createHealthRedis,
   createMailQueue,
   createProducerConnection,
   createS3Storage,
+  createViewCounter,
   s3ConfigFromEnv,
   withTimeout,
 } from '@novel-hub/core';
@@ -47,7 +49,11 @@ export interface Infra {
   env: ServerEnv;
   db: Db;
   healthRedis: ReturnType<typeof createHealthRedis>;
+  /** Producer connection (no offline queue: commands fail fast while Redis is down). */
+  producerRedis: ReturnType<typeof createProducerConnection>;
   mailQueue: MailQueue;
+  /** Counts chapter reads on `producerRedis`. */
+  viewCounter: ViewCounter;
   /** `null` when `S3_*` is not configured (dev only; production refuses to start). */
   storage: StoragePort | null;
   close: () => Promise<void>;
@@ -75,18 +81,20 @@ async function createInfra(): Promise<Infra> {
   // `redis: down` until it connects.
   await withTimeout(healthRedis.connect(), REDIS_CONNECT_WAIT_MS, 'redis connect').catch(() => {});
   // Create the queue up front so its connection is ready before the first request sends mail.
-  const queueRedis = createProducerConnection(env.REDIS_URL);
-  const mailQueue = createMailQueue(queueRedis, env.QUEUE_PREFIX);
+  const producerRedis = createProducerConnection(env.REDIS_URL);
+  const mailQueue = createMailQueue(producerRedis, env.QUEUE_PREFIX);
+  // Same prefix as the worker that flushes the counters.
+  const viewCounter = createViewCounter(producerRedis, env.QUEUE_PREFIX);
   const close = async () => {
     // With Redis down `Queue.close` may wait forever, so bound it.
     await withTimeout(mailQueue.close(), QUEUE_CLOSE_WAIT_MS, 'queue close').catch(() => {});
     // `disconnect`, not `quit`: `quit` needs a live connection; with Redis down it fails and
     // ioredis keeps reconnecting, which keeps the process alive.
-    queueRedis.disconnect();
+    producerRedis.disconnect();
     healthRedis.disconnect();
     await withTimeout(pool.end(), POOL_CLOSE_WAIT_MS, 'pool end').catch(() => {});
   };
-  return { env, db, healthRedis, mailQueue, storage, close };
+  return { env, db, healthRedis, producerRedis, mailQueue, viewCounter, storage, close };
 }
 
 export function getInfra(): Promise<Infra> {

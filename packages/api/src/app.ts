@@ -5,6 +5,7 @@ import { csrf } from './middleware/csrf';
 import { noStore } from './middleware/no-store';
 import { createHealthRoutes } from './routes/health';
 import { createMeRoutes } from './routes/me';
+import { createReadingRoutes } from './routes/reading';
 import { createStoryRoutes } from './routes/stories';
 import { createTagRoutes } from './routes/tags';
 
@@ -14,6 +15,7 @@ function createV1Routes(deps: ApiDeps) {
     .use(csrf(deps.appUrl))
     .route('/health', createHealthRoutes(deps))
     .route('/me', createMeRoutes(deps))
+    .route('/reading', createReadingRoutes(deps))
     .route('/stories', createStoryRoutes(deps))
     .route('/tags', createTagRoutes(deps));
 }

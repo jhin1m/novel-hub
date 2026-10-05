@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import {
   appEnvSchema,
+  cdnEnvSchema,
   authEnvSchema,
   dbEnvSchema,
   findRepoRoot,
@@ -311,5 +312,39 @@ describe('loadOptionalEnv', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     loadOptionalEnv(s3EnvSchema, { ...half, S3_SECRET_ACCESS_KEY: 'very-secret' }, 's3');
     expect(String(warn.mock.calls[0]?.[0])).not.toContain('very-secret');
+  });
+});
+
+describe('cdnEnvSchema via loadOptionalEnv', () => {
+  const zone = '0123456789abcdef0123456789abcdef';
+
+  it('throws in production when the set is missing or half filled', () => {
+    expect(() => loadOptionalEnv(cdnEnvSchema, { NODE_ENV: 'production' }, 'cdn')).toThrow(
+      /CF_ZONE_ID.*CF_API_TOKEN/,
+    );
+    expect(() =>
+      loadOptionalEnv(cdnEnvSchema, { NODE_ENV: 'production', CF_ZONE_ID: zone }, 'cdn'),
+    ).toThrow(/CF_API_TOKEN/);
+  });
+
+  it('returns null with a warning in development when missing or half filled', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(loadOptionalEnv(cdnEnvSchema, { NODE_ENV: 'development' }, 'cdn')).toBeNull();
+    expect(
+      loadOptionalEnv(cdnEnvSchema, { NODE_ENV: 'development', CF_API_TOKEN: 'secret' }, 'cdn'),
+    ).toBeNull();
+    expect(warn).toHaveBeenCalledTimes(2);
+    expect(String(warn.mock.calls[1]?.[0])).not.toContain('secret');
+  });
+
+  it('returns the pair when both are set, and rejects a malformed zone id', () => {
+    const env = { NODE_ENV: 'production', CF_ZONE_ID: zone, CF_API_TOKEN: 't' };
+    expect(loadOptionalEnv(cdnEnvSchema, env, 'cdn')).toEqual({
+      CF_ZONE_ID: zone,
+      CF_API_TOKEN: 't',
+    });
+    expect(() =>
+      loadOptionalEnv(cdnEnvSchema, { ...env, CF_ZONE_ID: 'example.com' }, 'cdn'),
+    ).toThrow(/CF_ZONE_ID/);
   });
 });

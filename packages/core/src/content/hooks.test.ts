@@ -37,7 +37,15 @@ describe('contentChangeSchema', () => {
 });
 
 describe('jobsForChange', () => {
-  it.each(CHANGES)('maps $entity.$action to no job yet', (change) => {
-    expect(jobsForChange(change)).toEqual([]);
+  it.each(CHANGES)('maps $entity.$action to exactly one purge job, without a jobId', (change) => {
+    const jobs = jobsForChange(change);
+    expect(jobs).toEqual([
+      {
+        name: 'purge-urls',
+        data: change,
+        opts: { attempts: 11, backoff: { type: 'exponential', delay: 10_000 } },
+      },
+    ]);
+    expect(jobs[0]?.opts).not.toHaveProperty('jobId');
   });
 });

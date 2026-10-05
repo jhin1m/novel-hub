@@ -1,7 +1,7 @@
 ---
 phase: 9
 title: "Phase 9: Trang đọc C — tiến độ đọc, purge CDN, đếm lượt đọc"
-status: pending
+status: completed
 priority: P1
 effort: "2d"
 dependencies: [8]
@@ -169,12 +169,12 @@ export function flushViewCounters(redis: Redis, db: Db, prefix: string, dates: s
 
 ## Function / Interface Checklist
 
-- [ ] `readingProgressInput`, `chapterViewInput`, `VIEW_RULES`, `statsDate`, `cdnEnvSchema`
-- [ ] `findReadableChapterRef`, `saveReadingProgress`
-- [ ] `createCdnPurger`, `urlsFor`, `storyUrlsEverPublished`, `jobsForChange` (nhánh purge), processor `purge-urls`
-- [ ] `createUserUpdateAfter`, script `cdn:purge`
-- [ ] `createViewCounter`, `recordChapterView`, `flushViewCounters`, processor `flush-view-counters`, `peerIp`
-- [ ] `computeScrollPct`, `useReadingProgress`, `useViewBeacon`
+- [x] `readingProgressInput`, `chapterViewInput`, `VIEW_RULES`, `statsDate`, `cdnEnvSchema`
+- [x] `findReadableChapterRef`, `saveReadingProgress`
+- [x] `createCdnPurger`, `urlsFor`, `storyUrlsEverPublished`, `jobsForChange` (nhánh purge), processor `purge-urls`
+- [x] `createUserUpdateAfter`, script `cdn:purge`
+- [x] `createViewCounter`, `recordChapterView`, `flushViewCounters`, processor `flush-view-counters`, `peerIp`
+- [x] `computeScrollPct`, `useReadingProgress`, `useViewBeacon`
 
 ## Test Scenario Matrix
 
@@ -210,11 +210,11 @@ export function flushViewCounters(redis: Redis, db: Db, prefix: string, dates: s
 
 ## Success Criteria
 
-- [ ] Tiến độ đọc ghi bằng debounce và khi rời trang
-- [ ] Mọi `ContentChange` (chương, truyện, user) sinh job purge đúng URL; truyện ẩn/tác giả bị ban purge được mọi chương đã từng đăng
-- [ ] Production thiếu `CF_*` thì worker không khởi động; có lệnh purge tay
-- [ ] Lượt đọc vào `chapter_daily_stats` sau ≤ 5 phút, có giới hạn người xem/IP/chương/ngày
-- [ ] Gate 5 lệnh xanh; checkbox 6 Giai đoạn 1 = `[x]`
+- [x] Tiến độ đọc ghi bằng debounce và khi rời trang
+- [x] Mọi `ContentChange` (chương, truyện, user) sinh job purge đúng URL; truyện ẩn/tác giả bị ban purge được mọi chương đã từng đăng
+- [x] Production thiếu `CF_*` thì worker không khởi động; có lệnh purge tay
+- [x] Lượt đọc vào `chapter_daily_stats` sau ≤ 5 phút, có giới hạn người xem/IP/chương/ngày
+- [x] Gate 5 lệnh xanh; checkbox 6 Giai đoạn 1 = `[x]`
 
 ## Risk Assessment
 
@@ -240,6 +240,12 @@ Rollback: không migration. Gỡ nhánh `purge-urls` trong `jobsForChange` (even
 ## Câu hỏi mở (đã chốt — Validation Session 1, 2026-10-05)
 
 1. Dwell 30 giây; tối đa 3 lượt/người xem và 10 lượt/IP mỗi chương mỗi ngày; chỉnh sau khi có dữ liệu thật. `CF_ZONE_ID`/`CF_API_TOKEN` đã có (user xác nhận), smoke purge thật được ở phase này.
+
+## Kết quả (2026-10-05)
+
+- Gate 5 lệnh xanh; checkbox 6 Giai đoạn 1 `[x]`. Review `../reports/code-reviewer-261005-1400-phase-09-progress-purge-views-review-report.md` (8/10): đã sửa H1 (Lua kiểm cap trước khi ghi key, request vượt cap không tạo key), M1 (Redis lỗi giữa flush → trả id về `dirty`), M2 (job purge 11 lần thử, backoff mũ 10s ≈ 2,8 giờ), L3 (log lỗi đếm lượt đọc tối đa 1 lần/phút), L7 (cookie `nh_vid` chỉ đặt khi 204). Report: `../reports/cook-261005-1408-phase-09-progress-purge-views-report.md`.
+- Lệch plan: thêm `storyUrlsByPublicId` (core) cho lệnh tay để worker không cần `drizzle-orm`; `cdnConfigFromEnv`; `ContentJob.opts` (chỉ `attempts`/`backoff`, không `jobId`); fixture test `packages/core/src/testing/story-fixture.ts`; `.env.example` không thêm `TRUST_CF_IP` (thuộc phase 13).
+- Chưa làm: smoke `pnpm cdn:purge` với Cloudflare thật (`.env` không có `CF_*`, theo chỉ thị không điền giá trị thật); kiểm `request.ip` có ở bản build production không (để phase 13).
 
 ## Next Steps
 

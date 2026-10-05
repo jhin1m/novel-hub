@@ -3,11 +3,15 @@ import { PUBLISHING_JOBS, type PublishingJobName, QUEUES } from '@novel-hub/shar
 import { type Job, Queue, UnrecoverableError, Worker } from 'bullmq';
 import type { Redis } from 'ioredis';
 import { processDrainContentEvents } from './processors/drain-content-events';
+import { processFlushViewCounters } from './processors/flush-view-counters';
 import { processSweepScheduledChapters } from './processors/sweep-scheduled-chapters';
 
 export interface PublishingJobDeps {
   db: Db;
   contentQueue: Pick<ContentQueue, 'addBulk'>;
+  /** Plain connection for the view counters (the BullMQ one is reserved for blocking commands). */
+  statsRedis: Redis;
+  queuePrefix: string;
 }
 
 export type PublishingQueue = Queue<unknown, void, PublishingJobName>;
@@ -16,6 +20,8 @@ export type PublishingQueue = Queue<unknown, void, PublishingJobName>;
 export const PUBLISHING_INTERVALS: Record<PublishingJobName, number> = {
   [PUBLISHING_JOBS.sweepScheduledChapters]: 60_000,
   [PUBLISHING_JOBS.drainContentEvents]: 5_000,
+  // Up to 5 minutes of reads may be lost if Redis dies; accepted.
+  [PUBLISHING_JOBS.flushViewCounters]: 300_000,
 };
 
 export function routePublishingJob(job: Pick<Job, 'name'>, deps: PublishingJobDeps): Promise<void> {
@@ -24,6 +30,8 @@ export function routePublishingJob(job: Pick<Job, 'name'>, deps: PublishingJobDe
       return processSweepScheduledChapters(deps);
     case PUBLISHING_JOBS.drainContentEvents:
       return processDrainContentEvents(deps);
+    case PUBLISHING_JOBS.flushViewCounters:
+      return processFlushViewCounters(deps);
     default:
       return Promise.reject(new UnrecoverableError(`no processor for job "${job.name}"`));
   }

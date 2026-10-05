@@ -1,7 +1,7 @@
 import { createApp } from '@novel-hub/api';
 import { makeTestApiDeps } from '@novel-hub/api/testing';
 import type { AuthMailMessage, AuthMailPort } from '@novel-hub/core';
-import { accounts, sessions, users } from '@novel-hub/db';
+import { accounts, contentEvents, sessions, users } from '@novel-hub/db';
 import { seedDatabase } from '@novel-hub/db/seed';
 import { createTestDb, truncateAll } from '@novel-hub/db/testing';
 import { usernameSchema } from '@novel-hub/shared';
@@ -244,9 +244,24 @@ describe('user update', () => {
       displayName: 'Lâm Phong',
     });
 
+    // Rejected updates record nothing.
+    expect(await db.select().from(contentEvents)).toEqual([]);
+
     res = await call('/auth/update-user', { body: { name: ' Phong Mới ' }, cookie });
     expect(res.status).toBe(200);
-    expect((await userByEmail('lp@example.com')).displayName).toBe('Phong Mới');
+    const user = await userByEmail('lp@example.com');
+    expect(user.displayName).toBe('Phong Mới');
+  });
+
+  it('a display name change records a user event for the CDN purge', async () => {
+    const { cookie } = await signUp({ username: 'lam_phong' });
+    const res = await call('/auth/update-user', { body: { name: 'Phong Mới' }, cookie });
+    expect(res.status).toBe(200);
+    const user = await userByEmail('lp@example.com');
+    const events = await db.select().from(contentEvents);
+    expect(events.map((e) => e.payload)).toEqual([
+      { entity: 'user', action: 'updated', userId: user.id },
+    ]);
   });
 
   it('role/status cannot be set by the user', async () => {

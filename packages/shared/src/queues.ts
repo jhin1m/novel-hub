@@ -16,6 +16,8 @@ export const QUEUES = {
 export const PUBLISHING_JOBS = {
   sweepScheduledChapters: 'sweep-scheduled-chapters',
   drainContentEvents: 'drain-content-events',
+  /** Moves the Redis view counters into `chapter_daily_stats`. */
+  flushViewCounters: 'flush-view-counters',
 } as const;
 
 export type PublishingJobName = (typeof PUBLISHING_JOBS)[keyof typeof PUBLISHING_JOBS];
@@ -24,13 +26,12 @@ export type PublishingJobName = (typeof PUBLISHING_JOBS)[keyof typeof PUBLISHING
  * Jobs on the `content` queue, each with its own payload schema. Payloads carry ids only and
  * every processor re-reads the current state, because the outbox delivers at least once.
  */
-export const CONTENT_JOBS = {} as const;
+export const CONTENT_JOBS = {
+  /** Purges the CDN copies of the public pages a change touches; payload is the change itself. */
+  purgeUrls: 'purge-urls',
+} as const;
 
-// No content job exists yet, so the union would be `never`; `string` keeps the queue usable
-// until the first job is declared.
-export type ContentJobName = [keyof typeof CONTENT_JOBS] extends [never]
-  ? string
-  : (typeof CONTENT_JOBS)[keyof typeof CONTENT_JOBS];
+export type ContentJobName = (typeof CONTENT_JOBS)[keyof typeof CONTENT_JOBS];
 
 export const MAIL_JOBS = {
   sendAuthEmail: 'send-auth-email',

@@ -75,6 +75,17 @@ export const s3EnvSchema = z.object({
 
 export type S3Env = z.infer<typeof s3EnvSchema>;
 
+/**
+ * Cloudflare cache purge (worker only). Both variables form the set; parse it with
+ * `loadOptionalEnv`, so production refuses to start without it and dev purges nothing.
+ */
+export const cdnEnvSchema = z.object({
+  CF_ZONE_ID: z.string().regex(/^[0-9a-f]{32}$/i),
+  CF_API_TOKEN: z.string().min(1),
+});
+
+export type CdnEnv = z.infer<typeof cdnEnvSchema>;
+
 // Refines are written as functions wrapping the composed schema: Zod 4 does not allow `.extend()` on a schema that already has
 // a refine, and its `.shape` drops the refine.
 

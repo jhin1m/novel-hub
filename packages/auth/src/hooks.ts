@@ -2,7 +2,7 @@
  * Hook của Better Auth: cổng Zod cho mọi field user đi qua Better Auth và lớp chặn user
  * bị ban. Lỗi ném dạng `APIError` để Better Auth trả `{ code, message }` với status đúng.
  */
-import { generateUsername, isBanned, isUsernameTaken } from '@novel-hub/core';
+import { generateUsername, isBanned, isUsernameTaken, recordContentChanges } from '@novel-hub/core';
 import { type Db, users } from '@novel-hub/db';
 import { DISPLAY_NAME_MAX_LENGTH, displayNameSchema, usernameSchema } from '@novel-hub/shared';
 import type { BetterAuthOptions } from 'better-auth';
@@ -34,6 +34,7 @@ type DatabaseHooks = NonNullable<BetterAuthOptions['databaseHooks']>;
 type UserHooks = NonNullable<DatabaseHooks['user']>;
 type UserCreateBefore = NonNullable<NonNullable<UserHooks['create']>['before']>;
 type UserUpdateBefore = NonNullable<NonNullable<UserHooks['update']>['before']>;
+type UserUpdateAfter = NonNullable<NonNullable<UserHooks['update']>['after']>;
 type SessionCreateBefore = NonNullable<
   NonNullable<NonNullable<DatabaseHooks['session']>['create']>['before']
 >;
@@ -106,6 +107,35 @@ export const userUpdateBefore: UserUpdateBefore = (data) => {
   if (!parsed.success) throw authError('BAD_REQUEST', 'DISPLAY_NAME_INVALID');
   return Promise.resolve({ data: { ...data, name: parsed.data } });
 };
+
+const UPDATE_USER_PATH = '/update-user';
+
+/**
+ * After a display name change: the name shows on cached public pages (author page, chapters), so
+ * an outbox event makes the worker purge them. Better Auth has already written the user, outside
+ * any transaction we control, so this is a separate insert; a failure is only logged (the fix is
+ * `pnpm cdn:purge`) and never fails the request.
+ */
+export function createUserUpdateAfter(db: Db): UserUpdateAfter {
+  return async (user, ctx) => {
+    const body: unknown = ctx?.body;
+    const renamed =
+      ctx?.path === UPDATE_USER_PATH &&
+      typeof body === 'object' &&
+      body !== null &&
+      'name' in body &&
+      body.name !== undefined;
+    if (!renamed) return;
+    try {
+      await recordContentChanges(db, [{ entity: 'user', action: 'updated', userId: user.id }]);
+    } catch (err) {
+      console.error(
+        '[auth] could not record the display name change:',
+        err instanceof Error ? err.message : err,
+      );
+    }
+  };
+}
 
 /** Không tạo session cho user bị ban (đăng nhập email, OAuth callback, xác thực email). */
 export function createSessionCreateBefore(db: Db): SessionCreateBefore {

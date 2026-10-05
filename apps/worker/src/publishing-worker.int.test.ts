@@ -30,6 +30,7 @@ const producer = createProducerConnection(TEST_REDIS_URL);
 const contentQueue = createContentQueue(producer, PREFIX);
 const publishingQueue = createPublishingQueue(producer, PREFIX);
 const workerRedis = createWorkerConnection(TEST_REDIS_URL);
+const statsRedis = createWorkerConnection(TEST_REDIS_URL);
 let worker: Worker | undefined;
 
 beforeEach(async () => {
@@ -45,12 +46,18 @@ afterAll(async () => {
   await contentQueue.close();
   producer.disconnect();
   workerRedis.disconnect();
+  statsRedis.disconnect();
   await pool.end();
 });
 
 /** Starts the worker once and resolves when a job of `name` completes. */
 function nextCompleted(name: string): Promise<void> {
-  worker ??= createPublishingWorker(workerRedis, PREFIX, { db, contentQueue });
+  worker ??= createPublishingWorker(workerRedis, PREFIX, {
+    db,
+    contentQueue,
+    statsRedis,
+    queuePrefix: PREFIX,
+  });
   const current = worker;
   return new Promise((resolve, reject) => {
     const onCompleted = (job: { name: string }) => {
@@ -112,10 +119,12 @@ describe('publishing worker (real Redis and Postgres)', () => {
     const schedulers = await publishingQueue.getJobSchedulers();
     expect(schedulers.map((s) => [s.key, s.every]).sort()).toEqual([
       [PUBLISHING_JOBS.drainContentEvents, 5_000],
+      [PUBLISHING_JOBS.flushViewCounters, 300_000],
       [PUBLISHING_JOBS.sweepScheduledChapters, 60_000],
     ]);
-    await publishingQueue.removeJobScheduler(PUBLISHING_JOBS.drainContentEvents);
-    await publishingQueue.removeJobScheduler(PUBLISHING_JOBS.sweepScheduledChapters);
+    for (const name of Object.values(PUBLISHING_JOBS)) {
+      await publishingQueue.removeJobScheduler(name);
+    }
   });
 
   it('a sweep job publishes due chapters and a drain job empties the outbox', async () => {

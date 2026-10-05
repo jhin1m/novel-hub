@@ -37,9 +37,9 @@ Giai đoạn 0 xong (`plans/261004-1255-giai-doan-0-nen-mong`). Spec `docs/proje
 | 4 | [Editor Tiptap và autosave](./phase-04-editor-tiptap-autosave.md) | 3 | Completed |
 | 5 | [Đăng chương và hẹn giờ](./phase-05-dang-chuong-va-hen-gio.md) | 4 | Completed |
 | 6 | [Khôi phục revision](./phase-06-khoi-phuc-revision.md) | 5 | Completed |
-| 7 | [Trang đọc: route, cache, giao diện](./phase-07-trang-doc-route-giao-dien.md) | 6 (phần 1/3) | Completed (checkbox chờ phase 9) |
-| 8 | [Trang đọc: cài đặt hiển thị](./phase-08-cai-dat-trang-doc.md) | 6 (phần 2/3) | Completed (checkbox chờ phase 9) |
-| 9 | [Trang đọc: tiến độ, purge CDN, lượt đọc](./phase-09-tien-do-purge-luot-doc.md) | 6 (đánh `[x]`) | Pending |
+| 7 | [Trang đọc: route, cache, giao diện](./phase-07-trang-doc-route-giao-dien.md) | 6 (phần 1/3) | Completed |
+| 8 | [Trang đọc: cài đặt hiển thị](./phase-08-cai-dat-trang-doc.md) | 6 (phần 2/3) | Completed |
+| 9 | [Trang đọc: tiến độ, purge CDN, lượt đọc](./phase-09-tien-do-purge-luot-doc.md) | 6 (đánh `[x]`) | Completed |
 | 10 | [Trang truyện, tác giả, tag, trang chủ](./phase-10-trang-truyen-tac-gia-tag-trang-chu.md) | 7 | Pending |
 | 11 | [Tìm kiếm Meilisearch](./phase-11-tim-kiem-meilisearch.md) | 8 | Pending |
 | 12 | [Tủ truyện và lịch sử đọc](./phase-12-tu-truyen-lich-su-doc.md) | 9 | Pending |
@@ -273,7 +273,8 @@ Phụ thuộc tuyến tính 1 → 17.
 - Phase 4 xong (2026-10-05): gate 5 lệnh xanh, checkbox 3 `[x]`. Review `../reports/code-reviewer-261005-1122-phase-04-editor-autosave-review-report.md` (7.5/10, đã sửa H1, M1–M3, L1, L2). Report: `../reports/cook-261005-1137-phase-04-editor-autosave-report.md`. DB dev cũ cần `pnpm db:seed --reset` (pid `p1`).
 - Phase 7 xong (2026-10-05): gate 5 lệnh xanh; checkbox 6 **chưa** đánh (phase 9). Review `../reports/code-reviewer-261005-1245-phase-07-reader-route-review-report.md` (8/10, đã sửa H1, M1, M2 và 4 Low). Report: `../reports/cook-261005-1228-phase-07-reader-route-report.md`. Lệch plan: `/` cuối nhận 307 của router (không cache); `%2D` trả 200 do Start decode path, dựa vào URL Normalization của Cloudflare (`docs/deployment-cloudflare.md`).
 - Phase 8 xong (2026-10-05): gate 5 lệnh xanh; checkbox 6 **chưa** đánh (phase 9). Review `../reports/code-reviewer-261005-1314-phase-08-reader-settings-review-report.md` (8.5/10, đã sửa M1, L1, L2, L6, L7). Report: `../reports/cook-261005-1337-phase-08-reader-settings-report.md`. Lệch plan: enum preset/width/align đổi sang tiếng Anh (`white`…`oled-black`, `narrow/medium/wide`, `left/justify`), chi tiết trong phase-08.
-- Tiếp: cook phase 9.
+- Phase 9 xong (2026-10-05): gate 5 lệnh xanh; checkbox 6 `[x]`. Review `../reports/code-reviewer-261005-1400-phase-09-progress-purge-views-review-report.md` (8/10, đã sửa H1, M1, M2, L3, L7). Report: `../reports/cook-261005-1408-phase-09-progress-purge-views-report.md`. Chưa smoke `pnpm cdn:purge` với Cloudflare thật (`CF_*` trống).
+- Tiếp: cook phase 10.
 - Nhắc trước khi mở public: backup Postgres ra ngoài VPS + thử restore (phase 17).
 
 <!-- slug: giai-doan-1-doc-va-viet -->

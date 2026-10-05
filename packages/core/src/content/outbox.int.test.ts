@@ -25,7 +25,7 @@ const change = (n: number): ContentChange => ({
 });
 /** Stands in for the real mapping, which produces no job yet. */
 const oneJobEach = (c: ContentChange): ContentJob[] => [
-  { name: 'test-job', data: { n: c.entity === 'chapter' ? c.chapterNumber : 0 } },
+  { name: 'purge-urls', data: { n: c.entity === 'chapter' ? c.chapterNumber : 0 } },
 ];
 
 async function rows() {
@@ -69,8 +69,8 @@ describe('drainContentEvents', () => {
 
     expect(await drainContentEvents(deps)).toEqual({ enqueued: 2, failed: 0 });
     expect(addBulk).toHaveBeenLastCalledWith([
-      { name: 'test-job', data: { n: 1 } },
-      { name: 'test-job', data: { n: 2 } },
+      { name: 'purge-urls', data: { n: 1 } },
+      { name: 'purge-urls', data: { n: 2 } },
     ]);
     expect((await rows()).every((r) => r.processedAt !== null)).toBe(true);
     expect(await drainContentEvents(deps)).toEqual({ enqueued: 0, failed: 0 });
@@ -138,12 +138,22 @@ describe('drainContentEvents', () => {
       { payload: change(3), processedAt: sql`now() - interval '6 days'` },
     ]);
     const addBulk = vi.fn().mockResolvedValue([]);
-    expect(await drainContentEvents({ db, contentQueue: { addBulk } })).toEqual({
+    const noJobs = () => [];
+    expect(await drainContentEvents({ db, contentQueue: { addBulk }, mapChange: noJobs })).toEqual({
       enqueued: 1,
       failed: 0,
     });
     expect(addBulk).not.toHaveBeenCalled();
     const left = (await rows()).map((r) => (r.payload as { chapterNumber: number }).chapterNumber);
     expect(left.sort()).toEqual([1, 3]);
+  });
+
+  it('by default turns every change into a purge job carrying the change', async () => {
+    await recordContentChanges(db, [change(1)]);
+    const addBulk = vi.fn().mockResolvedValue([]);
+    await drainContentEvents({ db, contentQueue: { addBulk } });
+    expect(addBulk).toHaveBeenCalledWith([
+      expect.objectContaining({ name: 'purge-urls', data: change(1) }),
+    ]);
   });
 });

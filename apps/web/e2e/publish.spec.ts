@@ -5,6 +5,18 @@ import { createStory } from './helpers/stories';
 const editorBox = (page: Page) => page.getByRole('textbox', { name: 'Nội dung chương' });
 const header = (page: Page) => page.getByRole('banner');
 
+/** Puts the caret at the end of the chapter. `End` only reaches the end of the wrapped visual line on Linux. */
+async function caretToEnd(page: Page) {
+  await editorBox(page).click();
+  await editorBox(page).evaluate((el) => {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(range);
+  });
+}
+
 /** Creates chapter 1 and stores a draft of `words` words through the API, as autosave would. */
 async function chapterWithWords(page: Page, publicId: string, words: number) {
   // A body-less POST counts as a form submit for the CSRF check, which wants a same-origin header.
@@ -58,8 +70,7 @@ test('a writer publishes a chapter, then updates it; the editor is locked while 
   await page.unroute('**/chapters/1/publish');
 
   // The server assigned the paragraph id; the next edit saves on top of that version.
-  await editorBox(page).click();
-  await page.keyboard.press('End');
+  await caretToEnd(page);
   await page.keyboard.type(' thêm');
   await expect(page.getByText(/^Đã lưu lúc/)).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText('Có thay đổi chưa đăng')).toBeVisible();
@@ -83,8 +94,7 @@ test('short chapters cannot be published; scheduling, unscheduling and deleting'
   await chapterWithWords(page, publicId, 299);
   await expect(page.getByRole('button', { name: 'Đăng', exact: true })).toBeDisabled();
 
-  await editorBox(page).click();
-  await page.keyboard.press('End');
+  await caretToEnd(page);
   await page.keyboard.type(' đủ');
   await expect(page.getByText('300 chữ')).toBeVisible();
   await expect(page.getByText(/^Đã lưu lúc/)).toBeVisible({ timeout: 10_000 });

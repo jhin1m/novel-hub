@@ -323,6 +323,7 @@ Một VPS, một người vận hành: mất dữ liệu là rủi ro lớn nh�
 - Hiện tại: `pg_dump` hằng ngày, nén, lưu vào một thư mục trên chính VPS (ngoài volume của Postgres), giữ 14 bản gần nhất.
 - Giới hạn đã biết: backup cùng VPS chỉ cứu được lỗi dữ liệu hoặc thao tác nhầm, không cứu được khi mất VPS hoặc hỏng đĩa.
 - Trước khi mở public: đẩy thêm bản sao ra ngoài VPS (bucket R2 riêng, không chung bucket ảnh). Đây là một mục trong checklist Giai đoạn 1.
+- Bản sao offsite được mã hoá phía VPS bằng rclone crypt trước khi đẩy lên (mã hoá nội dung và tên file; tên thư mục để rõ như `daily/` để bucket lock áp được). Mật khẩu crypt chỉ nằm trên VPS và một nơi lưu riêng ngoài VPS; mất mật khẩu là mất bản backup.
 - Thử restore vào một database tạm ít nhất một lần trước khi mở public, sau đó mỗi tháng một lần.
 - Meilisearch không cần backup: dựng lại từ Postgres bằng job reindex của worker.
 - Redis bật AOF. Counter chưa ghi dồn có thể mất tối đa 5 phút, chấp nhận được.

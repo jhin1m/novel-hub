@@ -1,7 +1,7 @@
 ---
 phase: 17
 title: "Phase 17: Backup offsite và thử restore"
-status: pending
+status: done-staging
 priority: P1
 effort: "1d (+ thời gian user cấu hình R2/VPS)"
 dependencies: [16]
@@ -117,9 +117,9 @@ hằng tháng (tay hoặc cron)
 
 ## Function / Interface Checklist
 
-- [ ] `pg-backup.sh [--local-only]` (biến: `COMPOSE_FILE`, `BACKUP_DIR`, `BACKUP_KEEP`, `RCLONE_REMOTE`, `HEALTHCHECK_URL`, `BACKUP_ENV_FILE`)
-- [ ] `restore-test.sh [--remote | FILE]`
-- [ ] `backup.env.example`, `README.md`
+- [x] `pg-backup.sh [--local-only]` (biến: `COMPOSE_FILE`, `BACKUP_DIR`, `BACKUP_KEEP`, `RCLONE_REMOTE`, `HEALTHCHECK_URL`, `BACKUP_ENV_FILE`)
+- [x] `restore-test.sh [--remote | FILE]`
+- [x] `backup.env.example`, `README.md`
 
 ## Test Scenario Matrix
 
@@ -146,12 +146,12 @@ Không có unit/int test tự động: script chỉ chạy trên host có Docker
 
 ## Success Criteria
 
-- [ ] Hai script + file mẫu + README trong `docker/backup/`
-- [ ] Thử local: dump, giữ 14 bản, upload remote giả, restore từ local và remote đều pass, lỗi được báo đúng
+- [x] Hai script + file mẫu + README trong `docker/backup/`
+- [x] Thử local: dump, giữ 14 bản, upload remote giả, restore từ local và remote đều pass, lỗi được báo đúng
 - [ ] Bucket lock bật cho `daily/` và đã thử xoá bằng token VPS bị từ chối
-- [ ] README có runbook khôi phục thật gồm purge toàn bộ Cloudflare, reindex, lưu ý bìa và hành động mod sau bản dump
+- [x] README có runbook khôi phục thật gồm purge toàn bộ Cloudflare, reindex, lưu ý bìa và hành động mod sau bản dump
 - [ ] User xác nhận chạy trên VPS với R2 riêng và restore từ R2 thành công → checkbox `[x]`; memory `offsite-backup-deferred` được cập nhật
-- [ ] Gate repo xanh
+- [x] Gate repo xanh
 
 ## Risk Assessment
 

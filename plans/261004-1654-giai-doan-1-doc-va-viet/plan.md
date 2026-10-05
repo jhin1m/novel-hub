@@ -47,7 +47,7 @@ Giai đoạn 0 xong (`plans/261004-1255-giai-doan-0-nen-mong`). Spec `docs/proje
 | 14 | [Kiểm tra trùng lặp](./phase-14-kiem-tra-trung-lap.md) | 11 (phần 1/2) | Completed |
 | 15 | [Báo cáo vi phạm và hàng chờ mod](./phase-15-bao-cao-hang-cho-mod.md) | 11 (đánh `[x]`) | Completed |
 | 16 | [SEO: metadata, OG, sitemap, canonical](./phase-16-seo-metadata-sitemap.md) | 12 | Done |
-| 17 | [Backup offsite và thử restore](./phase-17-backup-offsite-restore.md) | 13 | Pending |
+| 17 | [Backup offsite và thử restore](./phase-17-backup-offsite-restore.md) | 13 | Done trên staging, chờ VPS + R2 (checkbox chưa `[x]`) |
 
 Phụ thuộc tuyến tính 1 → 17.
 
@@ -59,6 +59,7 @@ Phụ thuộc tuyến tính 1 → 17.
 - **User (2026-10-05, sau phase 6):** đảo câu 11 của Validation Log sang phương án B — khôi phục revision tự chụp nháp hiện tại thành một revision (khi khác revision mới nhất) trước khi thay, tính trong giới hạn 20. Lý do: mirror localStorage bị xoá sau mỗi lần autosave thành công và khi khôi phục, nên không phải lớp bảo vệ. Làm thành việc riêng sau phase 7.
 - **User (2026-10-05, sau phase 14):** (a) chặn tác giả xoá chương đang `hidden_by_mod`; (b) chương hẹn giờ quét trễ giữ `published_at` = giờ quét thật; (c) tìm kiếm ẩn tác giả chỉ có truyện 18+ với khách và người chưa bật 18+; (d) khoá tài khoản tối đa 24 giờ do giới hạn email toàn cục: chấp nhận cho năm đầu, ghi vào tài liệu deploy; (e) production mà `TRUST_CF_IP=false` thì log cảnh báo khi khởi động. Làm (a), (c), (d), (e) thành một lượt sửa sau phase 15.
 - **User (2026-10-05, sau phase 16):** (a) trang truyện/chương 18+ dùng ảnh OG mặc định và mô tả trung tính trong `og:*`/`twitter:*`/meta description (giữ tiêu đề); (b) thêm env `ALLOW_INDEXING` (mặc định `false`) quyết định robots.txt và meta robots thay cho `NODE_ENV`; (c) phase 17 thử trên staging NAS (`ssh nas`, Ubuntu 24.04, Docker, rclone) với rclone remote tạm kiểu thư mục trên NAS thay R2 (vẫn qua rclone crypt); bucket lock R2 chưa thử; checkbox 13 vẫn chờ VPS + R2.
+- **User (2026-10-05, sau phase 17):** (a) thêm vào spec mục 11 một dòng về mã hoá rclone crypt cho bản offsite (đã sửa); (b) worker tự áp cấu hình index Meilisearch (idempotent) mỗi lần khởi động, để deploy đổi cấu hình tìm kiếm không cần nhớ chạy `pnpm search:reindex` mới hết 503; reindex vẫn dùng khi cần dựng lại dữ liệu (đã làm: `applySearchSettingsAtBoot` trong `apps/worker/src/processors/search-sync.ts`, gọi nền từ `apps/worker/src/index.ts`).
 - **Kiến trúc dữ liệu cho UI:**
   - Trang công khai: loader gọi `createServerFn({ method: 'GET' })` trong `apps/web/src/server-fns/` → `core`. Không TanStack Query cho dữ liệu công khai.
   - **Liên kết giữa các trang công khai là link tài liệu thường (`reloadDocument`)**, prefetch chương sau bằng `<link rel="prefetch">` HTML: mọi lượt xem đi qua HTML cache CDN, không gọi server fn từ browser (server fn GET không có cache header). <!-- Red Team: CDN bypass -->
@@ -281,7 +282,8 @@ Phụ thuộc tuyến tính 1 → 17.
 - Phase 12 xong (2026-10-05): gate 5 lệnh xanh; checkbox 9 `[x]`. Review `../reports/code-reviewer-261005-1536-phase-12-library-history-review-report.md` (8/10, đã sửa M1–M3, L1). Report: `../reports/cook-261005-1602-phase-12-library-history-report.md`. Lệch plan: cursor lịch sử theo µs, LATERAL `resumeChapter` thay `resolveReadableChapter`, `bodyLimit` reading chỉ cho route có body.
 - Phase 15 xong (2026-10-05): gate 5 lệnh xanh; checkbox 11 `[x]`. Review `../reports/code-reviewer-261005-1747-phase-15-moderation-review-report.md` (7.5/10, đã sửa H1, M1, M2, L1, L2, L5, L6). Report: `../reports/cook-261005-1747-phase-15-moderation-report.md`. Lệch plan: khách bấm báo cáo → `/sign-in` không kèm redirect; luật quyền mod áp cả cho nội dung của mod/admin; chưa smoke worker thật (bước 9).
 - Phase 16 xong (2026-10-05): gate 5 lệnh xanh; checkbox 12 `[x]`. Review `../reports/code-reviewer-261005-1905-phase-16-seo-review-report.md` (8/10, đã sửa M1, M2 (doc Cloudflare), L1, L2, L4). Report: `../reports/cook-261005-2009-phase-16-seo-report.md`. Lệch plan: `appUrl` chỉ lấy từ root loader (bỏ khỏi server fn trang), head dựng path bằng `canonicalPath` trực tiếp thay vì block `seo` trong server fn; trang tác giả/tag rỗng `noindex`. Chờ user quyết: M3 (preview 18+ có hiện bìa/giới thiệu), L3 (biến env cho robots thay `NODE_ENV`).
-- Tiếp: cook phase 17.
+- Phase 17 xong trên staging (2026-10-05): `docker/backup/` (`pg-backup.sh`, `restore-test.sh`, `backup.env.example`, `README.md`); thử trên NAS (dash) và macOS, remote thư mục bọc rclone crypt, restore từ local và `--remote` pass, các kịch bản lỗi pass; gate `typecheck`/`lint`/`test`/`format:check` xanh (không đổi code app nên không chạy int/e2e). Checkbox 13 **chưa** đánh: chờ VPS + R2 thật, bucket lock chưa thử. Lệch plan: crypt đặt `directory_name_encryption = false` và `RCLONE_REMOTE=r2-backup-crypt:` để key R2 bắt đầu bằng `daily/` (nếu không, prefix lock không khớp); verify dump bằng `pg_restore --file=/dev/null` thay `--list` (`--list` không đọc phần dữ liệu nên không bắt được file cụt). Report: `../reports/cook-261005-2103-phase-17-backup-offsite-report.md`.
+- Tiếp: chưa có review cho phase 17; khi có VPS + R2 làm theo `docker/backup/README.md` (bước 2, 7) rồi đánh checkbox 13.
 - Nhắc trước khi mở public: backup Postgres ra ngoài VPS + thử restore (phase 17).
 
 <!-- slug: giai-doan-1-doc-va-viet -->

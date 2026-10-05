@@ -1,7 +1,7 @@
 ---
 phase: 7
 title: "Phase 7: Trang đọc A — route, cache, giao diện đọc"
-status: pending
+status: completed
 priority: P1
 effort: "1.5d"
 dependencies: [6]

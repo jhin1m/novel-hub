@@ -37,7 +37,7 @@ Giai đoạn 0 xong (`plans/261004-1255-giai-doan-0-nen-mong`). Spec `docs/proje
 | 4 | [Editor Tiptap và autosave](./phase-04-editor-tiptap-autosave.md) | 3 | Completed |
 | 5 | [Đăng chương và hẹn giờ](./phase-05-dang-chuong-va-hen-gio.md) | 4 | Completed |
 | 6 | [Khôi phục revision](./phase-06-khoi-phuc-revision.md) | 5 | Completed |
-| 7 | [Trang đọc: route, cache, giao diện](./phase-07-trang-doc-route-giao-dien.md) | 6 (phần 1/3) | Pending |
+| 7 | [Trang đọc: route, cache, giao diện](./phase-07-trang-doc-route-giao-dien.md) | 6 (phần 1/3) | Completed (checkbox chờ phase 9) |
 | 8 | [Trang đọc: cài đặt hiển thị](./phase-08-cai-dat-trang-doc.md) | 6 (phần 2/3) | Pending |
 | 9 | [Trang đọc: tiến độ, purge CDN, lượt đọc](./phase-09-tien-do-purge-luot-doc.md) | 6 (đánh `[x]`) | Pending |
 | 10 | [Trang truyện, tác giả, tag, trang chủ](./phase-10-trang-truyen-tac-gia-tag-trang-chu.md) | 7 | Pending |
@@ -56,6 +56,7 @@ Phụ thuộc tuyến tính 1 → 17.
 - **User (2026-10-04):** HOLD SCOPE (đúng 13 checkbox, không thêm không cắt); thêm phase 1 dựng tokens, màu nhấn do user chọn ở bước validate.
 - **User (2026-10-05, sau red team):** áp dụng cả 15 finding; tách checkbox 6 thành phase 7–9 và checkbox 11 thành phase 14–15; giữ đếm lượt đọc ở phase 9 (mục 6).
 - **User (2026-10-05):** URL công khai và tên file route tiếng Anh (bảng đổi trong docs/code-standards.md); slug nội dung vẫn tiếng Việt không dấu; query phân trang `page`.
+- **User (2026-10-05, sau phase 6):** đảo câu 11 của Validation Log sang phương án B — khôi phục revision tự chụp nháp hiện tại thành một revision (khi khác revision mới nhất) trước khi thay, tính trong giới hạn 20. Lý do: mirror localStorage bị xoá sau mỗi lần autosave thành công và khi khôi phục, nên không phải lớp bảo vệ. Làm thành việc riêng sau phase 7.
 - **Kiến trúc dữ liệu cho UI:**
   - Trang công khai: loader gọi `createServerFn({ method: 'GET' })` trong `apps/web/src/server-fns/` → `core`. Không TanStack Query cho dữ liệu công khai.
   - **Liên kết giữa các trang công khai là link tài liệu thường (`reloadDocument`)**, prefetch chương sau bằng `<link rel="prefetch">` HTML: mọi lượt xem đi qua HTML cache CDN, không gọi server fn từ browser (server fn GET không có cache header). <!-- Red Team: CDN bypass -->
@@ -270,7 +271,8 @@ Phụ thuộc tuyến tính 1 → 17.
 - Phase 2 xong code (2026-10-05): gate 5 lệnh xanh, `s3-storage.int.test.ts` SKIPPED vì `S3_*` trống; checkbox 1 chờ user tạo bucket MinIO dev rồi chạy bước 13. Review `../reports/code-reviewer-261005-1023-phase-02-stories-review-report.md` (8/10, đã sửa M1–M3, L3, L4, L7). Report: `../reports/cook-261005-1049-phase-02-stories-report.md`.
 - Phase 3 xong (2026-10-05): gate 5 lệnh xanh, checkbox 2 `[x]`. Review `../reports/code-review-261005-1054-phase-03-text-cover-report.md` (8.5/10, 0 Critical/High/Medium; đã sửa L2, L3; L1 duyệt mắt dark ổn, không sửa; L4 để user quyết). Report: `../reports/cook-261005-1054-phase-03-text-cover-report.md`.
 - Phase 4 xong (2026-10-05): gate 5 lệnh xanh, checkbox 3 `[x]`. Review `../reports/code-reviewer-261005-1122-phase-04-editor-autosave-review-report.md` (7.5/10, đã sửa H1, M1–M3, L1, L2). Report: `../reports/cook-261005-1137-phase-04-editor-autosave-report.md`. DB dev cũ cần `pnpm db:seed --reset` (pid `p1`).
-- Tiếp: cook phase 5.
+- Phase 7 xong (2026-10-05): gate 5 lệnh xanh; checkbox 6 **chưa** đánh (phase 9). Review `../reports/code-reviewer-261005-1245-phase-07-reader-route-review-report.md` (8/10, đã sửa H1, M1, M2 và 4 Low). Report: `../reports/cook-261005-1228-phase-07-reader-route-report.md`. Lệch plan: `/` cuối nhận 307 của router (không cache); `%2D` trả 200 do Start decode path, dựa vào URL Normalization của Cloudflare (`docs/deployment-cloudflare.md`).
+- Tiếp: cook phase 8.
 - Nhắc trước khi mở public: backup Postgres ra ngoài VPS + thử restore (phase 17).
 
 <!-- slug: giai-doan-1-doc-va-viet -->

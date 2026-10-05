@@ -1,4 +1,4 @@
-import type { CurrentUser, HealthReport } from '@novel-hub/core';
+import type { HealthReport } from '@novel-hub/core';
 import { testClient } from 'hono/testing';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from './app';
@@ -11,17 +11,6 @@ const okReport: HealthReport = { status: 'ok', checks: { postgres: 'up', redis: 
 const downReport: HealthReport = { status: 'unhealthy', checks: { postgres: 'up', redis: 'down' } };
 
 const APP_URL = TEST_APP_URL;
-
-const user: CurrentUser = {
-  id: '01a107a5-0000-7000-8000-000000000000',
-  username: 'lam_phong',
-  displayName: 'Lâm Phong',
-  email: 'lp@example.com',
-  emailVerified: false,
-  avatarUrl: null,
-  role: 'reader',
-  status: 'active',
-};
 
 function deps(overrides: Partial<ApiDeps> = {}): ApiDeps {
   return makeTestApiDeps({
@@ -126,30 +115,8 @@ describe('GET /api/v1/me', () => {
     expect(await res.json()).toEqual({ error: { code: 'UNAUTHENTICATED', message: anyString } });
   });
 
-  it('signed in → 200, no id or email', async () => {
-    const app = createApp(
-      deps({
-        auth: { ...deps().auth, lookupSession: () => Promise.resolve({ user, setCookies: [] }) },
-      }),
-    );
-    const res = await testClient(app).api.v1.me.$get();
-    expect(res.status).toBe(200);
-    const text = await res.text();
-    expect(JSON.parse(text)).toEqual({
-      user: {
-        username: 'lam_phong',
-        displayName: 'Lâm Phong',
-        avatarUrl: null,
-        role: 'reader',
-        status: 'active',
-        emailVerified: false,
-      },
-    });
-    expect(text).not.toContain(user.id);
-    expect(text).not.toContain(user.email);
-  });
-
-  it('cookie header is passed to lookupSession; renewal Set-Cookie is sent back', async () => {
+  // The signed-in body needs the database: `routes/me.int.test.ts`.
+  it('cookie header is passed to lookupSession; Set-Cookie is sent back', async () => {
     let cookie: string | null = null;
     const renewed = ['phien=moi; Path=/; HttpOnly', 'phien_data=; Max-Age=0'];
     const app = createApp(
@@ -158,12 +125,14 @@ describe('GET /api/v1/me', () => {
           ...deps().auth,
           lookupSession: (headers) => {
             cookie = headers.get('cookie');
-            return Promise.resolve({ user, setCookies: renewed });
+            // An expired session: no user, and the cookies that clear it.
+            return Promise.resolve({ user: null, setCookies: renewed });
           },
         },
       }),
     );
     const res = await app.request('/api/v1/me', { headers: { cookie: 'a=b' } });
+    expect(res.status).toBe(401);
     expect(cookie).toBe('a=b');
     expect(res.headers.getSetCookie()).toEqual(renewed);
   });

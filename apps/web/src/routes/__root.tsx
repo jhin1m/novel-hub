@@ -6,6 +6,7 @@ import beVietnamProLatin from '@fontsource/be-vietnam-pro/files/be-vietnam-pro-l
 import beVietnamProVietnamese from '@fontsource/be-vietnam-pro/files/be-vietnam-pro-vietnamese-400-normal.woff2?url';
 import literataLatin from '@fontsource-variable/literata/files/literata-latin-wght-normal.woff2?url';
 import literataVietnamese from '@fontsource-variable/literata/files/literata-vietnamese-wght-normal.woff2?url';
+import { BOOT_SCRIPT } from '../lib/boot-script';
 import appCss from '../styles/app.css?url';
 
 // Preload the UI font (400) and the content font, latin + vietnamese subsets. The `?url` imports
@@ -46,8 +47,11 @@ function RootShell({ children }: { children: ReactNode }) {
   // One client per server render so cached data is never shared between requests.
   const [queryClient] = useState(() => new QueryClient());
   return (
-    <html lang="vi">
+    // The boot script may set attributes on <html> before React hydrates.
+    <html lang="vi" suppressHydrationWarning>
       <head>
+        {/* First in <head>: applies stored display hints before anything is painted. */}
+        <script dangerouslySetInnerHTML={{ __html: BOOT_SCRIPT }} />
         <HeadContent />
       </head>
       <body>

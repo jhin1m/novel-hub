@@ -293,6 +293,7 @@ describe('sign-in and /api/v1/me', () => {
         role: 'reader',
         status: 'active',
         emailVerified: false,
+        preferences: { showMature: false },
       },
     });
     expect(text).not.toContain((await userByEmail('lp@example.com')).id);

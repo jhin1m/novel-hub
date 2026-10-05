@@ -1,0 +1,89 @@
+/*
+ * Reading page. Defaults live on `:root` so the reader settings can override them on `<html>`
+ * before the first paint.
+ */
+:root {
+  --reader-font: var(--font-content);
+  --reader-font-size: 19px;
+  --reader-line-height: 1.8;
+  --reader-paragraph-gap: 1em;
+  /* Text column on desktop: ~60-75 characters per line. */
+  --reader-column: 68ch;
+}
+
+.reader-page {
+  min-height: 100dvh;
+  background: var(--reader-bg);
+  color: var(--reader-fg);
+}
+
+.reader-column {
+  max-width: var(--reader-column);
+  margin-inline: auto;
+  font-family: var(--reader-font);
+  font-size: var(--reader-font-size);
+  line-height: var(--reader-line-height);
+}
+
+/* Published chapter HTML: only the tags the sanitizer allows. */
+.reader-content {
+  overflow-wrap: break-word;
+
+  & > * + * {
+    margin-top: var(--reader-paragraph-gap);
+  }
+
+  & h2 {
+    font-size: 1.3em;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  & h3 {
+    font-size: 1.15em;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  & blockquote {
+    border-left: 2px solid currentColor;
+    padding-left: 1em;
+    color: var(--reader-muted);
+  }
+
+  & hr {
+    margin-block: 2em;
+    border: 0;
+    text-align: center;
+
+    &::after {
+      content: '* * *';
+      color: var(--reader-muted);
+      letter-spacing: 0.5em;
+    }
+  }
+}
+
+.reader-nav {
+  transition: transform 200ms ease;
+
+  &[data-hidden] {
+    transform: translateY(-100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reader-nav {
+    transition: none;
+  }
+}
+
+/* Set before paint for readers who allowed 18+ content: no warning screen flash. */
+:root[data-mature-ok] .mature-gate {
+  display: none;
+}
+
+/* Keyboard focus inside the hidden bar brings it back. */
+.reader-nav:focus-within {
+  transform: none;
+}

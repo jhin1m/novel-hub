@@ -17,6 +17,7 @@
 @import '@fontsource-variable/inter/wght.css';
 
 @import './tokens.css';
+@import './reader.css';
 
 /* Map tokens to Tailwind utilities (`bg-background`, `text-primary`, `font-serif`, ...). */
 @theme inline {

@@ -1,0 +1,24 @@
+import { describe, expect, it } from 'vitest';
+import { canonicalPath } from './canonical-path';
+
+describe('canonicalPath', () => {
+  it('builds every kind of public URL', () => {
+    expect(canonicalPath({ kind: 'home' })).toBe('/');
+    expect(canonicalPath({ kind: 'story', slug: 'kiem-dao', publicId: 'k7m2xq9p' })).toBe(
+      '/stories/kiem-dao-k7m2xq9p',
+    );
+    expect(
+      canonicalPath({ kind: 'chapter', slug: 'kiem-dao', publicId: 'k7m2xq9p', number: 3 }),
+    ).toBe('/stories/kiem-dao-k7m2xq9p/chapter-3');
+    expect(canonicalPath({ kind: 'author', username: 'lam_phong' })).toBe('/authors/lam_phong');
+    expect(canonicalPath({ kind: 'static', path: '/terms' })).toBe('/terms');
+  });
+
+  it('adds the page query to tag pages only past the first page', () => {
+    expect(canonicalPath({ kind: 'tag', slug: 'tien-hiep' })).toBe('/tags/tien-hiep');
+    expect(canonicalPath({ kind: 'tag', slug: 'tien-hiep', page: 1 })).toBe('/tags/tien-hiep');
+    expect(canonicalPath({ kind: 'tag', slug: 'tien-hiep', page: 2 })).toBe(
+      '/tags/tien-hiep?page=2',
+    );
+  });
+});

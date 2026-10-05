@@ -1,4 +1,9 @@
-import { getAuthorStory, listAuthorChapters, listAuthorStories } from '@novel-hub/core';
+import {
+  getAuthorStory,
+  getPreferences,
+  listAuthorChapters,
+  listAuthorStories,
+} from '@novel-hub/core';
 import { Hono } from 'hono';
 import type { ApiDeps } from '../deps';
 import { coreError } from '../lib/core-errors';
@@ -9,10 +14,11 @@ import { sessionMiddleware } from '../middleware/session';
 export function createMeRoutes(deps: Pick<ApiDeps, 'auth' | 'db'>) {
   return new Hono()
     .use(sessionMiddleware(deps.auth))
-    .get('/', requireAuth, (c) => {
-      const { username, displayName, avatarUrl, role, status, emailVerified } = c.var.authUser;
+    .get('/', requireAuth, async (c) => {
+      const { id, username, displayName, avatarUrl, role, status, emailVerified } = c.var.authUser;
+      const preferences = await getPreferences(deps.db, id);
       return c.json(
-        { user: { username, displayName, avatarUrl, role, status, emailVerified } },
+        { user: { username, displayName, avatarUrl, role, status, emailVerified, preferences } },
         200,
       );
     })

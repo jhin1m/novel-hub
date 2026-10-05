@@ -16,6 +16,7 @@ import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as WriteIndexRouteImport } from './routes/write/index'
+import { Route as StoriesStoryKeyChapterChar123numberChar125RouteImport } from './routes/stories.$storyKey.chapter-{$number}'
 import { Route as WriteStoriesNewRouteImport } from './routes/write/stories/new'
 import { Route as WriteStoriesPublicIdIndexRouteImport } from './routes/write/stories/$publicId/index'
 import { Route as WriteStoriesPublicIdChaptersNumberRouteImport } from './routes/write/stories/$publicId/chapters/$number'
@@ -55,6 +56,12 @@ const WriteIndexRoute = WriteIndexRouteImport.update({
   path: '/write/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StoriesStoryKeyChapterChar123numberChar125Route =
+  StoriesStoryKeyChapterChar123numberChar125RouteImport.update({
+    id: '/stories/$storyKey/chapter-{$number}',
+    path: '/stories/$storyKey/chapter-{$number}',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const WriteStoriesNewRoute = WriteStoriesNewRouteImport.update({
   id: '/write/stories/new',
   path: '/write/stories/new',
@@ -81,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof SignUpRoute
   '/api/$': typeof ApiSplatRoute
   '/write/': typeof WriteIndexRoute
+  '/stories/$storyKey/chapter-{$number}': typeof StoriesStoryKeyChapterChar123numberChar125Route
   '/write/stories/new': typeof WriteStoriesNewRoute
   '/write/stories/$publicId/': typeof WriteStoriesPublicIdIndexRoute
   '/write/stories/$publicId/chapters/$number': typeof WriteStoriesPublicIdChaptersNumberRoute
@@ -93,6 +101,7 @@ export interface FileRoutesByTo {
   '/sign-up': typeof SignUpRoute
   '/api/$': typeof ApiSplatRoute
   '/write': typeof WriteIndexRoute
+  '/stories/$storyKey/chapter-{$number}': typeof StoriesStoryKeyChapterChar123numberChar125Route
   '/write/stories/new': typeof WriteStoriesNewRoute
   '/write/stories/$publicId': typeof WriteStoriesPublicIdIndexRoute
   '/write/stories/$publicId/chapters/$number': typeof WriteStoriesPublicIdChaptersNumberRoute
@@ -106,6 +115,7 @@ export interface FileRoutesById {
   '/sign-up': typeof SignUpRoute
   '/api/$': typeof ApiSplatRoute
   '/write/': typeof WriteIndexRoute
+  '/stories/$storyKey/chapter-{$number}': typeof StoriesStoryKeyChapterChar123numberChar125Route
   '/write/stories/new': typeof WriteStoriesNewRoute
   '/write/stories/$publicId/': typeof WriteStoriesPublicIdIndexRoute
   '/write/stories/$publicId/chapters/$number': typeof WriteStoriesPublicIdChaptersNumberRoute
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/api/$'
     | '/write/'
+    | '/stories/$storyKey/chapter-{$number}'
     | '/write/stories/new'
     | '/write/stories/$publicId/'
     | '/write/stories/$publicId/chapters/$number'
@@ -132,6 +143,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/api/$'
     | '/write'
+    | '/stories/$storyKey/chapter-{$number}'
     | '/write/stories/new'
     | '/write/stories/$publicId'
     | '/write/stories/$publicId/chapters/$number'
@@ -144,6 +156,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/api/$'
     | '/write/'
+    | '/stories/$storyKey/chapter-{$number}'
     | '/write/stories/new'
     | '/write/stories/$publicId/'
     | '/write/stories/$publicId/chapters/$number'
@@ -157,6 +170,7 @@ export interface RootRouteChildren {
   SignUpRoute: typeof SignUpRoute
   ApiSplatRoute: typeof ApiSplatRoute
   WriteIndexRoute: typeof WriteIndexRoute
+  StoriesStoryKeyChapterChar123numberChar125Route: typeof StoriesStoryKeyChapterChar123numberChar125Route
   WriteStoriesNewRoute: typeof WriteStoriesNewRoute
   WriteStoriesPublicIdIndexRoute: typeof WriteStoriesPublicIdIndexRoute
   WriteStoriesPublicIdChaptersNumberRoute: typeof WriteStoriesPublicIdChaptersNumberRoute
@@ -213,6 +227,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WriteIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/stories/$storyKey/chapter-{$number}': {
+      id: '/stories/$storyKey/chapter-{$number}'
+      path: '/stories/$storyKey/chapter-{$number}'
+      fullPath: '/stories/$storyKey/chapter-{$number}'
+      preLoaderRoute: typeof StoriesStoryKeyChapterChar123numberChar125RouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/write/stories/new': {
       id: '/write/stories/new'
       path: '/write/stories/new'
@@ -245,6 +266,8 @@ const rootRouteChildren: RootRouteChildren = {
   SignUpRoute: SignUpRoute,
   ApiSplatRoute: ApiSplatRoute,
   WriteIndexRoute: WriteIndexRoute,
+  StoriesStoryKeyChapterChar123numberChar125Route:
+    StoriesStoryKeyChapterChar123numberChar125Route,
   WriteStoriesNewRoute: WriteStoriesNewRoute,
   WriteStoriesPublicIdIndexRoute: WriteStoriesPublicIdIndexRoute,
   WriteStoriesPublicIdChaptersNumberRoute:

@@ -107,3 +107,16 @@ export {
   restoreRevision,
   revisionKey,
 } from './revisions/revisions';
+export {
+  type ReadDecision,
+  type ReadableChapterFacts,
+  canReadChapter,
+  isStoryPubliclyVisible,
+} from './access/can-read-chapter';
+export {
+  type ChapterPageData,
+  getChapterForReading,
+  listReadableChapters,
+} from './reader/get-chapter-for-reading';
+export { getChapterToc } from './reader/toc';
+export { getPreferences } from './users/preferences';

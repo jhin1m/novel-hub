@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from './api-client';
 import { authClient } from './auth-client';
+import { syncMatureFlag } from './boot-script';
 import { throwIfAuthError } from './auth-errors';
 
 const api = createApiClient();
@@ -18,11 +19,18 @@ export function useMe() {
     staleTime: 60_000,
     queryFn: async () => {
       const res = await api.api.v1.me.$get();
-      if (res.status === 200) return (await res.json()).user;
+      if (res.status === 200) {
+        const { user } = await res.json();
+        syncMatureFlag(user.preferences.showMature);
+        return user;
+      }
       // Release unread bodies: an unconsumed chunked response stays open in the browser and
       // keeps the connection busy (the site header runs this on every page).
       await res.body?.cancel();
-      if (res.status === 401) return null;
+      if (res.status === 401) {
+        syncMatureFlag(false);
+        return null;
+      }
       throw new Error('GET /api/v1/me failed');
     },
   });
@@ -37,6 +45,7 @@ export function useSignOut() {
       throwIfAuthError(error);
     },
     onSuccess: () => {
+      syncMatureFlag(false);
       // Drop every per-account cache (my stories...) so the next account never sees them.
       queryClient.removeQueries({ queryKey: meQueryKey });
       queryClient.setQueryData(meQueryKey, null);

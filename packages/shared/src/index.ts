@@ -70,3 +70,5 @@ export {
   revisionKeySchema,
   revisionParamSchema,
 } from './schemas/revision';
+export { parseChapterNumber, parseChapterSegment } from './schemas/reader';
+export { type CanonicalTarget, canonicalPath } from './canonical-path';

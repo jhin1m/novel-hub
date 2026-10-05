@@ -1,4 +1,9 @@
-import { CONTENT_JOBS, type ContentJobName, type SearchSyncPayload } from '@novel-hub/shared';
+import {
+  CONTENT_JOBS,
+  type ContentJobName,
+  type FingerprintChapterPayload,
+  type SearchSyncPayload,
+} from '@novel-hub/shared';
 import type { JobsOptions } from 'bullmq';
 import { z } from 'zod';
 
@@ -77,17 +82,26 @@ const searchSync = (data: SearchSyncPayload): ContentJob => ({
 });
 
 /**
- * The jobs a change needs (CDN purge and search sync; fingerprints join later). Pure, so the
- * mapping is unit tested without Redis. Every change touches cached public pages, so every change
- * purges; the job carries the change itself and resolves URLs from the current state. Every change
- * also resyncs search: a chapter moves its story's counters, a user change their name or ban.
+ * The jobs a change needs (CDN purge, search sync, duplicate check). Pure, so the mapping is unit
+ * tested without Redis. Every change touches cached public pages, so every change purges; the job
+ * carries the change itself and resolves URLs from the current state. Every change also resyncs
+ * search: a chapter moves its story's counters, a user change their name or ban. Chapter content
+ * that went public (first publish or republish) is fingerprinted; a missed run is caught by the
+ * hourly backfill, so the default retries are enough.
  */
 export function jobsForChange(change: ContentChange): ContentJob[] {
   const purge: ContentJob = { name: CONTENT_JOBS.purgeUrls, data: change, opts: OUTAGE_RETRY };
   switch (change.entity) {
     case 'story':
-    case 'chapter':
       return [purge, searchSync({ kind: 'story', storyId: change.storyId })];
+    case 'chapter': {
+      const jobs = [purge, searchSync({ kind: 'story', storyId: change.storyId })];
+      if (change.action === 'published' || change.action === 'updated') {
+        const data: FingerprintChapterPayload = { chapterId: change.chapterId };
+        jobs.push({ name: CONTENT_JOBS.fingerprintChapter, data });
+      }
+      return jobs;
+    }
     case 'user':
       return [purge, searchSync({ kind: 'user', userId: change.userId })];
     default: {

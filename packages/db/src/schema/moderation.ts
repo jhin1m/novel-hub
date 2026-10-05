@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { check, index, pgTable, text, uuid } from 'drizzle-orm/pg-core';
+import { check, index, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { users } from './auth';
 import { createdAt, timestamptz, uuidPk } from './columns';
 import { stories } from './stories';
@@ -23,6 +23,11 @@ export const reports = pgTable(
     index('reports_target_idx').on(t.targetType, t.targetId),
     index('reports_reporter_id_idx').on(t.reporterId),
     index('reports_handled_by_idx').on(t.handledBy),
+    // At most one open automatic report per target and reason, so repeated or concurrent
+    // duplicate checks insert with `ON CONFLICT DO NOTHING`.
+    uniqueIndex('reports_open_auto_key')
+      .on(t.targetType, t.targetId, t.reason)
+      .where(sql`${t.status} = 'open' AND ${t.reporterId} IS NULL`),
   ],
 );
 

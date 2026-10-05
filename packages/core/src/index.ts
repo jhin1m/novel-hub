@@ -214,3 +214,13 @@ export {
   createRateLimiter,
 } from './rate-limit/limiter';
 export { resetRateLimits } from './rate-limit/reset';
+export {
+  DUPLICATE_REASON,
+  type FingerprintResult,
+  fingerprintChapter,
+} from './dedupe/fingerprint-chapter';
+export { listChaptersNeedingFingerprint } from './dedupe/backfill';
+export { normalizeForDedupe, shingles } from './dedupe/normalize';
+export { jaccardEstimate, minhash } from './dedupe/minhash';
+export { hamming64, simhash } from './dedupe/simhash';
+export { lshKeys } from './dedupe/lsh';

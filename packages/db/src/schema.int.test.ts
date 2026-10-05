@@ -1,14 +1,16 @@
 import { dbEnvSchema, loadServerEnv } from '@novel-hub/shared/env';
-import { eq, sql } from 'drizzle-orm';
+import { arrayOverlaps, eq, sql } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDb } from './client';
 import {
   chapterContents,
+  chapterFingerprints,
   chapters,
   contentEvents,
   featuredSlots,
   ratings,
   readingProgress,
+  reports,
   stories,
   storyTags,
   tags,
@@ -220,6 +222,44 @@ describe('ràng buộc', () => {
     }
     await db.insert(ratings).values({ userId: user.id, storyId: story.id, score: 1 });
     await db.update(ratings).set({ score: 5 }).where(eq(ratings.userId, user.id));
+  });
+});
+
+describe('duplicate check', () => {
+  it('finds overlapping LSH keys through the GIN index', async () => {
+    const { chapter } = await insertStoryGraph();
+    await db
+      .insert(chapterFingerprints)
+      .values({ chapterId: chapter.id, minhash: [1, 2], simhash: -5n, lshKeys: [7, -9] });
+    const found = await db
+      .select({ id: chapterFingerprints.chapterId, simhash: chapterFingerprints.simhash })
+      .from(chapterFingerprints)
+      .where(arrayOverlaps(chapterFingerprints.lshKeys, [-9, 100]));
+    expect(found).toEqual([{ id: chapter.id, simhash: -5n }]);
+
+    const plan = await db.transaction(async (tx) => {
+      await tx.execute(sql`set local enable_seqscan = off`);
+      const { rows } = await tx.execute<{ 'QUERY PLAN': string }>(
+        sql`explain select chapter_id from chapter_fingerprints where lsh_keys && '{7}'::int[]`,
+      );
+      return rows.map((row) => row['QUERY PLAN']).join('\n');
+    });
+    expect(plan).toContain('chapter_fingerprints_lsh_keys_idx');
+  });
+
+  it('keeps one open automatic report per target and reason, any number of handled ones', async () => {
+    const { user, chapter } = await insertStoryGraph();
+    const auto = { targetType: 'chapter', targetId: chapter.id, reason: 'duplicate' };
+    await db.insert(reports).values(auto);
+    const err = await catchPgError(db.insert(reports).values(auto));
+    expect(err.constraint).toBe('reports_open_auto_key');
+
+    // Handled automatic reports and reports filed by users are not limited.
+    await db.update(reports).set({ status: 'dismissed' });
+    await db.insert(reports).values(auto);
+    await db.insert(reports).values({ ...auto, reporterId: user.id });
+    await db.insert(reports).values({ ...auto, reporterId: user.id });
+    expect(await db.$count(reports)).toBe(4);
   });
 });
 

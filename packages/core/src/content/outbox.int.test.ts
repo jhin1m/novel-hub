@@ -148,13 +148,14 @@ describe('drainContentEvents', () => {
     expect(left.sort()).toEqual([1, 3]);
   });
 
-  it('by default turns every change into a purge job and a search sync', async () => {
+  it('by default turns a published chapter into a purge, a search sync and a fingerprint', async () => {
     await recordContentChanges(db, [change(1)]);
     const addBulk = vi.fn().mockResolvedValue([]);
     await drainContentEvents({ db, contentQueue: { addBulk } });
     expect(addBulk).toHaveBeenCalledWith([
       expect.objectContaining({ name: 'purge-urls', data: change(1) }),
       expect.objectContaining({ name: 'search-sync', data: { kind: 'story', storyId: STORY } }),
+      { name: 'fingerprint-chapter', data: { chapterId: STORY } },
     ]);
   });
 });

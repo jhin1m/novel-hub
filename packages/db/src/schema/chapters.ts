@@ -81,10 +81,21 @@ export const chapterRevisions = pgTable(
 );
 
 /** Dấu vân tay nội dung cho kiểm tra trùng lặp (spec mục 7). */
-export const chapterFingerprints = pgTable('chapter_fingerprints', {
-  chapterId: uuid()
-    .primaryKey()
-    .references(() => chapters.id, { onDelete: 'cascade' }),
-  minhash: integer().array().notNull(),
-  simhash: bigint({ mode: 'bigint' }).notNull(),
-});
+export const chapterFingerprints = pgTable(
+  'chapter_fingerprints',
+  {
+    chapterId: uuid()
+      .primaryKey()
+      .references(() => chapters.id, { onDelete: 'cascade' }),
+    minhash: integer().array().notNull(),
+    simhash: bigint({ mode: 'bigint' }).notNull(),
+    /** One key per LSH band of `minhash`; candidates share at least one key (`&&` on the GIN). */
+    lshKeys: integer()
+      .array()
+      .notNull()
+      .default(sql`'{}'`),
+    /** `chapter_contents.content_hash` the fingerprint was computed from; stale when it differs. */
+    contentHash: text(),
+  },
+  (t) => [index('chapter_fingerprints_lsh_keys_idx').using('gin', t.lshKeys)],
+);

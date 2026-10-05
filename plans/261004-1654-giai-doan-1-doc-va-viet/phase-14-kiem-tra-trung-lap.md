@@ -1,7 +1,7 @@
 ---
 phase: 14
 title: "Phase 14: Kiểm tra trùng lặp"
-status: pending
+status: completed
 priority: P1
 effort: "1.5d"
 dependencies: [13]
@@ -128,11 +128,11 @@ Không có UI, không env mới, không dependency mới.
 
 ## Function / Interface Checklist
 
-- [ ] `normalizeForDedupe`, `shingles`, `minhash`, `simhash`, `lshKeys`, `jaccardEstimate`, `hamming64`
-- [ ] `fingerprintChapter(db, chapterId)`, `listChaptersNeedingFingerprint(db, limit, afterId?)`
-- [ ] `processFingerprintChapter`, `processBackfillFingerprints`
-- [ ] `jobsForChange` nhánh fingerprint; `DEDUPE`, `fingerprintChapterPayload`, `duplicateReportDetail`
-- [ ] Migration `0002_dedupe_fingerprints`: `lsh_keys` + GIN, `content_hash`, `reports_open_auto_key`
+- [x] `normalizeForDedupe`, `shingles`, `minhash`, `simhash`, `lshKeys`, `jaccardEstimate`, `hamming64`
+- [x] `fingerprintChapter(db, chapterId)`, `listChaptersNeedingFingerprint(db, limit, afterId?)`
+- [x] `processFingerprintChapter`, `processBackfillFingerprints`
+- [x] `jobsForChange` nhánh fingerprint; `DEDUPE`, `fingerprintChapterPayload`, `duplicateReportDetail`
+- [x] Migration `0002_dedupe_fingerprints`: `lsh_keys` + GIN, `content_hash`, `reports_open_auto_key`
 
 ## Test Scenario Matrix
 
@@ -158,10 +158,10 @@ Không có UI, không env mới, không dependency mới.
 
 ## Success Criteria
 
-- [ ] Đăng chương copy của tác giả khác → có đúng một báo cáo `duplicate` tự động, chương không bị ẩn
-- [ ] Chương đã đăng thiếu hoặc lệch fingerprint được backfill trong ≤ 1 giờ
-- [ ] Job không đặt `jobId`; chạy lặp/song song không sinh báo cáo trùng
-- [ ] Migration đã chạy; gate xanh; checkbox 11 **chưa** đánh
+- [x] Đăng chương copy của tác giả khác → có đúng một báo cáo `duplicate` tự động, chương không bị ẩn
+- [x] Chương đã đăng thiếu hoặc lệch fingerprint được backfill trong ≤ 1 giờ
+- [x] Job không đặt `jobId`; chạy lặp/song song không sinh báo cáo trùng
+- [x] Migration đã chạy; gate xanh; checkbox 11 **chưa** đánh
 
 ## Risk Assessment
 
@@ -184,6 +184,15 @@ Rollback: migration chỉ thêm cột có default, cột nullable và index — 
 ## Next Steps
 
 Phase 15: báo cáo của người dùng, hàng chờ `/moderation` (hiện cả báo cáo `duplicate`), hành động mod; đánh `[x]` checkbox 11 khi xong.
+
+## Ghi chú triển khai (2026-10-05)
+
+- Không bọc transaction: fingerprint commit trước truy vấn ứng viên, nên hai bản copy đăng cùng lúc luôn có một lượt thấy bản kia.
+- Báo cáo đặt trên chương **đăng sau** của cặp (bằng nhau thì id lớn hơn); mỗi lượt chèn một báo cáo cho **mỗi** chương copy (khớp tốt nhất chưa bị `dismissed`), nên thứ tự kiểm không làm sót bản copy.
+- Chuẩn hoá: bỏ ký tự `\p{Cf}` (zero-width, soft hyphen), NFKC thay NFC (gộp cả fullwidth) — đóng băng cùng hàm hash.
+- Ứng viên sắp theo số band key trùng trước `LIMIT 200`.
+- Giới hạn đã biết cho docs mod (phase 15): sửa rải đều 1/10 số từ → Jaccard ~0,33, không bắt được.
+- Phase 15 cần chốt: trạng thái nào ngoài `dismissed` chặn tạo lại cùng cặp; không thêm trạng thái "chưa xử lý" khác `open` (partial index giả định vậy).
 
 ## Câu hỏi mở (đã chốt — Validation Session 1, 2026-10-05)
 

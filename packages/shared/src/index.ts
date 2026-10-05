@@ -23,15 +23,19 @@ export {
 export {
   CONTENT_JOBS,
   type ContentJobName,
+  type DuplicateReportDetail,
+  type FingerprintChapterPayload,
   MAIL_JOBS,
   type MailJobName,
   PUBLISHING_JOBS,
   type PublishingJobName,
   QUEUES,
   type SendAuthEmailPayload,
+  duplicateReportDetail,
+  fingerprintChapterPayload,
   sendAuthEmailPayload,
 } from './queues';
-export { COVER_MIME_TYPES, LIMITS } from './limits';
+export { COVER_MIME_TYPES, DEDUPE, LIMITS } from './limits';
 export { parseStoryKey, storyKey } from './story-key';
 export { coverImageUrl } from './cover';
 export {

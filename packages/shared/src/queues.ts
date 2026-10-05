@@ -18,6 +18,8 @@ export const PUBLISHING_JOBS = {
   drainContentEvents: 'drain-content-events',
   /** Moves the Redis view counters into `chapter_daily_stats`. */
   flushViewCounters: 'flush-view-counters',
+  /** Enqueues `fingerprint-chapter` for published chapters whose fingerprint is missing or stale. */
+  backfillFingerprints: 'backfill-fingerprints',
 } as const;
 
 export type PublishingJobName = (typeof PUBLISHING_JOBS)[keyof typeof PUBLISHING_JOBS];
@@ -31,9 +33,29 @@ export const CONTENT_JOBS = {
   purgeUrls: 'purge-urls',
   /** Re-reads a story (or a user's author doc and stories) and upserts or deletes its search docs. */
   searchSync: 'search-sync',
+  /** Fingerprints a published chapter and files an automatic report when it copies another author. */
+  fingerprintChapter: 'fingerprint-chapter',
 } as const;
 
 export type ContentJobName = (typeof CONTENT_JOBS)[keyof typeof CONTENT_JOBS];
+
+export const fingerprintChapterPayload = z.object({ chapterId: z.uuid() });
+
+export type FingerprintChapterPayload = z.infer<typeof fingerprintChapterPayload>;
+
+/**
+ * `reports.detail` of an automatic duplicate report. Internal ids only: the moderation API maps
+ * `matchedChapterId` to a public URL before showing it.
+ */
+export const duplicateReportDetail = z.object({
+  matchedChapterId: z.uuid(),
+  /** Estimated Jaccard similarity of the two chapters' shingle sets, 0–1. */
+  jaccard: z.number().min(0).max(1),
+  /** Hamming distance of the two SimHashes, 0–64; small means near-identical text. */
+  hamming: z.number().int().min(0).max(64),
+});
+
+export type DuplicateReportDetail = z.infer<typeof duplicateReportDetail>;
 
 export const MAIL_JOBS = {
   sendAuthEmail: 'send-auth-email',

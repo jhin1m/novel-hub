@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LIMITS } from './limits';
+import { DEDUPE, LIMITS } from './limits';
 
 describe('LIMITS', () => {
   it('matches the starting values of the spec', () => {
@@ -14,5 +14,12 @@ describe('LIMITS', () => {
       '600x900',
       '300x450',
     ]);
+  });
+});
+
+describe('DEDUPE', () => {
+  it('splits the MinHash signature exactly into the LSH bands', () => {
+    expect(DEDUPE.bands * DEDUPE.rows).toBe(DEDUPE.perms);
+    expect(DEDUPE.jaccard).toBe(0.7);
   });
 });

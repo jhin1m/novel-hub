@@ -27,5 +27,28 @@ export const LIMITS = {
   draftMaxBytes: 2_000_000,
 } as const;
 
+/**
+ * Duplicate check parameters (spec section 7). `shingle`, `perms`, `bands` and `rows` shape the
+ * stored fingerprints: changing them makes every stored fingerprint meaningless (clear
+ * `chapter_fingerprints` and let the backfill recompute). With 16 bands of 8 rows a pair with
+ * Jaccard 0.8 becomes a candidate ~95% of the time, 0.5 only ~6%; `jaccard` is the final filter.
+ */
+export const DEDUPE = {
+  /** Words per shingle. */
+  shingle: 5,
+  /** MinHash permutations; equals `bands * rows`. */
+  perms: 128,
+  bands: 16,
+  rows: 8,
+  /** Estimated Jaccard similarity at or above which an automatic report is filed. */
+  jaccard: 0.7,
+  /** Below this many shingles a chapter is fingerprinted but never compared (too little text). */
+  minShingles: 20,
+  maxCandidates: 200,
+  backfillBatch: 500,
+  /** Batches per backfill run, so one run enqueues at most 5,000 jobs. */
+  backfillMaxBatches: 10,
+} as const;
+
 /** Image types accepted for upload (checked again from magic bytes on the server). */
 export const COVER_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;

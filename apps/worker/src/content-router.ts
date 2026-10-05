@@ -1,10 +1,14 @@
 import { CONTENT_JOBS } from '@novel-hub/shared';
 import { type Job, UnrecoverableError } from 'bullmq';
+import {
+  type FingerprintChapterDeps,
+  processFingerprintChapter,
+} from './processors/fingerprint-chapter';
 import { type PurgeUrlsDeps, processPurgeUrls } from './processors/purge-urls';
 import { type SearchSyncDeps, processSearchSync } from './processors/search-sync';
 
 /** Dependencies of `content` jobs. */
-export type ContentJobDeps = PurgeUrlsDeps & SearchSyncDeps;
+export type ContentJobDeps = PurgeUrlsDeps & SearchSyncDeps & FingerprintChapterDeps;
 
 export type ContentJobRouter = (
   job: Pick<Job, 'name' | 'data'>,
@@ -22,6 +26,8 @@ export const routeContentJob: ContentJobRouter = (job, deps) => {
       return processPurgeUrls(job.data, deps);
     case CONTENT_JOBS.searchSync:
       return processSearchSync(job.data, deps);
+    case CONTENT_JOBS.fingerprintChapter:
+      return processFingerprintChapter(job.data, deps);
     default:
       return Promise.reject(new UnrecoverableError(`no processor for job "${job.name}"`));
   }

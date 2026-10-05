@@ -2,6 +2,7 @@ import { type ContentQueue, type Db, logRedisErrors } from '@novel-hub/core';
 import { PUBLISHING_JOBS, type PublishingJobName, QUEUES } from '@novel-hub/shared';
 import { type Job, Queue, UnrecoverableError, Worker } from 'bullmq';
 import type { Redis } from 'ioredis';
+import { processBackfillFingerprints } from './processors/backfill-fingerprints';
 import { processDrainContentEvents } from './processors/drain-content-events';
 import { processFlushViewCounters } from './processors/flush-view-counters';
 import { processSweepScheduledChapters } from './processors/sweep-scheduled-chapters';
@@ -22,6 +23,8 @@ export const PUBLISHING_INTERVALS: Record<PublishingJobName, number> = {
   [PUBLISHING_JOBS.drainContentEvents]: 5_000,
   // Up to 5 minutes of reads may be lost if Redis dies; accepted.
   [PUBLISHING_JOBS.flushViewCounters]: 300_000,
+  // Catches fingerprints missed by the outbox path (failed jobs, lost Redis, older chapters).
+  [PUBLISHING_JOBS.backfillFingerprints]: 3_600_000,
 };
 
 export function routePublishingJob(job: Pick<Job, 'name'>, deps: PublishingJobDeps): Promise<void> {
@@ -32,6 +35,8 @@ export function routePublishingJob(job: Pick<Job, 'name'>, deps: PublishingJobDe
       return processDrainContentEvents(deps);
     case PUBLISHING_JOBS.flushViewCounters:
       return processFlushViewCounters(deps);
+    case PUBLISHING_JOBS.backfillFingerprints:
+      return processBackfillFingerprints(deps).then(() => undefined);
     default:
       return Promise.reject(new UnrecoverableError(`no processor for job "${job.name}"`));
   }

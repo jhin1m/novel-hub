@@ -47,17 +47,20 @@ export async function makePublishedStory(
   return { publicId, storyId: row.id, slug: row.slug };
 }
 
-/** Creates the next chapter (320 words) and publishes it unless `draft`. Returns its number. */
+/**
+ * Creates the next chapter and publishes it unless `draft`. Returns its number. The default text
+ * (320 words) is the same for every chapter; pass `text` for distinct content.
+ */
 export async function addChapter(
   db: Db,
   author: StoryActor,
   publicId: string,
   draft = false,
+  text = Array.from({ length: 320 }, (_, i) => `chữ${i}`).join(' '),
 ): Promise<number> {
   const created = await createChapter(db, author, publicId);
   if (!created.ok) throw new Error(created.error);
   const { number, draftUpdatedAt } = created.value;
-  const text = Array.from({ length: 320 }, (_, i) => `chữ${i}`).join(' ');
   const saved = await saveDraft(db, author, publicId, number, {
     doc: {
       type: 'doc',

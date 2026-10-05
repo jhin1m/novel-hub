@@ -118,6 +118,7 @@ describe('publishing worker (real Redis and Postgres)', () => {
     await registerPublishingSchedulers(publishingQueue);
     const schedulers = await publishingQueue.getJobSchedulers();
     expect(schedulers.map((s) => [s.key, s.every]).sort()).toEqual([
+      [PUBLISHING_JOBS.backfillFingerprints, 3_600_000],
       [PUBLISHING_JOBS.drainContentEvents, 5_000],
       [PUBLISHING_JOBS.flushViewCounters, 300_000],
       [PUBLISHING_JOBS.sweepScheduledChapters, 60_000],

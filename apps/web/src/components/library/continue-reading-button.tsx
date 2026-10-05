@@ -20,15 +20,17 @@ export function ResumeLink({
   number,
   scrollPct,
   size,
+  className,
 }: {
   story: StoryRef;
   number: number;
   scrollPct: number;
   size?: 'sm';
+  className?: string;
 }) {
   const href = canonicalPath({ kind: 'chapter', ...story, number });
   return (
-    <Button asChild size={size}>
+    <Button asChild size={size} className={className}>
       <a
         href={href}
         onClick={(event) => {

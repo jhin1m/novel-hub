@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Trang chủ"
-status: pending
+status: completed
 priority: P1
 effort: "0.75d"
 dependencies: [3]
@@ -78,11 +78,11 @@ Bỏ e2e "khách: không có `complementary` Đọc tiếp" (pass cả khi khố
 
 ## Function/interface checklist
 
-- [ ] `pickHero<T extends { chapterCount: number }>(stories: readonly T[]): T | null` (truyện đầu có `chapterCount > 0`; giữ hàm riêng + test vì red team #10 thêm điều kiện lọc — #13 chỉ bỏ helper một dòng)
-- [ ] `withoutStory<T extends { publicId: string }>(stories: readonly T[], publicId: string | null): T[]`
-- [ ] `continueRows<T extends { story: { isMature: boolean } }>(items: T[], showMature: boolean, max = 3): T[]`
-- [ ] `HomeGenreChips({ genres })`, `HomeFeaturedHero({ story })`, `HomeContinueReading()`
-- [ ] `ResumeLink({ story, number, scrollPct, size?, className? })` (không thêm `variant`)
+- [x] `pickHero<T extends { chapterCount: number }>(stories: readonly T[]): T | null` (truyện đầu có `chapterCount > 0`; giữ hàm riêng + test vì red team #10 thêm điều kiện lọc — #13 chỉ bỏ helper một dòng)
+- [x] `withoutStory<T extends { publicId: string }>(stories: readonly T[], publicId: string | null): T[]`
+- [x] `continueRows<T extends { story: { isMature: boolean } }>(items: T[], showMature: boolean, max = 3): T[]`
+- [x] `HomeGenreChips({ genres })`, `HomeFeaturedHero({ story })`, `HomeContinueReading()`
+- [x] `ResumeLink({ story, number, scrollPct, size?, className? })` (không thêm `variant`)
 
 ## Dependency map
 
@@ -119,11 +119,11 @@ Link tên truyện (dùng `.first()`); link "Tiên hiệp" (chip là link, tên 
 
 ## Success Criteria
 
-- [ ] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
-- [ ] `git diff --stat` không có file trong `packages/core`, `packages/api`, `server-fns/`
-- [ ] HTML `/` (curl) không chứa khối aside "Đọc tiếp", không chứa truyện 18+, không chứa "Biên tập chọn"; hero (nếu có) là truyện notable đầu có `chapterCount > 0`
-- [ ] `rg -n 'font-serif' apps/web/src/routes/index.tsx apps/web/src/components/home` rỗng
-- [ ] `routes/index.tsx` và file mới ≤ 200 dòng
+- [x] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
+- [x] `git diff --stat` không có file trong `packages/core`, `packages/api`, `server-fns/`
+- [x] HTML `/` (curl) không chứa khối aside "Đọc tiếp", không chứa truyện 18+, không chứa "Biên tập chọn"; hero (nếu có) là truyện notable đầu có `chapterCount > 0`
+- [x] `rg -n 'font-serif' apps/web/src/routes/index.tsx apps/web/src/components/home` rỗng
+- [x] `routes/index.tsx` và file mới ≤ 200 dòng
 
 ## Risk Assessment
 

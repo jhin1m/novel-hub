@@ -1,12 +1,17 @@
 import { canonicalPath } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { createFileRoute } from '@tanstack/react-router';
-import type { ReactNode } from 'react';
-import { Badge } from '@/components/ui/badge';
+import { ClockIcon, SparklesIcon } from 'lucide-react';
+import { HomeContinueReading } from '../components/home/home-continue-reading';
+import { HomeFeaturedHero } from '../components/home/home-featured-hero';
+import { HomeGenreChips } from '../components/home/home-genre-chips';
+import { SectionHeading } from '../components/section-heading';
 import { SiteLayout } from '../components/site-layout';
 import { StoryGrid } from '../components/story/story-grid';
+import { StoryRowList } from '../components/story/story-row-list';
 import { publicPageHeaders } from '../lib/cache-headers';
 import { assertCanonical, requestLocation } from '../lib/canonical';
+import { pickHero, withoutStory } from '../lib/home';
 import { seo, siteConfig } from '../lib/seo';
 import { useMatureAwareList } from '../lib/use-mature-aware-list';
 import { getHomePage } from '../server-fns/catalog';
@@ -38,47 +43,49 @@ function HomePage() {
     { stories: notable, page: 1, totalPages: 1 },
     { list: 'notable' },
   );
+  // From the server-rendered list, so the hero is the same in the HTML and after hydration and
+  // is never an 18+ story; the band below leaves it out, whichever list it shows.
+  const hero = pickHero(notable);
+  const notableStories = withoutStory(notableList.stories, hero?.publicId ?? null);
   return (
     <SiteLayout>
-      <div className="mx-auto flex max-w-6xl flex-col gap-12 px-4 py-10">
-        <h1 className="sr-only">{m.app_name()}</h1>
-        <HomeSection id="recent" title={m.home_recent()}>
-          {recentList.stories.length > 0 ? (
-            <StoryGrid stories={recentList.stories} priorityCount={6} />
-          ) : (
-            <p className="text-muted-foreground">{m.home_empty()}</p>
-          )}
-        </HomeSection>
-        {notableList.stories.length > 0 ? (
-          <HomeSection id="notable" title={m.home_notable()}>
-            <StoryGrid stories={notableList.stories} />
-          </HomeSection>
-        ) : null}
-        {genres.length > 0 ? (
-          <HomeSection id="genres" title={m.home_genres()}>
-            <ul className="flex flex-wrap gap-2">
-              {genres.map((tag) => (
-                <li key={tag.slug}>
-                  <Badge asChild variant="secondary" className="px-3 py-1 text-sm">
-                    <a href={canonicalPath({ kind: 'tag', slug: tag.slug })}>{tag.name}</a>
-                  </Badge>
-                </li>
-              ))}
-            </ul>
-          </HomeSection>
+      <h1 className="sr-only">{m.app_name()}</h1>
+      <div className="flex flex-col gap-[52px] py-8 md:py-10">
+        <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-[52px] px-4 md:px-8">
+          {genres.length > 0 ? <HomeGenreChips genres={genres} /> : null}
+          <div className="flex flex-wrap gap-6 empty:hidden">
+            {hero ? <HomeFeaturedHero story={hero} /> : null}
+            <HomeContinueReading />
+          </div>
+          <section aria-labelledby="recent-title" className="flex flex-col gap-5">
+            <SectionHeading
+              id="recent-title"
+              icon={ClockIcon}
+              title={m.home_recent()}
+              subtitle={m.home_recent_subtitle()}
+            />
+            {recentList.stories.length > 0 ? (
+              <StoryRowList stories={recentList.stories} priorityCount={4} />
+            ) : (
+              <p className="text-muted-foreground">{m.home_empty()}</p>
+            )}
+          </section>
+        </div>
+        {notableStories.length > 0 ? (
+          <section aria-labelledby="notable-title" className="bg-band py-11">
+            <div className="mx-auto flex max-w-[1240px] flex-col gap-5 px-4 md:px-8">
+              <SectionHeading
+                id="notable-title"
+                icon={SparklesIcon}
+                title={m.home_notable()}
+                subtitle={m.home_notable_subtitle()}
+                onBand
+              />
+              <StoryGrid stories={notableStories} scroll />
+            </div>
+          </section>
         ) : null}
       </div>
     </SiteLayout>
-  );
-}
-
-function HomeSection({ id, title, children }: { id: string; title: string; children: ReactNode }) {
-  return (
-    <section aria-labelledby={`${id}-title`} className="flex flex-col gap-4">
-      <h2 id={`${id}-title`} className="font-serif text-2xl font-semibold">
-        {title}
-      </h2>
-      {children}
-    </section>
   );
 }

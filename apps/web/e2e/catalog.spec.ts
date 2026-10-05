@@ -1,7 +1,7 @@
 import { canonicalPath } from '@novel-hub/shared';
 import { expect, test } from '@playwright/test';
 import { gotoHydrated, signUp } from './helpers/accounts';
-import { type PublishedStory, createPublishedStory } from './helpers/content';
+import { type PublishedStory, allowMatureContent, createPublishedStory } from './helpers/content';
 
 const LIST_CACHE = 'public, s-maxage=600, stale-while-revalidate=3600';
 const PAGE_CACHE = 'public, s-maxage=86400, stale-while-revalidate=3600';
@@ -42,6 +42,9 @@ test('home, tag and author pages list public stories, never 18+ or drafts, and a
   const home = await (await request.get('/')).text();
   expect(home).toContain(other.title);
   expect(home).toContain('Mới cập nhật');
+  expect(home).not.toContain('Biên tập chọn');
+  // Loaded in the browser for signed-in readers only.
+  expect(home).not.toContain('id="continue-title"');
 });
 
 test('the story page is cached and shows the story; drafts are 404', async ({ request }) => {
@@ -160,6 +163,28 @@ test('turning 18+ on in settings (with the age statement) adds 18+ stories to th
   await expect(page.getByRole('checkbox', { name: 'Hiện nội dung 18+' })).not.toBeChecked();
   await gotoHydrated(page, '/');
   await expect(page.getByRole('link', { name: mature.title })).toHaveCount(0);
+});
+
+test('"continue reading" on the home page hides 18+ stories unless the account shows them', async ({
+  page,
+}) => {
+  const account = await signUp(page);
+  for (const story of [normal, mature]) {
+    const res = await page.request.put('/api/v1/reading/progress', {
+      data: { publicId: story.publicId, number: 1, scrollPct: 20 },
+    });
+    expect(res.status()).toBe(204);
+  }
+
+  await gotoHydrated(page, '/');
+  const aside = page.getByRole('complementary', { name: 'Đọc tiếp' });
+  await expect(aside).toContainText(normal.title);
+  await expect(aside).not.toContainText(mature.title);
+  await expect(page.getByText(mature.title)).toHaveCount(0);
+
+  await allowMatureContent(account.email);
+  await gotoHydrated(page, '/');
+  await expect(aside).toContainText(mature.title);
 });
 
 test('terms and content policy are public pages linked from the footer', async ({

@@ -29,6 +29,8 @@ export const LIMITS = {
   reportDetailMax: 1_000,
   /** Free-text note a moderator adds to an action. */
   modNoteMax: 500,
+  /** A comment, in code points after normalisation (`normalizePlainText`). */
+  commentMax: 2_000,
 } as const;
 
 /**

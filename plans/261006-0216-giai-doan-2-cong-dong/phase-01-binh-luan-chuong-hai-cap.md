@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "Bình luận chương hai cấp"
-status: pending
+status: done
 priority: P1
 effort: "2d"
 dependencies: []
@@ -93,14 +93,14 @@ Hono comments sub-app → core/comments/* → findReadableChapterRef + canPostCo
 
 ## Function / Interface Checklist
 
-- [ ] `canPostCommunityContent(user: PolicyUser): boolean` — `emailVerified && status === 'active'`
-- [ ] `normalizePlainText(raw: string, max: number): string | null` — null khi rỗng hoặc vượt giới hạn
-- [ ] `createComment(db, actor, input) → Result<CommentDto, 'NOT_FOUND'|'INVALID_STATE'|'USER_MUTED'|'FORBIDDEN'>` (`INVALID_STATE` = parent không thuộc chương/không visible)
-- [ ] `listChapterComments(db, viewer|null, {publicId, number, cursor}) → Result<{total, items, nextCursor}, 'NOT_FOUND'>`
-- [ ] `listCommentReplies(db, viewer|null, {commentId, cursor}) → Result<{items, nextCursor}, 'NOT_FOUND'>` — join gốc → chương → truyện → users và chạy `canReadChapter`; gốc phải là gốc (`parent_id is null`), `visible`, người viết không bị ban; sai bất kỳ điều kiện nào → `NOT_FOUND` <!-- Red Team: replies readability -->
-- [ ] `deleteComment(db, actor, commentId) → Result<void, 'NOT_FOUND'|'FORBIDDEN'>` (chủ bình luận; mod dùng action ẩn)
-- [ ] `setCommentHidden(...)` trả `ModerationTarget` `{type:'comment', id}` để `resolveReportsFor` đóng báo cáo
-- [ ] Route: `GET /comments`, `POST /comments` (`requireVerifiedEmail` → `rateLimit(deps,'comment')` → `validate`), `GET /comments/:id/replies`, `DELETE /comments/:id` (`requireAuth`)
+- [x] `canPostCommunityContent(user: PolicyUser): boolean` — `emailVerified && status === 'active'`
+- [x] `normalizePlainText(raw: string, max: number): string | null` — null khi rỗng hoặc vượt giới hạn
+- [x] `createComment(db, actor, input) → Result<CommentDto, 'NOT_FOUND'|'INVALID_STATE'|'USER_MUTED'|'FORBIDDEN'>` (`INVALID_STATE` = parent không thuộc chương/không visible)
+- [x] `listChapterComments(db, viewer|null, {publicId, number, cursor}) → Result<{total, items, nextCursor}, 'NOT_FOUND'>`
+- [x] `listCommentReplies(db, viewer|null, {commentId, cursor}) → Result<{items, nextCursor}, 'NOT_FOUND'>` — join gốc → chương → truyện → users và chạy `canReadChapter`; gốc phải là gốc (`parent_id is null`), `visible`, người viết không bị ban; sai bất kỳ điều kiện nào → `NOT_FOUND` <!-- Red Team: replies readability -->
+- [x] `deleteComment(db, actor, commentId) → Result<void, 'NOT_FOUND'|'FORBIDDEN'>` (chủ bình luận; mod dùng action ẩn)
+- [x] `setCommentHidden(...)` trả `ModerationTarget` `{type:'comment', id}` để `resolveReportsFor` đóng báo cáo
+- [x] Route: `GET /comments`, `POST /comments` (`requireVerifiedEmail` → `rateLimit(deps,'comment')` → `validate`), `GET /comments/:id/replies`, `DELETE /comments/:id` (`requireAuth`)
 
 ## Implementation Steps
 
@@ -133,20 +133,20 @@ Hono comments sub-app → core/comments/* → findReadableChapterRef + canPostCo
 
 ## Todo List
 
-- [ ] Shared schema + limits + reports
-- [ ] Migration
-- [ ] Core service + policy + moderation
-- [ ] Hono sub-app + mã lỗi
-- [ ] UI khu bình luận + moderation
-- [ ] i18n + docs
-- [ ] Test unit/int/e2e, gate xanh
+- [x] Shared schema + limits + reports
+- [x] Migration
+- [x] Core service + policy + moderation
+- [x] Hono sub-app + mã lỗi
+- [x] UI khu bình luận + moderation
+- [x] i18n + docs
+- [x] Test unit/int/e2e, gate xanh
 
 ## Success Criteria
 
-- [ ] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
-- [ ] Bình luận hai cấp hoạt động end-to-end, muted bị chặn, mod ẩn/khôi phục được
-- [ ] HTML trang chương không đổi (vẫn `public`, không cookie); API bình luận chỉ gọi khi gần cuối chương
-- [ ] Checkbox 1 spec **giữ** `[ ]`
+- [x] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
+- [x] Bình luận hai cấp hoạt động end-to-end, muted bị chặn, mod ẩn/khôi phục được
+- [x] HTML trang chương không đổi (vẫn `public`, không cookie); API bình luận chỉ gọi khi gần cuối chương
+- [x] Checkbox 1 spec **giữ** `[ ]`
 
 ## Risk Assessment
 
@@ -163,3 +163,24 @@ Hono comments sub-app → core/comments/* → findReadableChapterRef + canPostCo
 ## Next Steps
 
 Phase 2: bình luận theo đoạn dùng lại hook, composer, list với tham số `paragraphId`.
+
+## Implementation Log
+
+### 2026-10-06 — cook --auto
+Gate xanh: `pnpm typecheck`, `lint`, `format:check`, `test` (713), `test:int` (318, 1 skip S3), `test:e2e` (96). Checkbox 1 spec **giữ** `[ ]` (phase 2 làm nốt). Migration `0003_comment_threads.sql`.
+
+Lệch so với plan (tất cả `[auto]`, sáng user duyệt):
+- [auto] `normalizePlainText` đặt ở `packages/shared/src/plain-text.ts` (không phải `core/lib`): Zod `commentCreateSchema` và bộ đếm ký tự của form dùng chung; phase 4, 9 import từ `@novel-hub/shared`. Lý do: một nguồn chuẩn hoá cho API và form.
+- [auto] Cursor dạng `${micros}_${uuid}` (như `historyCursorSchema`), không base64url; Zod regex chặn cursor hỏng → 400 `VALIDATION_ERROR`. Lý do: tiền lệ history, không cần mã lỗi mới.
+- [auto] `createComment` không bọc transaction (ghi trong JSDoc): gốc bị ẩn giữa chừng thì trả lời mới ẩn theo. Lý do: `findReadableChapterRef` nhận `Db`, không có lợi ích thực.
+- [auto] Index gốc khai báo tăng dần `(chapter_id, created_at, id) where parent_id is null`, quét ngược cho "mới nhất trước" (khớp `ORDER BY … DESC` mặc định NULLS FIRST, index DESC sinh `NULLS LAST` thì không khớp).
+- [auto] `total` chỉ tính ở trang đầu (`null` ở trang sau) — reviewer L5, tránh đếm lại cả chương mỗi trang.
+- [auto] `CommentContext.id` (UUID) trả cho mod để gửi action `hide_comment`; UI không hiển thị.
+- [auto] Văn bản chỉ gồm ký tự vô hình (zero-width) coi như rỗng; `U+2028/2029` → xuống dòng.
+- [auto] Test web thuần (`comment-body.test.tsx`) thay cho `comment-item.test.tsx`: vitest gốc không có alias `@/`, không đổi config.
+
+Review (`code-reviewer`): 0 Critical, 1 High (alias test — sửa bằng tách module thuần), 2 Medium (map `USER_MUTED`; trùng trả lời sau khi xoá — dedupe + `startCursor` trong query key), 5 Low (đều sửa: trả lời mới hiện ngay, thông báo lỗi riêng cho bình luận, không báo cáo được trả lời trong nhánh ẩn, ký tự vô hình, đếm total).
+
+Câu hỏi mở:
+- Chương 18+: API bình luận đọc/đăng không kiểm `preferences.showMature` (màn cảnh báo chỉ ở client, như HTML chương). Giữ hay yêu cầu bật 18+ mới được đăng?
+- `e2e/library.spec.ts:59` ("continue reading") fail 1 lần khi tester chạy full suite, chạy riêng 3/3 xanh, full suite lần 2 xanh: flaky dưới tải, không liên quan bình luận.

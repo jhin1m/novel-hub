@@ -22,6 +22,13 @@
       "when": 1791194467304,
       "tag": "0002_dedupe_fingerprints",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791255391561,
+      "tag": "0003_comment_threads",
+      "breakpoints": true
     }
   ]
 }

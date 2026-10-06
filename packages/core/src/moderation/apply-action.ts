@@ -3,6 +3,7 @@ import type { ModerationAction, ModerationActionInput } from '@novel-hub/shared'
 import { type Result, err, ok } from '../lib/result';
 import { canModerate } from '../policies/moderation';
 import type { CurrentUser } from '../users/current-user';
+import { setCommentHidden } from './comment-visibility';
 import { setChapterHidden, setStoryHidden } from './content-visibility';
 import type { ModerationError, ModerationTarget } from './log-action';
 import { mergeTag } from './merge-tag';
@@ -32,6 +33,15 @@ function dispatch(
         input.storyPublicId,
         input.number,
         input.action === 'hide_chapter',
+        input.note,
+      );
+    case 'hide_comment':
+    case 'restore_comment':
+      return setCommentHidden(
+        tx,
+        actor,
+        input.commentId,
+        input.action === 'hide_comment',
         input.note,
       );
     case 'mute_user':

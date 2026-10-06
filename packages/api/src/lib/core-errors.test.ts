@@ -22,6 +22,8 @@ const expected: [CoreErrorCode, number][] = [
   ['ALREADY_PUBLISHED', 409],
   ['NOT_SCHEDULED', 409],
   ['ADULT_CONFIRMATION_REQUIRED', 400],
+  ['INVALID_STATE', 409],
+  ['USER_MUTED', 403],
 ];
 
 describe('coreError', () => {

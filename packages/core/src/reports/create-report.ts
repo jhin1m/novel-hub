@@ -1,6 +1,7 @@
-import { type Db, chapters, reports, stories, users } from '@novel-hub/db';
+import { type Db, chapters, comments, reports, stories, users } from '@novel-hub/db';
 import type { ReportCreateInput, ReportTarget, ReportTargetType } from '@novel-hub/shared';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, isNull, ne, or, sql } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { canReadChapter } from '../access/can-read-chapter';
 import { publicStoryWhere } from '../catalog/story-card';
 import { type Result, err, ok } from '../lib/result';
@@ -13,7 +14,7 @@ export interface ResolvedTarget {
 
 /**
  * The internal id of a target anyone can see: a public story (18+ included), a readable chapter, a
- * user who is not banned. Anything else is "not found", so a report never confirms that hidden
+ * user who is not banned, a shown comment under a readable chapter. Anything else is "not found", so a report never confirms that hidden
  * content exists.
  */
 async function resolveVisibleTarget(db: Db, target: ReportTarget): Promise<ResolvedTarget | null> {
@@ -51,6 +52,45 @@ async function resolveVisibleTarget(db: Db, target: ReportTarget): Promise<Resol
         story: { visibility: row.visibility, authorStatus: row.authorStatus },
       });
       return decision.readable ? { type: 'chapter', id: row.id } : null;
+    }
+    case 'comment': {
+      // A reply is shown only while its thread is: a reply under a hidden thread is hidden too.
+      const writer = alias(users, 'writer');
+      const thread = alias(comments, 'thread');
+      const threadWriter = alias(users, 'thread_writer');
+      const [row] = await db
+        .select({
+          id: comments.id,
+          commentStatus: comments.status,
+          writerStatus: writer.status,
+          status: chapters.status,
+          deletedAt: chapters.deletedAt,
+          visibility: stories.visibility,
+          authorStatus: users.status,
+        })
+        .from(comments)
+        .innerJoin(writer, eq(writer.id, comments.userId))
+        .innerJoin(chapters, eq(chapters.id, comments.chapterId))
+        .innerJoin(stories, eq(stories.id, chapters.storyId))
+        .innerJoin(users, eq(users.id, stories.authorId))
+        .leftJoin(thread, eq(thread.id, comments.parentId))
+        .leftJoin(threadWriter, eq(threadWriter.id, thread.userId))
+        .where(
+          and(
+            eq(comments.id, target.commentId),
+            or(
+              isNull(comments.parentId),
+              and(eq(thread.status, 'visible'), ne(threadWriter.status, 'banned')),
+            ),
+          ),
+        );
+      if (!row || row.commentStatus !== 'visible' || row.writerStatus === 'banned') return null;
+      const decision = canReadChapter(null, {
+        status: row.status,
+        deletedAt: row.deletedAt,
+        story: { visibility: row.visibility, authorStatus: row.authorStatus },
+      });
+      return decision.readable ? { type: 'comment', id: row.id } : null;
     }
     case 'user': {
       const [row] = await db

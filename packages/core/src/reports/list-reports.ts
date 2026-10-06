@@ -15,9 +15,12 @@ import type { CurrentUser } from '../users/current-user';
 import {
   type ChapterContext,
   type ChapterWithStory,
+  type CommentContext,
+  type CommentWithChapter,
   type StoryContext,
   type UserContext,
   loadChapterContexts,
+  loadCommentContexts,
   loadStoryContexts,
   loadUserContexts,
 } from './report-context';
@@ -26,6 +29,7 @@ export type ReportTargetDto =
   | { type: 'story'; story: StoryContext }
   | { type: 'chapter'; story: StoryContext; chapter: ChapterContext }
   | { type: 'user'; user: UserContext }
+  | { type: 'comment'; story: StoryContext; chapter: ChapterContext; comment: CommentContext }
   /** The target no longer exists (or the row names an unknown type). */
   | { type: 'missing' };
 
@@ -114,10 +118,11 @@ export async function listReports(
   const idsOf = (type: string) =>
     rows.filter((row) => row.targetType === type).map((row) => row.targetId);
   const matchedIds = [...duplicates.values()].flatMap((d) => (d ? [d.matchedChapterId] : []));
-  const [storyMap, chapterMap, userMap, openCounts] = await Promise.all([
+  const [storyMap, chapterMap, userMap, commentMap, openCounts] = await Promise.all([
     loadStoryContexts(db, idsOf('story')),
     loadChapterContexts(db, [...idsOf('chapter'), ...matchedIds]),
     loadUserContexts(db, idsOf('user')),
+    loadCommentContexts(db, idsOf('comment')),
     db
       .select({ targetType: reports.targetType, targetId: reports.targetId, n: count() })
       .from(reports)
@@ -144,7 +149,12 @@ export async function listReports(
       reporter: row.reporterUsername ? { username: row.reporterUsername } : null,
       handledBy: row.handlerUsername ? { username: row.handlerUsername } : null,
       openOnTarget: openMap.get(openKey(row.targetType, row.targetId)) ?? 0,
-      target: targetDto(row.targetType, row.targetId, storyMap, chapterMap, userMap),
+      target: targetDto(row.targetType, row.targetId, {
+        storyMap,
+        chapterMap,
+        userMap,
+        commentMap,
+      }),
       duplicateOf:
         duplicate && matched
           ? { ...matched, similarityPct: Math.round(duplicate.jaccard * 100) }
@@ -157,10 +167,14 @@ export async function listReports(
 function targetDto(
   type: string,
   id: string,
-  storyMap: Map<string, StoryContext>,
-  chapterMap: Map<string, ChapterWithStory>,
-  userMap: Map<string, UserContext>,
+  maps: {
+    storyMap: Map<string, StoryContext>;
+    chapterMap: Map<string, ChapterWithStory>;
+    userMap: Map<string, UserContext>;
+    commentMap: Map<string, CommentWithChapter>;
+  },
 ): ReportTargetDto {
+  const { storyMap, chapterMap, userMap, commentMap } = maps;
   if (type === 'story') {
     const story = storyMap.get(id);
     return story ? { type, story } : { type: 'missing' };
@@ -172,6 +186,10 @@ function targetDto(
   if (type === 'user') {
     const user = userMap.get(id);
     return user ? { type, user } : { type: 'missing' };
+  }
+  if (type === 'comment') {
+    const found = commentMap.get(id);
+    return found ? { type, ...found } : { type: 'missing' };
   }
   return { type: 'missing' };
 }

@@ -2,6 +2,7 @@ import { canonicalPath, parseChapterNumber, parseStoryKey } from '@novel-hub/sha
 import { m } from '@novel-hub/shared/messages';
 import { createFileRoute } from '@tanstack/react-router';
 import { useRef, useState } from 'react';
+import { ChapterComments } from '../components/comments/chapter-comments';
 import { ChapterContent } from '../components/reader/chapter-content';
 import { ChapterEnd } from '../components/reader/chapter-end';
 import { ChapterHeader } from '../components/reader/chapter-header';
@@ -141,6 +142,7 @@ function ReaderPage() {
                 number: chapter.number,
               }}
             />
+            <ChapterComments chapter={chapterRef} enabled={!gated} />
           </div>
         </main>
         <ChapterTocSheet

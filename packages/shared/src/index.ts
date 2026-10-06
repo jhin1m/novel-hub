@@ -53,6 +53,20 @@ export {
   tagSlugSchema,
 } from './schemas/story';
 export { countWords } from './text';
+export { normalizePlainText, plainTextLength } from './plain-text';
+export {
+  COMMENTS_PAGE_SIZE,
+  COMMENT_REPLY_PREVIEW,
+  COMMENT_STATUSES,
+  type CommentCreateInput,
+  type CommentListQuery,
+  type CommentStatus,
+  commentCreateSchema,
+  commentCursorSchema,
+  commentIdParamSchema,
+  commentListQuerySchema,
+  commentRepliesQuerySchema,
+} from './schemas/comment';
 export {
   type EditorDocJson,
   type EditorMarkJson,
@@ -152,8 +166,10 @@ export {
 } from './rate-limits';
 export {
   MODERATION_ACTIONS,
+  MODERATION_LOG_ACTIONS,
   type ModerationAction,
   type ModerationActionInput,
+  type ModerationLogAction,
   REPORTS_PAGE_SIZE,
   REPORT_REASONS,
   REPORT_STATUSES,

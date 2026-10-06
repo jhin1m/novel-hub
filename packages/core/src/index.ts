@@ -226,6 +226,13 @@ export { jaccardEstimate, minhash } from './dedupe/minhash';
 export { hamming64, simhash } from './dedupe/simhash';
 export { lshKeys } from './dedupe/lsh';
 export { canModerate, canModerateUser } from './policies/moderation';
+export { canPostCommunityContent } from './policies/community';
+export { type CommentDto, type CommentThreadDto, type CommentViewer } from './comments/comment-dto';
+export { type ChapterCommentsPage, listChapterComments } from './comments/list-comments';
+export { type CommentRepliesPage, listCommentReplies } from './comments/list-replies';
+export { type CreateCommentError, createComment } from './comments/create-comment';
+export { deleteComment } from './comments/delete-comment';
+export { setCommentHidden } from './moderation/comment-visibility';
 export { type ResolvedTarget, createReport } from './reports/create-report';
 export {
   type ReportDto,
@@ -233,7 +240,12 @@ export {
   type ReportTargetDto,
   listReports,
 } from './reports/list-reports';
-export { type ChapterContext, type StoryContext, type UserContext } from './reports/report-context';
+export {
+  type ChapterContext,
+  type CommentContext,
+  type StoryContext,
+  type UserContext,
+} from './reports/report-context';
 export { applyModerationAction } from './moderation/apply-action';
 export { type ModerationError, type ModerationTarget } from './moderation/log-action';
 export { banUser, moderateUser, unbanUser } from './moderation/user-status';

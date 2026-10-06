@@ -23,6 +23,7 @@ const CORE_ERROR_STATUS = {
   NOT_SCHEDULED: 409,
   ADULT_CONFIRMATION_REQUIRED: 400,
   INVALID_STATE: 409,
+  USER_MUTED: 403,
 } as const;
 
 export type CoreErrorCode = keyof typeof CORE_ERROR_STATUS;
@@ -49,6 +50,7 @@ const CORE_ERROR_MESSAGES: Record<CoreErrorCode, string> = {
   NOT_SCHEDULED: 'The chapter is not scheduled',
   ADULT_CONFIRMATION_REQUIRED: 'Turning 18+ content on requires confirming you are 18 or older',
   INVALID_STATE: 'The target is not in a state this action applies to',
+  USER_MUTED: 'This account is muted and cannot post',
 };
 
 export function coreError<C extends CoreErrorCode>(c: Context, code: C) {

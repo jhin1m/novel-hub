@@ -25,6 +25,7 @@ const TITLES: Record<ReportTarget['type'], () => string> = {
   story: m.report_title_story,
   chapter: m.report_title_chapter,
   user: m.report_title_user,
+  comment: m.report_title_comment,
 };
 
 /**

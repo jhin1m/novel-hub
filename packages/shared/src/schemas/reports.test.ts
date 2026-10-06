@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   MODERATION_ACTIONS,
+  MODERATION_LOG_ACTIONS,
   moderationActionSchema,
   reportCreateSchema,
   reportListQuerySchema,
@@ -14,6 +15,7 @@ describe('reportCreateSchema', () => {
       { type: 'story', storyPublicId: 'k7m2xq9p' },
       { type: 'chapter', storyPublicId: 'k7m2xq9p', number: 3 },
       { type: 'user', username: 'lam_phong' },
+      { type: 'comment', commentId: reportId },
     ]) {
       expect(reportCreateSchema.safeParse({ target, reason: 'spam' }).success).toBe(true);
     }
@@ -47,6 +49,8 @@ describe('moderationActionSchema', () => {
       { action: 'restore_story', storyPublicId: 'k7m2xq9p' },
       { action: 'hide_chapter', storyPublicId: 'k7m2xq9p', number: 1, note: 'copy' },
       { action: 'restore_chapter', storyPublicId: 'k7m2xq9p', number: 1 },
+      { action: 'hide_comment', commentId: reportId, reportId },
+      { action: 'restore_comment', commentId: reportId },
       { action: 'mute_user', username: 'lam_phong' },
       { action: 'unmute_user', username: 'lam_phong' },
       { action: 'ban_user', username: 'lam_phong' },
@@ -65,6 +69,7 @@ describe('moderationActionSchema', () => {
     for (const body of [
       { action: 'delete_story', storyPublicId: 'k7m2xq9p' },
       { action: 'hide_chapter', storyPublicId: 'k7m2xq9p' },
+      { action: 'hide_comment', commentId: 'not-a-uuid' },
       { action: 'ban_user' },
       { action: 'merge_tag', sourceSlug: 'a' },
       { action: 'dismiss_report', reportId: 'not-a-uuid' },
@@ -72,6 +77,12 @@ describe('moderationActionSchema', () => {
     ]) {
       expect(moderationActionSchema.safeParse(body).success, JSON.stringify(body)).toBe(false);
     }
+  });
+});
+
+describe('MODERATION_LOG_ACTIONS', () => {
+  it('logs every one-click action', () => {
+    for (const action of MODERATION_ACTIONS) expect(MODERATION_LOG_ACTIONS).toContain(action);
   });
 });
 

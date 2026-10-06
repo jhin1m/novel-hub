@@ -1,6 +1,7 @@
-import { type Db, chapters, stories, users } from '@novel-hub/db';
-import type { ChapterStatus, StoryVisibility } from '@novel-hub/shared';
+import { type Db, chapters, comments, stories, users } from '@novel-hub/db';
+import type { ChapterStatus, CommentStatus, StoryVisibility } from '@novel-hub/shared';
 import { eq, inArray } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import type { UserRole, UserStatus } from '../policies/user';
 
 /** A story as the moderation queue shows it, by public keys only. */
@@ -30,6 +31,25 @@ export interface UserContext {
 export interface ChapterWithStory {
   story: StoryContext;
   chapter: ChapterContext;
+}
+
+/** Characters of a reported comment shown in the queue. */
+export const COMMENT_EXCERPT_MAX = 200;
+
+/** A reported comment: the start of its text, its state and its writer. */
+export interface CommentContext {
+  /** For the hide/restore actions: a comment has no public key. Never shown. */
+  id: string;
+  excerpt: string;
+  /** Longer than the excerpt. */
+  truncated: boolean;
+  status: CommentStatus;
+  isReply: boolean;
+  writer: UserContext;
+}
+
+export interface CommentWithChapter extends ChapterWithStory {
+  comment: CommentContext;
 }
 
 const storyColumns = {
@@ -115,6 +135,67 @@ export async function loadChapterContexts(
         },
       },
     ]),
+  );
+}
+
+/** Comments by internal id with their chapter and story, whatever their state. */
+export async function loadCommentContexts(
+  db: Db,
+  ids: readonly string[],
+): Promise<Map<string, CommentWithChapter>> {
+  if (ids.length === 0) return new Map();
+  const writer = alias(users, 'writer');
+  const rows = await db
+    .select({
+      id: comments.id,
+      body: comments.body,
+      status: comments.status,
+      parentId: comments.parentId,
+      writerUsername: writer.username,
+      writerDisplayName: writer.displayName,
+      writerRole: writer.role,
+      writerStatus: writer.status,
+      number: chapters.number,
+      title: chapters.title,
+      chapterStatus: chapters.status,
+      deletedAt: chapters.deletedAt,
+      ...storyColumns,
+    })
+    .from(comments)
+    .innerJoin(writer, eq(writer.id, comments.userId))
+    .innerJoin(chapters, eq(chapters.id, comments.chapterId))
+    .innerJoin(stories, eq(stories.id, chapters.storyId))
+    .innerJoin(users, eq(users.id, stories.authorId))
+    .where(inArray(comments.id, [...ids]));
+  return new Map(
+    rows.map((row) => {
+      const chars = [...row.body];
+      return [
+        row.id,
+        {
+          story: toStoryContext(row),
+          chapter: {
+            number: row.number,
+            title: row.title,
+            status: row.chapterStatus,
+            deleted: row.deletedAt !== null,
+          },
+          comment: {
+            id: row.id,
+            excerpt: chars.slice(0, COMMENT_EXCERPT_MAX).join(''),
+            truncated: chars.length > COMMENT_EXCERPT_MAX,
+            status: row.status as CommentStatus,
+            isReply: row.parentId !== null,
+            writer: {
+              username: row.writerUsername,
+              displayName: row.writerDisplayName,
+              role: row.writerRole,
+              status: row.writerStatus,
+            },
+          },
+        },
+      ];
+    }),
   );
 }
 

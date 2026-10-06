@@ -137,6 +137,48 @@ describe('actionsFor', () => {
     expect(actionsFor(report({ type: 'story', story: own }), mod)).toEqual([]);
   });
 
+  it('hides or restores a reported comment and acts on its writer', () => {
+    const comment = {
+      id: '01920000-0000-7000-8000-000000000001',
+      excerpt: 'Quảng cáo',
+      truncated: false,
+      status: 'visible',
+      isReply: false,
+      writer: { ...author, username: 'spammer', role: 'reader' },
+    } as const;
+    const target = { type: 'comment', story, chapter, comment } as const;
+    const visible = actionsFor(report(target), mod);
+    expect(visible[0]).toEqual({ action: 'hide_comment', commentId: comment.id });
+    expect(names(visible)).toEqual([
+      'hide_comment',
+      'mute_user',
+      'ban_user',
+      'resolve_report',
+      'dismiss_report',
+    ]);
+    const hidden = { ...target, comment: { ...comment, status: 'hidden_by_mod' as const } };
+    expect(names(actionsFor(report(hidden), mod))[0]).toBe('restore_comment');
+    const deleted = { ...target, comment: { ...comment, status: 'deleted' as const } };
+    expect(names(actionsFor(report(deleted), mod))).toEqual([
+      'mute_user',
+      'ban_user',
+      'resolve_report',
+      'dismiss_report',
+    ]);
+  });
+
+  it('offers nothing on a report about the viewer’s own comment', () => {
+    const comment = {
+      id: '01920000-0000-7000-8000-000000000001',
+      excerpt: 'Của mod',
+      truncated: false,
+      status: 'visible',
+      isReply: true,
+      writer: { ...author, username: 'mod_one', role: 'mod' },
+    } as const;
+    expect(actionsFor(report({ type: 'comment', story, chapter, comment }), mod)).toEqual([]);
+  });
+
   it('only closes a report whose target is missing', () => {
     expect(names(actionsFor(report({ type: 'missing' }), mod))).toEqual([
       'resolve_report',

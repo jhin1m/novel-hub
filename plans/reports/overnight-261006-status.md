@@ -1,6 +1,6 @@
 # Overnight 261006: đang chạy
-Cập nhật: 2026-10-06 09:53
-Đang làm: Q8 / phase-01
+Cập nhật: 2026-10-06 10:42
+Đang làm: Q8 / phase-02
 ## Đã xong
 - Q1 canvas /write + editor (artboard F-* trên https://claude.ai/artifact/X7w7oUBxruy6Y47oQ4HdAo), đặc tả ở plans/reports/design-261006-write-editor-screens-report.md
 - Q2 report brainstorm cuối: plans/reports/brainstorm-261006-ui-redesign-b-plus-final-report.md
@@ -20,6 +20,7 @@ Cập nhật: 2026-10-06 09:53
 - Q5 phase-12 tài liệu + spec §2/§8 (redesign B+ xong 12/12 phase)
 - Q6 plan Giai đoạn 2: plans/261006-0216-giai-doan-2-cong-dong (9 phase cho 6 checkbox, red-team 16/17 áp dụng)
 - Q7 validate Giai đoạn 2 (sửa index ON CONFLICT thông báo, 400→403 tự theo dõi)
+- Q8 phase-01 bình luận chương hai cấp (migration 0003_comment_threads, đã áp DB dev)
 
 ## Quyết định [auto] (sáng cần duyệt)
 - Q1: 8 quyết định [auto] trong design-261006-write-editor-screens-report.md
@@ -43,6 +44,7 @@ Cập nhật: 2026-10-06 09:53
 - Q5 p12: font serif còn dùng ngoài nội dung (giới thiệu truyện, tên chương trang đọc, trang điều khoản, chữ 'N' logo, mẫu 'Aa') ghi là ngoại lệ trong docs; câu hỏi: giữ serif cho logo + điều khoản?; việc sau: nút đóng dialog/sheet còn focus:ring-2 ring-offset-2, tên chương trang đọc luôn serif
 - Q6: 9 phase cho 6 checkbox; bình luận theo đoạn không chèn chỉ báo vào nội dung; hero trang chủ chưa do mod chọn; cửa sổ xếp hạng 'ngày' = hôm nay + hôm qua; 8 huy hiệu; cắt khu xếp hạng trang chủ, thông báo huy hiệu, biểu đồ SVG dashboard, chip dự thi (xem 5 câu hỏi mở trong plan.md)
 - Q7: tài khoản muted không đăng được cả bình luận lẫn đánh giá/review (spec chỉ ghi bình luận, đây là mở rộng); hero trang chủ vẫn tự động, mod chọn khu 'Truyện nổi bật' riêng
+- Q8 p01: normalizePlainText ở packages/shared; cursor phân trang ${micros}_${uuid}; createComment không bọc transaction; câu hỏi: API bình luận chương 18+ không kiểm tuỳ chọn 18+ (giữ hay bắt buộc bật?)
 
 ## Chặn / lỗi
 - Q3 (nhẹ): 'ck plan add-phase --after' lỗi afterId.toLowerCase; worker đổi tên phase bằng tay, 'ck plan validate' xác nhận
@@ -51,6 +53,7 @@ Cập nhật: 2026-10-06 09:53
 - (đã sửa) Test chập chờn publishing-worker.int.test.ts
 - Cần kiểm tay trên điện thoại thật: toolbar editor nằm đúng trên bàn phím ảo, con trỏ không bị che
 - Controller khởi động lại phiên lúc ~01:50 UTC (sau khi phase 11 xong); tiếp tục từ trạng thái trên đĩa, không mất việc
+- E2E chập chờn e2e/library.spec.ts:59 'continue reading' (đỏ 1 lần khi tải nặng, chạy lại xanh); chưa rõ nguyên nhân
 
 ## Lệnh tiếp theo cho user
 - (đang chạy)

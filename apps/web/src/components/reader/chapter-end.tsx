@@ -6,7 +6,7 @@ import { ReportButton } from '../report/report-button';
 
 /**
  * After the text: the author's note, a large next-chapter link, the previous chapter, then a
- * quiet report button. Comments come later.
+ * quiet report button. The comments follow (`ChapterComments`).
  */
 export function ChapterEnd({
   prevHref,

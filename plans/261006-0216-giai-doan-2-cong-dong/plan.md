@@ -1,7 +1,7 @@
 ---
 title: "Giai đoạn 2: Cộng đồng"
 description: "6 checkbox Giai đoạn 2 của spec trong 9 phase: bình luận chương và theo đoạn, theo dõi + thông báo, đánh giá, xếp hạng, dashboard tác giả, huy hiệu, truyện nổi bật do mod chọn, cuộc thi theo chủ đề."
-status: pending
+status: in-progress
 priority: P1
 effort: 13d
 branch: "overnight/261006"
@@ -27,7 +27,7 @@ Mỗi lần `/ck:cook` đúng một phase; checkbox spec chỉ đánh `[x]` ở 
 
 | Phase | Name | Checkbox spec | Status |
 |-------|------|---------------|--------|
-| 1 | [Bình luận chương hai cấp](./phase-01-binh-luan-chuong-hai-cap.md) | 1 (phần 1/2) | Pending |
+| 1 | [Bình luận chương hai cấp](./phase-01-binh-luan-chuong-hai-cap.md) | 1 (phần 1/2) | Completed |
 | 2 | [Bình luận theo đoạn](./phase-02-binh-luan-theo-doan.md) | 1 (đánh `[x]`) | Pending |
 | 3 | [Theo dõi và thông báo](./phase-03-theo-doi-va-thong-bao.md) | 2 | Pending |
 | 4 | [Đánh giá và review](./phase-04-danh-gia-va-review.md) | 3 | Pending |

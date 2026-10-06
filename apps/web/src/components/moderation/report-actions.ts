@@ -7,6 +7,8 @@ export const ACTION_LABELS: Record<ModerationAction, () => string> = {
   restore_story: m.moderation_action_restore_story,
   hide_chapter: m.moderation_action_hide_chapter,
   restore_chapter: m.moderation_action_restore_chapter,
+  hide_comment: m.moderation_action_hide_comment,
+  restore_comment: m.moderation_action_restore_comment,
   mute_user: m.moderation_action_mute_user,
   unmute_user: m.moderation_action_unmute_user,
   ban_user: m.moderation_action_ban_user,
@@ -83,10 +85,17 @@ export function actionsFor(report: ReportDto, viewer: Viewer): CardAction[] {
   const owner =
     target.type === 'user'
       ? target.user
-      : target.type === 'story' || target.type === 'chapter'
-        ? target.story.author
-        : null;
+      : target.type === 'comment'
+        ? target.comment.writer
+        : target.type === 'story' || target.type === 'chapter'
+          ? target.story.author
+          : null;
   if (owner && canActOn(viewer, owner)) {
+    if (target.type === 'comment') {
+      const { id: commentId, status } = target.comment;
+      if (status === 'visible') actions.push({ action: 'hide_comment', commentId });
+      if (status === 'hidden_by_mod') actions.push({ action: 'restore_comment', commentId });
+    }
     if (target.type === 'chapter' && !target.chapter.deleted) {
       const ref = { storyPublicId: target.story.publicId, number: target.chapter.number };
       if (target.chapter.status === 'published') actions.push({ action: 'hide_chapter', ...ref });

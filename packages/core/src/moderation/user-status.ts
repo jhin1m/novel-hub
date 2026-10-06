@@ -53,7 +53,7 @@ export async function unbanUser(
 
 /**
  * Mutes, unmutes, bans or unbans a user by username, with the user row locked. Muting only blocks
- * comments (phase 2), so it changes nothing public and has no outbox event.
+ * posting comments (`canPostCommunityContent`), so it changes nothing public and has no outbox event.
  */
 export async function moderateUser(
   tx: Tx,

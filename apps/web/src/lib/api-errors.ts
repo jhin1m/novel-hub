@@ -65,6 +65,7 @@ const MESSAGES: Record<string, () => string> = {
   ALREADY_PUBLISHED: m.error_already_published,
   NOT_SCHEDULED: m.error_not_scheduled,
   INVALID_STATE: m.error_invalid_state,
+  USER_MUTED: m.error_user_muted,
 };
 
 /** User-facing message for an API error code; anything unknown gets the generic message. */

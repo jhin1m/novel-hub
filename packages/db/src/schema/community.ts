@@ -49,13 +49,20 @@ export const comments = pgTable(
     parentId: uuid().references((): AnyPgColumn => comments.id),
     /** Để sẵn cho bình luận theo đoạn (`data-pid`). */
     paragraphId: text(),
+    /** Plain text, normalised before insert; rendered as text, never as HTML. */
     body: text().notNull(),
+    /** `visible` / `deleted` (by its writer) / `hidden_by_mod`; values validated in `shared`. */
     status: text().notNull().default('visible'),
     createdAt: createdAt(),
   },
   (t) => [
-    index('comments_chapter_id_created_at_idx').on(t.chapterId, t.createdAt),
-    index('comments_parent_id_idx').on(t.parentId),
+    check('comments_body_length', sql`char_length(${t.body}) BETWEEN 1 AND 2000`),
+    // Top-level comments of a chapter, read backwards for newest first (keyset on created_at, id).
+    index('comments_chapter_roots_idx')
+      .on(t.chapterId, t.createdAt, t.id)
+      .where(sql`${t.parentId} IS NULL`),
+    // Replies of a thread, oldest first.
+    index('comments_parent_idx').on(t.parentId, t.createdAt, t.id),
     index('comments_story_id_idx').on(t.storyId),
     index('comments_user_id_idx').on(t.userId),
   ],

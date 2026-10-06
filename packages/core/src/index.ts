@@ -156,6 +156,9 @@ export {
 export { chaptersPerWeek } from './catalog/frequency';
 export { type StoryPageData, getStoryPage } from './catalog/story-page';
 export { type AuthorPageData, getAuthorPage } from './catalog/author-page';
+export { ensureBadgeCatalog } from './badges/badge-catalog';
+export { awardMilestoneBadges, badgeRuleQuery } from './badges/award-badges';
+export { type UserBadgeDto, listUserBadges } from './badges/user-badges';
 export { type TagPageResult, canonicalTagSlug, getTagPage } from './catalog/tag-page';
 export {
   type HomePageData,

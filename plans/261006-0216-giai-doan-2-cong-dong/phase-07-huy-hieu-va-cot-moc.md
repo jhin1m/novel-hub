@@ -1,7 +1,7 @@
 ---
 phase: 7
 title: "Huy hiệu và cột mốc"
-status: pending
+status: completed
 priority: P2
 effort: "0.75d"
 dependencies: [6]
@@ -84,11 +84,11 @@ getAuthorPage → + badges: listUserBadges(db, authorId) → [{code, awardedAt}]
 
 ## Function / Interface Checklist
 
-- [ ] `BADGES`, `BADGE_CODES`, `type BadgeCode`
-- [ ] `ensureBadgeCatalog(db) → Promise<void>`
-- [ ] `awardMilestoneBadges(db) → Promise<number>` (số dòng mới)
-- [ ] `listUserBadges(db, userId) → Promise<Array<{ code: BadgeCode, awardedAt: string }>>` (bỏ code không còn trong danh mục)
-- [ ] `<BadgeList badges />`
+- [x] `BADGES`, `BADGE_CODES`, `type BadgeCode`
+- [x] `ensureBadgeCatalog(db) → Promise<void>`
+- [x] `awardMilestoneBadges(db) → Promise<number>` (số dòng mới)
+- [x] `listUserBadges(db, userId) → Promise<Array<{ code: BadgeCode, awardedAt: string }>>` (bỏ code không còn trong danh mục)
+- [x] `<BadgeList badges />`
 
 ## Implementation Steps
 
@@ -116,17 +116,17 @@ getAuthorPage → + badges: listUserBadges(db, authorId) → [{code, awardedAt}]
 
 ## Todo List
 
-- [ ] Shared danh mục
-- [ ] Core award + catalog + author page
-- [ ] Worker
-- [ ] UI + i18n
-- [ ] E2E, gate
+- [x] Shared danh mục
+- [x] Core award + catalog + author page
+- [x] Worker
+- [x] UI + i18n
+- [x] E2E, gate
 
 ## Success Criteria
 
-- [ ] Gate xanh
-- [ ] Job trao đúng, idempotent; trang tác giả hiện huy hiệu
-- [ ] Checkbox 6 vẫn `[ ]`
+- [x] Gate xanh
+- [x] Job trao đúng, idempotent; trang tác giả hiện huy hiệu
+- [x] Checkbox 6 vẫn `[ ]`
 
 ## Risk Assessment
 
@@ -136,6 +136,15 @@ getAuthorPage → + badges: listUserBadges(db, authorId) → [{code, awardedAt}]
 ## Security Considerations
 
 - Rule SQL tham số hoá; không nhận input người dùng.
+
+## Cook Log (2026-10-06, chế độ tự động)
+
+- Gate xanh: typecheck, lint, format:check, test 776, test:int 389 (+1 skip S3), test:e2e 108 (sau sửa review chạy lại typecheck/lint/format/test/test:int + `e2e/badges.spec.ts`).
+- [auto] `BadgeList` là `<ul aria-label="Huy hiệu">` đặt ngay dưới bio, không heading riêng. Lý do: khu nhỏ trong header tác giả, plan ghi "khu nhỏ dưới bio".
+- [auto] Icon: PenLine, BookOpen, LibraryBig, Type, ScrollText, Users, UsersRound, BookCheck. Lý do: lucide có sẵn, trung tính.
+- [auto] Giữ huy hiệu tính cả truyện 18+ (theo plan `includeMature:true`); câu hỏi mở cho user.
+- Review: `reports/code-reviewer-261006-badges-review-report.md` (0 Critical/High/Medium; sửa Low 2).
+- Docs: `docs/moderation-guide.md` thêm mục huy hiệu (không thu hồi).
 
 ## Next Steps
 

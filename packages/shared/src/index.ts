@@ -167,6 +167,14 @@ export {
   rankingWindow,
 } from './rankings';
 export {
+  BADGES,
+  BADGE_CODES,
+  type BadgeCode,
+  type BadgeDefinition,
+  type BadgeRule,
+  isBadgeCode,
+} from './badges';
+export {
   type ChapterStatsRow,
   STATS_WINDOW_DAYS,
   type StoryStatsDto,

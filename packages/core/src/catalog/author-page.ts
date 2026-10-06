@@ -1,5 +1,6 @@
 import { type Db, stories, users } from '@novel-hub/db';
 import { and, eq, isNotNull } from 'drizzle-orm';
+import { type UserBadgeDto, listUserBadges } from '../badges/user-badges';
 import {
   type ListOptions,
   type StoryCardDto,
@@ -13,6 +14,8 @@ export interface AuthorPageData {
   author: { username: string; displayName: string; bio: string | null };
   /** Public stories of the author, most recently updated first. */
   stories: StoryCardDto[];
+  /** Milestone badges of the author, in catalog order. */
+  badges: UserBadgeDto[];
 }
 
 /**
@@ -51,5 +54,6 @@ export async function getAuthorPage(
   return {
     author: { username: author.username, displayName: author.displayName, bio: author.bio },
     stories: rows.filter((r) => o.includeMature || !r.isMature).map(toStoryCard),
+    badges: await listUserBadges(db, author.id),
   };
 }

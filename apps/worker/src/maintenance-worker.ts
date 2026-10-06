@@ -7,6 +7,7 @@ import {
 } from '@novel-hub/shared';
 import { type Job, Queue, UnrecoverableError, Worker } from 'bullmq';
 import type { Redis } from 'ioredis';
+import { processAwardBadges } from './processors/award-badges';
 import { processPruneNotifications } from './processors/prune-notifications';
 import { processRecomputeRankings } from './processors/recompute-rankings';
 
@@ -26,6 +27,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export const MAINTENANCE_INTERVALS: Record<MaintenanceJobName, number> = {
   [MAINTENANCE_JOBS.pruneNotifications]: DAY_MS,
   [MAINTENANCE_JOBS.recomputeRankings]: RANKING_RULES.refreshMinutes * 60_000,
+  [MAINTENANCE_JOBS.awardBadges]: 30 * 60_000,
 };
 
 export function routeMaintenanceJob(
@@ -37,6 +39,8 @@ export function routeMaintenanceJob(
       return processPruneNotifications(deps);
     case MAINTENANCE_JOBS.recomputeRankings:
       return processRecomputeRankings(deps);
+    case MAINTENANCE_JOBS.awardBadges:
+      return processAwardBadges(deps);
     default:
       return Promise.reject(new UnrecoverableError(`no processor for job "${job.name}"`));
   }

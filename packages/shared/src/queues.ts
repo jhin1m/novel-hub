@@ -32,6 +32,8 @@ export const MAINTENANCE_JOBS = {
   pruneNotifications: 'prune-notifications',
   /** Recomputes the ranking sorted sets in Redis from `story_daily_stats`. */
   recomputeRankings: 'recompute-rankings',
+  /** Awards the author milestone badges reached since the last run. */
+  awardBadges: 'award-badges',
 } as const;
 
 export type MaintenanceJobName = (typeof MAINTENANCE_JOBS)[keyof typeof MAINTENANCE_JOBS];

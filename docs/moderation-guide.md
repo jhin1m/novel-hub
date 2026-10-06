@@ -51,6 +51,7 @@ Trang công khai được Cloudflare cache: sau khi ẩn hoặc khoá, worker pu
 - **Mở khoá tài khoản:** tài khoản về trạng thái bình thường; nếu trước khi bị khoá họ đang bị cấm bình luận thì phải cấm lại. Chương hẹn giờ của tác giả đã quá giờ trong lúc bị khoá sẽ được đăng ngay ở lần quét kế tiếp (tối đa khoảng 60 giây), có thể đăng dồn nhiều chương.
 - **Gộp tag:** chọn đúng tag đích trước khi xác nhận. Tag nào đã gộp vào tag nguồn trước đó cũng chuyển thẳng sang tag đích (không tạo chuỗi chuyển hướng nhiều bước). Gộp tag phổ biến sinh nhiều job purge, worker xử lý dần. Tag nguồn không còn truyện nào thì trang tag cũ có thể còn trong cache CDN tới khi hết hạn.
 - **Báo cáo trùng lặp tự động:** chỉ bắt được chương chép gần nguyên văn (độ giống ước tính từ 70%). Chép rồi sửa nhiều (giống dưới khoảng 50%) gần như không bị phát hiện, cần người đọc báo cáo. Báo cáo tự động hiện "Giống N% với chương này" kèm link chương gốc. Bỏ qua một cặp trùng thì lần đăng lại có sửa nhẹ của cùng cặp sẽ không bị báo lại.
+- **Huy hiệu tác giả:** worker tự trao mỗi 30 phút theo cột mốc (số chương, số chữ trên truyện công khai; số người theo dõi đã xác thực email và không bị khoá; hoàn thành một truyện). Huy hiệu không bao giờ bị thu hồi: ẩn truyện hay khoá tài khoản người theo dõi ảo không gỡ huy hiệu đã trao. Tác giả bị khoá không nhận thêm huy hiệu và trang tác giả của họ không hiện.
 - Mô tả của người báo và ghi chú của mod là văn bản thuần, không ai ngoài mod/admin thấy. Tác giả không biết ai đã báo cáo.
 
 ## Hoàn tác gộp tag thủ công

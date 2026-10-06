@@ -2,6 +2,7 @@ import { canonicalPath, usernameParamSchema } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { createFileRoute } from '@tanstack/react-router';
 import { BookOpenIcon } from 'lucide-react';
+import { BadgeList } from '../components/badges/badge-list';
 import { FollowButton } from '../components/follow/follow-button';
 import { NotFoundPage } from '../components/not-found';
 import { PageShell, PageTitle } from '../components/page-shell';
@@ -50,7 +51,7 @@ export const Route = createFileRoute('/authors/$username')({
 });
 
 function AuthorPage() {
-  const { author, stories } = Route.useLoaderData();
+  const { author, stories, badges } = Route.useLoaderData();
   const list = useMatureAwareList(
     { stories, page: 1, totalPages: 1 },
     { list: 'author', author: author.username },
@@ -75,6 +76,7 @@ function AuthorPage() {
                 {author.bio}
               </p>
             ) : null}
+            <BadgeList badges={badges} />
             <div className="flex flex-wrap items-center gap-2">
               <FollowButton
                 target={{ kind: 'author', username: author.username }}

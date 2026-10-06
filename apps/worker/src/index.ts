@@ -25,6 +25,7 @@ import {
   createMaintenanceWorker,
   registerMaintenanceSchedulers,
 } from './maintenance-worker';
+import { ensureBadgeCatalogAtBoot } from './processors/award-badges';
 import {
   type SearchWriter,
   applySearchSettingsAtBoot,
@@ -111,6 +112,7 @@ function main(): void {
   );
   // In the background: a slow or down Meilisearch never holds up the other jobs.
   void applySearchSettingsAtBoot(search);
+  void ensureBadgeCatalogAtBoot(db);
 
   // Workers first (running jobs finish and may still use the queues and the pool), then the rest.
   registerShutdown(

@@ -1,6 +1,6 @@
 # Overnight 261006: đang chạy
-Cập nhật: 2026-10-06 14:11
-Đang làm: Q8 / phase-07
+Cập nhật: 2026-10-06 14:42
+Đang làm: Q8 / phase-08
 ## Đã xong
 - Q1 canvas /write + editor (artboard F-* trên https://claude.ai/artifact/X7w7oUBxruy6Y47oQ4HdAo), đặc tả ở plans/reports/design-261006-write-editor-screens-report.md
 - Q2 report brainstorm cuối: plans/reports/brainstorm-261006-ui-redesign-b-plus-final-report.md
@@ -26,6 +26,7 @@ Cập nhật: 2026-10-06 14:11
 - Q8 phase-04 đánh giá + review → [x] checkbox 'Đánh giá' (migration 0006)
 - Q8 phase-05 xếp hạng → [x] checkbox 'Xếp hạng' (migration 0007)
 - Q8 phase-06 dashboard tác giả → [x] checkbox 'Dashboard'
+- Q8 phase-07 huy hiệu + cột mốc
 
 ## Quyết định [auto] (sáng cần duyệt)
 - Q1: 8 quyết định [auto] trong design-261006-write-editor-screens-report.md
@@ -55,6 +56,7 @@ Cập nhật: 2026-10-06 14:11
 - Q8 p04: điểm tổng chỉ ở trang review đầu; xoá khi chưa có đánh giá trả 404; rate limit tính cả xoá; khu đánh giá chỉ hiện khi có chương đăng; hiển thị 4,0; xoá đánh giá xoá hẳn dòng (báo cáo về review đã xoá chỉ đóng được)
 - Q8 p05: trần 10 người đọc/IP/truyện/ngày có thể đếm thiếu người dùng chung IP di động (câu hỏi mở)
 - Q8 p06: tổng lượt đọc cộng cả chương đã xoá/ẩn (lệch tổng bảng); ô 'người đọc' = cộng dồn người đọc duy nhất mỗi ngày 30 ngày (có chú thích); bỏ 3 ghi chú review nhỏ
+- Q8 p07: huy hiệu tính cả truyện 18+ → trang tác giả công khai có thể hiện mốc dù danh sách truyện trống (giữ hay chỉ tính truyện không 18+?); danh sách <ul aria-label='Huy hiệu'> dưới bio
 
 ## Chặn / lỗi
 - Q3 (nhẹ): 'ck plan add-phase --after' lỗi afterId.toLowerCase; worker đổi tên phase bằng tay, 'ck plan validate' xác nhận

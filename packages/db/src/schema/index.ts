@@ -6,3 +6,4 @@ export * from './community';
 export * from './engagement';
 export * from './moderation';
 export * from './content-events';
+export * from './contests';

@@ -55,6 +55,18 @@ Trang công khai được Cloudflare cache: sau khi ẩn hoặc khoá, worker pu
 - Mọi lần thêm, kết thúc, xoá ghi vào nhật ký kiểm duyệt (`feature_story` / `unfeature_story`, ghi chú là khoảng thời gian).
 - **Cache:** thêm hoặc kết thúc không purge CDN; trang chủ thật cập nhật sau tối đa 10 phút (tới khoảng 70 phút nếu Cloudflare còn phục vụ bản cũ trong lúc làm mới). Muốn có hiệu lực ngay thì purge URL trang chủ trên dashboard Cloudflare (`pnpm cdn:purge` hiện chỉ purge theo truyện). Ẩn truyện hay khoá tác giả thì trang chủ đã được purge sẵn.
 
+## Cuộc thi theo chủ đề
+
+- Tab "Cuộc thi" trong `/moderation`: nhập tên (2–150 ký tự), chủ đề và thể lệ (văn bản thuần ≤ 5.000 ký tự, giữ xuống dòng, không HTML), thời gian bắt đầu/kết thúc theo giờ Việt Nam (mặc định từ bây giờ, 30 ngày; tối đa 180 ngày), bấm "Tạo cuộc thi". URL `/contests/{slug}` sinh từ tên (trùng thì thêm `-2`, `-3`) và **không đổi** khi sửa tên.
+- Trạng thái suy ra từ thời gian: sắp diễn ra, đang diễn ra (nhận bài), đã kết thúc. Muốn kết thúc sớm: sửa giờ kết thúc. Khi đã có bài dự thi thì không đổi được giờ bắt đầu (điều kiện dự thi dựa vào nó).
+- Tác giả tự đưa truyện vào hoặc rút ra ở trang quản lý truyện, chỉ khi cuộc thi đang diễn ra. Truyện hợp lệ: của chính tác giả, công khai và có chương đã đăng, không 18+, tạo sau giờ bắt đầu cuộc thi.
+- "Bài dự thi và xếp hạng": gán Hạng 1–3 (mỗi hạng một truyện) hoặc "Không xếp hạng", chỉ khi cuộc thi đã kết thúc. Không gán được cho truyện của chính mình. Bài bị ẩn, tác giả bị khoá hoặc đổi sang 18+ ghi "Không còn hiện công khai": không gán hạng được, chỉ bỏ hạng; trang cuộc thi tự bỏ các bài này.
+- Không có bình chọn, không giải thưởng tiền. Mọi lần tạo, sửa, gán hạng ghi vào nhật ký kiểm duyệt (`create_contest` / `update_contest` / `set_contest_placement`, target `contest`; ghi chú là slug hoặc `{public_id}: {hạng}`).
+- **Cache:** `/contests` và trang cuộc thi cache 10 phút; tạo, sửa, tham gia, rút, gán hạng không purge, hiện ra sau tối đa 10 phút (tới khoảng 70 phút nếu Cloudflare còn bản cũ). Ẩn truyện hay khoá tác giả thì `/contests` và trang đầu của các cuộc thi truyện đó từng dự đã được purge sẵn (trang sau hết hạn sau 10 phút).
+- Giờ bắt đầu được đặt về quá khứ: truyện tạo từ mốc đó trở đi đều hợp lệ, nên đặt bằng hoặc sau lúc công bố cuộc thi.
+- Cuộc thi đã có hạng thì không sửa giờ kết thúc về tương lai được (mở lại sẽ ẩn kết quả); bỏ hạng trước nếu thật sự cần mở lại.
+- Danh sách cho mod hiện 100 cuộc thi bắt đầu gần nhất.
+
 ## Lưu ý
 
 - **Mở khoá tài khoản:** tài khoản về trạng thái bình thường; nếu trước khi bị khoá họ đang bị cấm bình luận thì phải cấm lại. Chương hẹn giờ của tác giả đã quá giờ trong lúc bị khoá sẽ được đăng ngay ở lần quét kế tiếp (tối đa khoảng 60 giây), có thể đăng dồn nhiều chương.

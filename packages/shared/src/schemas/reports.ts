@@ -52,6 +52,9 @@ export const MODERATION_LOG_ACTIONS = [
   ...MODERATION_ACTIONS,
   'feature_story',
   'unfeature_story',
+  'create_contest',
+  'update_contest',
+  'set_contest_placement',
 ] as const;
 export type ModerationLogAction = (typeof MODERATION_LOG_ACTIONS)[number];
 

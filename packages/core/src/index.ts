@@ -177,6 +177,21 @@ export {
 } from './featured/featured-slots';
 export { listFeaturedSlotsForMods } from './featured/featured-slot-list';
 export { listActiveFeatured } from './featured/active-featured';
+export {
+  type ContestManageError,
+  createContest,
+  setPlacement,
+  updateContest,
+} from './contests/manage-contests';
+export {
+  type ContestEntryError,
+  contestIneligibility,
+  enterContest,
+  listOpenContestsForStory,
+  withdrawEntry,
+} from './contests/contest-entries';
+export { type ContestPageDto, getContestPage, listContestsPage } from './contests/read-contests';
+export { listContestEntriesForMods, listContestsForMods } from './contests/contest-admin-list';
 export { type StoryList, listStories } from './catalog/lists';
 export {
   SEARCH_REQUEST_TIMEOUT_MS,

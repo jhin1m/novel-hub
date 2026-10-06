@@ -57,6 +57,13 @@
       "when": 1791265340973,
       "tag": "0007_story_daily_stats",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791275767483,
+      "tag": "0008_contests",
+      "breakpoints": true
     }
   ]
 }

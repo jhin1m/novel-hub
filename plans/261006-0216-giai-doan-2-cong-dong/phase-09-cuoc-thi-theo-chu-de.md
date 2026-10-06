@@ -1,7 +1,7 @@
 ---
 phase: 9
 title: "Cuộc thi theo chủ đề"
-status: pending
+status: completed
 priority: P2
 effort: "2d"
 dependencies: [8]
@@ -88,13 +88,13 @@ Web: routes/contests.index.tsx, routes/contests.$slug.tsx (server-fn), moderatio
 
 ## Function / Interface Checklist
 
-- [ ] `contestStatus({startsAt, endsAt}, now) → 'upcoming'|'open'|'ended'`
-- [ ] `createContest(tx, actor, input)`, `updateContest(tx, actor, id, patch)`, `setPlacement(tx, actor, contestId, storyPublicId, placement|null)`
-- [ ] `enterContest(db, actor, slug, publicId)`, `withdrawEntry(db, actor, slug, publicId)`
-- [ ] `listOpenContestsForStory(db, actor, publicId) → Array<{slug, title, endsAt, entered, eligible, reason?}>`
-- [ ] `listContestsPage(db, now)`, `getContestPage(db, slug, page, now)`
-- [ ] `uniqueContestSlug(tx, title)`
-- [ ] `canonicalPath({kind:'contests'})`, `canonicalPath({kind:'contest', slug, page?})`
+- [x] `contestStatus({startsAt, endsAt}, now) → 'upcoming'|'open'|'ended'`
+- [x] `createContest(tx, actor, input)`, `updateContest(tx, actor, id, patch)`, `setPlacement(tx, actor, contestId, storyPublicId, placement|null)`
+- [x] `enterContest(db, actor, slug, publicId)`, `withdrawEntry(db, actor, slug, publicId)`
+- [x] `listOpenContestsForStory(db, actor, publicId) → Array<{slug, title, endsAt, entered, eligible, reason?}>`
+- [x] `listContestsPage(db, now)`, `getContestPage(db, slug, page, now)`
+- [x] `uniqueContestSlug(tx, title)`
+- [x] `canonicalPath({kind:'contests'})`, `canonicalPath({kind:'contest', slug, page?})`
 
 ## Implementation Steps
 
@@ -125,18 +125,18 @@ Web: routes/contests.index.tsx, routes/contests.$slug.tsx (server-fn), moderatio
 
 ## Todo List
 
-- [ ] Migration + shared
-- [ ] Core + API
-- [ ] Trang công khai + footer + sitemap
-- [ ] Khối tác giả + tab mod
-- [ ] i18n, docs, e2e, gate, `[x]` checkbox 6
+- [x] Migration + shared
+- [x] Core + API
+- [x] Trang công khai + footer + sitemap
+- [x] Khối tác giả + tab mod
+- [x] i18n, docs, e2e, gate, `[x]` checkbox 6
 
 ## Success Criteria
 
-- [ ] Gate xanh
-- [ ] Mod tổ chức cuộc thi trọn vòng (tạo → nhận bài → kết thúc → gán hạng), có log
-- [ ] Trang cuộc thi công khai cache được, không có 18+, không có nội dung tài khoản bị ban
-- [ ] Checkbox 6 spec `[x]`; plan Giai đoạn 2 hoàn tất
+- [x] Gate xanh
+- [x] Mod tổ chức cuộc thi trọn vòng (tạo → nhận bài → kết thúc → gán hạng), có log
+- [x] Trang cuộc thi công khai cache được, không có 18+, không có nội dung tài khoản bị ban
+- [x] Checkbox 6 spec `[x]`; plan Giai đoạn 2 hoàn tất
 
 ## Risk Assessment
 
@@ -147,6 +147,21 @@ Web: routes/contests.index.tsx, routes/contests.$slug.tsx (server-fn), moderatio
 
 - Mô tả cuộc thi là văn bản thuần (`normalizePlainText`, render text node, không HTML).
 - Route mod sau `requireRole('mod','admin')` + `canModerate`; route tác giả kiểm `canEditStory`.
+
+## Implementation Notes (cook)
+
+Lệch nhỏ so với plan, tự chọn khi user ngủ:
+
+- [auto] `contestStatus` đặt ở `packages/shared/src/schemas/contest.ts` (test ở `contest.test.ts`) thay vì `core/contests/contest-status.ts`. Lý do: hàm thuần, core dùng và web dùng được, tránh file một hàm.
+- [auto] Lỗi `CONTEST_STORY_INELIGIBLE` không kèm lý do trong body; lý do (`not_published`/`mature`/`too_old`) trả ở `GET /contests/open`, khối tác giả hiện trước khi bấm. Lý do: giữ dạng lỗi thống nhất `{ error: { code, message } }`.
+- [auto] Rút bài chỉ cần đăng nhập (`requireAuth`), tham gia cần email đã xác thực. Lý do: không thể đã tham gia mà chưa xác thực; rút không đăng nội dung.
+- [auto] Bài được liệt kê = `publicStoryWhere({ includeMature: false })` + có chương (`last_chapter_at` not null), như trang tag. Danh sách bài cho mod hiện mọi bài kèm cờ `listed`; bài không còn công khai chỉ bỏ hạng được, không gán hạng.
+- [auto] Chọn hạng bằng nhóm nút "Hạng 1/2/3 · Không xếp hạng" (`aria-pressed`) thay vì select. Lý do: một cú bấm như các hành động mod khác, e2e đơn giản.
+- [auto] `catalogUrls` chỉ thêm `/contests` + trang cuộc thi khi truyện từng dự thi (không thêm cho mọi thay đổi). Lý do: purge đúng phạm vi, không đổi danh sách URL của truyện không dự thi.
+- [auto] Slug duy nhất nhờ advisory lock trong transaction tạo; migration đổi tên `0008_contests.sql`.
+- Sau review (`reports/code-reviewer-261006-phase-09-contests-review.md`): tham gia chạy trong transaction khoá chia sẻ hàng cuộc thi (chống đổi `starts_at` cùng lúc); truyện không còn chương = `not_published`; thời gian cuộc thi hiện kèm giờ.
+- [auto] Cuộc thi đã có hạng không sửa được giờ kết thúc về tương lai (`INVALID_STATE`), bỏ hạng trước. Lý do: mở lại sẽ ẩn kết quả và cho rút bài có hạng không ghi log.
+- [auto] Tab mod thứ tư làm hàng tab tràn ở 360px: hàng tab dạng viên cuộn trong hàng riêng như `/library` (`moderation-tab-links.tsx`).
 
 ## Next Steps
 

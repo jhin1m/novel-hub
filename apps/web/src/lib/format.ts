@@ -19,6 +19,15 @@ const date = new Intl.DateTimeFormat('vi-VN', {
   timeZone: 'Asia/Ho_Chi_Minh',
 });
 
+const dateTime = new Intl.DateTimeFormat('vi-VN', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'Asia/Ho_Chi_Minh',
+});
+
 /** A number with at most one decimal, Vietnamese style (`1,5`). */
 export function formatDecimal(value: number): string {
   return decimal.format(value);
@@ -40,6 +49,11 @@ export function formatWordCount(words: number): string {
 /** `dd/MM/yyyy` in Vietnam time, from an ISO timestamp. */
 export function formatDate(iso: string): string {
   return date.format(new Date(iso));
+}
+
+/** `HH:mm dd/MM/yyyy` in Vietnam time, from an ISO timestamp (deadlines that close mid-day). */
+export function formatDateTime(iso: string): string {
+  return dateTime.format(new Date(iso));
 }
 
 /** First letter of a name or title, upper-cased, by code point so a surrogate pair is never split. */

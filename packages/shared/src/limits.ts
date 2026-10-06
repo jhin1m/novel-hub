@@ -33,6 +33,10 @@ export const LIMITS = {
   commentMax: 2_000,
   /** A story review, in code points after normalisation (`normalizePlainText`). */
   reviewMax: 5_000,
+  /** A themed contest: title, plain-text description (theme and rules), longest run in days. */
+  contestTitle: { min: 2, max: 150 },
+  contestDescriptionMax: 5_000,
+  contestMaxDays: 180,
 } as const;
 
 /**

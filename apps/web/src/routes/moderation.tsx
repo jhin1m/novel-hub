@@ -8,6 +8,8 @@ import { m } from '@novel-hub/shared/messages';
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 import { textLinkClass } from '../components/auth-ui';
+import { ContestAdminList } from '../components/moderation/contest-admin-list';
+import { ContestForm } from '../components/moderation/contest-form';
 import { FeaturedSlotForm } from '../components/moderation/featured-slot-form';
 import { FeaturedSlotList } from '../components/moderation/featured-slot-list';
 import { MergeTagForm } from '../components/moderation/merge-tag-form';
@@ -23,12 +25,13 @@ import { type MeUser, useMe } from '../lib/me';
 import { useReports } from '../lib/moderation';
 import { seo } from '../lib/seo';
 
-const MODERATION_TABS = ['reports', 'tags', 'featured'] as const;
+const MODERATION_TABS = ['reports', 'tags', 'featured', 'contests'] as const;
 
 const TAB_LABELS: Record<(typeof MODERATION_TABS)[number], () => string> = {
   reports: m.moderation_tab_reports,
   tags: m.moderation_tab_tags,
   featured: m.moderation_tab_featured,
+  contests: m.moderation_tab_contests,
 };
 
 const moderationSearchSchema = reportListQuerySchema.extend({
@@ -99,6 +102,12 @@ function ModerationPage() {
               <div className="flex flex-col gap-8">
                 <FeaturedSlotForm />
                 <FeaturedSlotList />
+              </div>
+            ) : search.tab === 'contests' ? (
+              <div className="flex flex-col gap-8">
+                <p className="text-muted-foreground">{m.contest_admin_intro()}</p>
+                <ContestForm />
+                <ContestAdminList />
               </div>
             ) : (
               <ReportQueue search={search} viewer={me.data} />

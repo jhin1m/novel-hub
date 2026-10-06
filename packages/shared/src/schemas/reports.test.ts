@@ -91,7 +91,13 @@ describe('MODERATION_LOG_ACTIONS', () => {
   });
 
   it('keeps log-only actions out of the request body', () => {
-    for (const action of ['feature_story', 'unfeature_story']) {
+    for (const action of [
+      'feature_story',
+      'unfeature_story',
+      'create_contest',
+      'update_contest',
+      'set_contest_placement',
+    ]) {
       expect(MODERATION_LOG_ACTIONS).toContain(action);
       expect(moderationActionSchema.safeParse({ action, storyPublicId: 'k7m2xq9p' }).success).toBe(
         false,

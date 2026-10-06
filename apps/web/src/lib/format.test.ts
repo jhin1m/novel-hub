@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDate, formatInitial, formatWordCount } from './format';
+import { formatDate, formatDateTime, formatInitial, formatWordCount } from './format';
 
 describe('formatWordCount', () => {
   it.each([
@@ -12,6 +12,12 @@ describe('formatWordCount', () => {
     [1_250_000, '1,3 triệu'],
   ])('%i → %s', (words, text) => {
     expect(formatWordCount(words)).toBe(text);
+  });
+});
+
+describe('formatDateTime', () => {
+  it('shows the minute and day in Vietnam time, whatever the time zone of the machine', () => {
+    expect(formatDateTime('2026-10-31T16:59:00.000Z')).toBe('23:59 31/10/2026');
   });
 });
 

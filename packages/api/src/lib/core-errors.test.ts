@@ -27,6 +27,9 @@ const expected: [CoreErrorCode, number][] = [
   ['COMMENT_PARAGRAPH_INVALID', 422],
   ['RATING_HIDDEN', 409],
   ['FEATURED_MATURE', 422],
+  ['CONTEST_NOT_OPEN', 409],
+  ['CONTEST_STORY_INELIGIBLE', 422],
+  ['CONTEST_PLACEMENT_TAKEN', 409],
 ];
 
 describe('coreError', () => {

@@ -173,7 +173,7 @@ Làm tuần tự; mỗi mục chỉ coi là xong khi đạt tiêu chí và có t
 - [x] Đánh giá và review truyện.
 - [x] Xếp hạng ngày, tuần, tháng; xếp hạng theo tốc độ tăng trưởng.
 - [x] Dashboard tác giả: lượt đọc theo chương, tỷ lệ bỏ dở theo chương, lượt theo dõi mới.
-- [ ] Huy hiệu và cột mốc; khu truyện nổi bật do mod chọn; công cụ tổ chức cuộc thi theo chủ đề.
+- [x] Huy hiệu và cột mốc; khu truyện nổi bật do mod chọn; công cụ tổ chức cuộc thi theo chủ đề.
 
 ### Giai đoạn 3 (sau cùng)
 

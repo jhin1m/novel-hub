@@ -27,6 +27,9 @@ const CORE_ERROR_STATUS = {
   COMMENT_PARAGRAPH_INVALID: 422,
   RATING_HIDDEN: 409,
   FEATURED_MATURE: 422,
+  CONTEST_NOT_OPEN: 409,
+  CONTEST_STORY_INELIGIBLE: 422,
+  CONTEST_PLACEMENT_TAKEN: 409,
 } as const;
 
 export type CoreErrorCode = keyof typeof CORE_ERROR_STATUS;
@@ -57,6 +60,9 @@ const CORE_ERROR_MESSAGES: Record<CoreErrorCode, string> = {
   COMMENT_PARAGRAPH_INVALID: 'The paragraph is not in the published chapter',
   RATING_HIDDEN: 'The rating was hidden by a moderator',
   FEATURED_MATURE: 'An 18+ story cannot be featured',
+  CONTEST_NOT_OPEN: 'The contest is not open',
+  CONTEST_STORY_INELIGIBLE: 'The story may not enter this contest',
+  CONTEST_PLACEMENT_TAKEN: 'Another entry already holds this place',
 };
 
 export function coreError<C extends CoreErrorCode>(c: Context, code: C) {

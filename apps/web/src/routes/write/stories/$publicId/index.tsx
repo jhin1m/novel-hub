@@ -2,6 +2,7 @@ import { m } from '@novel-hub/shared/messages';
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { FormMessage, textLinkClass } from '../../../../components/auth-ui';
 import { ChapterList } from '../../../../components/chapter-list';
+import { ContestEntryPanel } from '../../../../components/contests/contest-entry-panel';
 import { CoverUpload } from '../../../../components/cover-upload';
 import { PageShell, PageTitle, pageCardClass } from '../../../../components/page-shell';
 import { SiteLayout } from '../../../../components/site-layout';
@@ -67,6 +68,7 @@ function EditStory() {
         {m.writer_stats_link()}
       </Link>
       <ChapterList publicId={story.data.publicId} />
+      <ContestEntryPanel publicId={story.data.publicId} />
       <div className={pageCardClass}>
         <CoverUpload story={story.data} authorName={me.data?.displayName ?? ''} />
       </div>

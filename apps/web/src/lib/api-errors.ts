@@ -69,6 +69,9 @@ const MESSAGES: Record<string, () => string> = {
   COMMENT_PARAGRAPH_INVALID: m.error_comment_paragraph_invalid,
   RATING_HIDDEN: m.error_rating_hidden,
   FEATURED_MATURE: m.error_featured_mature,
+  CONTEST_NOT_OPEN: m.error_contest_not_open,
+  CONTEST_STORY_INELIGIBLE: m.error_contest_story_ineligible,
+  CONTEST_PLACEMENT_TAKEN: m.error_contest_placement_taken,
 };
 
 /** User-facing message for an API error code; anything unknown gets the generic message. */

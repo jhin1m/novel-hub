@@ -18,6 +18,9 @@ export function SiteFooter() {
           <a href={canonicalPath({ kind: 'ranking', period: 'week' })} className={FOOTER_LINK}>
             {m.ranking_nav()}
           </a>
+          <a href={canonicalPath({ kind: 'contests' })} className={FOOTER_LINK}>
+            {m.contest_nav()}
+          </a>
           <a href={canonicalPath({ kind: 'static', path: '/terms' })} className={FOOTER_LINK}>
             {m.layout_terms()}
           </a>

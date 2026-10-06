@@ -9,6 +9,8 @@ export type CanonicalTarget =
   | { kind: 'author'; username: string }
   | { kind: 'tag'; slug: string; page?: number }
   | { kind: 'ranking'; period: RankingPeriod }
+  | { kind: 'contests' }
+  | { kind: 'contest'; slug: string; page?: number }
   | { kind: 'static'; path: '/terms' | '/content-policy' };
 
 /**
@@ -32,6 +34,12 @@ export function canonicalPath(target: CanonicalTarget): string {
         : `/tags/${target.slug}`;
     case 'ranking':
       return `/rankings/${target.period}`;
+    case 'contests':
+      return '/contests';
+    case 'contest':
+      return target.page !== undefined && target.page > 1
+        ? `/contests/${target.slug}?page=${target.page}`
+        : `/contests/${target.slug}`;
     case 'static':
       return target.path;
   }

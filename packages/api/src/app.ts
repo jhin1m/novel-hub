@@ -6,6 +6,7 @@ import { csrf } from './middleware/csrf';
 import { noStore } from './middleware/no-store';
 import { createAuthorStatsRoutes } from './routes/author-stats';
 import { createCommentRoutes } from './routes/comments';
+import { createContestRoutes } from './routes/contests';
 import { createFollowRoutes } from './routes/follows';
 import { createHealthRoutes } from './routes/health';
 import { createLibraryRoutes } from './routes/library';
@@ -25,6 +26,7 @@ function createV1Routes(deps: ApiDeps) {
     .use(csrf(deps.appUrl))
     .route('/author-stats', createAuthorStatsRoutes(deps))
     .route('/comments', createCommentRoutes(deps))
+    .route('/contests', createContestRoutes(deps))
     .route('/follows', createFollowRoutes(deps))
     .route('/health', createHealthRoutes(deps))
     .route('/library', createLibraryRoutes(deps))

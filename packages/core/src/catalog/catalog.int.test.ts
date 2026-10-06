@@ -1,4 +1,12 @@
-import { contentEvents, stories, storyTags, tags, users } from '@novel-hub/db';
+import {
+  contentEvents,
+  contestEntries,
+  contests,
+  stories,
+  storyTags,
+  tags,
+  users,
+} from '@novel-hub/db';
 import { seedTags } from '@novel-hub/db/seed';
 import { createTestDb, truncateAll } from '@novel-hub/db/testing';
 import { STORY_VISIBILITIES } from '@novel-hub/shared';
@@ -345,6 +353,40 @@ describe('catalogUrls', () => {
       '/',
       '/tags/tien-hiep',
       ...RANKING_PATHS,
+    ]);
+  });
+
+  it('adds /contests and the page of every contest the story entered', async () => {
+    const author = await makeAuthor(db);
+    const s = await makePublishedStory(db, author, 1);
+    const other = await makePublishedStory(db, author, 1, 'Truyện Khác');
+    const contestRows = await db
+      .insert(contests)
+      .values(
+        ['mua-thu', 'mua-dong', 'mua-he'].map((slug) => ({
+          slug,
+          title: slug,
+          description: 'Chủ đề',
+          startsAt: new Date('2026-09-01T00:00:00Z'),
+          endsAt: new Date('2026-10-01T00:00:00Z'),
+          createdBy: author.id,
+        })),
+      )
+      .returning({ id: contests.id, slug: contests.slug });
+    const id = (slug: string) => contestRows.find((c) => c.slug === slug)?.id ?? '';
+    await db.insert(contestEntries).values([
+      { contestId: id('mua-thu'), storyId: s.storyId },
+      { contestId: id('mua-dong'), storyId: s.storyId },
+      { contestId: id('mua-he'), storyId: other.storyId },
+    ]);
+    const story = await catalogUrls(db, { entity: 'story', action: 'hidden', storyId: s.storyId });
+    expect(story.slice(-3)).toEqual(['/contests', '/contests/mua-dong', '/contests/mua-thu']);
+    const user = await catalogUrls(db, { entity: 'user', action: 'banned', userId: author.id });
+    expect(user.slice(-4)).toEqual([
+      '/contests',
+      '/contests/mua-dong',
+      '/contests/mua-he',
+      '/contests/mua-thu',
     ]);
   });
 });

@@ -6,7 +6,7 @@ export type ModerationError = 'FORBIDDEN' | 'NOT_FOUND' | 'INVALID_STATE';
 
 /** What an action acted on, as `moderation_actions.target_type` / `target_id` record it. */
 export interface ModerationTarget {
-  type: 'story' | 'chapter' | 'user' | 'tag' | 'report' | 'comment' | 'rating';
+  type: 'story' | 'chapter' | 'user' | 'tag' | 'report' | 'comment' | 'rating' | 'contest';
   id: string;
 }
 

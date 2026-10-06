@@ -15,8 +15,8 @@ export interface TabItem {
 }
 
 /**
- * A row of client-side links that rewrite the search params (the page is never cached): pill tabs,
- * or with `small` a wrapping row of filter chips.
+ * A row of client-side links that rewrite the search params (the page is never cached): pill tabs
+ * scrolling in their own row, or with `small` a wrapping row of filter chips.
  */
 export function TabLinks({
   label,
@@ -28,7 +28,12 @@ export function TabLinks({
   small?: boolean;
 }) {
   return (
-    <nav aria-label={label}>
+    // Pill tabs scroll inside their own row at narrow widths (like the /library shelves); the page
+    // itself never scrolls sideways.
+    <nav
+      aria-label={label}
+      className={small ? undefined : '-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0'}
+    >
       <ul className={cn(small ? SEGMENTED_CHIP_LIST_CLASS : SEGMENTED_LIST_CLASS)}>
         {items.map((item) => (
           <li key={item.key}>

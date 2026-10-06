@@ -1,6 +1,6 @@
-import { type Db, chapters, stories, storyTags, tags, users } from '@novel-hub/db';
+import { type Db, chapters, contests, stories, storyTags, tags, users } from '@novel-hub/db';
 import { RANKING_PERIODS, canonicalPath } from '@novel-hub/shared';
-import { type SQL, and, asc, count, eq, isNotNull, isNull } from 'drizzle-orm';
+import { type SQL, and, asc, count, desc, eq, isNotNull, isNull } from 'drizzle-orm';
 import { canReadChapter } from '../access/can-read-chapter';
 import { publicStoryWhere, totalPagesFor } from '../catalog/story-card';
 import { followMerges } from '../catalog/tag-page';
@@ -57,13 +57,13 @@ export async function countSitemap(
 }
 
 /**
- * Home, the static pages, the ranking pages, every canonical tag page and every author page that lists at least one
+ * Home, the static pages, the ranking pages, the contest pages, every canonical tag page and every author page that lists at least one
  * sitemap story with a chapter (the condition of those lists). A merged tag counts as the tag at
  * the end of its merge chain; a broken chain is left out.
  */
 export async function listSitemapPages(db: Db): Promise<SitemapEntry[]> {
   const listed = and(sitemapStoryWhere(), isNotNull(stories.lastChapterAt)) as SQL;
-  const [authors, usedTags, allTags] = await Promise.all([
+  const [authors, usedTags, allTags, contestRows] = await Promise.all([
     db
       .selectDistinct({ username: users.username })
       .from(stories)
@@ -77,6 +77,10 @@ export async function listSitemapPages(db: Db): Promise<SitemapEntry[]> {
       .innerJoin(users, eq(users.id, stories.authorId))
       .where(listed),
     db.select({ id: tags.id, slug: tags.slug, canonicalId: tags.canonicalId }).from(tags),
+    db
+      .select({ slug: contests.slug })
+      .from(contests)
+      .orderBy(desc(contests.startsAt), desc(contests.id)),
   ]);
 
   const slugById = new Map(allTags.map((t) => [t.id, t.slug]));
@@ -94,6 +98,8 @@ export async function listSitemapPages(db: Db): Promise<SitemapEntry[]> {
     page(canonicalPath({ kind: 'static', path: '/terms' })),
     page(canonicalPath({ kind: 'static', path: '/content-policy' })),
     ...RANKING_PERIODS.map((period) => page(canonicalPath({ kind: 'ranking', period }))),
+    page(canonicalPath({ kind: 'contests' })),
+    ...contestRows.map((c) => page(canonicalPath({ kind: 'contest', slug: c.slug }))),
     ...[...tagSlugs].sort().map((slug) => page(canonicalPath({ kind: 'tag', slug }))),
     ...authors.map((a) => page(canonicalPath({ kind: 'author', username: a.username }))),
   ];

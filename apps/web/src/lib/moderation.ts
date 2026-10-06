@@ -98,3 +98,71 @@ export function useChangeFeaturedSlot() {
     onSettled: () => queryClient.invalidateQueries({ queryKey: featuredSlotsQueryKey }),
   });
 }
+
+/** Under `['me']` like the queue: moderator-only data leaves with the account. */
+export const contestsAdminQueryKey = [...meQueryKey, 'moderation', 'contests'] as const;
+
+/** Contests for moderators, newest start first. */
+export function useAdminContests() {
+  return useQuery({
+    queryKey: contestsAdminQueryKey,
+    retry: false,
+    queryFn: async () => {
+      const res = await api.api.v1.moderation.contests.$get();
+      if (!res.ok) throw await readApiError(res);
+      return res.json();
+    },
+  });
+}
+
+/** Creates a contest (no `id`) or replaces one's fields, then reloads the list. */
+export function useSaveContest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...json }: ContestFields & { id?: string }) => {
+      const res = id
+        ? await api.api.v1.moderation.contests[':id'].$patch({ param: { id }, json })
+        : await api.api.v1.moderation.contests.$post({ json });
+      if (!res.ok) throw await readApiError(res);
+      return res.json();
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: contestsAdminQueryKey }),
+  });
+}
+
+/** What the contest form sends: times as ISO with offset. */
+export interface ContestFields {
+  title: string;
+  description: string;
+  startsAt: string;
+  endsAt: string;
+}
+
+/** Entries of a contest for ranking. */
+export function useContestEntries(id: string) {
+  return useQuery({
+    queryKey: [...contestsAdminQueryKey, id, 'entries'],
+    retry: false,
+    queryFn: async () => {
+      const res = await api.api.v1.moderation.contests[':id'].entries.$get({ param: { id } });
+      if (!res.ok) throw await readApiError(res);
+      return res.json();
+    },
+  });
+}
+
+/** Places an entry (1–3) or clears its place (`null`), then reloads the entries and the list. */
+export function useSetContestPlacement(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (json: { story: string; placement: 1 | 2 | 3 | null }) => {
+      const res = await api.api.v1.moderation.contests[':id'].placements.$put({
+        param: { id },
+        json,
+      });
+      if (!res.ok) throw await readApiError(res);
+      return res.json();
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: contestsAdminQueryKey }),
+  });
+}

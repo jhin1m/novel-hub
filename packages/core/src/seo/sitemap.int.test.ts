@@ -1,4 +1,4 @@
-import { chapters, stories, storyTags, tags, users } from '@novel-hub/db';
+import { chapters, contests, stories, storyTags, tags, users } from '@novel-hub/db';
 import { seedTags } from '@novel-hub/db/seed';
 import { createTestDb, truncateAll } from '@novel-hub/db/testing';
 import { canonicalPath } from '@novel-hub/shared';
@@ -124,7 +124,7 @@ describe('listSitemapChapters', () => {
 });
 
 describe('listSitemapPages', () => {
-  it('lists home, static pages, canonical tags and authors with a listed story', async () => {
+  it('lists home, static, ranking and contest pages, canonical tags and authors with a listed story', async () => {
     const author = await makeAuthor(db);
     const matureOnly = await makeAuthor(db, 'mature_only');
     const banned = await makeAuthor(db, 'banned_author');
@@ -143,6 +143,25 @@ describe('listSitemapPages', () => {
     const empty = await makeAuthor(db, 'no_chapters');
     const emptied = await makePublishedStory(db, empty, 1, 'Hết Chương');
     await setStory(emptied.storyId, { lastChapterAt: null });
+    // Every contest page is listed, newest start first.
+    await db.insert(contests).values([
+      {
+        slug: 'mua-thu',
+        title: 'Mùa thu',
+        description: 'Chủ đề',
+        startsAt: new Date('2026-09-01T00:00:00Z'),
+        endsAt: new Date('2026-10-01T00:00:00Z'),
+        createdBy: author.id,
+      },
+      {
+        slug: 'mua-dong',
+        title: 'Mùa đông',
+        description: 'Chủ đề',
+        startsAt: new Date('2026-12-01T00:00:00Z'),
+        endsAt: new Date('2027-01-01T00:00:00Z'),
+        createdBy: author.id,
+      },
+    ]);
 
     expect(paths(await listSitemapPages(db))).toEqual([
       '/',
@@ -152,6 +171,9 @@ describe('listSitemapPages', () => {
       '/rankings/week',
       '/rankings/month',
       '/rankings/rising',
+      '/contests',
+      '/contests/mua-dong',
+      '/contests/mua-thu',
       '/tags/tien-hiep',
       '/authors/author',
     ]);
@@ -165,6 +187,9 @@ describe('listSitemapPages', () => {
       '/rankings/week',
       '/rankings/month',
       '/rankings/rising',
+      '/contests',
+      '/contests/mua-dong',
+      '/contests/mua-thu',
       '/tags/do-thi',
       '/tags/tien-hiep',
       '/authors/author',

@@ -1,6 +1,6 @@
-# Overnight 261006: đang chạy
-Cập nhật: 2026-10-06 15:33
-Đang làm: Q8 / phase-09
+# Overnight 261006: xong
+Cập nhật: 2026-10-06 16:37
+Đang làm: — (hàng đợi đã chạy hết)
 ## Đã xong
 - Q1 canvas /write + editor (artboard F-* trên https://claude.ai/artifact/X7w7oUBxruy6Y47oQ4HdAo), đặc tả ở plans/reports/design-261006-write-editor-screens-report.md
 - Q2 report brainstorm cuối: plans/reports/brainstorm-261006-ui-redesign-b-plus-final-report.md
@@ -28,6 +28,7 @@ Cập nhật: 2026-10-06 15:33
 - Q8 phase-06 dashboard tác giả → [x] checkbox 'Dashboard'
 - Q8 phase-07 huy hiệu + cột mốc
 - Q8 phase-08 truyện nổi bật do mod chọn
+- Q8 phase-09 cuộc thi theo chủ đề → [x] checkbox 'Huy hiệu/nổi bật/cuộc thi' (migration 0008). Giai đoạn 2 xong 9/9 phase
 
 ## Quyết định [auto] (sáng cần duyệt)
 - Q1: 8 quyết định [auto] trong design-261006-write-editor-screens-report.md
@@ -59,6 +60,7 @@ Cập nhật: 2026-10-06 15:33
 - Q8 p06: tổng lượt đọc cộng cả chương đã xoá/ẩn (lệch tổng bảng); ô 'người đọc' = cộng dồn người đọc duy nhất mỗi ngày 30 ngày (có chú thích); bỏ 3 ghi chú review nhỏ
 - Q8 p07: huy hiệu tính cả truyện 18+ → trang tác giả công khai có thể hiện mốc dù danh sách truyện trống (giữ hay chỉ tính truyện không 18+?); danh sách <ul aria-label='Huy hiệu'> dưới bio
 - Q8 p08: nhóm 'Đang trong thời gian nổi bật' trong trang mod liệt kê cả truyện bị ẩn/ngoài top 12; YAGNI: server vẫn nhận lượt nổi bật đã kết thúc/bắt đầu quá xa, tự chọn truyện mình chỉ báo FORBIDDEN chung
+- Q8 p09: lỗi API khi truyện không đủ điều kiện chỉ trả mã; rút bài chỉ cần đăng nhập; chọn hạng bằng nhóm nút; trạng thái cuộc thi tính ở shared. Câu hỏi: mod được đặt giờ bắt đầu về quá khứ (đang cho phép)?; cuộc thi đã có hạng có được mở lại (đang chặn)?
 
 ## Chặn / lỗi
 - Q3 (nhẹ): 'ck plan add-phase --after' lỗi afterId.toLowerCase; worker đổi tên phase bằng tay, 'ck plan validate' xác nhận
@@ -68,6 +70,7 @@ Cập nhật: 2026-10-06 15:33
 - Cần kiểm tay trên điện thoại thật: toolbar editor nằm đúng trên bàn phím ảo, con trỏ không bị che
 - Controller khởi động lại phiên lúc ~01:50 UTC (sau khi phase 11 xong); tiếp tục từ trạng thái trên đĩa, không mất việc
 - E2E chập chờn e2e/library.spec.ts:59 'continue reading' (đỏ 1 lần khi tải nặng, chạy lại xanh); chưa rõ nguyên nhân
+- Gate phase 9 lần 1 đỏ 50 e2e do server test cổng 3100 tự chết giữa lượt (ECONNREFUSED, không log lỗi); chạy lại nguyên gate xanh 110/110, không sửa code. Log lần đỏ: /tmp/nh-gate-phase9-run1.log
 
 ## Lệnh tiếp theo cho user
-- (đang chạy)
+- Duyệt các quyết định [auto] ở trên (đặc biệt: hero 'Mới đáng chú ý', muted chặn cả review, huy hiệu tính truyện 18+, thứ tự cuối chương sửa spec §8)

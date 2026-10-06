@@ -73,4 +73,7 @@ Cập nhật: 2026-10-06 16:37
 - Gate phase 9 lần 1 đỏ 50 e2e do server test cổng 3100 tự chết giữa lượt (ECONNREFUSED, không log lỗi); chạy lại nguyên gate xanh 110/110, không sửa code. Log lần đỏ: /tmp/nh-gate-phase9-run1.log
 
 ## Lệnh tiếp theo cho user
-- Duyệt các quyết định [auto] ở trên (đặc biệt: hero 'Mới đáng chú ý', muted chặn cả review, huy hiệu tính truyện 18+, thứ tự cuối chương sửa spec §8)
+- Duyệt các quyết định [auto] ở trên (đặc biệt: hero 'Mới đáng chú ý', muted chặn cả review, huy hiệu tính truyện 18+, thứ tự cuối chương sửa spec §8).
+- Xem tay trên điện thoại thật: toolbar editor trên bàn phím ảo; xem UI mới bằng `pnpm db:seed-demo && pnpm search:reindex` rồi web dev cổng 3200.
+- Dọn thư mục `.claude/` chưa track ở gốc repo (do subagent tạo).
+- Còn mở: Giai đoạn 1 hai checkbox hạ tầng (S3 MinIO thật; backup offsite trên VPS + thử restore), cần trước khi mở public. Giai đoạn 3 chỉ làm khi có yêu cầu.

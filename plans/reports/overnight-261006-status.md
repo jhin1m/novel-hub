@@ -1,6 +1,6 @@
 # Overnight 261006: đang chạy
-Cập nhật: 2026-10-06 07:34
-Đang làm: Q5 / phase-10
+Cập nhật: 2026-10-06 08:14
+Đang làm: Q5 / phase-11
 ## Đã xong
 - Q1 canvas /write + editor (artboard F-* trên https://claude.ai/artifact/X7w7oUBxruy6Y47oQ4HdAo), đặc tả ở plans/reports/design-261006-write-editor-screens-report.md
 - Q2 report brainstorm cuối: plans/reports/brainstorm-261006-ui-redesign-b-plus-final-report.md
@@ -15,6 +15,7 @@ Cập nhật: 2026-10-06 07:34
 - Q5 phase-07 trang đọc: sheet cài đặt + mục lục
 - Q5 phase-08 trang /write
 - Q5 phase-09 editor tách file (gate xanh sau 1 lần sửa: test int publishing-worker chập chờn, nay chờ đúng job id + drain hàng đợi, 12/12 xanh)
+- Q5 phase-10 editor giao diện
 
 ## Quyết định [auto] (sáng cần duyệt)
 - Q1: 8 quyết định [auto] trong design-261006-write-editor-screens-report.md
@@ -33,12 +34,14 @@ Cập nhật: 2026-10-06 07:34
 - Q5 p07: 1024–1279px cột chữ co lại khi panel mở (chọn Vừa/Rộng chỉ thấy khác sau khi đóng); tab chọn thêm viền + cao 40px; viền ô màu 'Sáng' mờ chưa sửa (quyết định thiết kế)
 - Q5 p08: giữ dải số liệu ở /write; nhãn 'Tổng quan truyện của bạn' đặt trên dl như plan
 - Fix test chập chờn: không sửa registerPublishingSchedulers (chạy job ngay khi đăng ký là đúng ở production)
+- Q5 p10: pill 'Có thay đổi chưa đăng' trên mobile xuống dòng dưới tên chương; sheet lịch sử cao 90% dưới lg; hộp thoại đăng mobile phóng to thay vì trượt lên
 
 ## Chặn / lỗi
 - Q3 (nhẹ): 'ck plan add-phase --after' lỗi afterId.toLowerCase; worker đổi tên phase bằng tay, 'ck plan validate' xác nhận
 - Thư mục .claude/ (settings.local.json, agent-memory của code-reviewer) do subagent tạo ở gốc repo, chưa track; controller không commit, sáng xem rồi xoá hoặc gitignore
 - Q5 p05 (controller): lần đầu đóng worker khi nó còn chạy e2e nền (chưa in RESULT) → e2e mồ côi cổng 3100 chạy chồng gate, test int publishing-worker đỏ. Đã kill tiến trình mồ côi, sửa controller chỉ đóng worker khi có RESULT, cook lại phase 5 trên working tree; không tính là lần sửa gate
 - (đã sửa) Test chập chờn publishing-worker.int.test.ts
+- Cần kiểm tay trên điện thoại thật: toolbar editor nằm đúng trên bàn phím ảo, con trỏ không bị che
 
 ## Lệnh tiếp theo cho user
 - (đang chạy)

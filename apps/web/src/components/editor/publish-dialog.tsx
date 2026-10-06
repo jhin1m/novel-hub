@@ -1,6 +1,6 @@
 import { type ChapterStatus, LIMITS } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
-import { type FormEvent, useId, useState } from 'react';
+import { type FormEvent, useState } from 'react';
 import { FormMessage } from '@/components/auth-ui';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,10 +13,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
+import { type PublishMode, PublishWhenFieldset } from './publish-when-fieldset';
+import { wordMeter } from './word-meter';
 
 const HOUR_MS = 3_600_000;
+
+/** A centred 520px dialog from `md` up; below that the same node becomes a bottom sheet. */
+const SHEET_ON_PHONE =
+  'max-w-none sm:max-w-none md:max-w-[520px] max-md:top-auto max-md:bottom-0 max-md:left-0 ' +
+  'max-md:max-h-[90dvh] max-md:translate-x-0 max-md:translate-y-0 max-md:overflow-y-auto ' +
+  'max-md:rounded-none max-md:rounded-t-[28px] max-md:border-x-0 max-md:border-b-0';
 const MINUTE_MS = 60_000;
 
 /**
@@ -43,6 +50,24 @@ export function wordCountInRange(words: number): boolean {
 
 const formatCount = (n: number) => n.toLocaleString('vi-VN');
 
+/** Decorative bar under the word-count sentence, which already says everything in words. */
+function WordMeter({ words, inRange }: { words: number; inRange: boolean }) {
+  const { ratio, minMarker } = wordMeter(words);
+  const pct = (n: number) => `${(n * 100).toFixed(2)}%`;
+  return (
+    <div aria-hidden className="relative h-1.5 w-full rounded-full bg-secondary">
+      <div
+        className={cn('h-full rounded-full', inRange ? 'bg-primary' : 'bg-destructive')}
+        style={{ width: pct(ratio) }}
+      />
+      <div
+        className="absolute -top-1 h-3.5 w-0.5 rounded-full bg-foreground/60"
+        style={{ left: pct(minMarker) }}
+      />
+    </div>
+  );
+}
+
 /**
  * Publish (or update) button with its confirmation dialog. A chapter that was never published can
  * also be scheduled. The work itself (pausing autosave, the request) belongs to the editor; the
@@ -65,9 +90,8 @@ export function PublishDialog({
   onPublish: () => Promise<boolean>;
   onSchedule: (at: Date) => Promise<boolean>;
 }) {
-  const id = useId();
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<'now' | 'later'>('now');
+  const [mode, setMode] = useState<PublishMode>('now');
   const [when, setWhen] = useState('');
   const [earliest, setEarliest] = useState('');
   const isUpdate = status === 'published';
@@ -102,7 +126,7 @@ export function PublishDialog({
           {isUpdate ? m.publish_update_button() : m.publish_button()}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className={SHEET_ON_PHONE}>
         <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-4">
           <DialogHeader>
             <DialogTitle>
@@ -119,46 +143,17 @@ export function PublishDialog({
               {isUpdate ? ` ${m.publish_update_description()}` : null}
             </DialogDescription>
           </DialogHeader>
+          <WordMeter words={words} inRange={inRange} />
 
           {isUpdate ? null : (
-            <fieldset className="flex flex-col gap-3" disabled={pending}>
-              <legend className="mb-2 text-sm font-medium">{m.publish_when_label()}</legend>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="radio"
-                  name={`${id}-mode`}
-                  checked={mode === 'now'}
-                  onChange={() => setMode('now')}
-                />
-                {m.publish_now()}
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="radio"
-                  name={`${id}-mode`}
-                  checked={mode === 'later'}
-                  onChange={() => setMode('later')}
-                />
-                {m.publish_later()}
-              </label>
-              {mode === 'later' ? (
-                <div className="flex flex-col gap-1 pl-6">
-                  <Label htmlFor={`${id}-when`}>{m.schedule_time_label()}</Label>
-                  <Input
-                    id={`${id}-when`}
-                    type="datetime-local"
-                    required
-                    value={when}
-                    min={earliest}
-                    onChange={(e) => setWhen(e.target.value)}
-                    aria-describedby={`${id}-when-hint`}
-                  />
-                  <p id={`${id}-when-hint`} className="text-sm text-muted-foreground">
-                    {m.schedule_time_hint()}
-                  </p>
-                </div>
-              ) : null}
-            </fieldset>
+            <PublishWhenFieldset
+              mode={mode}
+              onModeChange={setMode}
+              when={when}
+              onWhenChange={setWhen}
+              min={earliest}
+              disabled={pending}
+            />
           )}
 
           {error ? <FormMessage>{error}</FormMessage> : null}

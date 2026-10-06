@@ -58,7 +58,8 @@ export function ChapterMetaField({
           onChange={(e) => setValue(e.target.value)}
           onBlur={onBlur}
           className={cn(
-            'h-auto border-0 px-0 font-serif text-2xl font-semibold shadow-none md:text-2xl',
+            'h-auto rounded-none border-0 bg-transparent px-0 py-1 shadow-none',
+            'font-serif text-[26px] leading-tight font-bold md:text-[36px]',
             'focus-visible:ring-0 dark:bg-transparent',
           )}
         />
@@ -67,7 +68,7 @@ export function ChapterMetaField({
     );
   }
   return (
-    <div className="flex flex-col gap-2 border-t pt-6">
+    <div className="flex flex-col gap-2 rounded-[20px] bg-card p-5">
       <Label htmlFor={id}>{m.editor_author_note_label()}</Label>
       <Textarea
         id={id}
@@ -76,8 +77,9 @@ export function ChapterMetaField({
         onChange={(e) => setValue(e.target.value)}
         onBlur={onBlur}
         aria-describedby={`${id}-hint`}
+        className="min-h-24 bg-background"
       />
-      <p id={`${id}-hint`} className="text-sm text-muted-foreground">
+      <p id={`${id}-hint`} className="text-xs text-muted-foreground">
         {m.editor_author_note_hint()}
       </p>
       {error}

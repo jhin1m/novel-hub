@@ -1,7 +1,7 @@
 ---
 phase: 10
 title: "Editor chương: giao diện"
-status: pending
+status: completed
 priority: P1
 effort: "1d"
 dependencies: [9]
@@ -91,12 +91,12 @@ Không thêm unit test cho `wordCountInRange`/`toLocalInputValue` (hiện **chư
 
 ## Function/interface checklist
 
-- [ ] `saveStatusTone(status: SaveStatus): 'ok' | 'idle' | 'problem'` (export từ `save-status.tsx`)
-- [ ] `wordMeter(words: number, limits = LIMITS.chapterWords): { ratio: number; minMarker: number }` (export từ `publish-dialog.tsx`)
-- [ ] `useMediaQuery(query: string): boolean` (`useSyncExternalStore`, server snapshot `false`)
-- [ ] `useKeyboardOffset(): void`
-- [ ] `EditorHeader` props như phase 9 (thêm dùng `useMyStory` bên trong, không thêm prop)
-- [ ] (nếu tách) `PublishWhenFieldset({ mode, onModeChange, when, onWhenChange, min })`, `RevisionPreview({ publicId, number, revisionKey, pending, onRestoreClick, onBack })` — không prop `html`
+- [x] `saveStatusTone(status: SaveStatus): 'ok' | 'idle' | 'problem'` (export từ `save-status.tsx`)
+- [x] `wordMeter(words: number, limits = LIMITS.chapterWords): { ratio: number; minMarker: number }` (export từ `word-meter.ts`, xem Validation Log)
+- [x] `useMediaQuery(query: string): boolean` (`useSyncExternalStore`, server snapshot `false`)
+- [x] `useKeyboardOffset(): void`
+- [x] `EditorHeader` props như phase 9 (thêm dùng `useMyStory` bên trong, không thêm prop)
+- [x] (nếu tách) `PublishWhenFieldset({ mode, onModeChange, when, onWhenChange, min })`, `RevisionPreview({ publicId, number, revisionKey, pending, onRestoreClick, onBack })` — không prop `html`
 
 ## Dependency map
 
@@ -127,12 +127,12 @@ Không key mới (dùng lại `editor_back`, `editor_chapter_heading`, `editor_w
 
 ## Success Criteria
 
-- [ ] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
-- [ ] `lib/autosave.ts`, `lib/draft-mirror.ts`, `lib/chapters.ts`, 3 hook phase 9 không đổi (`git diff --stat`)
-- [ ] Số chữ, trạng thái lưu, badge chương, pill "Có thay đổi chưa đăng" mỗi thứ đúng một node trong DOM
-- [ ] `rg -l 'dangerouslySetInnerHTML' apps/web/src` đúng 3 file (`routes/__root.tsx`, `components/reader/chapter-content.tsx`, file xem trước revision); không component nào có prop `html: string` cho xem trước
-- [ ] `app.css` khối `hr` của editor/xem trước không đổi
-- [ ] Mọi file trong `components/editor/` ≤ 200 dòng; `lint-boundaries.test.ts` xanh
+- [x] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
+- [x] `lib/autosave.ts`, `lib/draft-mirror.ts`, `lib/chapters.ts`, 3 hook phase 9 không đổi (`git diff --stat`)
+- [x] Số chữ, trạng thái lưu, badge chương, pill "Có thay đổi chưa đăng" mỗi thứ đúng một node trong DOM
+- [x] `rg -l 'dangerouslySetInnerHTML' apps/web/src` đúng 3 file (`routes/__root.tsx`, `components/reader/chapter-content.tsx`, file xem trước revision); không component nào có prop `html: string` cho xem trước
+- [x] `app.css` khối `hr` của editor/xem trước không đổi
+- [x] Mọi file trong `components/editor/` ≤ 200 dòng; `lint-boundaries.test.ts` xanh
 
 ## Risk Assessment
 
@@ -150,3 +150,17 @@ Không key mới (dùng lại `editor_back`, `editor_chapter_heading`, `editor_w
 ## Ngoài phạm vi phase
 
 Không đổi API/autosave/mirror/hook phase 9; không dòng giải thích nút Đăng; không vẽ lại trang quản lý truyện; không thêm chuỗi i18n; không đổi kiểu ngắt cảnh; không xem trước bản nháp local.
+
+## Validation Log
+
+### Cook — 2026-10-06 (tự động qua đêm)
+
+- [auto] `wordMeter` nằm ở `components/editor/word-meter.ts`, test `word-meter.test.ts` (không phải `publish-dialog.tsx`/`publish-dialog.test.ts`). Lý do: `vitest.config.ts` gốc không có alias `@/`, `publish-dialog.tsx` kéo cả cây import `@/`; không đổi config. `save-status.tsx` đổi sang import tương đối vì cùng lý do.
+- [auto] `RevisionPreview` nhận `revision: RevisionSummary` (gồm `key`) thay vì `revisionKey`. Lý do: phần meta cần `createdAt`/`wordCount`; vẫn tự gọi `useRevisionPreview`, không có prop `html`.
+- [auto] `PublishWhenFieldset` thêm prop `disabled` (thay `fieldset disabled={pending}` cũ). Lý do: giữ khoá khi đang đăng.
+- [auto] Mobile: pill "Có thay đổi chưa đăng" chuyển xuống dòng meta dưới tên chương cùng số chữ (`MobileChapterMeta`), không ở header. Lý do: header 64px ở 390px cắt pill còn "C" (đã chụp ảnh kiểm); vẫn đúng một node.
+- [auto] Nút "Chế độ tập trung" chỉ còn icon (`icon-sm`, `aria-label` giữ). Lý do: spec "nút icon".
+- [auto] Thêm `scrollMargin`/`scrollThreshold` cho editor (trên 150px, dưới 80px) qua `chapterEditorProps()` ở `chapter-editor-helpers.ts`. Lý do: code review M1, con trỏ bị header/toolbar dính che khi gõ; chưa kiểm trên điện thoại thật.
+- [auto] `useKeyboardOffset` trả 0 khi pinch-zoom (`visualViewport.scale > 1`) và chỉ ghi biến CSS khi giá trị đổi. Lý do: code review L2.
+- [auto] Không đổi: sheet lịch sử cao cố định 90dvh dưới `lg`; dialog đăng trên mobile giữ hiệu ứng zoom thay vì trượt lên (review L3, L4, cosmetic, YAGNI).
+- Cần kiểm tay trên điện thoại thật: toolbar nổi trên bàn phím ảo, con trỏ không bị che.

@@ -2,7 +2,7 @@ import { canonicalPath } from '@novel-hub/shared';
 import { type Locator, type Page, expect, test } from '@playwright/test';
 import { gotoHydrated, signUpVerified } from './helpers/accounts';
 import { type PublishedStory, createPublishedStory } from './helpers/content';
-import { createStory } from './helpers/stories';
+import { createChapter, createStory } from './helpers/stories';
 
 const MAIN_NAV = { name: 'Điều hướng chính' } as const;
 const TABS = ['Trang chủ', 'Khám phá', 'Tủ truyện', 'Viết', 'Tôi'];
@@ -122,6 +122,29 @@ test.describe('mobile tab bar at 360px', () => {
     // A plain click: it fails if anything fixed sits over the link.
     await page.getByRole('contentinfo').getByRole('link', { name: 'Điều khoản' }).click();
     await expect(page).toHaveURL('/terms');
+  });
+});
+
+test.describe('chapter editor at 390px', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test('the toolbar sits at the bottom, "Đăng" shows, no horizontal scroll', async ({ page }) => {
+    await signUpVerified(page);
+    const publicId = await createStory(page, `Editor Hẹp ${Date.now().toString(36)}`);
+    const number = await createChapter(page, publicId);
+    await gotoHydrated(page, `/write/stories/${publicId}/chapters/${number}`);
+
+    const toolbar = page.getByRole('toolbar', { name: 'Định dạng' });
+    await expect(toolbar).toBeVisible();
+    const box = await toolbar.boundingBox();
+    if (!box) throw new Error('toolbar not laid out');
+    expect(box.y + box.height).toBeCloseTo(844, 0);
+    await expect(page.getByRole('button', { name: 'Đăng', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Lịch sử' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Về trang truyện' })).toBeVisible();
+    // The word count moves under the chapter title, once.
+    await expect(page.getByText('0 chữ', { exact: true })).toHaveCount(1);
+    await expectNoHorizontalScroll(page);
   });
 });
 

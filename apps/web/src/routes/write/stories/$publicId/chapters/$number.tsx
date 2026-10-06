@@ -36,7 +36,11 @@ function ChapterEditorPage() {
 function LoadedEditor({ publicId, number }: { publicId: string; number: number }) {
   const draft = useChapterDraft(publicId, number);
   if (draft.isPending) {
-    return <p className="px-4 py-10 text-center text-muted-foreground">{m.writer_loading()}</p>;
+    return (
+      <p className="min-h-dvh bg-background px-4 py-16 text-center text-sm text-muted-foreground">
+        {m.writer_loading()}
+      </p>
+    );
   }
   if (draft.isError) {
     const missing =
@@ -44,7 +48,9 @@ function LoadedEditor({ publicId, number }: { publicId: string; number: number }
     return missing ? (
       <Missing publicId={publicId} />
     ) : (
-      <FormMessage>{m.error_generic()}</FormMessage>
+      <div className="mx-auto max-w-[680px] px-4 py-16">
+        <FormMessage>{m.error_generic()}</FormMessage>
+      </div>
     );
   }
   return (
@@ -59,7 +65,7 @@ function LoadedEditor({ publicId, number }: { publicId: string; number: number }
 
 function Missing({ publicId }: { publicId: string }) {
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-4 px-4 py-10">
+    <div className="mx-auto flex max-w-[680px] flex-col items-start gap-4 px-4 py-16">
       <FormMessage>{m.chapter_not_found()}</FormMessage>
       <Link to="/write/stories/$publicId" params={{ publicId }} className={textLinkClass}>
         {m.editor_back()}

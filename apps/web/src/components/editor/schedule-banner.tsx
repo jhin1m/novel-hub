@@ -1,4 +1,5 @@
 import { m } from '@novel-hub/shared/messages';
+import { ClockIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const dateFormat = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' });
@@ -19,14 +20,29 @@ export function ScheduleBanner({
   onReschedule: () => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-md border bg-muted px-4 py-3 text-sm">
+    <div className="flex flex-wrap items-center gap-3 rounded-lg bg-warning-soft px-4 py-3 text-sm text-warning-foreground">
+      <ClockIcon aria-hidden className="size-4 shrink-0" />
       <p className="grow">
         {m.schedule_banner({ time: dateFormat.format(new Date(scheduledAt)) })}
       </p>
-      <Button type="button" size="sm" variant="outline" disabled={pending} onClick={onReschedule}>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        className="border-current"
+        disabled={pending}
+        onClick={onReschedule}
+      >
         {m.schedule_update()}
       </Button>
-      <Button type="button" size="sm" variant="outline" disabled={pending} onClick={onUnschedule}>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        className="border-current"
+        disabled={pending}
+        onClick={onUnschedule}
+      >
         {m.schedule_cancel()}
       </Button>
     </div>

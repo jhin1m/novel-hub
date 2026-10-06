@@ -16,7 +16,7 @@ export function DraftRestoreBanner({
   return (
     <div
       role="alert"
-      className="flex flex-wrap items-center gap-3 rounded-md border bg-muted px-4 py-3 text-sm"
+      className="flex flex-wrap items-center gap-3 rounded-lg bg-band px-4 py-3 text-sm"
     >
       <p className="grow">
         {m.editor_restore_message({ time: timeFormat.format(new Date(savedAt)) })}

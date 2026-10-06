@@ -1,4 +1,3 @@
-import { m } from '@novel-hub/shared/messages';
 import { editorExtensions } from '@novel-hub/shared/editor';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { useRef, useState } from 'react';
@@ -12,10 +11,16 @@ import {
   readMirror,
   sameDoc,
 } from '@/lib/draft-mirror';
-import { type MirrorWriter, wordsOf } from './chapter-editor-helpers';
+import { useMediaQuery } from '@/lib/use-media-query';
+import {
+  DESKTOP_QUERY,
+  type MirrorWriter,
+  chapterEditorProps,
+  wordsOf,
+} from './chapter-editor-helpers';
 import { ChapterMetaField } from './chapter-meta-field';
 import { EditorBanners } from './editor-banners';
-import { EditorHeader } from './editor-header';
+import { EditorHeader, MobileChapterMeta } from './editor-header';
 import { useFocusMode } from './focus-toggle';
 import { type PublishError, useChapterPublishing } from './use-chapter-publishing';
 import { useEditorAutosave } from './use-editor-autosave';
@@ -40,6 +45,7 @@ export function ChapterEditor({
   }));
   const [words, setWords] = useState(() => wordsOf(draft.doc));
   const [focus, setFocus] = useFocusMode();
+  const isDesktop = useMediaQuery(DESKTOP_QUERY);
   // The route renders only in the browser, so local storage is readable on the first render.
   const [restore, setRestore] = useState<DraftMirror | null>(() => {
     const saved = readMirror(browserStorage(), mirrorKey(publicId, number));
@@ -62,14 +68,7 @@ export function ChapterEditor({
     extensions: editorExtensions,
     content: draft.doc,
     immediatelyRender: false,
-    editorProps: {
-      attributes: {
-        class: 'chapter-editor-content',
-        'aria-label': m.editor_content_label(),
-        'aria-multiline': 'true',
-        role: 'textbox',
-      },
-    },
+    editorProps: chapterEditorProps(),
   });
 
   const { resolveConflict } = useEditorAutosave({
@@ -150,7 +149,7 @@ export function ChapterEditor({
         onRestore={restoreRevision}
       />
 
-      <main className="mx-auto flex w-full max-w-[70ch] grow flex-col gap-6 px-4 py-8">
+      <main className="mx-auto flex w-full max-w-[680px] grow flex-col gap-6 px-4 pt-8 pb-20 md:pb-16">
         <EditorBanners
           status={status}
           resolving={resolving}
@@ -166,16 +165,24 @@ export function ChapterEditor({
           onApplyRestore={applyRestore}
           onDiscardRestore={discardRestore}
         />
-
         {focus ? null : (
-          <ChapterMetaField
-            kind="title"
-            publicId={publicId}
-            number={number}
-            initial={draft.chapter.title}
-          />
+          <div className="flex flex-col gap-1">
+            <ChapterMetaField
+              kind="title"
+              publicId={publicId}
+              number={number}
+              initial={draft.chapter.title}
+            />
+            {/* On a phone the word count and the unpublished pill leave the header for this line. */}
+            {isDesktop ? null : (
+              <MobileChapterMeta words={words} showUnpublished={showUnpublished} />
+            )}
+          </div>
         )}
-        <EditorContent editor={editor} className="grow font-serif text-lg leading-[1.85]" />
+        <EditorContent
+          editor={editor}
+          className="grow font-serif text-[18px] leading-[1.85] md:text-[20px]"
+        />
         {focus ? null : (
           <ChapterMetaField
             kind="authorNote"

@@ -1,5 +1,5 @@
 import { m } from '@novel-hub/shared/messages';
-import { ArrowLeft, History } from 'lucide-react';
+import { History } from 'lucide-react';
 import { useState } from 'react';
 import { FormMessage } from '@/components/auth-ui';
 import { Badge } from '@/components/ui/badge';
@@ -21,12 +21,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { type RevisionSummary, useRevisionPreview, useRevisions } from '@/lib/chapters';
-
-const dateTimeFormat = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' });
-
-const formatWords = (count: number) =>
-  m.editor_word_count({ count: count.toLocaleString('vi-VN') });
+import { type RevisionSummary, useRevisions } from '@/lib/chapters';
+import { wordCountText } from './chapter-editor-helpers';
+import { RevisionPreview, revisionDateTime } from './revision-preview';
 
 /**
  * Published versions of a chapter: browse, preview, restore into the draft. The restore itself
@@ -48,7 +45,6 @@ export function RevisionHistorySheet({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const revisions = useRevisions(publicId, number, open);
-  const preview = useRevisionPreview(publicId, number, open ? selectedKey : null);
   const selected = revisions.data?.find((revision) => revision.key === selectedKey) ?? null;
 
   const onOpenChange = (next: boolean) => {
@@ -82,10 +78,10 @@ export function RevisionHistorySheet({
           title={m.revision_history()}
         >
           <History />
-          <span className="hidden sm:inline">{m.revision_history()}</span>
+          <span className="hidden md:inline">{m.revision_history()}</span>
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-full gap-0 sm:max-w-xl">
+      <SheetContent side="adaptive-right" className="gap-0 max-lg:h-[90dvh] lg:max-w-[560px]">
         <SheetHeader className="border-b">
           <SheetTitle>{m.revision_history_title()}</SheetTitle>
           <SheetDescription>{m.revision_history_description()}</SheetDescription>
@@ -93,47 +89,17 @@ export function RevisionHistorySheet({
         <div className="flex grow flex-col gap-4 overflow-y-auto p-4">
           {error ? <FormMessage>{error}</FormMessage> : null}
           {selected ? (
-            <>
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  disabled={pending}
-                  onClick={() => {
-                    setSelectedKey(null);
-                    setError(null);
-                  }}
-                >
-                  <ArrowLeft />
-                  {m.revision_back()}
-                </Button>
-                <span className="text-sm text-muted-foreground">
-                  {dateTimeFormat.format(new Date(selected.createdAt))} ·{' '}
-                  {formatWords(selected.wordCount)}
-                </span>
-                <Button
-                  type="button"
-                  size="sm"
-                  className="ml-auto"
-                  disabled={pending || !preview.data}
-                  onClick={() => setConfirming(true)}
-                >
-                  {m.revision_restore()}
-                </Button>
-              </div>
-              {preview.isPending ? (
-                <p className="text-sm text-muted-foreground">{m.revision_loading()}</p>
-              ) : preview.isError ? (
-                <FormMessage>{m.revision_load_failed()}</FormMessage>
-              ) : (
-                <article
-                  className="chapter-preview-content font-serif text-lg leading-[1.85]"
-                  // Rendered and sanitized on the server from the stored document.
-                  dangerouslySetInnerHTML={{ __html: preview.data.html }}
-                />
-              )}
-            </>
+            <RevisionPreview
+              publicId={publicId}
+              number={number}
+              revision={selected}
+              pending={pending}
+              onRestoreClick={() => setConfirming(true)}
+              onBack={() => {
+                setSelectedKey(null);
+                setError(null);
+              }}
+            />
           ) : revisions.isPending ? (
             <p className="text-sm text-muted-foreground">{m.revision_loading()}</p>
           ) : revisions.isError ? (
@@ -150,14 +116,16 @@ export function RevisionHistorySheet({
                       setSelectedKey(revision.key);
                       setError(null);
                     }}
-                    className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-md border px-3 py-2 text-left text-sm hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border bg-background px-4 py-3 text-left text-sm hover:bg-secondary focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
                   >
-                    <span className="font-medium">
-                      {dateTimeFormat.format(new Date(revision.createdAt))}
+                    <span className="font-bold">
+                      {revisionDateTime.format(new Date(revision.createdAt))}
                     </span>
-                    <span className="text-muted-foreground">{formatWords(revision.wordCount)}</span>
+                    <span className="text-muted-foreground">
+                      {wordCountText(revision.wordCount)}
+                    </span>
                     {revision.isPublished ? (
-                      <Badge variant="secondary" className="ml-auto">
+                      <Badge variant="default" className="ml-auto">
                         {m.revision_published_badge()}
                       </Badge>
                     ) : null}

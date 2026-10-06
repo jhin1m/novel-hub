@@ -1,6 +1,7 @@
 import { m } from '@novel-hub/shared/messages';
-import type { SaveStatus } from '@/lib/autosave';
-import { cn } from '@/lib/utils';
+// Relative imports: unit tests run without the `@/` alias.
+import type { SaveStatus } from '../../lib/autosave';
+import { cn } from '../../lib/utils';
 
 const timeFormat = new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
@@ -21,16 +22,44 @@ export function saveStatusText(status: SaveStatus): string {
   }
 }
 
+/** Colour family of the status dot: saved, waiting to save, or something the author must see. */
+export function saveStatusTone(status: SaveStatus): 'ok' | 'idle' | 'problem' {
+  switch (status.kind) {
+    case 'saved':
+      return 'ok';
+    case 'dirty':
+    case 'saving':
+      return 'idle';
+    case 'error':
+    case 'conflict':
+      return 'problem';
+  }
+}
+
+const DOT_CLASS = {
+  ok: 'bg-primary',
+  idle: 'bg-muted-foreground',
+  problem: 'bg-destructive',
+} as const;
+
 /** Small save indicator; a live region so screen readers hear saves and errors. */
 export function SaveStatusText({ status, className }: { status: SaveStatus; className?: string }) {
-  const problem = status.kind === 'error' || status.kind === 'conflict';
+  const tone = saveStatusTone(status);
   return (
     <p
       role="status"
       aria-live="polite"
       data-status={status.kind}
-      className={cn('text-xs', problem ? 'text-destructive' : 'text-muted-foreground', className)}
+      className={cn(
+        'truncate text-xs',
+        tone === 'problem' ? 'text-destructive' : 'text-muted-foreground',
+        className,
+      )}
     >
+      <span
+        aria-hidden
+        className={cn('mr-1.5 inline-block size-1.5 rounded-full align-middle', DOT_CLASS[tone])}
+      />
       {saveStatusText(status)}
     </p>
   );

@@ -48,14 +48,13 @@ export function FocusToggle({
     <Button
       type="button"
       variant="ghost"
-      size={focus ? 'icon-sm' : 'sm'}
+      size="icon-sm"
       aria-label={label}
       title={label}
       onClick={() => onChange(!focus)}
       className={focus ? 'opacity-40 hover:opacity-100 focus-visible:opacity-100' : undefined}
     >
       {focus ? <Minimize2 /> : <Maximize2 />}
-      {focus ? null : <span className="hidden sm:inline">{label}</span>}
     </Button>
   );
 }

@@ -34,6 +34,7 @@ Toàn bộ TypeScript, một monorepo, type dùng chung từ DB tới UI. Pin ve
 | Auth | Better Auth (adapter Drizzle) | Email/mật khẩu + OAuth Google; bắt buộc xác thực email trước khi đăng truyện, chương, bình luận |
 | Editor | Tiptap (ProseMirror) | Lưu JSON, render HTML khi đăng |
 | UI styling | Tailwind CSS v4 + CSS variables; shadcn/ui chỉ thêm component cần dùng | Tokens khai báo một nơi (mục 8); kèm dependency bắt buộc của shadcn (Radix, clsx, tailwind-merge, class-variance-authority) |
+| Font | `@fontsource-variable/plus-jakarta-sans` (giao diện), `@fontsource-variable/source-serif-4` (nội dung), `@fontsource-variable/literata`, `@fontsource-variable/noto-serif` (tuỳ chọn trang đọc) | Self-host, subset tiếng Việt; không gọi Google Fonts |
 | i18n | Paraglide JS (inlang) | Compile-time, type-safe, tree-shake; tiếng Việt mặc định |
 | Sanitize HTML | `sanitize-html` | Chạy phía server khi đăng chương; whitelist đúng các thẻ Tiptap sinh ra |
 | Xử lý ảnh | `sharp` | Resize, chuyển WebP |
@@ -243,14 +244,14 @@ Công cụ mod phải có trước khi mở cộng đồng.
 
 ## 8. Ngôn ngữ thiết kế và quy tắc UI
 
-Hướng "yên tĩnh, đậm chất sách", mobile-first. Khu đọc gần như vô hình, khu khám phá giống hiệu sách, khu viết tập trung. Không quảng cáo, không banner, không popup.
+Hướng "ấm, như một ứng dụng đọc", mobile-first. Khu đọc gần như vô hình, khu khám phá giống hiệu sách, khu viết tập trung. Không quảng cáo, không banner, không popup (hero trang chủ là truyện nổi bật mới, nhãn "Mới đáng chú ý", không phải banner).
 
 **Nền tảng chung**
 
-- Màu: tông trung tính ấm (trắng ngà, xám than) + một màu nhấn duy nhất (chốt khi dựng Design System). Khai báo bằng CSS variables, có light và dark; khu đọc thêm sepia.
-- Chữ: Literata cho nội dung truyện, Be Vietnam Pro cho giao diện. Self-host font, subset đủ tiếng Việt.
+- Màu: nền ngà ấm, nội dung đặt trên thẻ trắng, một màu nhấn duy nhất (mòng két) chỉ cho hành động chính, mục đang chọn, tiến độ, focus. Khai báo bằng CSS variables, light và dark theo hệ điều hành (không nút chuyển); khu đọc có 6 preset riêng.
+- Chữ: Source Serif 4 cho nội dung truyện, Plus Jakarta Sans cho giao diện. Self-host font, subset đủ tiếng Việt.
 - Nguồn chuẩn về thiết kế: `docs/design-guidelines.md` (ghi link Design System và mockup) và file tokens trong `apps/web/src/styles/`. Khi hai nơi lệch nhau, file tokens trong repo là chuẩn.
-- Nhiều khoảng trắng, bo góc nhỏ, bóng đổ tối thiểu, không gradient.
+- Nhiều khoảng trắng, bo góc mềm, nút và chip dạng viên, bóng đổ chỉ ở bìa nổi và lớp nổi (dialog), không gradient.
 - Không thêm thanh tiến trình chuyển trang ở đầu màn hình.
 - Không hiển thị ID nội bộ ra giao diện.
 - Mọi chuỗi hiển thị đi qua hệ thống i18n (tiếng Việt mặc định), không hardcode.
@@ -260,24 +261,25 @@ Hướng "yên tĩnh, đậm chất sách", mobile-first. Khu đọc gần như 
 - Cỡ chữ mặc định 18–20px trên mobile, line-height 1.75–1.9 (dấu tiếng Việt chồng nhiều tầng), độ dài dòng 60–75 ký tự trên desktop.
 - Bảng tuỳ chỉnh (mở từ nút cài đặt trên thanh điều hướng, xem trước ngay khi chỉnh):
   - Màu nền: bộ preset có sẵn (sáng, ngà, sepia, xanh dịu, xám tối, đen OLED); mỗi preset đi kèm màu chữ đạt tương phản WCAG AA. Không có bảng chọn màu tự do.
-  - Font: Literata, Noto Serif, Be Vietnam Pro, Inter (tối đa 4, đều self-host subset tiếng Việt). Font khác mặc định chỉ tải khi người đọc chọn.
+  - Font: Source Serif 4 (mặc định), Literata, Noto Serif, Plus Jakarta Sans (tối đa 4, đều self-host subset tiếng Việt). Font khác mặc định chỉ tải khi người đọc chọn.
   - Cỡ chữ 14–28px, khoảng cách dòng 1.5–2.2, khoảng cách đoạn, độ rộng cột chữ (hẹp/vừa/rộng, chỉ trên desktop), căn lề trái/đều.
   - Nút "Khôi phục mặc định".
 - Lưu cài đặt ở localStorage để script inline áp dụng trước khi vẽ trang; người đã đăng nhập đồng bộ thêm vào `users.preferences` để dùng chung trên nhiều thiết bị.
-- Thanh điều hướng ẩn khi cuộn xuống, hiện khi cuộn lên hoặc chạm giữa màn hình. Chỉ gồm: tên chương, chương trước/sau, mục lục, cài đặt.
-- Không chèn gì vào giữa nội dung. Cuối chương: nút chương tiếp thật to, lời nhắn tác giả, bình luận.
+- Thanh điều hướng ẩn khi cuộn xuống, hiện khi cuộn lên hoặc chạm giữa màn hình. Chỉ gồm: nút về trang truyện, tên truyện (nhỏ), tên chương, thanh tiến độ đọc mảnh, chương trước/sau, mục lục, cài đặt. Dưới 1024px: thanh trên + thanh dưới (Mục lục, Trước, Sau, Cài đặt); từ 1024px: thanh trên + rail dọc bên phải, bảng cài đặt là panel bên phải không che cột chữ.
+- Không chèn gì vào giữa nội dung. Cuối chương, theo thứ tự: lời nhắn tác giả, nút "Chương tiếp" thật to, "Chương trước"; bình luận thêm ở Giai đoạn 2.
 - Bàn phím: mũi tên trái/phải để chuyển chương.
 
 **Khu khám phá**
 
-- Bìa là trung tâm thị giác, tỷ lệ 2:3. Bìa mặc định dạng chữ (tên truyện, bút danh, màu nền sinh từ tag chính) phải đủ đẹp để một lưới toàn bìa mặc định vẫn chỉnh tề.
+- Bìa là trung tâm thị giác, tỷ lệ 2:3. Bìa mặc định dạng chữ (tên truyện, bút danh, màu nền sinh từ tag chính, gáy sách bên trái, chữ cái đầu lớn mờ) phải đủ đẹp để một lưới toàn bìa mặc định vẫn chỉnh tề.
 - Thẻ truyện hiện: tag chính, số chương, tổng số chữ, trạng thái, lần cập nhật gần nhất, nhãn có dùng AI nếu có.
-- Trang truyện: thông tin như tần suất ra chương và số chữ, trình bày gọn như một trang sách.
+- Trang chủ có hero truyện nổi bật, chip thể loại, dải nền tông trơn (`--band`) sau một khu; mobile có thanh tab dưới 5 mục (Trang chủ, Khám phá, Tủ truyện, Viết, Tôi).
+- Trang truyện: dải màu tag chính chứa bìa, tên, tác giả và hàng số liệu (số chương, số chữ, tần suất ra chương, lần cập nhật); nội dung đặt trên tấm nền chồng lên dải; mobile có nút đọc dính đáy.
 
 **Khu viết**
 
 - Editor nền trơn, không sidebar thừa, trạng thái lưu nhỏ ở góc, chế độ tập trung che mọi thứ trừ chữ.
-- Dashboard tác giả là nơi duy nhất được dày số liệu và biểu đồ.
+- Dashboard tác giả là nơi duy nhất được dày số liệu và biểu đồ. `/write` có dải số liệu nhỏ; dashboard đầy đủ ở Giai đoạn 2.
 
 ## 9. Quy ước code và cách làm việc cho Claude Code
 

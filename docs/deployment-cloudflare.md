@@ -87,6 +87,8 @@ pnpm cdn:purge -- --story <publicId>   # trang truyện + mọi chương từng 
 
 Cần đã đặt `CF_*`, `DATABASE_URL`, `APP_URL`; thiếu `CF_*` thì thoát mã 1. Trường hợp rộng hơn dùng "Purge Everything" trên dashboard.
 
+**Sau deploy (hoặc rollback) làm đổi asset:** khi bản mới đổi hash file CSS/JS/font (ví dụ đổi font, redesign giao diện), bấm **"Purge Everything" trên dashboard ngay sau khi web mới healthy** (`/api/v1/health` trả 200). Lý do: HTML trang chương/truyện đang cache `s-maxage=86400` (`PUBLIC_CACHE`, `apps/web/src/lib/cache-headers.ts`) vẫn trỏ tới asset cũ, mà asset cũ không còn trên origin → trang mất CSS, JS không hydrate, nút ở màn cảnh báo 18+ không chạy. Worker không tự purge trường hợp này (outbox chỉ có sự kiện nội dung). Không chắc bản mới có đổi asset hay không (so tên file trong `apps/web/.output/public/assets/` giữa hai bản) thì cứ purge.
+
 ## Cho phép index (`ALLOW_INDEXING`)
 
 Máy tìm kiếm chỉ được vào khi `ALLOW_INDEXING=true` (mặc định `false`, không phụ thuộc `NODE_ENV`):

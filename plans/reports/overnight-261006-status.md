@@ -1,6 +1,6 @@
 # Overnight 261006: đang chạy
-Cập nhật: 2026-10-06 08:54
-Đang làm: Q5 / phase-12
+Cập nhật: 2026-10-06 09:15
+Đang làm: Q6
 ## Đã xong
 - Q1 canvas /write + editor (artboard F-* trên https://claude.ai/artifact/X7w7oUBxruy6Y47oQ4HdAo), đặc tả ở plans/reports/design-261006-write-editor-screens-report.md
 - Q2 report brainstorm cuối: plans/reports/brainstorm-261006-ui-redesign-b-plus-final-report.md
@@ -17,6 +17,7 @@ Cập nhật: 2026-10-06 08:54
 - Q5 phase-09 editor tách file (gate xanh sau 1 lần sửa: test int publishing-worker chập chờn, nay chờ đúng job id + drain hàng đợi, 12/12 xanh)
 - Q5 phase-10 editor giao diện
 - Q5 phase-11 trang phụ
+- Q5 phase-12 tài liệu + spec §2/§8 (redesign B+ xong 12/12 phase)
 
 ## Quyết định [auto] (sáng cần duyệt)
 - Q1: 8 quyết định [auto] trong design-261006-write-editor-screens-report.md
@@ -37,6 +38,7 @@ Cập nhật: 2026-10-06 08:54
 - Fix test chập chờn: không sửa registerPublishingSchedulers (chạy job ngay khi đăng ký là đúng ở production)
 - Q5 p10: pill 'Có thay đổi chưa đăng' trên mobile xuống dòng dưới tên chương; sheet lịch sử cao 90% dưới lg; hộp thoại đăng mobile phóng to thay vì trượt lên
 - Q5 p11: form truyện + trang tĩnh cột 720px (plan ghi ~560px); /moderation rộng 1240px (reviewer: chữ dàn dài, cân nhắc 960px?); badge tag warning có nên dùng màu warning?; logic report-card tách sang report-actions.ts để test
+- Q5 p12: font serif còn dùng ngoài nội dung (giới thiệu truyện, tên chương trang đọc, trang điều khoản, chữ 'N' logo, mẫu 'Aa') ghi là ngoại lệ trong docs; câu hỏi: giữ serif cho logo + điều khoản?; việc sau: nút đóng dialog/sheet còn focus:ring-2 ring-offset-2, tên chương trang đọc luôn serif
 
 ## Chặn / lỗi
 - Q3 (nhẹ): 'ck plan add-phase --after' lỗi afterId.toLowerCase; worker đổi tên phase bằng tay, 'ck plan validate' xác nhận

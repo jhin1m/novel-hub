@@ -4,7 +4,7 @@ description: >-
   Đổi giao diện toàn site sang hướng B+ (ứng dụng đọc ấm): tokens, 2 font mới,
   component, layout có thanh tab mobile, trang chủ, trang truyện, trang đọc,
   /write, editor, trang phụ và tài liệu; không đổi API/DB/URL.
-status: in-progress
+status: completed
 priority: P1
 effort: 8d
 branch: overnight/261006
@@ -47,7 +47,7 @@ Plan riêng do user thêm (không ứng với checkbox nào ở mục 5 spec), c
 | 9 | [Editor chương: tách file](./phase-09-editor-tach-file.md) | Completed |
 | 10 | [Editor chương: giao diện](./phase-10-editor-giao-dien.md) | Completed |
 | 11 | [Trang phụ](./phase-11-trang-phu.md) | Completed |
-| 12 | [Tài liệu và spec](./phase-12-tai-lieu-va-spec.md) | Pending |
+| 12 | [Tài liệu và spec](./phase-12-tai-lieu-va-spec.md) | Completed |
 
 ## Dependencies
 

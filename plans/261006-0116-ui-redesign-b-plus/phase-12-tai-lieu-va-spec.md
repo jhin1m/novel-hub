@@ -1,7 +1,7 @@
 ---
 phase: 12
 title: "Tài liệu và spec"
-status: pending
+status: completed
 priority: P2
 effort: "0.25d"
 dependencies: [11]
@@ -73,10 +73,10 @@ Không test tự động mới (chỉ tài liệu).
 
 ## Function/interface checklist
 
-- [ ] Hàng "Font" §2 (4 package, vai trò từng font)
-- [ ] §8 sửa đủ 10 vị trí dòng ở Requirements
-- [ ] `design-guidelines.md`: nguồn canvas, token, khu đọc, font, chữ (chỉ phần đã có), bo góc, bóng, focus, bìa, component, layout, breakpoint
-- [ ] `deployment-cloudflare.md`: đoạn purge sau deploy/rollback đổi asset
+- [x] Hàng "Font" §2 (4 package, vai trò từng font)
+- [x] §8 sửa đủ 10 vị trí dòng ở Requirements
+- [x] `design-guidelines.md`: nguồn canvas, token, khu đọc, font, chữ (chỉ phần đã có), bo góc, bóng, focus, bìa, component, layout, breakpoint
+- [x] `deployment-cloudflare.md`: đoạn purge sau deploy/rollback đổi asset
 
 ## Dependency map
 
@@ -101,11 +101,11 @@ Không áp dụng (không đổi `vi.json`).
 
 ## Success Criteria
 
-- [ ] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
-- [ ] `docs/project-spec.md` có hàng "Font" ở §2 và §8 khớp brainstorm §7 + quyết định đã chốt (nhãn hero "Mới đáng chú ý", breakpoint `lg` khu đọc, ngắt cảnh giữ); không checkbox nào bị đổi
-- [ ] `docs/design-guidelines.md` không còn token/font cũ, có link canvas, không ghi thang chữ chưa hiện thực
-- [ ] `docs/deployment-cloudflare.md` có bước "Purge Everything sau deploy/rollback đổi asset"
-- [ ] `git diff --stat` chỉ có 3 file trong `docs/`
+- [x] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
+- [x] `docs/project-spec.md` có hàng "Font" ở §2 và §8 khớp brainstorm §7 + quyết định đã chốt (nhãn hero "Mới đáng chú ý", breakpoint `lg` khu đọc, ngắt cảnh giữ); không checkbox nào bị đổi
+- [x] `docs/design-guidelines.md` không còn token/font cũ, có link canvas, không ghi thang chữ chưa hiện thực
+- [x] `docs/deployment-cloudflare.md` có bước "Purge Everything sau deploy/rollback đổi asset"
+- [x] `git diff --stat` chỉ có 3 file trong `docs/`
 
 ## Risk Assessment
 

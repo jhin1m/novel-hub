@@ -52,3 +52,49 @@ export function useModerationAction() {
     onSettled: () => queryClient.invalidateQueries({ queryKey: reportsQueryKey }),
   });
 }
+
+/** Under `['me']` like the queue: moderator-only data leaves with the account. */
+export const featuredSlotsQueryKey = [...meQueryKey, 'moderation', 'featured'] as const;
+
+/** Featured slots for moderators: running, upcoming, recently ended. */
+export function useFeaturedSlots() {
+  return useQuery({
+    queryKey: featuredSlotsQueryKey,
+    retry: false,
+    queryFn: async () => {
+      const res = await api.api.v1.moderation.featured.$get();
+      if (!res.ok) throw await readApiError(res);
+      return res.json();
+    },
+  });
+}
+
+/** Features a story (a link or public id; times as ISO with offset), then reloads the list. */
+export function useCreateFeaturedSlot() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { story: string; startsAt: string; endsAt: string }) => {
+      const res = await api.api.v1.moderation.featured.$post({ json: input });
+      if (!res.ok) throw await readApiError(res);
+      return res.json();
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: featuredSlotsQueryKey }),
+  });
+}
+
+/** Ends a running slot now (`end`) or deletes one not started yet (`delete`), then reloads. */
+export function useChangeFeaturedSlot() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, change }: { id: string; change: 'end' | 'delete' }) => {
+      const slot = api.api.v1.moderation.featured[':id'];
+      const res =
+        change === 'end'
+          ? await slot.end.$post({ param: { id } })
+          : await slot.$delete({ param: { id } });
+      if (!res.ok) throw await readApiError(res);
+      return res.json();
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: featuredSlotsQueryKey }),
+  });
+}

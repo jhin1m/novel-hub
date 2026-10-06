@@ -168,6 +168,15 @@ export {
   listRecentlyUpdated,
 } from './catalog/home';
 export { catalogUrls } from './catalog/urls';
+export {
+  type FeaturedSlotError,
+  createFeaturedSlot,
+  deleteFeaturedSlot,
+  endFeaturedSlot,
+  featuredSlotState,
+} from './featured/featured-slots';
+export { listFeaturedSlotsForMods } from './featured/featured-slot-list';
+export { listActiveFeatured } from './featured/active-featured';
 export { type StoryList, listStories } from './catalog/lists';
 export {
   SEARCH_REQUEST_TIMEOUT_MS,

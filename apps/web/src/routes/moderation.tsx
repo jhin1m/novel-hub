@@ -8,6 +8,8 @@ import { m } from '@novel-hub/shared/messages';
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 import { textLinkClass } from '../components/auth-ui';
+import { FeaturedSlotForm } from '../components/moderation/featured-slot-form';
+import { FeaturedSlotList } from '../components/moderation/featured-slot-list';
 import { MergeTagForm } from '../components/moderation/merge-tag-form';
 import { TabLinks } from '../components/moderation/moderation-tab-links';
 import { REPORT_STATUS_LABELS, ReportCard } from '../components/moderation/report-card';
@@ -21,7 +23,13 @@ import { type MeUser, useMe } from '../lib/me';
 import { useReports } from '../lib/moderation';
 import { seo } from '../lib/seo';
 
-const MODERATION_TABS = ['reports', 'tags'] as const;
+const MODERATION_TABS = ['reports', 'tags', 'featured'] as const;
+
+const TAB_LABELS: Record<(typeof MODERATION_TABS)[number], () => string> = {
+  reports: m.moderation_tab_reports,
+  tags: m.moderation_tab_tags,
+  featured: m.moderation_tab_featured,
+};
 
 const moderationSearchSchema = reportListQuerySchema.extend({
   tab: z.enum(MODERATION_TABS).optional().catch(undefined),
@@ -32,7 +40,7 @@ export type ModerationSearch = z.output<typeof moderationSearchSchema>;
 /** `/moderation?…` with defaults left out of the URL. */
 function moderationHref(search: ModerationSearch): string {
   const params = new URLSearchParams();
-  if (search.tab === 'tags') params.set('tab', 'tags');
+  if (search.tab) params.set('tab', search.tab);
   if (search.status !== 'open') params.set('status', search.status);
   if (search.reason) params.set('reason', search.reason);
   if (search.page > 1) params.set('page', String(search.page));
@@ -80,13 +88,18 @@ function ModerationPage() {
               label={m.moderation_tabs()}
               items={MODERATION_TABS.map((tab) => ({
                 key: tab,
-                label: tab === 'reports' ? m.moderation_tab_reports() : m.moderation_tab_tags(),
-                search: { ...search, tab: tab === 'tags' ? tab : undefined, page: 1 },
+                label: TAB_LABELS[tab](),
+                search: { ...search, tab: tab === 'reports' ? undefined : tab, page: 1 },
                 current: (search.tab ?? 'reports') === tab,
               }))}
             />
             {search.tab === 'tags' ? (
               <MergeTagForm />
+            ) : search.tab === 'featured' ? (
+              <div className="flex flex-col gap-8">
+                <FeaturedSlotForm />
+                <FeaturedSlotList />
+              </div>
             ) : (
               <ReportQueue search={search} viewer={me.data} />
             )}

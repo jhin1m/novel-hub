@@ -68,6 +68,7 @@ const MESSAGES: Record<string, () => string> = {
   USER_MUTED: m.error_user_muted,
   COMMENT_PARAGRAPH_INVALID: m.error_comment_paragraph_invalid,
   RATING_HIDDEN: m.error_rating_hidden,
+  FEATURED_MATURE: m.error_featured_mature,
 };
 
 /** User-facing message for an API error code; anything unknown gets the generic message. */

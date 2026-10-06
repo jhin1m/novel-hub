@@ -5,9 +5,17 @@ import {
   publishChapter,
   saveDraft,
 } from '@novel-hub/core';
-import { contentEvents, reports, users } from '@novel-hub/db';
+import {
+  contentEvents,
+  featuredSlots,
+  moderationActions,
+  reports,
+  stories,
+  users,
+} from '@novel-hub/db';
 import { seedTags } from '@novel-hub/db/seed';
 import { createTestDb, truncateAll } from '@novel-hub/db/testing';
+import { eq } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../app';
 import { TEST_APP_URL, makeTestApiDeps } from '../testing';
@@ -152,5 +160,100 @@ describe('reports and moderation over HTTP', () => {
     );
     expect(unknown.status).toBe(404);
     expect((await db.select().from(users)).every((u) => u.status === 'active')).toBe(true);
+  });
+});
+
+describe('featured stories over HTTP', () => {
+  const DAY = 24 * 60 * 60 * 1000;
+  const iso = (offsetMs: number) => new Date(Date.now() + offsetMs).toISOString();
+  const send = (method: string) => ({
+    method,
+    headers: { origin: TEST_APP_URL },
+  });
+
+  it('a moderator features, lists, ends and deletes; readers get 403', async () => {
+    const publicId = await makeStory(await makeUser('author'));
+    const mod = await makeUser('mod_one', 'mod');
+    const reader = await makeUser('reader_one');
+
+    const body = {
+      story: `https://example.com/stories/truyen-${publicId}`,
+      startsAt: iso(-60_000),
+    };
+    const tooLong = await appAs(mod).request(
+      '/api/v1/moderation/featured',
+      post({ ...body, endsAt: iso(91 * DAY) }),
+    );
+    expect(tooLong.status).toBe(400);
+    const created = await appAs(mod).request(
+      '/api/v1/moderation/featured',
+      post({ ...body, endsAt: iso(7 * DAY) }),
+    );
+    expect(created.status).toBe(201);
+    const running = (await created.json()) as { id: string; state: string };
+    expect(running.state).toBe('active');
+    const later = await appAs(mod).request(
+      '/api/v1/moderation/featured',
+      post({ story: publicId, startsAt: iso(2 * DAY), endsAt: iso(3 * DAY) }),
+    );
+    const upcoming = (await later.json()) as { id: string };
+
+    const list = await appAs(mod).request('/api/v1/moderation/featured');
+    expect(list.status).toBe(200);
+    expect(await list.json()).toMatchObject({
+      active: [{ id: running.id, story: { publicId } }],
+      upcoming: [{ id: upcoming.id }],
+      ended: [],
+    });
+
+    expect((await appAs(reader).request('/api/v1/moderation/featured')).status).toBe(403);
+    expect(
+      (
+        await appAs(reader).request(
+          '/api/v1/moderation/featured',
+          post({ ...body, endsAt: iso(DAY) }),
+        )
+      ).status,
+    ).toBe(403);
+
+    const deleteRunning = await appAs(mod).request(
+      `/api/v1/moderation/featured/${running.id}`,
+      send('DELETE'),
+    );
+    expect(deleteRunning.status).toBe(409);
+    expect(await deleteRunning.json()).toMatchObject({ error: { code: 'INVALID_STATE' } });
+    const ended = await appAs(mod).request(
+      `/api/v1/moderation/featured/${running.id}/end`,
+      send('POST'),
+    );
+    expect(ended.status).toBe(200);
+    const deleted = await appAs(mod).request(
+      `/api/v1/moderation/featured/${upcoming.id}`,
+      send('DELETE'),
+    );
+    expect(deleted.status).toBe(200);
+    expect(
+      (await appAs(mod).request('/api/v1/moderation/featured/not-a-uuid', send('DELETE'))).status,
+    ).toBe(400);
+
+    expect(await db.select().from(featuredSlots)).toHaveLength(1);
+    expect((await db.select().from(moderationActions)).map((r) => r.action).sort()).toEqual([
+      'feature_story',
+      'feature_story',
+      'unfeature_story',
+      'unfeature_story',
+    ]);
+  });
+
+  it('refuses an 18+ story with 422 FEATURED_MATURE', async () => {
+    const publicId = await makeStory(await makeUser('author'));
+    await db.update(stories).set({ isMature: true }).where(eq(stories.publicId, publicId));
+    const mod = await makeUser('mod_one', 'mod');
+    const res = await appAs(mod).request(
+      '/api/v1/moderation/featured',
+      post({ story: publicId, startsAt: iso(0), endsAt: iso(DAY) }),
+    );
+    expect(res.status).toBe(422);
+    expect(await res.json()).toMatchObject({ error: { code: 'FEATURED_MATURE' } });
   });
 });

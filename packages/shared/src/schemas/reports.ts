@@ -48,7 +48,11 @@ export type ModerationAction = (typeof MODERATION_ACTIONS)[number];
  * Every `moderation_actions.action` value: the one-click actions plus moderator work that is logged
  * but not taken from the queue. Only the one-click ones are accepted as a request body.
  */
-export const MODERATION_LOG_ACTIONS = [...MODERATION_ACTIONS] as const;
+export const MODERATION_LOG_ACTIONS = [
+  ...MODERATION_ACTIONS,
+  'feature_story',
+  'unfeature_story',
+] as const;
 export type ModerationLogAction = (typeof MODERATION_LOG_ACTIONS)[number];
 
 /** Reports per page of the moderation queue. */

@@ -1,9 +1,10 @@
-import { canonicalPath } from '@novel-hub/shared';
+import { FEATURED_RULES, canonicalPath } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { createFileRoute } from '@tanstack/react-router';
 import { ClockIcon, SparklesIcon } from 'lucide-react';
 import { HomeContinueReading } from '../components/home/home-continue-reading';
 import { HomeFeaturedHero } from '../components/home/home-featured-hero';
+import { HomeFeaturedPicks } from '../components/home/home-featured-picks';
 import { HomeGenreChips } from '../components/home/home-genre-chips';
 import { SectionHeading } from '../components/section-heading';
 import { SiteLayout } from '../components/site-layout';
@@ -34,7 +35,7 @@ export const Route = createFileRoute('/')({
 });
 
 function HomePage() {
-  const { recent, notable, genres } = Route.useLoaderData();
+  const { recent, notable, picks, genres } = Route.useLoaderData();
   const recentList = useMatureAwareList(
     { stories: recent, page: 1, totalPages: 1 },
     { list: 'recent' },
@@ -47,6 +48,11 @@ function HomePage() {
   // is never an 18+ story; the band below leaves it out, whichever list it shows.
   const hero = pickHero(notable);
   const notableStories = withoutStory(notableList.stories, hero?.publicId ?? null);
+  // Never 18+ (refused when picked, filtered when read), so no client top-up as for the lists.
+  const pickedStories = withoutStory(picks, hero?.publicId ?? null).slice(
+    0,
+    FEATURED_RULES.homeLimit,
+  );
   return (
     <SiteLayout>
       <h1 className="sr-only">{m.app_name()}</h1>
@@ -57,6 +63,7 @@ function HomePage() {
             {hero ? <HomeFeaturedHero story={hero} /> : null}
             <HomeContinueReading />
           </div>
+          {pickedStories.length > 0 ? <HomeFeaturedPicks stories={pickedStories} /> : null}
           <section aria-labelledby="recent-title" className="flex flex-col gap-5">
             <SectionHeading
               id="recent-title"

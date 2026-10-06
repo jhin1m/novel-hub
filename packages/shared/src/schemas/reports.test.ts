@@ -89,6 +89,15 @@ describe('MODERATION_LOG_ACTIONS', () => {
   it('logs every one-click action', () => {
     for (const action of MODERATION_ACTIONS) expect(MODERATION_LOG_ACTIONS).toContain(action);
   });
+
+  it('keeps log-only actions out of the request body', () => {
+    for (const action of ['feature_story', 'unfeature_story']) {
+      expect(MODERATION_LOG_ACTIONS).toContain(action);
+      expect(moderationActionSchema.safeParse({ action, storyPublicId: 'k7m2xq9p' }).success).toBe(
+        false,
+      );
+    }
+  });
 });
 
 describe('reportListQuerySchema', () => {

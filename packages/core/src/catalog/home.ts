@@ -1,6 +1,7 @@
 import { type Db, stories, tags } from '@novel-hub/db';
-import { CATALOG_PAGE_SIZE, NOTABLE_LIMIT } from '@novel-hub/shared';
+import { CATALOG_PAGE_SIZE, FEATURED_RULES, NOTABLE_LIMIT } from '@novel-hub/shared';
 import { type SQL, and, desc, eq, gte, isNotNull, isNull, notInArray } from 'drizzle-orm';
+import { listActiveFeatured } from '../featured/active-featured';
 import { type TagView, compareTags } from '../stories/story-view';
 import {
   type ListOptions,
@@ -87,6 +88,11 @@ export async function listGenres(db: Db): Promise<TagView[]> {
 export interface HomePageData {
   recent: StoryCardDto[];
   notable: StoryCardDto[];
+  /**
+   * Moderator picks running now, one more than the block shows: the page drops the hero story from
+   * them and still has a full block.
+   */
+  picks: StoryCardDto[];
   genres: TagView[];
 }
 
@@ -94,13 +100,14 @@ export interface HomePageData {
 export async function getHomePage(db: Db, now: Date = new Date()): Promise<HomePageData> {
   const o = { includeMature: false };
   // Only the first page shows, so no total is counted.
-  const [recent, notable, genres] = await Promise.all([
+  const [recent, notable, picks, genres] = await Promise.all([
     selectStoryCards(db)
       .where(recentlyUpdatedWhere(o))
       .orderBy(...recentlyUpdatedOrder)
       .limit(CATALOG_PAGE_SIZE),
     listNotable(db, { ...o, now }),
+    listActiveFeatured(db, now, FEATURED_RULES.homeLimit + 1),
     listGenres(db),
   ]);
-  return { recent: recent.map(toStoryCard), notable, genres };
+  return { recent: recent.map(toStoryCard), notable, picks, genres };
 }

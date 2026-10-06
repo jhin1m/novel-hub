@@ -26,6 +26,7 @@ const CORE_ERROR_STATUS = {
   USER_MUTED: 403,
   COMMENT_PARAGRAPH_INVALID: 422,
   RATING_HIDDEN: 409,
+  FEATURED_MATURE: 422,
 } as const;
 
 export type CoreErrorCode = keyof typeof CORE_ERROR_STATUS;
@@ -55,6 +56,7 @@ const CORE_ERROR_MESSAGES: Record<CoreErrorCode, string> = {
   USER_MUTED: 'This account is muted and cannot post',
   COMMENT_PARAGRAPH_INVALID: 'The paragraph is not in the published chapter',
   RATING_HIDDEN: 'The rating was hidden by a moderator',
+  FEATURED_MATURE: 'An 18+ story cannot be featured',
 };
 
 export function coreError<C extends CoreErrorCode>(c: Context, code: C) {

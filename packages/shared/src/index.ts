@@ -228,6 +228,18 @@ export {
   type RateLimitRule,
 } from './rate-limits';
 export {
+  FEATURED_RULES,
+  FEATURED_SLOTS,
+  type FeaturedSlot,
+  type FeaturedSlotCreateInput,
+  type FeaturedSlotDto,
+  type FeaturedSlotListDto,
+  type FeaturedSlotState,
+  featuredSlotCreateSchema,
+  featuredSlotIdParamSchema,
+  parseStoryRef,
+} from './schemas/featured';
+export {
   MODERATION_ACTIONS,
   MODERATION_LOG_ACTIONS,
   type ModerationAction,

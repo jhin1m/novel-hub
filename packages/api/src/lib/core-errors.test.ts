@@ -26,6 +26,7 @@ const expected: [CoreErrorCode, number][] = [
   ['USER_MUTED', 403],
   ['COMMENT_PARAGRAPH_INVALID', 422],
   ['RATING_HIDDEN', 409],
+  ['FEATURED_MATURE', 422],
 ];
 
 describe('coreError', () => {

@@ -1,7 +1,7 @@
 ---
 phase: 8
 title: "Truyện nổi bật do mod chọn"
-status: pending
+status: completed
 priority: P2
 effort: "0.75d"
 dependencies: [7]
@@ -73,11 +73,11 @@ routes/index.tsx: <HomeFeaturedPicks stories={picks without hero} />
 
 ## Function / Interface Checklist
 
-- [ ] `createFeaturedSlot(tx, actor, input) → Result<FeaturedSlotDto, 'NOT_FOUND'|'FORBIDDEN'|'FEATURED_MATURE'>`
-- [ ] `endFeaturedSlot(tx, actor, id)`, `deleteFeaturedSlot(tx, actor, id)` → `'NOT_FOUND'|'INVALID_STATE'`
-- [ ] `listFeaturedSlotsForMods(db, now)`
-- [ ] `listActiveFeatured(db, now, limit = 12) → StoryCardDto[]`
-- [ ] `toVnDateTimeLocal(iso)`, `fromVnDateTimeLocal(value) → ISO` (thuần)
+- [x] `createFeaturedSlot(tx, actor, input) → Result<FeaturedSlotDto, 'NOT_FOUND'|'FORBIDDEN'|'FEATURED_MATURE'>`
+- [x] `endFeaturedSlot(tx, actor, id)`, `deleteFeaturedSlot(tx, actor, id)` → `'NOT_FOUND'|'INVALID_STATE'`
+- [x] `listFeaturedSlotsForMods(db, now)`
+- [x] `listActiveFeatured(db, now, limit = 12) → StoryCardDto[]`
+- [x] `toVnDateTimeLocal(iso)`, `fromVnDateTimeLocal(value) → ISO` (thuần)
 
 ## Implementation Steps
 
@@ -105,17 +105,17 @@ routes/index.tsx: <HomeFeaturedPicks stories={picks without hero} />
 
 ## Todo List
 
-- [ ] Shared + core + API
-- [ ] Tab mod
-- [ ] Khu trang chủ
-- [ ] i18n, docs, e2e, gate
+- [x] Shared + core + API
+- [x] Tab mod
+- [x] Khu trang chủ
+- [x] i18n, docs, e2e, gate
 
 ## Success Criteria
 
-- [ ] Gate xanh
-- [ ] Mod chọn/kết thúc/xoá slot, có log; hero trang chủ và spec §8 không đổi
-- [ ] Không truyện 18+ nào vào khu nổi bật
-- [ ] Checkbox 6 vẫn `[ ]`
+- [x] Gate xanh
+- [x] Mod chọn/kết thúc/xoá slot, có log; hero trang chủ và spec §8 không đổi
+- [x] Không truyện 18+ nào vào khu nổi bật
+- [x] Checkbox 6 vẫn `[ ]`
 
 ## Risk Assessment
 
@@ -125,6 +125,14 @@ routes/index.tsx: <HomeFeaturedPicks stories={picks without hero} />
 ## Security Considerations
 
 - Mọi route sau `requireRole('mod','admin')` + `canModerate` ở core.
+
+## Implementation Notes
+
+- [auto] `createFeaturedSlot` trả `{ id, state }` thay vì `FeaturedSlotDto` đầy đủ: UI chỉ reload danh sách sau khi tạo. Lý do: DTO danh sách cần thêm tác giả/tag chính cho bìa mặc định, không cần ở response tạo.
+- [auto] Core nhận `Db` và tự mở transaction (như `applyModerationAction`), không nhận `tx`.
+- [auto] `getHomePage` lấy 13 picks (`homeLimit + 1`); web bỏ truyện hero rồi cắt 12.
+- [auto] Nhóm danh sách mod "Đang trong thời gian nổi bật" (không phải "Đang hiển thị") kèm giải thích: nhóm theo thời gian, trang chủ còn lọc ẩn/18+/ban và top 12 (review M1).
+- Report: `reports/tester-261006-phase-08-featured-gate.md`, `reports/code-reviewer-261006-phase-08-featured-review.md`.
 
 ## Next Steps
 

@@ -46,6 +46,15 @@ Trang công khai được Cloudflare cache: sau khi ẩn hoặc khoá, worker pu
 - Người viết xoá đánh giá là xoá hẳn (khác bình luận, vốn xoá mềm): báo cáo đang chờ về nó hiện "không còn tồn tại", mod chỉ đóng báo cáo. Ẩn/khôi phục của mod không đổi thời điểm sửa của review (không đẩy lên đầu danh sách, không gắn nhãn "đã sửa").
 - Hàng chờ hiện số sao, 200 ký tự đầu của review (hoặc ghi chú "chỉ chấm điểm"), người viết và truyện. Khu đánh giá tải ở trình duyệt khi người đọc cuộn tới, không nằm trong HTML được cache, nên ẩn có tác dụng ngay.
 
+## Truyện nổi bật
+
+- Tab "Nổi bật" trong `/moderation`: dán link truyện (hoặc link chương, hoặc mã `public_id`), chọn thời gian bắt đầu/kết thúc theo giờ Việt Nam (mặc định từ bây giờ, 7 ngày; tối đa 90 ngày), bấm "Thêm vào nổi bật".
+- Khu "Truyện nổi bật" nằm ngay dưới hàng hero trang chủ: các truyện đang trong thời gian nổi bật, mới bắt đầu trước, mỗi truyện một lần, tối đa 12, bỏ truyện đang là hero. Khu ẩn khi không có truyện nào. Hero vẫn là "Mới đáng chú ý" tự động, mod không chọn hero.
+- Bị từ chối: truyện 18+, truyện của chính mình, truyện không công khai hoặc chưa có chương đã đăng. Truyện bị ẩn, tác giả bị khoá, hoặc đổi sang 18+ sau khi được chọn thì tự rời khu nổi bật (không cần kết thúc tay).
+- Danh sách chia ba nhóm: đang trong thời gian nổi bật ("Kết thúc ngay" đặt giờ kết thúc là bây giờ; nhóm này xếp theo thời gian, nên vẫn liệt kê truyện đã bị ẩn/khoá dù trang chủ không hiện), sắp tới ("Xoá" xoá hẳn), đã kết thúc trong 30 ngày gần nhất. Lượt đã bắt đầu không xoá được, chỉ kết thúc.
+- Mọi lần thêm, kết thúc, xoá ghi vào nhật ký kiểm duyệt (`feature_story` / `unfeature_story`, ghi chú là khoảng thời gian).
+- **Cache:** thêm hoặc kết thúc không purge CDN; trang chủ thật cập nhật sau tối đa 10 phút (tới khoảng 70 phút nếu Cloudflare còn phục vụ bản cũ trong lúc làm mới). Muốn có hiệu lực ngay thì purge URL trang chủ trên dashboard Cloudflare (`pnpm cdn:purge` hiện chỉ purge theo truyện). Ẩn truyện hay khoá tác giả thì trang chủ đã được purge sẵn.
+
 ## Lưu ý
 
 - **Mở khoá tài khoản:** tài khoản về trạng thái bình thường; nếu trước khi bị khoá họ đang bị cấm bình luận thì phải cấm lại. Chương hẹn giờ của tác giả đã quá giờ trong lúc bị khoá sẽ được đăng ngay ở lần quét kế tiếp (tối đa khoảng 60 giây), có thể đăng dồn nhiều chương.

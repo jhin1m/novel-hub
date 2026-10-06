@@ -34,7 +34,7 @@ Mỗi lần `/ck:cook` đúng một phase; checkbox spec chỉ đánh `[x]` ở 
 | 5 | [Xếp hạng](./phase-05-xep-hang.md) | 4 | Completed |
 | 6 | [Dashboard tác giả](./phase-06-dashboard-tac-gia.md) | 5 | Completed |
 | 7 | [Huy hiệu và cột mốc](./phase-07-huy-hieu-va-cot-moc.md) | 6 (phần 1/3) | Completed |
-| 8 | [Truyện nổi bật do mod chọn](./phase-08-truyen-noi-bat-do-mod-chon.md) | 6 (phần 2/3) | Pending |
+| 8 | [Truyện nổi bật do mod chọn](./phase-08-truyen-noi-bat-do-mod-chon.md) | 6 (phần 2/3) | Completed |
 | 9 | [Cuộc thi theo chủ đề](./phase-09-cuoc-thi-theo-chu-de.md) | 6 (đánh `[x]`) | Pending |
 
 Phụ thuộc tuyến tính 1 → 9. Cứng: 2 cần 1; 4 dùng policy cộng đồng, `normalizePlainText`, `MODERATION_LOG_ACTIONS` của 1; 5 và 7 dùng queue `maintenance` của 3; 6 dùng `follows` của 3 và `story_daily_stats` của 5; 7 dùng `follows` của 3; 8, 9 dùng từ vựng log của 1; 9 dùng `vn-datetime` của 8.

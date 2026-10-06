@@ -1,6 +1,7 @@
 import { m } from '@novel-hub/shared/messages';
 import { Link } from '@tanstack/react-router';
 import {
+  BellIcon,
   LibraryBigIcon,
   LogOutIcon,
   PenLineIcon,
@@ -74,6 +75,12 @@ export function SiteAccountMenu() {
           <Link to="/library" search={{ shelf: 'reading', page: 1 }}>
             <LibraryBigIcon aria-hidden />
             {m.layout_library()}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/notifications">
+            <BellIcon aria-hidden />
+            {m.notification_title()}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>

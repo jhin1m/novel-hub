@@ -4,6 +4,7 @@ import { m } from '@novel-hub/shared/messages';
 import type { CSSProperties } from 'react';
 import { coverColorVar } from '../../lib/cover-palette';
 import { formatInitial } from '../../lib/format';
+import { FollowButton } from '../follow/follow-button';
 import { ContinueReadingButton } from '../library/continue-reading-button';
 import { LibraryButton } from '../library/library-button';
 import { StoryCover } from '../story-cover';
@@ -139,6 +140,11 @@ export function StoryHero({
               </div>
             ) : null}
             <LibraryButton publicId={story.publicId} tone="on-cover" />
+            <FollowButton
+              target={{ kind: 'story', publicId: story.publicId }}
+              ownerUsername={story.author.username}
+              tone="on-cover"
+            />
           </div>
         </div>
       </div>

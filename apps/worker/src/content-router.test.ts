@@ -3,6 +3,7 @@ import { UnrecoverableError } from 'bullmq';
 import type { Redis } from 'ioredis';
 import { describe, expect, it, vi } from 'vitest';
 import { routeContentJob } from './content-router';
+import { routeMaintenanceJob } from './maintenance-worker';
 import { routePublishingJob } from './publishing-worker';
 
 const db = {} as Db;
@@ -24,6 +25,15 @@ describe('job routers', () => {
           queuePrefix: 'test',
         },
       ),
+    ).rejects.toBeInstanceOf(UnrecoverableError);
+    await expect(routeMaintenanceJob({ name: 'unknown' }, { db })).rejects.toBeInstanceOf(
+      UnrecoverableError,
+    );
+  });
+
+  it('never retries a notify-followers job without a chapter id', async () => {
+    await expect(
+      routeContentJob({ name: 'notify-followers', data: { chapterId: 'x' } }, contentDeps),
     ).rejects.toBeInstanceOf(UnrecoverableError);
   });
 

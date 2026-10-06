@@ -2,6 +2,7 @@ import { canonicalPath, usernameParamSchema } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { createFileRoute } from '@tanstack/react-router';
 import { BookOpenIcon } from 'lucide-react';
+import { FollowButton } from '../components/follow/follow-button';
 import { NotFoundPage } from '../components/not-found';
 import { PageShell, PageTitle } from '../components/page-shell';
 import { ReportButton } from '../components/report/report-button';
@@ -74,10 +75,13 @@ function AuthorPage() {
                 {author.bio}
               </p>
             ) : null}
-            <ReportButton
-              target={{ type: 'user', username: author.username }}
-              className="self-start"
-            />
+            <div className="flex flex-wrap items-center gap-2">
+              <FollowButton
+                target={{ kind: 'author', username: author.username }}
+                ownerUsername={author.username}
+              />
+              <ReportButton target={{ type: 'user', username: author.username }} />
+            </div>
           </div>
         </header>
         <section aria-labelledby="author-stories" className="flex flex-col gap-5">

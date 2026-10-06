@@ -4,11 +4,15 @@ import {
   type FingerprintChapterDeps,
   processFingerprintChapter,
 } from './processors/fingerprint-chapter';
+import { type NotifyFollowersDeps, processNotifyFollowers } from './processors/notify-followers';
 import { type PurgeUrlsDeps, processPurgeUrls } from './processors/purge-urls';
 import { type SearchSyncDeps, processSearchSync } from './processors/search-sync';
 
 /** Dependencies of `content` jobs. */
-export type ContentJobDeps = PurgeUrlsDeps & SearchSyncDeps & FingerprintChapterDeps;
+export type ContentJobDeps = PurgeUrlsDeps &
+  SearchSyncDeps &
+  FingerprintChapterDeps &
+  NotifyFollowersDeps;
 
 export type ContentJobRouter = (
   job: Pick<Job, 'name' | 'data'>,
@@ -28,6 +32,8 @@ export const routeContentJob: ContentJobRouter = (job, deps) => {
       return processSearchSync(job.data, deps);
     case CONTENT_JOBS.fingerprintChapter:
       return processFingerprintChapter(job.data, deps);
+    case CONTENT_JOBS.notifyFollowers:
+      return processNotifyFollowers(job.data, deps);
     default:
       return Promise.reject(new UnrecoverableError(`no processor for job "${job.name}"`));
   }

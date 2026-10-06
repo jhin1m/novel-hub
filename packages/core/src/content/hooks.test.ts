@@ -52,10 +52,15 @@ describe('jobsForChange', () => {
         (change.action === 'published' || change.action === 'updated')
           ? [{ name: 'fingerprint-chapter', data: { chapterId: change.chapterId } }]
           : [];
+      const notify =
+        change.entity === 'chapter' && change.action === 'published'
+          ? [{ name: 'notify-followers', data: { chapterId: change.chapterId } }]
+          : [];
       expect(jobs).toEqual([
         { name: 'purge-urls', data: change, opts: RETRY_OPTS },
         { name: 'search-sync', data: sync, opts: RETRY_OPTS },
         ...fingerprint,
+        ...notify,
       ]);
       for (const job of jobs) {
         expect(job).not.toHaveProperty('jobId');
@@ -98,5 +103,33 @@ describe('jobsForChange fingerprints', () => {
   it('never fingerprints story or user changes', () => {
     expect(fingerprintJobs({ entity: 'story', action: 'published', storyId: STORY })).toEqual([]);
     expect(fingerprintJobs({ entity: 'user', action: 'banned', userId: STORY })).toEqual([]);
+  });
+});
+
+describe('jobsForChange follower notifications', () => {
+  const chapter = {
+    entity: 'chapter',
+    storyId: STORY,
+    chapterId: CHAPTER,
+    chapterNumber: 1,
+  } as const;
+  const notifyJobs = (change: ContentChange) =>
+    jobsForChange(change).filter((job) => job.name === 'notify-followers');
+
+  it('notifies followers of a first publish, with default retries', () => {
+    const jobs = notifyJobs({ ...chapter, action: 'published', contentHash: 'abc' });
+    expect(jobs).toEqual([{ name: 'notify-followers', data: { chapterId: CHAPTER } }]);
+  });
+
+  it.each(['updated', 'deleted', 'hidden', 'restored'] as const)(
+    'does not notify for a %s chapter',
+    (action) => {
+      expect(notifyJobs({ ...chapter, action })).toEqual([]);
+    },
+  );
+
+  it('never notifies for story or user changes', () => {
+    expect(notifyJobs({ entity: 'story', action: 'published', storyId: STORY })).toEqual([]);
+    expect(notifyJobs({ entity: 'user', action: 'updated', userId: STORY })).toEqual([]);
   });
 });

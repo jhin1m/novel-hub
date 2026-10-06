@@ -8,6 +8,7 @@ import {
   primaryKey,
   smallint,
   text,
+  uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
 import { users } from './auth';
@@ -108,8 +109,24 @@ export const notifications = pgTable(
     payload: jsonb()
       .notNull()
       .default(sql`'{}'::jsonb`),
+    /**
+     * Groups notifications while unread (`story:{id}` for new chapters): a later event updates the
+     * unread row with the same key instead of adding one. `null` never groups.
+     */
+    dedupeKey: text(),
     readAt: timestamptz(),
     createdAt: createdAt(),
   },
-  (t) => [index('notifications_user_id_created_at_idx').on(t.userId, t.createdAt.desc())],
+  (t) => [
+    index('notifications_user_id_created_at_idx').on(t.userId, t.createdAt.desc()),
+    // The predicate must stay exactly `read_at IS NULL`: the fan-out's `ON CONFLICT … WHERE`
+    // repeats it, and Postgres only picks a partial index whose predicate it can match.
+    uniqueIndex('notifications_unread_dedupe_key')
+      .on(t.userId, t.dedupeKey)
+      .where(sql`${t.readAt} IS NULL`),
+    // The bell's unread count.
+    index('notifications_unread_idx')
+      .on(t.userId)
+      .where(sql`${t.readAt} IS NULL`),
+  ],
 );

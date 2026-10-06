@@ -260,3 +260,27 @@ export {
   listSitemapStories,
 } from './seo/sitemap';
 export { type SitemapEntry, renderRobots, renderSitemapIndex, renderUrlset } from './seo/xml';
+export {
+  type FollowError,
+  type FollowStatus,
+  followAuthor,
+  followStory,
+  getFollowStatus,
+  unfollowAuthor,
+  unfollowStory,
+} from './follows/follows';
+export { notifyFollowersOfChapter } from './notifications/notify-followers';
+export {
+  type NotificationViewer,
+  notificationViewer,
+  notificationVisibleWhere,
+} from './notifications/notification-visibility';
+export {
+  type ChapterPublishedNotificationDto,
+  type NotificationDto,
+  type NotificationPage,
+  listNotifications,
+} from './notifications/list-notifications';
+export { countUnreadNotifications } from './notifications/unread-count';
+export { markNotificationsRead } from './notifications/mark-read';
+export { PRUNE_BATCH_SIZE, pruneNotifications } from './notifications/prune-notifications';

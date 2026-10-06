@@ -541,5 +541,15 @@
   "comment_paragraph_tab_paragraphs": "Theo đoạn ({count})",
   "comment_paragraph_item_count": "{count} bình luận",
   "comment_paragraph_index_empty": "Các đoạn có bình luận không còn trong bản đang hiển thị. Hãy tải lại trang.",
-  "comment_paragraph_orphaned": "Bình luận về đoạn đã sửa"
+  "comment_paragraph_orphaned": "Bình luận về đoạn đã sửa",
+  "follow_button": "Theo dõi",
+  "notification_title": "Thông báo",
+  "notification_bell_unread": "Thông báo ({count} chưa đọc)",
+  "notification_unread": "Chưa đọc",
+  "notification_chapter_new": "{story} có chương mới: {chapter}",
+  "notification_chapter_titled": "Chương {number} – {title}",
+  "notification_chapters_new": "{story} có {count} chương mới",
+  "notification_empty": "Chưa có thông báo nào. Theo dõi truyện hoặc tác giả để nhận tin chương mới.",
+  "notification_mark_all_read": "Đánh dấu đã đọc tất cả",
+  "notification_sign_in": "Đăng nhập để xem thông báo chương mới của truyện và tác giả bạn theo dõi."
 }

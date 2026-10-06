@@ -13,7 +13,8 @@ export type RateLimitAction =
   | 'createChapter'
   | 'publishChapter'
   | 'report'
-  | 'comment';
+  | 'comment'
+  | 'follow';
 
 export interface Limit {
   max: number;
@@ -95,6 +96,15 @@ export const RATE_LIMITS: Readonly<Record<RateLimitAction, RateLimitRule>> = {
       newAccount: { max: 5, windowSec: 10 * MINUTE },
     },
     ip: { max: 60, windowSec: 10 * MINUTE },
+    onStoreError: 'open',
+  },
+  // Following is cheap and reversible; the limit only stops scripted follow/unfollow loops.
+  follow: {
+    user: {
+      normal: { max: 60, windowSec: 10 * MINUTE },
+      newAccount: { max: 60, windowSec: 10 * MINUTE },
+    },
+    ip: { max: 120, windowSec: 10 * MINUTE },
     onStoreError: 'open',
   },
 };

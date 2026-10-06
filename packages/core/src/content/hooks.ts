@@ -2,6 +2,7 @@ import {
   CONTENT_JOBS,
   type ContentJobName,
   type FingerprintChapterPayload,
+  type NotifyFollowersPayload,
   type SearchSyncPayload,
 } from '@novel-hub/shared';
 import type { JobsOptions } from 'bullmq';
@@ -82,12 +83,14 @@ const searchSync = (data: SearchSyncPayload): ContentJob => ({
 });
 
 /**
- * The jobs a change needs (CDN purge, search sync, duplicate check). Pure, so the mapping is unit
- * tested without Redis. Every change touches cached public pages, so every change purges; the job
- * carries the change itself and resolves URLs from the current state. Every change also resyncs
+ * The jobs a change needs (CDN purge, search sync, duplicate check, follower notifications).
+ * Pure, so the mapping is unit tested without Redis. Every change touches cached public pages, so
+ * every change purges; the job carries the change itself and resolves URLs from the current state.
+ * Every change also resyncs
  * search: a chapter moves its story's counters, a user change their name or ban. Chapter content
  * that went public (first publish or republish) is fingerprinted; a missed run is caught by the
- * hourly backfill, so the default retries are enough.
+ * hourly backfill, so the default retries are enough. A chapter's first publish notifies the
+ * followers of its story and author.
  */
 export function jobsForChange(change: ContentChange): ContentJob[] {
   const purge: ContentJob = { name: CONTENT_JOBS.purgeUrls, data: change, opts: OUTAGE_RETRY };
@@ -99,6 +102,11 @@ export function jobsForChange(change: ContentChange): ContentJob[] {
       if (change.action === 'published' || change.action === 'updated') {
         const data: FingerprintChapterPayload = { chapterId: change.chapterId };
         jobs.push({ name: CONTENT_JOBS.fingerprintChapter, data });
+      }
+      // `published` is only recorded on a chapter's first publish (now or at its scheduled time).
+      if (change.action === 'published') {
+        const data: NotifyFollowersPayload = { chapterId: change.chapterId };
+        jobs.push({ name: CONTENT_JOBS.notifyFollowers, data });
       }
       return jobs;
     }

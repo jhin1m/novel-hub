@@ -5,10 +5,12 @@ import { authRateLimit } from './middleware/auth-rate-limit';
 import { csrf } from './middleware/csrf';
 import { noStore } from './middleware/no-store';
 import { createCommentRoutes } from './routes/comments';
+import { createFollowRoutes } from './routes/follows';
 import { createHealthRoutes } from './routes/health';
 import { createLibraryRoutes } from './routes/library';
 import { createMeRoutes } from './routes/me';
 import { createModerationRoutes } from './routes/moderation';
+import { createNotificationRoutes } from './routes/notifications';
 import { createReadingRoutes } from './routes/reading';
 import { createReportRoutes } from './routes/reports';
 import { createSearchRoutes } from './routes/search';
@@ -20,10 +22,12 @@ function createV1Routes(deps: ApiDeps) {
   return new Hono()
     .use(csrf(deps.appUrl))
     .route('/comments', createCommentRoutes(deps))
+    .route('/follows', createFollowRoutes(deps))
     .route('/health', createHealthRoutes(deps))
     .route('/library', createLibraryRoutes(deps))
     .route('/me', createMeRoutes(deps))
     .route('/moderation', createModerationRoutes(deps))
+    .route('/notifications', createNotificationRoutes(deps))
     .route('/reading', createReadingRoutes(deps))
     .route('/reports', createReportRoutes(deps))
     .route('/search', createSearchRoutes(deps))

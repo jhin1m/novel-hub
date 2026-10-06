@@ -10,6 +10,8 @@ export const QUEUES = {
   content: 'content',
   /** Internal periodic jobs only, so slow I/O on `content` never delays scheduled publishing. */
   publishing: 'publishing',
+  /** Heavy periodic housekeeping (pruning, recomputing), one job at a time, off `publishing`. */
+  maintenance: 'maintenance',
 } as const;
 
 /** Repeatable jobs on the `publishing` queue. BullMQ forbids `:` in scheduler ids, hence `-`. */
@@ -24,6 +26,14 @@ export const PUBLISHING_JOBS = {
 
 export type PublishingJobName = (typeof PUBLISHING_JOBS)[keyof typeof PUBLISHING_JOBS];
 
+/** Repeatable jobs on the `maintenance` queue. */
+export const MAINTENANCE_JOBS = {
+  /** Deletes old notifications in batches. */
+  pruneNotifications: 'prune-notifications',
+} as const;
+
+export type MaintenanceJobName = (typeof MAINTENANCE_JOBS)[keyof typeof MAINTENANCE_JOBS];
+
 /**
  * Jobs on the `content` queue, each with its own payload schema. Payloads carry ids only and
  * every processor re-reads the current state, because the outbox delivers at least once.
@@ -35,6 +45,8 @@ export const CONTENT_JOBS = {
   searchSync: 'search-sync',
   /** Fingerprints a published chapter and files an automatic report when it copies another author. */
   fingerprintChapter: 'fingerprint-chapter',
+  /** Creates or bumps the "new chapter" notification of the followers of a chapter's story and author. */
+  notifyFollowers: 'notify-followers',
 } as const;
 
 export type ContentJobName = (typeof CONTENT_JOBS)[keyof typeof CONTENT_JOBS];
@@ -42,6 +54,10 @@ export type ContentJobName = (typeof CONTENT_JOBS)[keyof typeof CONTENT_JOBS];
 export const fingerprintChapterPayload = z.object({ chapterId: z.uuid() });
 
 export type FingerprintChapterPayload = z.infer<typeof fingerprintChapterPayload>;
+
+export const notifyFollowersPayload = z.object({ chapterId: z.uuid() });
+
+export type NotifyFollowersPayload = z.infer<typeof notifyFollowersPayload>;
 
 /**
  * `reports.detail` of an automatic duplicate report. Internal ids only: the moderation API maps

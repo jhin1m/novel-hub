@@ -26,6 +26,9 @@ export {
   type DuplicateReportDetail,
   type FingerprintChapterPayload,
   MAIL_JOBS,
+  MAINTENANCE_JOBS,
+  type MaintenanceJobName,
+  type NotifyFollowersPayload,
   type MailJobName,
   PUBLISHING_JOBS,
   type PublishingJobName,
@@ -33,8 +36,32 @@ export {
   type SendAuthEmailPayload,
   duplicateReportDetail,
   fingerprintChapterPayload,
+  notifyFollowersPayload,
   sendAuthEmailPayload,
 } from './queues';
+export {
+  FOLLOW_TARGET_TYPES,
+  type FollowStatusQuery,
+  type FollowTargetType,
+  followAuthorParamSchema,
+  followStatusQuerySchema,
+} from './schemas/follow';
+export {
+  type ChapterPublishedPayload,
+  type MarkNotificationsReadInput,
+  NOTIFICATIONS_PAGE_SIZE,
+  NOTIFICATION_CHAPTER_IDS_MAX,
+  NOTIFICATION_READ_IDS_MAX,
+  NOTIFICATION_TYPES,
+  type NotificationType,
+  type StoredNotification,
+  UNREAD_BADGE_MAX,
+  chapterPublishedPayload,
+  markNotificationsReadSchema,
+  notificationCursorSchema,
+  notificationListQuerySchema,
+  parseNotification,
+} from './schemas/notification';
 export { COVER_MIME_TYPES, DEDUPE, LIMITS } from './limits';
 export { parseStoryKey, storyKey } from './story-key';
 export { coverImageUrl } from './cover';

@@ -21,12 +21,16 @@ import { createContentWorker } from './content-worker';
 import { workerEnvSchema } from './env';
 import { createMailWorker } from './mail-worker';
 import {
+  createMaintenanceQueue,
+  createMaintenanceWorker,
+  registerMaintenanceSchedulers,
+} from './maintenance-worker';
+import {
   type SearchWriter,
   applySearchSettingsAtBoot,
   createSearchWriter,
 } from './processors/search-sync';
 import {
-  type PublishingQueue,
   createPublishingQueue,
   createPublishingWorker,
   registerPublishingSchedulers,
@@ -39,16 +43,16 @@ const SHUTDOWN_TIMEOUT_MS = 30_000;
 const SCHEDULER_RETRY_MS = 30_000;
 
 /**
- * Registers the periodic jobs without holding up the boot; Redis being briefly unavailable only
- * delays the first sweep, it never leaves the worker without one.
+ * Registers a queue's periodic jobs without holding up the boot; Redis being briefly unavailable
+ * only delays the first run, it never leaves the worker without one.
  */
-function registerSchedulersInBackground(queue: PublishingQueue): void {
-  registerPublishingSchedulers(queue).catch((err: unknown) => {
+function registerSchedulersInBackground(label: string, register: () => Promise<void>): void {
+  register().catch((err: unknown) => {
     console.error(
-      '[worker] could not register publishing schedulers, retrying:',
+      `[worker] could not register ${label} schedulers, retrying:`,
       err instanceof Error ? err.message : err,
     );
-    setTimeout(() => registerSchedulersInBackground(queue), SCHEDULER_RETRY_MS).unref();
+    setTimeout(() => registerSchedulersInBackground(label, register), SCHEDULER_RETRY_MS).unref();
   });
 }
 
@@ -71,7 +75,7 @@ function main(): void {
   const cdn = createCdnPurger(cdnConfigFromEnv(loadOptionalEnv(cdnEnvSchema, process.env, 'cdn')));
   // Same rule for search: production requires the master key, dev without it skips search jobs.
   const search = searchWriterFromEnv(env.QUEUE_PREFIX);
-  // Small pool: one sweep and one drain at a time, plus a few content jobs.
+  // Small pool: one sweep and one drain at a time, plus a few content jobs and one maintenance job.
   const { db, pool } = createDb(env.DATABASE_URL, { max: 5 });
   const connection = createWorkerConnection(env.REDIS_URL);
   // Queues use a connection without an offline queue: a refused `addBulk` leaves outbox events
@@ -79,6 +83,7 @@ function main(): void {
   const producer = createProducerConnection(env.REDIS_URL);
   const contentQueue = createContentQueue(producer, env.QUEUE_PREFIX);
   const publishingQueue = createPublishingQueue(producer, env.QUEUE_PREFIX);
+  const maintenanceQueue = createMaintenanceQueue(producer, env.QUEUE_PREFIX);
   const statsRedis = createWorkerConnection(env.REDIS_URL);
   logRedisErrors(statsRedis, '[redis:stats]');
 
@@ -95,7 +100,11 @@ function main(): void {
     search,
   });
   const mailWorker = createMailWorker(connection, env.QUEUE_PREFIX, { mailer });
-  registerSchedulersInBackground(publishingQueue);
+  const maintenanceWorker = createMaintenanceWorker(connection, env.QUEUE_PREFIX, { db });
+  registerSchedulersInBackground('publishing', () => registerPublishingSchedulers(publishingQueue));
+  registerSchedulersInBackground('maintenance', () =>
+    registerMaintenanceSchedulers(maintenanceQueue),
+  );
   // In the background: a slow or down Meilisearch never holds up the other jobs.
   void applySearchSettingsAtBoot(search);
 
@@ -105,8 +114,10 @@ function main(): void {
       () => publishingWorker.close(),
       () => contentWorker.close(),
       () => mailWorker.close(),
+      () => maintenanceWorker.close(),
       () => contentQueue.close(),
       () => publishingQueue.close(),
+      () => maintenanceQueue.close(),
       () => pool.end(),
       () => Promise.resolve(producer.disconnect()),
       () => Promise.resolve(statsRedis.disconnect()),

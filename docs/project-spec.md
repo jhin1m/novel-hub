@@ -169,7 +169,7 @@ Làm tuần tự; mỗi mục chỉ coi là xong khi đạt tiêu chí và có t
 ### Giai đoạn 2: Cộng đồng
 
 - [x] Bình luận chương (2 cấp), sau đó bình luận theo đoạn.
-- [ ] Theo dõi truyện và tác giả; thông báo trong app khi có chương mới.
+- [x] Theo dõi truyện và tác giả; thông báo trong app khi có chương mới.
 - [ ] Đánh giá và review truyện.
 - [ ] Xếp hạng ngày, tuần, tháng; xếp hạng theo tốc độ tăng trưởng.
 - [ ] Dashboard tác giả: lượt đọc theo chương, tỷ lệ bỏ dở theo chương, lượt theo dõi mới.

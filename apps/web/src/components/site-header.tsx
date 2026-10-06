@@ -2,6 +2,7 @@ import { SEARCH_QUERY_MAX_LENGTH } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { Link, useRouterState } from '@tanstack/react-router';
 import { LibraryBigIcon, PenLineIcon, SearchIcon } from 'lucide-react';
+import { NotificationBell } from '@/components/notifications/notification-bell';
 import { SiteAccountMenu } from '@/components/site-account-menu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,6 +46,7 @@ export function SiteHeader() {
             </a>
           </Button>
           <HeaderNav active={active} />
+          <NotificationBell />
           <SiteAccountMenu />
         </div>
       </div>

@@ -52,6 +52,7 @@ URL và tên file route cùng là tiếng Anh, vì TanStack Router sinh URL từ
 | Tag | `/tags/{tagSlug}` | `tags.$tagSlug.tsx` |
 | Tìm kiếm | `/search?q=...` | `search.tsx` |
 | Tủ truyện | `/library` | `library.tsx` |
+| Thông báo | `/notifications` | `notifications.tsx` |
 | Cài đặt | `/settings` | `settings.tsx` |
 | Khu viết | `/write`, `/write/stories/new`, `/write/stories/{publicId}`, `/write/stories/{publicId}/chapters/{number}` | `write/...` |
 | Hàng chờ mod | `/moderation` | `moderation.tsx` |

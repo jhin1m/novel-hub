@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Theo dõi và thông báo"
-status: pending
+status: completed
 priority: P1
 effort: "2d"
 dependencies: [2]
@@ -100,13 +100,13 @@ Web: FollowButton (story hero, author header) ── /api/v1/follows/*
 
 ## Function / Interface Checklist
 
-- [ ] `followStory(db, user, publicId)`, `unfollowStory(...)`, `followAuthor(db, user, username)`, `unfollowAuthor(...)` → `Result<void, 'NOT_FOUND'|'FORBIDDEN'>`
-- [ ] `getFollowStatus(db, userId, {storyPublicId?, username?})`
-- [ ] `notifyFollowersOfChapter(db, chapterId) → Promise<{ affected: number }>` (idempotent theo chapterId)
-- [ ] `notificationVisibleWhere(viewer: {id, showMature})` — SQL dùng chung cho list và count
-- [ ] `listNotifications(db, userId, cursor)`, `countUnreadNotifications(db, userId)`, `markNotificationsRead(db, userId, {ids}|{all})`, `pruneNotifications(db, olderThanDays = 90)`
-- [ ] `jobsForChange` trả thêm `notify-followers` cho `chapter/published` (không cho `updated`, `restored`)
-- [ ] Route: `PUT|DELETE /follows/stories/:publicId`, `PUT|DELETE /follows/authors/:username`, `GET /follows/status`, `GET /notifications`, `GET /notifications/unread-count`, `POST /notifications/read`
+- [x] `followStory(db, user, publicId)`, `unfollowStory(...)`, `followAuthor(db, user, username)`, `unfollowAuthor(...)` → `Result<void, 'NOT_FOUND'|'FORBIDDEN'>`
+- [x] `getFollowStatus(db, userId, {storyPublicId?, username?})`
+- [x] `notifyFollowersOfChapter(db, chapterId) → Promise<{ affected: number }>` (idempotent theo chapterId)
+- [x] `notificationVisibleWhere(viewer: {id, showMature})` — SQL dùng chung cho list và count
+- [x] `listNotifications(db, userId, cursor)`, `countUnreadNotifications(db, userId)`, `markNotificationsRead(db, userId, {ids}|{all})`, `pruneNotifications(db, olderThanDays = 90)`
+- [x] `jobsForChange` trả thêm `notify-followers` cho `chapter/published` (không cho `updated`, `restored`)
+- [x] Route: `PUT|DELETE /follows/stories/:publicId`, `PUT|DELETE /follows/authors/:username`, `GET /follows/status`, `GET /notifications`, `GET /notifications/unread-count`, `POST /notifications/read`
 
 ## Implementation Steps
 
@@ -137,19 +137,31 @@ Web: FollowButton (story hero, author header) ── /api/v1/follows/*
 
 ## Todo List
 
-- [ ] Shared + migration
-- [ ] Core follows + notifications
-- [ ] Outbox job + worker + scheduler
-- [ ] API
-- [ ] UI nút theo dõi, chuông, trang thông báo
-- [ ] i18n, docs, e2e, gate, `[x]` checkbox 2
+- [x] Shared + migration
+- [x] Core follows + notifications
+- [x] Outbox job + worker + scheduler
+- [x] API
+- [x] UI nút theo dõi, chuông, trang thông báo
+- [x] i18n, docs, e2e, gate, `[x]` checkbox 2
 
 ## Success Criteria
 
-- [ ] Gate xanh
-- [ ] Chương đăng (ngay hoặc hẹn giờ) tạo/cập nhật đúng một thông báo chưa đọc mỗi (follower, truyện); chạy lại job không nhân đôi
-- [ ] Chuông/badge/trang thông báo hoạt động; HTML công khai không đổi theo người xem
-- [ ] Checkbox 2 spec `[x]`
+- [x] Gate xanh
+- [x] Chương đăng (ngay hoặc hẹn giờ) tạo/cập nhật đúng một thông báo chưa đọc mỗi (follower, truyện); chạy lại job không nhân đôi
+- [x] Chuông/badge/trang thông báo hoạt động; HTML công khai không đổi theo người xem
+- [x] Checkbox 2 spec `[x]`
+
+## Implementation Log
+
+Cook 2026-10-06 (tự động qua đêm). Gate xanh: typecheck, lint, format, unit 739, int 351, e2e 99 (`reports/tester-261006-follows-notifications-gate-report.md`). Review: `reports/code-reviewer-261006-follows-notifications-review-report.md` (M1, L1, L2, L5 đã sửa).
+
+- [auto] Link đăng nhập của khách không kèm `redirect`: `sign-in.tsx` chưa hỗ trợ, `LibraryButton` cũng vậy; thêm là sửa trang đăng nhập ngoài phạm vi. Lý do: YAGNI, theo mẫu hiện có.
+- [auto] Nút theo dõi giữ nhãn "Theo dõi", trạng thái qua `aria-pressed` + nền đặc + icon; ẩn với chủ truyện/chính tác giả. Lý do: mẫu toggle chuẩn (nhãn không đổi khi dùng `aria-pressed`), tránh 403 vô ích.
+- [auto] Bỏ theo dõi không bao giờ lỗi (204 cả khi mục tiêu không còn/không tồn tại), như `removeFromLibrary`. Lý do: idempotent, cho phép bỏ theo dõi truyện đã bị ẩn.
+- [auto] `showMature` của người xem đọc từ `users.preferences` trong core (`notificationViewer`), không lấy từ request. Lý do: theo quy ước `includeMature` suy ra phía server.
+- [auto] Thời gian tương đối: hàm mới `formatRelativeTime` (Intl, không dependency), chỉ dùng ở trang cá nhân render client.
+- [auto] Test SSR nút theo dõi viết trên hàm thuần `followButtonView` (component `Button` dùng alias `@/` mà vitest không resolve). Lý do: không đổi config test.
+- [auto] Fan-out sắp xếp người nhận theo `user_id` (chống deadlock giữa hai job cùng truyện) và bỏ qua người đã đọc thông báo có chương này (job giao lại muộn). Lý do: finding review M1, L1.
 
 ## Risk Assessment
 

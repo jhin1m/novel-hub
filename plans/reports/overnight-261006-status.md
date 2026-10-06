@@ -1,6 +1,6 @@
 # Overnight 261006: đang chạy
-Cập nhật: 2026-10-06 11:17
-Đang làm: Q8 / phase-03
+Cập nhật: 2026-10-06 12:03
+Đang làm: Q8 / phase-04
 ## Đã xong
 - Q1 canvas /write + editor (artboard F-* trên https://claude.ai/artifact/X7w7oUBxruy6Y47oQ4HdAo), đặc tả ở plans/reports/design-261006-write-editor-screens-report.md
 - Q2 report brainstorm cuối: plans/reports/brainstorm-261006-ui-redesign-b-plus-final-report.md
@@ -22,6 +22,7 @@ Cập nhật: 2026-10-06 11:17
 - Q7 validate Giai đoạn 2 (sửa index ON CONFLICT thông báo, 400→403 tự theo dõi)
 - Q8 phase-01 bình luận chương hai cấp (migration 0003_comment_threads, đã áp DB dev)
 - Q8 phase-02 bình luận theo đoạn → [x] checkbox 'Bình luận chương' (migration 0004)
+- Q8 phase-03 theo dõi + thông báo → [x] checkbox 'Theo dõi' (migration 0005)
 
 ## Quyết định [auto] (sáng cần duyệt)
 - Q1: 8 quyết định [auto] trong design-261006-write-editor-screens-report.md
@@ -47,6 +48,7 @@ Cập nhật: 2026-10-06 11:17
 - Q7: tài khoản muted không đăng được cả bình luận lẫn đánh giá/review (spec chỉ ghi bình luận, đây là mở rộng); hero trang chủ vẫn tự động, mod chọn khu 'Truyện nổi bật' riêng
 - Q8 p01: normalizePlainText ở packages/shared; cursor phân trang ${micros}_${uuid}; createComment không bọc transaction; câu hỏi: API bình luận chương 18+ không kiểm tuỳ chọn 18+ (giữ hay bắt buộc bật?)
 - Q8 p02: 'Theo đoạn (M)' đếm số bình luận; hai tab chỉ hiện khi có bình luận theo đoạn; sheet đoạn đẩy cột chữ như bảng cài đặt, mobile cao ≤60%; trả lời lưu paragraph_id của gốc; lỗi Low: triple-click đoạn cuối/trước blockquote không hiện nút nổi
+- Q8 p03 câu hỏi: link đăng nhập cho khách (theo dõi/tủ truyện) có kèm redirect quay lại? (cần sửa sign-in.tsx); có siết rate limit follow cho tài khoản mới (spec §7)?
 
 ## Chặn / lỗi
 - Q3 (nhẹ): 'ck plan add-phase --after' lỗi afterId.toLowerCase; worker đổi tên phase bằng tay, 'ck plan validate' xác nhận

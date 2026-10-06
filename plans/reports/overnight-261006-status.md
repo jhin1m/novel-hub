@@ -44,6 +44,7 @@ Cập nhật: 2026-10-06 08:54
 - Q5 p05 (controller): lần đầu đóng worker khi nó còn chạy e2e nền (chưa in RESULT) → e2e mồ côi cổng 3100 chạy chồng gate, test int publishing-worker đỏ. Đã kill tiến trình mồ côi, sửa controller chỉ đóng worker khi có RESULT, cook lại phase 5 trên working tree; không tính là lần sửa gate
 - (đã sửa) Test chập chờn publishing-worker.int.test.ts
 - Cần kiểm tay trên điện thoại thật: toolbar editor nằm đúng trên bàn phím ảo, con trỏ không bị che
+- Controller khởi động lại phiên lúc ~01:50 UTC (sau khi phase 11 xong); tiếp tục từ trạng thái trên đĩa, không mất việc
 
 ## Lệnh tiếp theo cho user
 - (đang chạy)

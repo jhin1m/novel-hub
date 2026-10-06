@@ -1,7 +1,7 @@
 ---
 phase: 9
 title: "Editor chương: tách file"
-status: pending
+status: completed
 priority: P1
 effort: "0.5d"
 dependencies: [8]
@@ -78,14 +78,14 @@ Không test mới: phase chỉ di chuyển code; hành vi được khoá bởi e
 
 ## Function/interface checklist
 
-- [ ] `chapter-editor-helpers.ts`: `export const WORD_COUNT_DELAY_MS = 500`; `export const wordsOf = (doc: EditorDocJson) => number`; `export const shortDateTime = (date: Date) => string`; `export type MirrorWriter = ReturnType<typeof createMirrorWriter>`
-- [ ] `useEditorAutosave(args: { editor: Editor | null; publicId: string; number: number; loadedRef: RefObject<DraftView>; autosaveRef: RefObject<Autosave | null>; mirrorRef: RefObject<MirrorWriter | null>; setStatus: Dispatch<SetStateAction<SaveStatus>>; setUnpublished: Dispatch<SetStateAction<boolean>>; setWords: Dispatch<SetStateAction<number>>; setResolving: Dispatch<SetStateAction<boolean>>; setResolveError: Dispatch<SetStateAction<boolean>> }): { resolveConflict: (keepMine: boolean) => Promise<void> }` — destructure ngay ở tham số; object `args` không bao giờ vào deps
-- [ ] `type PublishError = { message: string; from: 'dialog' | 'banner' }` (export từ `use-chapter-publishing.ts`, `ChapterEditor` dùng cho `useState<PublishError | null>`)
-- [ ] `useChapterPublishing(args: { editor: Editor | null; publicId: string; number: number; chapter: AuthorChapterView; autosaveRef; mirrorRef; setChapter: Dispatch<SetStateAction<AuthorChapterView>>; setUnpublished; setPublishing: Dispatch<SetStateAction<boolean>>; setPublishError: Dispatch<SetStateAction<PublishError | null>>; setNotice: Dispatch<SetStateAction<string | null>> }): { publishNow: () => Promise<boolean>; schedule: (at: Date, from?: 'dialog' | 'banner') => Promise<boolean>; unschedule: () => Promise<void> }` — gọi `useQueryClient()` bên trong cho `refreshStories`
-- [ ] `useRevisionRestore(args: { editor: Editor | null; publicId: string; number: number; autosaveRef; mirrorRef; setStatus; setWords; setUnpublished; setNotice; setPublishError }): { restoreRevision: (revision: RevisionSummary) => Promise<string | null> }` — gọi `useQueryClient()` bên trong cho invalidate revisions
-- [ ] `EditorHeader(props: { editor: Editor | null; publicId: string; number: number; chapter: AuthorChapterView; showUnpublished: boolean; status: SaveStatus; words: number; focus: boolean; onFocusChange: (v: boolean) => void; publishing: boolean; dialogError: string | null; onPublish: () => Promise<boolean>; onSchedule: (at: Date) => Promise<boolean>; onRestore: (revision: RevisionSummary) => Promise<string | null> })` (kiểu callback khớp `PublishDialog` `publish-dialog.tsx:65-66`, `RevisionHistorySheet` `revision-history-sheet.tsx:43`, `FocusToggle` `focus-toggle.tsx:39-45`)
-- [ ] `EditorBanners(props: { status: SaveStatus; resolving: boolean; resolveError: boolean; onResolve: (keepMine: boolean) => void; chapter: AuthorChapterView; publishing: boolean; onUnschedule: () => void; onReschedule: () => void; notice: string | null; bannerError: string | null; restore: DraftMirror | null; onApplyRestore: () => void; onDiscardRestore: () => void })`
-- [ ] `ChapterMetaField({ kind, publicId, number, initial })` (chữ ký hiện tại, chỉ thêm `export`)
+- [x] `chapter-editor-helpers.ts`: `export const WORD_COUNT_DELAY_MS = 500`; `export const wordsOf = (doc: EditorDocJson) => number`; `export const shortDateTime = (date: Date) => string`; `export type MirrorWriter = ReturnType<typeof createMirrorWriter>`
+- [x] `useEditorAutosave(args: { editor: Editor | null; publicId: string; number: number; loadedRef: RefObject<DraftView>; autosaveRef: RefObject<Autosave | null>; mirrorRef: RefObject<MirrorWriter | null>; setStatus: Dispatch<SetStateAction<SaveStatus>>; setUnpublished: Dispatch<SetStateAction<boolean>>; setWords: Dispatch<SetStateAction<number>>; setResolving: Dispatch<SetStateAction<boolean>>; setResolveError: Dispatch<SetStateAction<boolean>> }): { resolveConflict: (keepMine: boolean) => Promise<void> }` — destructure ngay ở tham số; object `args` không bao giờ vào deps
+- [x] `type PublishError = { message: string; from: 'dialog' | 'banner' }` (export từ `use-chapter-publishing.ts`, `ChapterEditor` dùng cho `useState<PublishError | null>`)
+- [x] `useChapterPublishing(args: { editor: Editor | null; publicId: string; number: number; chapter: AuthorChapterView; autosaveRef; mirrorRef; setChapter: Dispatch<SetStateAction<AuthorChapterView>>; setUnpublished; setPublishing: Dispatch<SetStateAction<boolean>>; setPublishError: Dispatch<SetStateAction<PublishError | null>>; setNotice: Dispatch<SetStateAction<string | null>> }): { publishNow: () => Promise<boolean>; schedule: (at: Date, from?: 'dialog' | 'banner') => Promise<boolean>; unschedule: () => Promise<void> }` — gọi `useQueryClient()` bên trong cho `refreshStories`
+- [x] `useRevisionRestore(args: { editor: Editor | null; publicId: string; number: number; autosaveRef; mirrorRef; setStatus; setWords; setUnpublished; setNotice; setPublishError }): { restoreRevision: (revision: RevisionSummary) => Promise<string | null> }` — gọi `useQueryClient()` bên trong cho invalidate revisions
+- [x] `EditorHeader(props: { editor: Editor | null; publicId: string; number: number; chapter: AuthorChapterView; showUnpublished: boolean; status: SaveStatus; words: number; focus: boolean; onFocusChange: (v: boolean) => void; publishing: boolean; dialogError: string | null; onPublish: () => Promise<boolean>; onSchedule: (at: Date) => Promise<boolean>; onRestore: (revision: RevisionSummary) => Promise<string | null> })` (kiểu callback khớp `PublishDialog` `publish-dialog.tsx:65-66`, `RevisionHistorySheet` `revision-history-sheet.tsx:43`, `FocusToggle` `focus-toggle.tsx:39-45`)
+- [x] `EditorBanners(props: { status: SaveStatus; resolving: boolean; resolveError: boolean; onResolve: (keepMine: boolean) => void; chapter: AuthorChapterView; publishing: boolean; onUnschedule: () => void; onReschedule: () => void; notice: string | null; bannerError: string | null; restore: DraftMirror | null; onApplyRestore: () => void; onDiscardRestore: () => void })`
+- [x] `ChapterMetaField({ kind, publicId, number, initial })` (chữ ký hiện tại, chỉ thêm `export`)
 
 `Editor` lấy từ `@tiptap/react`; `RefObject`, `Dispatch`, `SetStateAction` từ `react`; `Autosave`, `SaveStatus` từ `@/lib/autosave`; `DraftView`, `AuthorChapterView`, `RevisionSummary` từ `@/lib/chapters`; `DraftMirror` từ `@/lib/draft-mirror`.
 
@@ -115,11 +115,11 @@ Không key mới, không đổi key.
 
 ## Success Criteria
 
-- [ ] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
-- [ ] Mọi file trong `components/editor/` ≤ 200 dòng, trừ `publish-dialog.tsx` (185) và `revision-history-sheet.tsx` (197) không đụng
-- [ ] `lib/autosave.ts`, `lib/draft-mirror.ts`, `lib/chapters.ts` không đổi; không file ngoài `components/editor/` đổi
-- [ ] `createAutosave(` xuất hiện đúng 1 lần; không `useCallback`/`useMemo` trong hook mới; `pnpm lint` không cảnh báo `react-hooks/exhaustive-deps`
-- [ ] Không đổi chuỗi/class/thứ tự DOM (`git diff --color-moved` chỉ là di chuyển)
+- [x] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
+- [x] Mọi file trong `components/editor/` ≤ 200 dòng, trừ `publish-dialog.tsx` (185) và `revision-history-sheet.tsx` (197) không đụng
+- [x] `lib/autosave.ts`, `lib/draft-mirror.ts`, `lib/chapters.ts` không đổi; không file ngoài `components/editor/` đổi
+- [x] `createAutosave(` xuất hiện đúng 1 lần; không `useCallback`/`useMemo` trong hook mới; `pnpm lint` không cảnh báo `react-hooks/exhaustive-deps`
+- [x] Không đổi chuỗi/class/thứ tự DOM (`git diff --color-moved` chỉ là di chuyển)
 
 ## Risk Assessment
 
@@ -135,3 +135,12 @@ Không key mới, không đổi key.
 ## Ngoài phạm vi phase
 
 Mọi thay đổi giao diện editor (header 68px, toolbar, focus, dialog/sheet đăng, sheet lịch sử, banner, chấm trạng thái lưu, ô lời nhắn, badge chung) — phase 10; tách `publish-dialog.tsx`/`revision-history-sheet.tsx` — phase 10; đổi API/autosave/mirror.
+
+## Kết quả cook (2026-10-06)
+
+- Baseline e2e editor/publish/revision 9/9 trước khi sửa.
+- `chapter-editor.tsx` 553 → 190 dòng; file mới: helpers 14, meta-field 86, autosave hook 149, publishing hook 154, revision hook 85, header 97, banners 73.
+- Gate: typecheck, lint (không cảnh báo `react-hooks`), format:check xanh; unit 672/672, int 301 pass + 1 skip (S3), e2e 90/90.
+- Review: không lỗi (`reports/code-reviewer-261006-phase-09-editor-split-review-report.md`); test: `reports/tester-261006-phase-09-editor-split-gate-report.md`.
+- [auto] `bannerError !== null` thay vì truthy để khớp điều kiện gốc kể cả message rỗng.
+- [auto] Comment "Errors show where…" giữ tại `useState` trong `ChapterEditor` (vị trí gốc), không chép sang type `PublishError`.

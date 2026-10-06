@@ -1,6 +1,6 @@
 # Overnight 261006: đang chạy
-Cập nhật: 2026-10-06 07:00
-Đang làm: Q5 / phase-09
+Cập nhật: 2026-10-06 07:34
+Đang làm: Q5 / phase-10
 ## Đã xong
 - Q1 canvas /write + editor (artboard F-* trên https://claude.ai/artifact/X7w7oUBxruy6Y47oQ4HdAo), đặc tả ở plans/reports/design-261006-write-editor-screens-report.md
 - Q2 report brainstorm cuối: plans/reports/brainstorm-261006-ui-redesign-b-plus-final-report.md
@@ -14,6 +14,7 @@ Cập nhật: 2026-10-06 07:00
 - Q5 phase-06 trang đọc: khung
 - Q5 phase-07 trang đọc: sheet cài đặt + mục lục
 - Q5 phase-08 trang /write
+- Q5 phase-09 editor tách file (gate xanh sau 1 lần sửa: test int publishing-worker chập chờn, nay chờ đúng job id + drain hàng đợi, 12/12 xanh)
 
 ## Quyết định [auto] (sáng cần duyệt)
 - Q1: 8 quyết định [auto] trong design-261006-write-editor-screens-report.md

@@ -3,6 +3,11 @@ import { m } from '@novel-hub/shared/messages';
 import { createFileRoute } from '@tanstack/react-router';
 import { useRef, useState } from 'react';
 import { ChapterComments } from '../components/comments/chapter-comments';
+import { ParagraphCommentFab } from '../components/comments/paragraph-comment-fab';
+import {
+  type OpenParagraph,
+  ParagraphCommentsSheet,
+} from '../components/comments/paragraph-comments-sheet';
 import { ChapterContent } from '../components/reader/chapter-content';
 import { ChapterEnd } from '../components/reader/chapter-end';
 import { ChapterHeader } from '../components/reader/chapter-header';
@@ -19,6 +24,8 @@ import { throwNotFound } from '../lib/route-signals';
 import { chapterHeading } from '../lib/reader/chapter-heading';
 import { useArrowKeys } from '../lib/reader/use-arrow-keys';
 import { useNavVisibility } from '../lib/reader/use-nav-visibility';
+import { findParagraph } from '../lib/reader/paragraph-elements';
+import { useParagraphSelection } from '../lib/reader/use-paragraph-selection';
 import { useReadingProgress } from '../lib/reader/use-reading-progress';
 import { useResumeScroll } from '../lib/reader/use-resume-scroll';
 import { useViewBeacon } from '../lib/reader/use-view-beacon';
@@ -71,6 +78,12 @@ export const Route = createFileRoute('/stories/$storyKey/chapter-{$number}')({
   component: ReaderPage,
 });
 
+/** Below `lg` the paragraph sheet covers the lower 60% of the screen. */
+function hiddenBySheet(element: HTMLElement): boolean {
+  const top = element.getBoundingClientRect().top;
+  return window.innerWidth < 1024 && (top < 0 || top > window.innerHeight * 0.4);
+}
+
 function ReaderPage() {
   const { story, chapter, prevNumber, nextNumber } = Route.useLoaderData();
   const chapterHref = (number: number | null) =>
@@ -100,6 +113,19 @@ function ReaderPage() {
   };
   const onOpenChange = (name: ReaderPanel) => (open: boolean) => setPanel(open ? name : null);
   const controls = { prevHref, nextHref, activePanel: openPanel, onOpen, hidden, inert: gated };
+  // Comments about a paragraph: selecting text in one offers them; the list at the end opens them too.
+  const selected = useParagraphSelection(contentRef, !gated);
+  const [paragraph, setParagraph] = useState<OpenParagraph | null>(null);
+  const openParagraph = (pid: string, scroll: boolean) => {
+    const element = findParagraph(contentRef.current, pid);
+    // To the top (instant, so no reduced-motion variant) when asked, or when the paragraph would
+    // sit behind the bottom sheet of small screens.
+    if (element && (scroll || hiddenBySheet(element))) element.scrollIntoView({ block: 'start' });
+    // The selection did its job; leaving it would keep the phone's copy toolbar up.
+    window.getSelection()?.removeAllRanges();
+    setPanel(null);
+    setParagraph({ pid, excerpt: element?.textContent ?? '', open: true });
+  };
 
   return (
     <>
@@ -115,11 +141,11 @@ function ReaderPage() {
         />
         <ReaderControls variant="bar" {...controls} />
         <ReaderControls variant="rail" {...controls} />
-        {/* On wide screens the settings panel sits beside the text: the column moves left of it. */}
+        {/* On wide screens the settings and paragraph-comment panels sit beside the text: the column moves left. */}
         <main
           className={cn(
             'px-4 pt-[76px] pb-28 lg:pt-[84px] lg:pb-16',
-            openPanel === 'settings' && 'lg:pr-96',
+            (openPanel === 'settings' || paragraph?.open) && 'lg:pr-96',
           )}
           inert={gated}
         >
@@ -142,7 +168,12 @@ function ReaderPage() {
                 number: chapter.number,
               }}
             />
-            <ChapterComments chapter={chapterRef} enabled={!gated} />
+            <ChapterComments
+              chapter={chapterRef}
+              enabled={!gated}
+              contentRef={contentRef}
+              onOpenParagraph={(pid) => openParagraph(pid, true)}
+            />
           </div>
         </main>
         <ChapterTocSheet
@@ -156,6 +187,18 @@ function ReaderPage() {
           open={openPanel === 'settings'}
           onOpenChange={onOpenChange('settings')}
           trigger={trigger}
+        />
+        {selected && !paragraph?.open && !openPanel ? (
+          <ParagraphCommentFab
+            placement={selected.placement}
+            onOpen={() => openParagraph(selected.pid, false)}
+          />
+        ) : null}
+        <ParagraphCommentsSheet
+          chapter={chapterRef}
+          paragraph={paragraph}
+          contentRef={contentRef}
+          onClose={() => setParagraph((current) => current && { ...current, open: false })}
         />
       </div>
       {/* Outside the reading area, so the site colours apply rather than the reader preset's. */}

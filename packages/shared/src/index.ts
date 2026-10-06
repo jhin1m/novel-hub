@@ -66,6 +66,7 @@ export {
   commentIdParamSchema,
   commentListQuerySchema,
   commentRepliesQuerySchema,
+  paragraphCountsQuerySchema,
 } from './schemas/comment';
 export {
   type EditorDocJson,

@@ -39,6 +39,8 @@ export async function createPublishedStory(
     isMature?: boolean;
     warningTags?: string[];
     authorNote?: string;
+    /** Paragraphs added after the opening one of every chapter. */
+    extraParagraphs?: string[];
   } = {},
 ): Promise<PublishedStory> {
   counter += 1;
@@ -81,13 +83,11 @@ export async function createPublishedStory(
       const saved = await saveDraft(db, author, publicId, number, {
         doc: {
           type: 'doc',
-          content: [
-            {
-              type: 'paragraph',
-              attrs: { pid: null },
-              content: [{ type: 'text', text: chapterText(number) }],
-            },
-          ],
+          content: [chapterText(number), ...(opts.extraParagraphs ?? [])].map((text) => ({
+            type: 'paragraph',
+            attrs: { pid: null },
+            content: [{ type: 'text', text }],
+          })),
         },
         baseUpdatedAt: draftUpdatedAt ?? '',
       });

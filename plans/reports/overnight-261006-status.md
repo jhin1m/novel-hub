@@ -1,6 +1,6 @@
 # Overnight 261006: đang chạy
-Cập nhật: 2026-10-06 10:42
-Đang làm: Q8 / phase-02
+Cập nhật: 2026-10-06 11:17
+Đang làm: Q8 / phase-03
 ## Đã xong
 - Q1 canvas /write + editor (artboard F-* trên https://claude.ai/artifact/X7w7oUBxruy6Y47oQ4HdAo), đặc tả ở plans/reports/design-261006-write-editor-screens-report.md
 - Q2 report brainstorm cuối: plans/reports/brainstorm-261006-ui-redesign-b-plus-final-report.md
@@ -21,6 +21,7 @@ Cập nhật: 2026-10-06 10:42
 - Q6 plan Giai đoạn 2: plans/261006-0216-giai-doan-2-cong-dong (9 phase cho 6 checkbox, red-team 16/17 áp dụng)
 - Q7 validate Giai đoạn 2 (sửa index ON CONFLICT thông báo, 400→403 tự theo dõi)
 - Q8 phase-01 bình luận chương hai cấp (migration 0003_comment_threads, đã áp DB dev)
+- Q8 phase-02 bình luận theo đoạn → [x] checkbox 'Bình luận chương' (migration 0004)
 
 ## Quyết định [auto] (sáng cần duyệt)
 - Q1: 8 quyết định [auto] trong design-261006-write-editor-screens-report.md
@@ -45,6 +46,7 @@ Cập nhật: 2026-10-06 10:42
 - Q6: 9 phase cho 6 checkbox; bình luận theo đoạn không chèn chỉ báo vào nội dung; hero trang chủ chưa do mod chọn; cửa sổ xếp hạng 'ngày' = hôm nay + hôm qua; 8 huy hiệu; cắt khu xếp hạng trang chủ, thông báo huy hiệu, biểu đồ SVG dashboard, chip dự thi (xem 5 câu hỏi mở trong plan.md)
 - Q7: tài khoản muted không đăng được cả bình luận lẫn đánh giá/review (spec chỉ ghi bình luận, đây là mở rộng); hero trang chủ vẫn tự động, mod chọn khu 'Truyện nổi bật' riêng
 - Q8 p01: normalizePlainText ở packages/shared; cursor phân trang ${micros}_${uuid}; createComment không bọc transaction; câu hỏi: API bình luận chương 18+ không kiểm tuỳ chọn 18+ (giữ hay bắt buộc bật?)
+- Q8 p02: 'Theo đoạn (M)' đếm số bình luận; hai tab chỉ hiện khi có bình luận theo đoạn; sheet đoạn đẩy cột chữ như bảng cài đặt, mobile cao ≤60%; trả lời lưu paragraph_id của gốc; lỗi Low: triple-click đoạn cuối/trước blockquote không hiện nút nổi
 
 ## Chặn / lỗi
 - Q3 (nhẹ): 'ck plan add-phase --after' lỗi afterId.toLowerCase; worker đổi tên phase bằng tay, 'ck plan validate' xác nhận

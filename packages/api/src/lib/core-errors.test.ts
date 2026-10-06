@@ -24,6 +24,7 @@ const expected: [CoreErrorCode, number][] = [
   ['ADULT_CONFIRMATION_REQUIRED', 400],
   ['INVALID_STATE', 409],
   ['USER_MUTED', 403],
+  ['COMMENT_PARAGRAPH_INVALID', 422],
 ];
 
 describe('coreError', () => {

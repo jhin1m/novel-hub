@@ -1,4 +1,5 @@
 import {
+  countParagraphComments,
   createComment,
   deleteComment,
   listChapterComments,
@@ -9,6 +10,7 @@ import {
   commentIdParamSchema,
   commentListQuerySchema,
   commentRepliesQuerySchema,
+  paragraphCountsQuerySchema,
 } from '@novel-hub/shared';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
@@ -36,46 +38,56 @@ export function createCommentRoutes(deps: Pick<ApiDeps, 'auth' | 'db' | 'rateLim
     onError: (c) => c.json(errorBody('PAYLOAD_TOO_LARGE', 'Request body is too large'), 413),
   });
 
-  return new Hono()
-    .use(sessionMiddleware(deps.auth))
-    .get('/', validate('query', commentListQuerySchema), async (c) => {
-      const { story, chapter, cursor } = c.req.valid('query');
-      const result = await listChapterComments(deps.db, c.var.user, {
-        publicId: story,
-        number: chapter,
-        cursor,
-      });
-      if (!result.ok) return coreError(c, result.error);
-      return c.json(result.value, 200);
-    })
-    .post(
-      '/',
-      limitBody,
-      requireVerifiedEmail,
-      rateLimit(deps, 'comment'),
-      validate('json', commentCreateSchema),
-      async (c) => {
-        const result = await createComment(deps.db, c.var.authUser, c.req.valid('json'));
-        if (!result.ok) return coreError(c, result.error);
-        return c.json({ comment: result.value }, 201);
-      },
-    )
-    .get(
-      '/:id/replies',
-      validate('param', commentIdParamSchema),
-      validate('query', commentRepliesQuerySchema),
-      async (c) => {
-        const result = await listCommentReplies(deps.db, c.var.user, {
-          commentId: c.req.valid('param').id,
-          cursor: c.req.valid('query').cursor,
+  return (
+    new Hono()
+      .use(sessionMiddleware(deps.auth))
+      .get('/', validate('query', commentListQuerySchema), async (c) => {
+        const { story, chapter, paragraph, cursor } = c.req.valid('query');
+        const result = await listChapterComments(deps.db, c.var.user, {
+          publicId: story,
+          number: chapter,
+          paragraphId: paragraph,
+          cursor,
         });
         if (!result.ok) return coreError(c, result.error);
         return c.json(result.value, 200);
-      },
-    )
-    .delete('/:id', requireAuth, validate('param', commentIdParamSchema), async (c) => {
-      const result = await deleteComment(deps.db, c.var.authUser, c.req.valid('param').id);
-      if (!result.ok) return coreError(c, result.error);
-      return c.body(null, 204);
-    });
+      })
+      // Loaded with the comments at the end of the chapter, never with the page itself.
+      .get('/paragraph-counts', validate('query', paragraphCountsQuerySchema), async (c) => {
+        const { story, chapter } = c.req.valid('query');
+        const result = await countParagraphComments(deps.db, { publicId: story, number: chapter });
+        if (!result.ok) return coreError(c, result.error);
+        return c.json({ counts: result.value }, 200);
+      })
+      .post(
+        '/',
+        limitBody,
+        requireVerifiedEmail,
+        rateLimit(deps, 'comment'),
+        validate('json', commentCreateSchema),
+        async (c) => {
+          const result = await createComment(deps.db, c.var.authUser, c.req.valid('json'));
+          if (!result.ok) return coreError(c, result.error);
+          return c.json({ comment: result.value }, 201);
+        },
+      )
+      .get(
+        '/:id/replies',
+        validate('param', commentIdParamSchema),
+        validate('query', commentRepliesQuerySchema),
+        async (c) => {
+          const result = await listCommentReplies(deps.db, c.var.user, {
+            commentId: c.req.valid('param').id,
+            cursor: c.req.valid('query').cursor,
+          });
+          if (!result.ok) return coreError(c, result.error);
+          return c.json(result.value, 200);
+        },
+      )
+      .delete('/:id', requireAuth, validate('param', commentIdParamSchema), async (c) => {
+        const result = await deleteComment(deps.db, c.var.authUser, c.req.valid('param').id);
+        if (!result.ok) return coreError(c, result.error);
+        return c.body(null, 204);
+      })
+  );
 }

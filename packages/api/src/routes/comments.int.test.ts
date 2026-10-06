@@ -7,7 +7,7 @@ import {
   publishChapter,
   saveDraft,
 } from '@novel-hub/core';
-import { comments, reports, users } from '@novel-hub/db';
+import { chapterContents, comments, reports, users } from '@novel-hub/db';
 import { seedTags } from '@novel-hub/db/seed';
 import { createTestDb, truncateAll } from '@novel-hub/db/testing';
 import { eq } from 'drizzle-orm';
@@ -294,5 +294,50 @@ describe('/api/v1/comments', () => {
     expect(report?.status).toBe('resolved');
     const listed = await appAs(null).request(`/api/v1/comments?story=${publicId}&chapter=1`);
     expect(((await listed.json()) as { total: number }).total).toBe(0);
+  });
+
+  it('comments on a paragraph, lists and counts it apart from the chapter, and refuses unknown pids', async () => {
+    const author = await makeUser('tac_gia', 'author');
+    const publicId = await makeStory(author);
+    const draft = await addChapter(author, publicId, true);
+    const reader = await makeUser('doc_gia');
+    const [content] = await db.select().from(chapterContents);
+    const pid = content?.paragraphIds[0] ?? '';
+
+    const onParagraph = await appAs(reader).request(
+      '/api/v1/comments',
+      send('POST', { publicId, chapterNumber: 1, body: 'Đoạn hay', paragraphId: pid }),
+    );
+    expect(onParagraph.status).toBe(201);
+    const unknown = await appAs(reader).request(
+      '/api/v1/comments',
+      send('POST', { publicId, chapterNumber: 1, body: 'Lạc', paragraphId: 'zz2k9xq2' }),
+    );
+    expect(unknown.status).toBe(422);
+    expect(await errorCode(unknown)).toBe('COMMENT_PARAGRAPH_INVALID');
+    const malformed = await appAs(reader).request(
+      '/api/v1/comments',
+      send('POST', { publicId, chapterNumber: 1, body: 'Lạc', paragraphId: 'p[data-pid]' }),
+    );
+    expect(malformed.status).toBe(400);
+
+    const counted = await appAs(null).request(
+      `/api/v1/comments/paragraph-counts?story=${publicId}&chapter=1`,
+    );
+    expect(counted.status).toBe(200);
+    expect(counted.headers.get('cache-control')).toContain('no-store');
+    expect(await counted.json()).toEqual({ counts: { [pid]: 1 } });
+    const thread = await appAs(null).request(
+      `/api/v1/comments?story=${publicId}&chapter=1&paragraph=${pid}`,
+    );
+    expect(((await thread.json()) as { total: number }).total).toBe(1);
+    const chapter = await appAs(null).request(`/api/v1/comments?story=${publicId}&chapter=1`);
+    expect(((await chapter.json()) as { total: number }).total).toBe(0);
+
+    const onDraft = await appAs(null).request(
+      `/api/v1/comments/paragraph-counts?story=${publicId}&chapter=${draft}`,
+    );
+    expect(onDraft.status).toBe(404);
+    expect(await errorCode(onDraft)).toBe('NOT_FOUND');
   });
 });

@@ -30,6 +30,7 @@ Trang công khai được Cloudflare cache: sau khi ẩn hoặc khoá, worker pu
 ## Bình luận
 
 - Bình luận chương hai cấp: bình luận gốc và một cấp trả lời (trả lời một trả lời được gắn vào bình luận gốc). Văn bản thuần, tối đa 2.000 ký tự, không sửa được; người viết tự xoá được bình luận của mình.
+- Bình luận theo đoạn: người đọc bôi chọn chữ trong một đoạn (hoặc tiêu đề mục) rồi bấm "Bình luận đoạn này"; cuối chương có tab "Theo đoạn" liệt kê các đoạn có bình luận. Cùng luật đăng, ẩn, báo cáo như bình luận chương. Tác giả sửa chương làm mất đoạn thì bình luận của đoạn đó chuyển về danh sách bình luận chương, kèm nhãn "Bình luận về đoạn đã sửa"; không mất bình luận nào.
 - Người đăng phải đã xác thực email và không bị cấm bình luận; có giới hạn tần suất (`RATE_LIMITS.comment`, tài khoản mới chặt hơn).
 - Bình luận của tài khoản bị khoá không hiện (không xoá dữ liệu, mở khoá là hiện lại). Bình luận gốc bị ẩn hoặc bị xoá thì cả nhánh trả lời không hiện.
 - Hàng chờ hiện 200 ký tự đầu của bình luận bị báo cáo, người viết, chương và truyện chứa nó. Bình luận người viết đã xoá không khôi phục được.

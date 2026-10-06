@@ -28,7 +28,7 @@ Mỗi lần `/ck:cook` đúng một phase; checkbox spec chỉ đánh `[x]` ở 
 | Phase | Name | Checkbox spec | Status |
 |-------|------|---------------|--------|
 | 1 | [Bình luận chương hai cấp](./phase-01-binh-luan-chuong-hai-cap.md) | 1 (phần 1/2) | Completed |
-| 2 | [Bình luận theo đoạn](./phase-02-binh-luan-theo-doan.md) | 1 (đánh `[x]`) | Pending |
+| 2 | [Bình luận theo đoạn](./phase-02-binh-luan-theo-doan.md) | 1 (đánh `[x]`) | Completed |
 | 3 | [Theo dõi và thông báo](./phase-03-theo-doi-va-thong-bao.md) | 2 | Pending |
 | 4 | [Đánh giá và review](./phase-04-danh-gia-va-review.md) | 3 | Pending |
 | 5 | [Xếp hạng](./phase-05-xep-hang.md) | 4 | Pending |
@@ -220,3 +220,11 @@ Thêm theo câu hỏi của reviewer: dùng lại mã lỗi `NOT_FOUND`/`FORBIDD
 - Decision deltas checked: 8
 - Reconciled stale references: 5 (phase 3 ×2, phase 2 ×1, phase 8 ×1, plan.md quyết định bình luận đoạn ×1; mục "Câu hỏi mở" plan.md trỏ về Session 1)
 - Unresolved contradictions: 0
+
+### Cook phase 2 — 2026-10-06 (chế độ tự động)
+- [auto] "Theo đoạn (M)": M = tổng số bình luận theo đoạn (gốc + trả lời), không phải số đoạn. Lý do: cùng nghĩa với "Bình luận (N)" ở tiêu đề.
+- [auto] Tiêu đề "Bình luận (N)" chỉ đếm danh sách chương (gồm mồ côi); tab "Cả chương"/"Theo đoạn" chỉ hiện khi có bình luận theo đoạn. Lý do: không đổi hành vi phase 1, bớt nhiễu khi chưa có.
+- [auto] Sheet đoạn vẫn modal nhưng overlay trong suốt, cột chữ lùi trái (`lg:pr-96`) như bảng cài đặt; dưới `lg` sheet cao tối đa 60dvh, đoạn bị che thì cuộn lên đầu; focus vào panel thay vì ô nhập. Lý do: review (Medium) — đoạn được đánh dấu phải nhìn thấy, bàn phím điện thoại không che bình luận.
+- [auto] Trả lời lưu `paragraph_id` của bình luận gốc. Lý do: "kế thừa đoạn", dữ liệu tự mô tả.
+- Còn mở (Low, chấp nhận năm đầu): bôi ba lần đoạn cuối/đoạn trước blockquote không hiện nút; vị trí nút không tính lại khi cuộn; nhãn đọc màn hình của mục "Theo đoạn" là cả đoạn. Chi tiết: `reports/code-reviewer-261006-paragraph-comments-review-report.md`.
+

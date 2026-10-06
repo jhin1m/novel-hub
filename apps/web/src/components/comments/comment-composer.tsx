@@ -15,12 +15,15 @@ import { commentActionClass } from './comment-item';
  */
 export function CommentComposer({
   chapter,
+  paragraphId,
   parentId,
   replyTo,
   onCancel,
   onPosted,
 }: {
   chapter: CommentChapter;
+  /** Set for a new thread about a paragraph (`data-pid`). */
+  paragraphId?: string;
   /** Set for a reply: the comment answered (the server attaches it to its thread). */
   parentId?: string;
   replyTo?: string;
@@ -48,6 +51,7 @@ export function CommentComposer({
   return (
     <CommentForm
       chapter={chapter}
+      paragraphId={paragraphId}
       parentId={parentId}
       replyTo={replyTo}
       onCancel={onCancel}
@@ -58,12 +62,14 @@ export function CommentComposer({
 
 function CommentForm({
   chapter,
+  paragraphId,
   parentId,
   replyTo,
   onCancel,
   onPosted,
 }: {
   chapter: CommentChapter;
+  paragraphId: string | undefined;
   parentId: string | undefined;
   replyTo: string | undefined;
   onCancel: (() => void) | undefined;
@@ -82,12 +88,15 @@ function CommentForm({
       onSubmit={(e) => {
         e.preventDefault();
         if (!sendable || create.isPending) return;
-        create.mutate(parentId ? { body, parentId } : { body }, {
-          onSuccess: () => {
-            setBody('');
-            onPosted?.();
+        create.mutate(
+          parentId ? { body, parentId } : paragraphId ? { body, paragraphId } : { body },
+          {
+            onSuccess: () => {
+              setBody('');
+              onPosted?.();
+            },
           },
-        });
+        );
       }}
     >
       <label htmlFor={`${id}-body`} className={replyTo ? 'text-xs text-reader-muted' : 'sr-only'}>

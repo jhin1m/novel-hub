@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Bình luận theo đoạn"
-status: pending
+status: completed
 priority: P1
 effort: "1.5d"
 dependencies: [1]
@@ -82,11 +82,11 @@ core/comments: createComment(+paragraphId), listChapterComments(+paragraph filte
 
 ## Function / Interface Checklist
 
-- [ ] `countParagraphComments(db, {publicId, number}) → Result<Record<string, number>, 'NOT_FOUND'>`
-- [ ] `createComment` kiểm `paragraphId ∈ paragraph_ids` (`COMMENT_PARAGRAPH_INVALID`); trả lời bỏ qua `paragraphId` client gửi (lấy theo gốc)
-- [ ] `listChapterComments({…, paragraphId?})` — có `paragraphId` thì lọc đúng đoạn, không có thì "không gắn đoạn hoặc mồ côi"
-- [ ] `pidFromSelection(selection, root) → string | null` (thuần, test bằng DOM giả tối thiểu hoặc tách logic so khớp tổ tiên)
-- [ ] `useParagraphSelection(contentRef, {enabled}) → string | null`
+- [x] `countParagraphComments(db, {publicId, number}) → Result<Record<string, number>, 'NOT_FOUND'>`
+- [x] `createComment` kiểm `paragraphId ∈ paragraph_ids` (`COMMENT_PARAGRAPH_INVALID`); trả lời bỏ qua `paragraphId` client gửi (lấy theo gốc)
+- [x] `listChapterComments({…, paragraphId?})` — có `paragraphId` thì lọc đúng đoạn, không có thì "không gắn đoạn hoặc mồ côi"
+- [x] `pidFromSelection(selection, root) → string | null` (thuần, test bằng DOM giả tối thiểu hoặc tách logic so khớp tổ tiên)
+- [x] `useParagraphSelection(contentRef, {enabled}) → string | null`
 
 ## Implementation Steps
 
@@ -114,18 +114,18 @@ core/comments: createComment(+paragraphId), listChapterComments(+paragraph filte
 
 ## Todo List
 
-- [ ] Zod + migration
-- [ ] Core + API
-- [ ] Chọn chữ + nút nổi + sheet + tab theo đoạn
-- [ ] i18n, e2e, gate
-- [ ] Đánh `[x]` checkbox 1
+- [x] Zod + migration
+- [x] Core + API
+- [x] Chọn chữ + nút nổi + sheet + tab theo đoạn
+- [x] i18n, e2e, gate
+- [x] Đánh `[x]` checkbox 1
 
 ## Success Criteria
 
-- [ ] Gate xanh
-- [ ] Bình luận theo đoạn end-to-end; đoạn bị sửa không làm mất bình luận (về danh sách chương)
-- [ ] Không node nào được chèn vào nội dung chương; HTML SSR không đổi; thanh điều hướng vẫn hoạt động như cũ
-- [ ] Checkbox 1 spec `[x]`
+- [x] Gate xanh
+- [x] Bình luận theo đoạn end-to-end; đoạn bị sửa không làm mất bình luận (về danh sách chương)
+- [x] Không node nào được chèn vào nội dung chương; HTML SSR không đổi; thanh điều hướng vẫn hoạt động như cũ
+- [x] Checkbox 1 spec `[x]`
 
 ## Risk Assessment
 

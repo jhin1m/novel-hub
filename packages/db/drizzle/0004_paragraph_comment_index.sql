@@ -1,0 +1,1 @@
+CREATE INDEX "comments_chapter_paragraph_idx" ON "comments" USING btree ("chapter_id","paragraph_id") WHERE "comments"."paragraph_id" IS NOT NULL AND "comments"."parent_id" IS NULL;

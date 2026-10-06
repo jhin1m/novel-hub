@@ -426,6 +426,7 @@
   "layout_moderation": "Kiểm duyệt",
   "error_invalid_state": "Mục này đã đổi trạng thái. Hãy tải lại danh sách.",
   "error_user_muted": "Tài khoản của bạn đang bị cấm bình luận.",
+  "error_comment_paragraph_invalid": "Đoạn này không còn trong chương. Hãy tải lại trang.",
   "report_button": "Báo cáo",
   "report_title_story": "Báo cáo truyện",
   "report_title_chapter": "Báo cáo chương",
@@ -530,5 +531,15 @@
   "comment_delete": "Xoá",
   "comment_delete_title": "Xoá bình luận này?",
   "comment_delete_description": "Bình luận và các phản hồi của nó sẽ không còn hiển thị. Không thể hoàn tác.",
-  "comment_gone": "Bình luận này không còn hiển thị. Hãy tải lại danh sách."
+  "comment_gone": "Bình luận này không còn hiển thị. Hãy tải lại danh sách.",
+  "comment_paragraph_hint": "Bôi chọn một đoạn trong chương để bình luận về đoạn đó.",
+  "comment_paragraph_open": "Bình luận đoạn này",
+  "comment_paragraph_title": "Bình luận về đoạn",
+  "comment_paragraph_title_count": "Bình luận về đoạn ({count})",
+  "comment_paragraph_empty": "Chưa có bình luận nào về đoạn này.",
+  "comment_paragraph_tab_chapter": "Cả chương",
+  "comment_paragraph_tab_paragraphs": "Theo đoạn ({count})",
+  "comment_paragraph_item_count": "{count} bình luận",
+  "comment_paragraph_index_empty": "Các đoạn có bình luận không còn trong bản đang hiển thị. Hãy tải lại trang.",
+  "comment_paragraph_orphaned": "Bình luận về đoạn đã sửa"
 }

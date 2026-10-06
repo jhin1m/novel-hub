@@ -106,6 +106,29 @@
   }
 }
 
+/*
+ * Paragraph comments. The paragraph whose comments are open is marked by an attribute only (no
+ * node is added to the text); the outline keeps the text where it was. Opening from the list at
+ * the end scrolls the paragraph to the top, clear of the top bar.
+ */
+.reader-content [data-pid] {
+  scroll-margin-top: 5.5rem;
+}
+
+.reader-content [data-pc-active] {
+  border-radius: 0.375rem;
+  background: var(--reader-card);
+  outline: 0.375rem solid var(--reader-card);
+}
+
+/* Comments outside the reading page (the paragraph sheet portals to <body>) take site colours. */
+.site-comment-colors {
+  --reader-fg: var(--foreground);
+  --reader-muted: var(--muted-foreground);
+  --reader-card: var(--secondary);
+  --reader-bg: var(--card);
+}
+
 /* Reading bars: they get out of the way while scrolling down (`data-hidden`). */
 .reader-top-bar,
 .reader-bottom-bar,

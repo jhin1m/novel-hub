@@ -14,6 +14,8 @@ export interface CommentDto {
 
 /** A top-level comment with the size of its thread and its oldest replies. */
 export interface CommentThreadDto extends CommentDto {
+  /** About a paragraph no longer in the chapter's text, so listed with the chapter's own. */
+  orphanedParagraph: boolean;
   replyCount: number;
   replies: CommentDto[];
   /** Continues the replies after the ones sent here; `null` when they are all here. */

@@ -82,6 +82,7 @@ function CommentThread({
     <CommentItem
       comment={comment}
       compact={compact}
+      orphanedParagraph={!compact && thread.orphanedParagraph}
       onReply={() => setReplyTo({ id: comment.id, name: comment.author.displayName })}
       onDelete={() => onDelete(comment.id)}
       deleting={deleting}

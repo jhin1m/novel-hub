@@ -142,4 +142,66 @@ test.describe('chapter comments', () => {
     await expect(page.getByRole('heading', { name: 'Bình luận (0)' })).toBeVisible();
     await expect(page.getByText(body)).toHaveCount(0);
   });
+
+  test('a reader comments on a paragraph by selecting it; nothing is added to the text', async ({
+    page,
+  }) => {
+    const second = `Đoạn thứ hai đáng bàn ${run}.`;
+    const story = await createPublishedStory({
+      title: `Bình Luận Đoạn ${run}`,
+      published: 1,
+      extraParagraphs: [second],
+    });
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await signUpVerified(page);
+    await gotoHydrated(page, story.chapterPath(1));
+    const content = page.locator('.reader-content');
+    const html = await content.innerHTML();
+    const paragraph = content.locator('p[data-pid]').nth(1);
+    await expect(paragraph).toHaveText(second);
+
+    // A tap in the middle of the screen, nothing selected, still toggles the reading bars.
+    const topBar = page.locator('.reader-top-bar');
+    await page.mouse.click(640, 400);
+    await expect(topBar).toHaveAttribute('data-hidden');
+    await page.mouse.click(640, 400);
+    await expect(topBar).not.toHaveAttribute('data-hidden');
+
+    const fab = page.getByRole('button', { name: 'Bình luận đoạn này' });
+    await expect(fab).toHaveCount(0);
+    await paragraph.evaluate((element) => {
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    });
+    await fab.click();
+    const sheet = page.getByRole('dialog', { name: /^Bình luận về đoạn/ });
+    await expect(sheet).toContainText(second);
+    await expect(paragraph).toHaveAttribute('data-pc-active');
+    await sheet.getByLabel('Nội dung bình luận').fill('Câu này viết khéo.');
+    await sheet.getByRole('button', { name: 'Gửi' }).click();
+    await expect(
+      sheet.getByRole('article').filter({ hasText: 'Câu này viết khéo.' }),
+    ).toBeVisible();
+    await expect(sheet.getByRole('heading', { name: 'Bình luận về đoạn (1)' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(sheet).toHaveCount(0);
+    await expect(paragraph).not.toHaveAttribute('data-pc-active');
+    // The text is exactly what the server sent: no badge, button or wrapper was put in it.
+    expect(await content.innerHTML()).toBe(html);
+
+    // The end of the chapter lists the paragraph, not its comment, and opens it again.
+    await scrollToComments(page);
+    const section = page.getByRole('region', { name: /^Bình luận/ });
+    await expect(section.getByRole('heading', { name: 'Bình luận (0)' })).toBeVisible();
+    await expect(section.getByText('Câu này viết khéo.')).toHaveCount(0);
+    await section.getByRole('button', { name: 'Theo đoạn (1)' }).click();
+    const entry = section.getByRole('button', { name: new RegExp(second) });
+    await expect(entry).toContainText('1 bình luận');
+    await entry.click();
+    await expect(sheet.getByText('Câu này viết khéo.')).toBeVisible();
+    await expect(paragraph).toBeInViewport();
+  });
 });

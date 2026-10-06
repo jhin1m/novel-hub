@@ -24,6 +24,7 @@ const CORE_ERROR_STATUS = {
   ADULT_CONFIRMATION_REQUIRED: 400,
   INVALID_STATE: 409,
   USER_MUTED: 403,
+  COMMENT_PARAGRAPH_INVALID: 422,
 } as const;
 
 export type CoreErrorCode = keyof typeof CORE_ERROR_STATUS;
@@ -51,6 +52,7 @@ const CORE_ERROR_MESSAGES: Record<CoreErrorCode, string> = {
   ADULT_CONFIRMATION_REQUIRED: 'Turning 18+ content on requires confirming you are 18 or older',
   INVALID_STATE: 'The target is not in a state this action applies to',
   USER_MUTED: 'This account is muted and cannot post',
+  COMMENT_PARAGRAPH_INVALID: 'The paragraph is not in the published chapter',
 };
 
 export function coreError<C extends CoreErrorCode>(c: Context, code: C) {

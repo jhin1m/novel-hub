@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { LIMITS } from '../limits';
+import { isValidPid } from '../editor/pid';
 import { normalizePlainText } from '../plain-text';
 import { isValidPublicId } from '../public-id';
 
@@ -24,13 +25,28 @@ export const commentCursorSchema = z
 
 const chapterNumber = z.coerce.number().int().positive().max(2_147_483_647);
 
-/** Query of `GET /api/v1/comments`: the chapter by its public keys. */
-export const commentListQuerySchema = z.object({
+/** A paragraph of the published chapter by its `data-pid`; whether it exists is the server's call. */
+const paragraphId = z.string().refine(isValidPid);
+
+/** A chapter by its public keys. */
+const chapterQuery = {
   story: z.string().refine(isValidPublicId),
   chapter: chapterNumber,
+};
+
+/**
+ * Query of `GET /api/v1/comments`. With `paragraph`: the threads about that paragraph. Without:
+ * the threads about the chapter as a whole, plus those whose paragraph is gone from it.
+ */
+export const commentListQuerySchema = z.object({
+  ...chapterQuery,
+  paragraph: paragraphId.optional(),
   cursor: commentCursorSchema,
 });
 export type CommentListQuery = z.output<typeof commentListQuerySchema>;
+
+/** Query of `GET /api/v1/comments/paragraph-counts`. */
+export const paragraphCountsQuerySchema = z.object(chapterQuery);
 
 /** Query of `GET /api/v1/comments/:id/replies`. */
 export const commentRepliesQuerySchema = z.object({ cursor: commentCursorSchema });
@@ -47,6 +63,8 @@ export const commentCreateSchema = z.object({
   chapterNumber: z.number().int().positive().max(2_147_483_647),
   /** Replying to a reply attaches to its top-level comment (threads are two levels). */
   parentId: z.uuid().optional(),
+  /** The paragraph a top-level comment is about; a reply takes its thread's instead. */
+  paragraphId: paragraphId.optional(),
   body: z
     .string()
     .max(LIMITS.commentMax * 4)

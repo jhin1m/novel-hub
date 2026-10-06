@@ -232,6 +232,7 @@ export { type ChapterCommentsPage, listChapterComments } from './comments/list-c
 export { type CommentRepliesPage, listCommentReplies } from './comments/list-replies';
 export { type CreateCommentError, createComment } from './comments/create-comment';
 export { deleteComment } from './comments/delete-comment';
+export { countParagraphComments } from './comments/paragraph-counts';
 export { setCommentHidden } from './moderation/comment-visibility';
 export { type ResolvedTarget, createReport } from './reports/create-report';
 export {

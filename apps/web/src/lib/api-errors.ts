@@ -66,6 +66,7 @@ const MESSAGES: Record<string, () => string> = {
   NOT_SCHEDULED: m.error_not_scheduled,
   INVALID_STATE: m.error_invalid_state,
   USER_MUTED: m.error_user_muted,
+  COMMENT_PARAGRAPH_INVALID: m.error_comment_paragraph_invalid,
 };
 
 /** User-facing message for an API error code; anything unknown gets the generic message. */

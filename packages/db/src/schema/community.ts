@@ -47,7 +47,11 @@ export const comments = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: 'restrict' }),
     parentId: uuid().references((): AnyPgColumn => comments.id),
-    /** Để sẵn cho bình luận theo đoạn (`data-pid`). */
+    /**
+     * `data-pid` of the paragraph a thread is about (replies copy their thread's); `null` for the
+     * chapter as a whole. Not a reference: a later edit may drop the paragraph, and the comment then
+     * shows with the chapter's.
+     */
     paragraphId: text(),
     /** Plain text, normalised before insert; rendered as text, never as HTML. */
     body: text().notNull(),
@@ -61,6 +65,10 @@ export const comments = pgTable(
     index('comments_chapter_roots_idx')
       .on(t.chapterId, t.createdAt, t.id)
       .where(sql`${t.parentId} IS NULL`),
+    // Threads about a paragraph, and the per-paragraph counts.
+    index('comments_chapter_paragraph_idx')
+      .on(t.chapterId, t.paragraphId)
+      .where(sql`${t.paragraphId} IS NOT NULL AND ${t.parentId} IS NULL`),
     // Replies of a thread, oldest first.
     index('comments_parent_idx').on(t.parentId, t.createdAt, t.id),
     index('comments_story_id_idx').on(t.storyId),

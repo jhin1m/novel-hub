@@ -1,6 +1,6 @@
 import type { CommentCreateInput } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from './api-client';
 import { ApiError, apiErrorMessage, readApiError } from './api-errors';
 import { meQueryKey } from './me';
@@ -8,13 +8,20 @@ import { meQueryKey } from './me';
 const api = createApiClient();
 
 /**
- * Comments of a chapter. Public data, so not under `['me']`; the viewer's username is part of the
- * key because `isOwn` depends on the session, and signing in or out must not show stale buttons.
+ * Comments of a chapter, its paragraphs' included: one prefix, so posting or deleting anywhere
+ * reloads the chapter's list, the paragraph threads and their counts. Public data, so not under
+ * `['me']`; the viewer's username is part of the list keys because `isOwn` depends on the session,
+ * and signing in or out must not show stale buttons.
  */
 export const chapterCommentsKey = (publicId: string, number: number) =>
   ['comments', publicId, number] as const;
-const threadListKey = (publicId: string, number: number, viewer: string | null) =>
-  [...chapterCommentsKey(publicId, number), viewer, 'threads'] as const;
+/** `paragraphId` `null`: the chapter's own threads. */
+const threadListKey = (
+  publicId: string,
+  number: number,
+  viewer: string | null,
+  paragraphId: string | null,
+) => [...chapterCommentsKey(publicId, number), viewer, 'threads', paragraphId] as const;
 /** With the start cursor: when the preview changes (a reply deleted), the rest starts afresh. */
 const repliesKey = (
   publicId: string,
@@ -40,15 +47,19 @@ export interface CommentChapter {
   number: number;
 }
 
-/** Threads under a chapter, newest first, a page at a time. Runs only once `enabled`. */
+/**
+ * Threads under a chapter, newest first, a page at a time: those about `paragraphId`, or without
+ * it the chapter's own (with those whose paragraph was edited out). Runs only once `enabled`.
+ */
 export function useChapterComments(
   chapter: CommentChapter,
   viewer: string | null,
   enabled: boolean,
+  paragraphId: string | null = null,
 ) {
   const { publicId, number } = chapter;
   return useInfiniteQuery({
-    queryKey: threadListKey(publicId, number, viewer),
+    queryKey: threadListKey(publicId, number, viewer, paragraphId),
     enabled,
     initialPageParam: undefined as string | undefined,
     queryFn: async ({ pageParam }) => {
@@ -56,6 +67,7 @@ export function useChapterComments(
         query: {
           story: publicId,
           chapter: String(number),
+          ...(paragraphId === null ? {} : { paragraph: paragraphId }),
           ...(pageParam === undefined ? {} : { cursor: pageParam }),
         },
       });
@@ -63,6 +75,25 @@ export function useChapterComments(
       return res.json();
     },
     getNextPageParam: (last) => last.nextCursor ?? undefined,
+  });
+}
+
+/**
+ * Comments shown about each paragraph, by `data-pid`. Loaded with the comments at the end of the
+ * chapter (`enabled`), never with every read.
+ */
+export function useParagraphCommentCounts(chapter: CommentChapter, enabled: boolean) {
+  const { publicId, number } = chapter;
+  return useQuery({
+    queryKey: [...chapterCommentsKey(publicId, number), 'paragraph-counts'] as const,
+    enabled,
+    queryFn: async () => {
+      const res = await api.api.v1.comments['paragraph-counts'].$get({
+        query: { story: publicId, chapter: String(number) },
+      });
+      if (!res.ok) throw await readApiError(res);
+      return (await res.json()).counts;
+    },
   });
 }
 
@@ -93,7 +124,7 @@ export function useMoreReplies(
   });
 }
 
-/** Posts a comment or a reply, then reloads the chapter's comments. */
+/** Posts a comment (about a paragraph or not) or a reply, then reloads the chapter's comments. */
 export function useCreateComment(chapter: CommentChapter) {
   const queryClient = useQueryClient();
   return useMutation({

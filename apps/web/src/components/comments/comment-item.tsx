@@ -22,6 +22,7 @@ export function CommentItem({
   deleting = false,
   report,
   compact = false,
+  orphanedParagraph = false,
 }: {
   comment: CommentDto;
   onReply?: () => void;
@@ -30,6 +31,8 @@ export function CommentItem({
   report?: ReactNode;
   /** Replies: smaller avatar. */
   compact?: boolean;
+  /** A thread about a paragraph since edited out of the chapter: says so above the text. */
+  orphanedParagraph?: boolean;
 }) {
   return (
     <article className="flex gap-3">
@@ -43,6 +46,9 @@ export function CommentItem({
         {formatInitial(comment.author.displayName)}
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
+        {orphanedParagraph ? (
+          <p className="text-xs text-reader-muted">{m.comment_paragraph_orphaned()}</p>
+        ) : null}
         <CommentBody comment={comment} />
         <div className="-ml-2 flex flex-wrap items-center">
           {onReply ? (

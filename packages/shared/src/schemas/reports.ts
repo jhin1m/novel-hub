@@ -21,7 +21,7 @@ export const REPORT_STATUSES = ['open', 'resolved', 'dismissed'] as const;
 export type ReportStatus = (typeof REPORT_STATUSES)[number];
 
 /** `reports.target_type` values. */
-export const REPORT_TARGET_TYPES = ['story', 'chapter', 'user', 'comment'] as const;
+export const REPORT_TARGET_TYPES = ['story', 'chapter', 'user', 'comment', 'rating'] as const;
 export type ReportTargetType = (typeof REPORT_TARGET_TYPES)[number];
 
 /** One-click moderator actions (spec section 7): the bodies of `POST /moderation/actions`. */
@@ -32,6 +32,8 @@ export const MODERATION_ACTIONS = [
   'restore_chapter',
   'hide_comment',
   'restore_comment',
+  'hide_rating',
+  'restore_rating',
   'mute_user',
   'unmute_user',
   'ban_user',
@@ -56,14 +58,15 @@ const storyPublicId = z.string().refine(isValidPublicId);
 const chapterNumber = z.number().int().positive().max(2_147_483_647);
 
 /**
- * What a report points at, by public keys. A comment has no public key, so it is named by its id:
- * the one deliberate exception, and the UI never shows that id.
+ * What a report points at, by public keys. A comment and a rating have no public key, so they are
+ * named by their id: the deliberate exceptions, and the UI never shows those ids.
  */
 export const reportTargetSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('story'), storyPublicId }),
   z.object({ type: z.literal('chapter'), storyPublicId, number: chapterNumber }),
   z.object({ type: z.literal('user'), username: usernameParamSchema }),
   z.object({ type: z.literal('comment'), commentId: z.uuid() }),
+  z.object({ type: z.literal('rating'), ratingId: z.uuid() }),
 ]);
 export type ReportTarget = z.infer<typeof reportTargetSchema>;
 
@@ -98,6 +101,8 @@ const chapterAction = <A extends string>(action: A) =>
   z.object({ action: z.literal(action), storyPublicId, number: chapterNumber, ...actionCommon });
 const commentAction = <A extends string>(action: A) =>
   z.object({ action: z.literal(action), commentId: z.uuid(), ...actionCommon });
+const ratingAction = <A extends string>(action: A) =>
+  z.object({ action: z.literal(action), ratingId: z.uuid(), ...actionCommon });
 const userAction = <A extends string>(action: A) =>
   z.object({ action: z.literal(action), username: usernameParamSchema, ...actionCommon });
 const reportAction = <A extends string>(action: A) =>
@@ -111,6 +116,8 @@ export const moderationActionSchema = z.discriminatedUnion('action', [
   chapterAction('restore_chapter'),
   commentAction('hide_comment'),
   commentAction('restore_comment'),
+  ratingAction('hide_rating'),
+  ratingAction('restore_rating'),
   userAction('mute_user'),
   userAction('unmute_user'),
   userAction('ban_user'),

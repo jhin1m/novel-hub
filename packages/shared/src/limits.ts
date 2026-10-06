@@ -31,6 +31,8 @@ export const LIMITS = {
   modNoteMax: 500,
   /** A comment, in code points after normalisation (`normalizePlainText`). */
   commentMax: 2_000,
+  /** A story review, in code points after normalisation (`normalizePlainText`). */
+  reviewMax: 5_000,
 } as const;
 
 /**

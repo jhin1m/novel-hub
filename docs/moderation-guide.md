@@ -5,8 +5,8 @@ Dành cho tài khoản `mod` và `admin`. Trang hàng chờ: `/moderation` (link
 ## Hàng chờ báo cáo
 
 - Lọc theo trạng thái (Đang chờ / Đã xử lý / Đã bỏ qua) và theo lý do. Mới nhất lên trước, 20 báo cáo mỗi trang.
-- Mỗi báo cáo hiện mục bị báo cáo (truyện, chương, tài khoản hoặc bình luận) kèm link tới trang thật, trạng thái hiện tại (đã ẩn, tác giả đã xoá, tác giả đang bị khoá...), mô tả của người báo, người báo ("Hệ thống" với báo cáo tự động) và số báo cáo đang chờ cho cùng mục.
-- Người dùng báo cáo được truyện, chương, tài khoản, bình luận với 5 lý do: vi phạm bản quyền, đạo văn, spam, nội dung cấm, gắn nhãn sai. Mỗi người chỉ có một báo cáo đang chờ cho mỗi mục; có giới hạn tần suất (`RATE_LIMITS.report` trong `packages/shared/src/rate-limits.ts`).
+- Mỗi báo cáo hiện mục bị báo cáo (truyện, chương, tài khoản, bình luận hoặc đánh giá) kèm link tới trang thật, trạng thái hiện tại (đã ẩn, tác giả đã xoá, tác giả đang bị khoá...), mô tả của người báo, người báo ("Hệ thống" với báo cáo tự động) và số báo cáo đang chờ cho cùng mục.
+- Người dùng báo cáo được truyện, chương, tài khoản, bình luận, review (đánh giá) với 5 lý do: vi phạm bản quyền, đạo văn, spam, nội dung cấm, gắn nhãn sai. Mỗi người chỉ có một báo cáo đang chờ cho mỗi mục; có giới hạn tần suất (`RATE_LIMITS.report` trong `packages/shared/src/rate-limits.ts`).
 - Báo cáo không bao giờ tự ẩn nội dung; mod quyết định.
 
 ## Hành động
@@ -18,12 +18,13 @@ Mọi hành động ghi vào `moderation_actions` (ai, lúc nào, mục nào, gh
 | Ẩn truyện | Truyện và mọi chương biến mất khỏi trang công khai, tìm kiếm; tác giả vẫn viết, đăng chương nhưng truyện vẫn ẩn tới khi mod khôi phục | Khôi phục truyện |
 | Ẩn chương | Chương trả 404, bộ đếm chương/chữ của truyện tính lại; tác giả không đăng lại được chương này | Khôi phục chương |
 | Ẩn bình luận | Bình luận và cả nhánh trả lời của nó (nếu là bình luận gốc) biến mất khỏi khu bình luận; không báo cáo thêm được | Khôi phục bình luận |
-| Cấm bình luận | Tài khoản vẫn đọc, theo dõi được nhưng không đăng bình luận (ô nhập thay bằng thông báo bị hạn chế) | Bỏ cấm bình luận |
+| Ẩn đánh giá | Điểm của đánh giá ra khỏi điểm trung bình và số lượt, review biến mất khỏi danh sách; người viết thấy "đang bị ẩn", không sửa hay xoá được; không báo cáo thêm được | Khôi phục đánh giá |
+| Cấm bình luận | Tài khoản vẫn đọc, theo dõi được nhưng không đăng bình luận hay đánh giá (ô nhập thay bằng thông báo bị hạn chế) | Bỏ cấm bình luận |
 | Khoá tài khoản | Đăng xuất ngay mọi phiên, không đăng nhập lại được; mọi truyện, chương, trang tác giả biến mất khỏi trang và tìm kiếm. Không sửa dữ liệu truyện | Mở khoá tài khoản |
 | Gộp tag | Tab "Gộp tag": mọi truyện gắn tag cũ chuyển sang tag mới, URL tag cũ chuyển hướng 301 sang tag mới | Không có nút hoàn tác; sửa tay theo mục "Hoàn tác gộp tag thủ công" |
 | Bỏ qua / Đánh dấu đã xử lý | Đóng một báo cáo mà không đổi nội dung | — |
 
-Quyền: mod tác động lên reader và author; admin thêm cả mod. Không ai khoá được admin hay tự xử mình. Luật này áp cả cho nội dung: mod không ẩn/khôi phục truyện, chương, bình luận của mod khác hay của admin (để admin làm), không ai xử truyện của chính mình. Báo cáo về nội dung của mod/admin khác vẫn đóng được (bỏ qua, đánh dấu đã xử lý); báo cáo về chính mình hoặc nội dung của mình thì không. Mod bị cấm bình luận hoặc bị khoá thì mất quyền kiểm duyệt. Trang chỉ hiện các nút được phép.
+Quyền: mod tác động lên reader và author; admin thêm cả mod. Không ai khoá được admin hay tự xử mình. Luật này áp cả cho nội dung: mod không ẩn/khôi phục truyện, chương, bình luận, đánh giá của mod khác hay của admin (để admin làm), không ai xử truyện của chính mình. Báo cáo về nội dung của mod/admin khác vẫn đóng được (bỏ qua, đánh dấu đã xử lý); báo cáo về chính mình hoặc nội dung của mình thì không. Mod bị cấm bình luận hoặc bị khoá thì mất quyền kiểm duyệt. Trang chỉ hiện các nút được phép.
 
 Trang công khai được Cloudflare cache: sau khi ẩn hoặc khoá, worker purge cache và đồng bộ tìm kiếm qua outbox, thường trong vòng một phút. Worker dừng thì nội dung cũ còn trên CDN tới khi worker chạy lại.
 
@@ -35,6 +36,15 @@ Trang công khai được Cloudflare cache: sau khi ẩn hoặc khoá, worker pu
 - Bình luận của tài khoản bị khoá không hiện (không xoá dữ liệu, mở khoá là hiện lại). Bình luận gốc bị ẩn hoặc bị xoá thì cả nhánh trả lời không hiện.
 - Hàng chờ hiện 200 ký tự đầu của bình luận bị báo cáo, người viết, chương và truyện chứa nó. Bình luận người viết đã xoá không khôi phục được.
 - Bình luận tải ở trình duyệt khi người đọc cuộn gần cuối chương, không nằm trong HTML được cache, nên ẩn bình luận có tác dụng ngay, không cần purge CDN.
+
+## Đánh giá và review
+
+- Mỗi người một đánh giá cho mỗi truyện: 1–5 sao kèm review văn bản thuần tuỳ chọn (tối đa 5.000 ký tự); sửa hoặc xoá được. Chỉ truyện công khai đã có chương đăng mới đánh giá được; tác giả không tự đánh giá truyện của mình.
+- Người đánh giá phải đã xác thực email và không bị cấm bình luận; có giới hạn tần suất (`RATE_LIMITS.rate`, tài khoản mới chặt hơn).
+- Điểm trung bình, số lượt và phân bố tính lúc đọc từ các đánh giá không bị ẩn của tài khoản không bị khoá; khoá tài khoản là điểm và review của họ biến mất, mở khoá là hiện lại.
+- Đánh giá bị ẩn không tự gỡ được bằng cách sửa hoặc xoá rồi đánh giá lại: cả hai đều bị từ chối cho tới khi mod khôi phục.
+- Người viết xoá đánh giá là xoá hẳn (khác bình luận, vốn xoá mềm): báo cáo đang chờ về nó hiện "không còn tồn tại", mod chỉ đóng báo cáo. Ẩn/khôi phục của mod không đổi thời điểm sửa của review (không đẩy lên đầu danh sách, không gắn nhãn "đã sửa").
+- Hàng chờ hiện số sao, 200 ký tự đầu của review (hoặc ghi chú "chỉ chấm điểm"), người viết và truyện. Khu đánh giá tải ở trình duyệt khi người đọc cuộn tới, không nằm trong HTML được cache, nên ẩn có tác dụng ngay.
 
 ## Lưu ý
 

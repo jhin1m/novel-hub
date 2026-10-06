@@ -43,6 +43,13 @@
       "when": 1791260373586,
       "tag": "0005_notification_grouping",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791263110194,
+      "tag": "0006_ratings_moderation",
+      "breakpoints": true
     }
   ]
 }

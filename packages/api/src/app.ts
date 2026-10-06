@@ -11,6 +11,7 @@ import { createLibraryRoutes } from './routes/library';
 import { createMeRoutes } from './routes/me';
 import { createModerationRoutes } from './routes/moderation';
 import { createNotificationRoutes } from './routes/notifications';
+import { createRatingRoutes } from './routes/ratings';
 import { createReadingRoutes } from './routes/reading';
 import { createReportRoutes } from './routes/reports';
 import { createSearchRoutes } from './routes/search';
@@ -28,6 +29,7 @@ function createV1Routes(deps: ApiDeps) {
     .route('/me', createMeRoutes(deps))
     .route('/moderation', createModerationRoutes(deps))
     .route('/notifications', createNotificationRoutes(deps))
+    .route('/ratings', createRatingRoutes(deps))
     .route('/reading', createReadingRoutes(deps))
     .route('/reports', createReportRoutes(deps))
     .route('/search', createSearchRoutes(deps))

@@ -13,7 +13,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { users } from './auth';
 import { chapters } from './chapters';
-import { createdAt, timestamptz, uuidPk } from './columns';
+import { createdAt, timestamptz, updatedAt, uuidPk } from './columns';
 import { followTarget } from './enums';
 import { stories } from './stories';
 
@@ -81,6 +81,11 @@ export const comments = pgTable(
 export const ratings = pgTable(
   'ratings',
   {
+    /** The single key reports and moderator actions point at; the UI never shows it. */
+    id: uuid()
+      .notNull()
+      .unique('ratings_id_key')
+      .default(sql`uuidv7()`),
     userId: uuid()
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
@@ -88,13 +93,26 @@ export const ratings = pgTable(
       .notNull()
       .references(() => stories.id, { onDelete: 'cascade' }),
     score: smallint().notNull(),
+    /** Plain text, normalised before insert; rendered as text, never as HTML. `null` = no review. */
     review: text(),
+    /** `visible` / `hidden_by_mod`; values validated in `shared`. */
+    status: text().notNull().default('visible'),
     createdAt: createdAt(),
+    updatedAt: updatedAt(),
   },
   (t) => [
     primaryKey({ name: 'ratings_pkey', columns: [t.userId, t.storyId] }),
     check('ratings_score_range', sql`${t.score} BETWEEN 1 AND 5`),
+    check(
+      'ratings_review_length',
+      sql`${t.review} IS NULL OR char_length(${t.review}) BETWEEN 1 AND 5000`,
+    ),
     index('ratings_story_id_idx').on(t.storyId),
+    // A story's shown reviews, read backwards for most recently updated first (keyset on
+    // updated_at, id).
+    index('ratings_story_reviews_idx')
+      .on(t.storyId, t.updatedAt, t.id)
+      .where(sql`${t.status} = 'visible' AND ${t.review} IS NOT NULL`),
   ],
 );
 

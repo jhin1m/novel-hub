@@ -1,4 +1,4 @@
-import { type Tx, chapters, comments, reports, stories } from '@novel-hub/db';
+import { type Tx, chapters, comments, ratings, reports, stories } from '@novel-hub/db';
 import { and, eq, or } from 'drizzle-orm';
 import { type Result, err, ok } from '../lib/result';
 import type { CurrentUser } from '../users/current-user';
@@ -6,7 +6,7 @@ import { type ModerationError, type ModerationTarget, logModerationAction } from
 
 /**
  * The account a report target belongs to: the user itself, the author of the story/chapter, or
- * the writer of the comment.
+ * the writer of the comment/rating.
  */
 async function targetOwnerId(tx: Tx, type: string, id: string): Promise<string | null> {
   if (type === 'user') return id;
@@ -30,6 +30,13 @@ async function targetOwnerId(tx: Tx, type: string, id: string): Promise<string |
       .select({ userId: comments.userId })
       .from(comments)
       .where(eq(comments.id, id));
+    return row?.userId ?? null;
+  }
+  if (type === 'rating') {
+    const [row] = await tx
+      .select({ userId: ratings.userId })
+      .from(ratings)
+      .where(eq(ratings.id, id));
     return row?.userId ?? null;
   }
   return null;

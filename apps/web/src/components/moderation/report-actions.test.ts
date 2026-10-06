@@ -179,6 +179,31 @@ describe('actionsFor', () => {
     expect(actionsFor(report({ type: 'comment', story, chapter, comment }), mod)).toEqual([]);
   });
 
+  it('hides or restores a reported rating, and leaves the viewer’s own alone', () => {
+    const rating = {
+      id: '01920000-0000-7000-8000-000000000002',
+      score: 1,
+      excerpt: 'Quảng cáo',
+      truncated: false,
+      status: 'visible',
+      writer: { ...author, username: 'spammer', role: 'reader' },
+    } as const;
+    const target = { type: 'rating', story, rating } as const;
+    const visible = actionsFor(report(target), mod);
+    expect(visible[0]).toEqual({ action: 'hide_rating', ratingId: rating.id });
+    expect(names(visible)).toEqual([
+      'hide_rating',
+      'mute_user',
+      'ban_user',
+      'resolve_report',
+      'dismiss_report',
+    ]);
+    const hidden = { ...target, rating: { ...rating, status: 'hidden_by_mod' as const } };
+    expect(names(actionsFor(report(hidden), mod))[0]).toBe('restore_rating');
+    const own = { ...target, rating: { ...rating, writer: { ...author, username: 'mod_one' } } };
+    expect(actionsFor(report(own), mod)).toEqual([]);
+  });
+
   it('only closes a report whose target is missing', () => {
     expect(names(actionsFor(report({ type: 'missing' }), mod))).toEqual([
       'resolve_report',

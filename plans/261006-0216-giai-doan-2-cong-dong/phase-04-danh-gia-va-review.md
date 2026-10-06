@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Đánh giá và review"
-status: pending
+status: completed
 priority: P1
 effort: "1d"
 dependencies: [3]
@@ -80,12 +80,12 @@ moderation: setRatingHidden (khoá dòng rating, canModerateUser, visible ↔ hi
 
 ## Function / Interface Checklist
 
-- [ ] `upsertRating(db, actor, {publicId, score, review}) → Result<MyRatingDto, 'NOT_FOUND'|'FORBIDDEN'|'USER_MUTED'|'RATING_HIDDEN'>`
-- [ ] `deleteRating(db, actor, publicId) → Result<void, 'NOT_FOUND'|'RATING_HIDDEN'>`
-- [ ] `listStoryRatings(db, viewer|null, {publicId, cursor}) → Result<RatingsPageDto, 'NOT_FOUND'>`
-- [ ] `getMyRating(db, userId, publicId)`
-- [ ] `setRatingHidden(tx, actor, ratingId, hidden, note)` → `ModerationTarget {type:'rating', id}`
-- [ ] Route `GET /ratings`, `GET /ratings/mine`, `PUT /ratings` (`requireVerifiedEmail` → `rateLimit(deps,'rate')` → `validate`), `DELETE /ratings`
+- [x] `upsertRating(db, actor, {publicId, score, review}) → Result<MyRatingDto, 'NOT_FOUND'|'FORBIDDEN'|'USER_MUTED'|'RATING_HIDDEN'>`
+- [x] `deleteRating(db, actor, publicId) → Result<void, 'NOT_FOUND'|'RATING_HIDDEN'>`
+- [x] `listStoryRatings(db, viewer|null, {publicId, cursor}) → Result<RatingsPageDto, 'NOT_FOUND'>`
+- [x] `getMyRating(db, userId, publicId)`
+- [x] `setRatingHidden(tx, actor, ratingId, hidden, note)` → `ModerationTarget {type:'rating', id}`
+- [x] Route `GET /ratings`, `GET /ratings/mine`, `PUT /ratings` (`requireVerifiedEmail` → `rateLimit(deps,'rate')` → `validate`), `DELETE /ratings`
 
 ## Implementation Steps
 
@@ -115,18 +115,18 @@ moderation: setRatingHidden (khoá dòng rating, canModerateUser, visible ↔ hi
 
 ## Todo List
 
-- [ ] Shared + migration
-- [ ] Core + moderation
-- [ ] API
-- [ ] UI khu đánh giá + moderation
-- [ ] i18n, docs, e2e, gate, `[x]` checkbox 3
+- [x] Shared + migration
+- [x] Core + moderation
+- [x] API
+- [x] UI khu đánh giá + moderation
+- [x] i18n, docs, e2e, gate, `[x]` checkbox 3
 
 ## Success Criteria
 
-- [ ] Gate xanh
-- [ ] Summary luôn khớp đánh giá visible của người không bị ban (int test)
-- [ ] Mod ẩn/khôi phục review, không tự xử nội dung của mình; review bị ẩn không hồi sinh bằng xoá + đăng lại
-- [ ] Checkbox 3 spec `[x]`
+- [x] Gate xanh
+- [x] Summary luôn khớp đánh giá visible của người không bị ban (int test)
+- [x] Mod ẩn/khôi phục review, không tự xử nội dung của mình; review bị ẩn không hồi sinh bằng xoá + đăng lại
+- [x] Checkbox 3 spec `[x]`
 
 ## Risk Assessment
 
@@ -136,6 +136,22 @@ moderation: setRatingHidden (khoá dòng rating, canModerateUser, visible ↔ hi
 
 - Review là văn bản thuần (`normalizePlainText`), render text node.
 - `isOwn` tính ở server, không lộ user id. `ratingId` (UUID) là ngoại lệ có chủ đích của quy tắc khoá công khai trong báo cáo, như `commentId` (phase 1).
+
+## Implementation Notes (2026-10-06)
+
+- Migration `0006_ratings_moderation`: `id` (unique, `uuidv7()`), `status`, `updated_at`, index `ratings_story_reviews_idx (story_id, updated_at, id)` partial (đọc ngược cho mới nhất trước, như `comments_chapter_roots_idx`), thêm CHECK `ratings_review_length` (null hoặc 1–5.000).
+- Core `packages/core/src/ratings/*`, `moderation/rating-visibility.ts`, `reports/rating-report-context.ts`; API `routes/ratings.ts`; web `components/ratings/*`, `lib/ratings.ts`.
+- Code review: M1 (ẩn/khôi phục làm `$onUpdate` đổi `updated_at` → review nhảy lên đầu, nhãn "đã sửa") đã sửa + int test (test đỏ khi bỏ fix); L2 (sao trong summary đọc trùng điểm) đã sửa bằng `StarRow decorative`.
+- Gate: typecheck, lint, format:check, test (752), test:int (364), test:e2e (102) xanh; sau fix chạy lại unit, int ratings, e2e ratings + moderation, typecheck: xanh.
+
+### Quyết định [auto] (sáng cần duyệt)
+- [auto] `summary` chỉ trả ở trang đầu, trang sau `null` — như `total` của bình luận, tránh GROUP BY lặp mỗi lần "Xem thêm".
+- [auto] `DELETE` khi không có đánh giá → 404 `NOT_FOUND` (không idempotent) — khớp chữ ký plan; UI luôn tải lại sau khi xoá.
+- [auto] Rate limit `rate` đếm cả `DELETE` — chặn vòng xoá/đăng lại.
+- [auto] Khu đánh giá chỉ render khi truyện có ≥ 1 chương đã đăng (truyện chưa có chương API trả 404) — đơn giản nhất.
+- [auto] Điểm trung bình hiển thị kiểu Việt `4,0` (plan ghi "4.0"), như `formatDecimal` hiện có.
+- [auto] Thêm CHECK độ dài review ở DB (lớp phòng thủ thứ hai, như `comments_body_length`).
+- [auto] Bỏ qua L1 của reviewer (ô nhập giữ chữ đang gõ khi bị ẩn giữa chừng, đã khoá) — hiếm, không sai dữ liệu. L3 (xoá hẳn review đang bị báo cáo) giữ đúng spec "xoá hẳn dòng", ghi vào `docs/moderation-guide.md`.
 
 ## Next Steps
 

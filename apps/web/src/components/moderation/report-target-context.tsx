@@ -133,6 +133,39 @@ export function TargetContext({ report }: { report: ReportDto }) {
         </div>
       );
     }
+    case 'rating': {
+      const { rating } = target;
+      return (
+        <div className="flex flex-col gap-1">
+          <TargetLabel>{m.moderation_target_rating()}</TargetLabel>
+          <p className="text-sm font-bold">{m.moderation_rating_score({ score: rating.score })}</p>
+          {rating.excerpt === null ? (
+            <p className="text-sm text-muted-foreground">{m.moderation_rating_no_review()}</p>
+          ) : (
+            // Plain text from the writer: React escapes it.
+            <blockquote className="border-l-2 border-border pl-3 whitespace-pre-line">
+              {rating.truncated ? `${rating.excerpt}…` : rating.excerpt}
+            </blockquote>
+          )}
+          <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <a
+              href={canonicalPath({ kind: 'author', username: rating.writer.username })}
+              className={textLinkClass}
+            >
+              {m.moderation_comment_by({
+                name: rating.writer.displayName,
+                username: rating.writer.username,
+              })}
+            </a>
+            {rating.status === 'hidden_by_mod' ? (
+              <Badge variant="destructive">{m.moderation_state_hidden()}</Badge>
+            ) : null}
+            <UserStatusBadge status={rating.writer.status} />
+          </p>
+          <StoryLine story={target.story} />
+        </div>
+      );
+    }
     case 'missing':
       return <p className="text-muted-foreground">{m.moderation_target_missing()}</p>;
   }

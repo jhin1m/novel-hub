@@ -24,12 +24,18 @@ import {
   loadStoryContexts,
   loadUserContexts,
 } from './report-context';
+import {
+  type RatingContext,
+  type RatingWithStory,
+  loadRatingContexts,
+} from './rating-report-context';
 
 export type ReportTargetDto =
   | { type: 'story'; story: StoryContext }
   | { type: 'chapter'; story: StoryContext; chapter: ChapterContext }
   | { type: 'user'; user: UserContext }
   | { type: 'comment'; story: StoryContext; chapter: ChapterContext; comment: CommentContext }
+  | { type: 'rating'; story: StoryContext; rating: RatingContext }
   /** The target no longer exists (or the row names an unknown type). */
   | { type: 'missing' };
 
@@ -118,11 +124,12 @@ export async function listReports(
   const idsOf = (type: string) =>
     rows.filter((row) => row.targetType === type).map((row) => row.targetId);
   const matchedIds = [...duplicates.values()].flatMap((d) => (d ? [d.matchedChapterId] : []));
-  const [storyMap, chapterMap, userMap, commentMap, openCounts] = await Promise.all([
+  const [storyMap, chapterMap, userMap, commentMap, ratingMap, openCounts] = await Promise.all([
     loadStoryContexts(db, idsOf('story')),
     loadChapterContexts(db, [...idsOf('chapter'), ...matchedIds]),
     loadUserContexts(db, idsOf('user')),
     loadCommentContexts(db, idsOf('comment')),
+    loadRatingContexts(db, idsOf('rating')),
     db
       .select({ targetType: reports.targetType, targetId: reports.targetId, n: count() })
       .from(reports)
@@ -154,6 +161,7 @@ export async function listReports(
         chapterMap,
         userMap,
         commentMap,
+        ratingMap,
       }),
       duplicateOf:
         duplicate && matched
@@ -172,9 +180,10 @@ function targetDto(
     chapterMap: Map<string, ChapterWithStory>;
     userMap: Map<string, UserContext>;
     commentMap: Map<string, CommentWithChapter>;
+    ratingMap: Map<string, RatingWithStory>;
   },
 ): ReportTargetDto {
-  const { storyMap, chapterMap, userMap, commentMap } = maps;
+  const { storyMap, chapterMap, userMap, commentMap, ratingMap } = maps;
   if (type === 'story') {
     const story = storyMap.get(id);
     return story ? { type, story } : { type: 'missing' };
@@ -189,6 +198,10 @@ function targetDto(
   }
   if (type === 'comment') {
     const found = commentMap.get(id);
+    return found ? { type, ...found } : { type: 'missing' };
+  }
+  if (type === 'rating') {
+    const found = ratingMap.get(id);
     return found ? { type, ...found } : { type: 'missing' };
   }
   return { type: 'missing' };

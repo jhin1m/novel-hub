@@ -26,6 +26,7 @@ const TITLES: Record<ReportTarget['type'], () => string> = {
   chapter: m.report_title_chapter,
   user: m.report_title_user,
   comment: m.report_title_comment,
+  rating: m.report_title_rating,
 };
 
 /**

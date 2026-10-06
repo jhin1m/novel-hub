@@ -1,4 +1,4 @@
-import { type Db, chapters, comments, reports, stories, users } from '@novel-hub/db';
+import { type Db, chapters, comments, ratings, reports, stories, users } from '@novel-hub/db';
 import type { ReportCreateInput, ReportTarget, ReportTargetType } from '@novel-hub/shared';
 import { and, eq, isNull, ne, or, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
@@ -14,8 +14,8 @@ export interface ResolvedTarget {
 
 /**
  * The internal id of a target anyone can see: a public story (18+ included), a readable chapter, a
- * user who is not banned, a shown comment under a readable chapter. Anything else is "not found", so a report never confirms that hidden
- * content exists.
+ * user who is not banned, a shown comment under a readable chapter, a shown rating of a public
+ * story. Anything else is "not found", so a report never confirms that hidden content exists.
  */
 async function resolveVisibleTarget(db: Db, target: ReportTarget): Promise<ResolvedTarget | null> {
   switch (target.type) {
@@ -91,6 +91,24 @@ async function resolveVisibleTarget(db: Db, target: ReportTarget): Promise<Resol
         story: { visibility: row.visibility, authorStatus: row.authorStatus },
       });
       return decision.readable ? { type: 'comment', id: row.id } : null;
+    }
+    case 'rating': {
+      const writer = alias(users, 'writer');
+      const [row] = await db
+        .select({ id: ratings.id })
+        .from(ratings)
+        .innerJoin(writer, eq(writer.id, ratings.userId))
+        .innerJoin(stories, eq(stories.id, ratings.storyId))
+        .innerJoin(users, eq(users.id, stories.authorId))
+        .where(
+          and(
+            eq(ratings.id, target.ratingId),
+            eq(ratings.status, 'visible'),
+            ne(writer.status, 'banned'),
+            publicStoryWhere({ includeMature: true }),
+          ),
+        );
+      return row ? { type: 'rating', id: row.id } : null;
     }
     case 'user': {
       const [row] = await db

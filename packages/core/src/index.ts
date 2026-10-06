@@ -234,6 +234,18 @@ export { type CreateCommentError, createComment } from './comments/create-commen
 export { deleteComment } from './comments/delete-comment';
 export { countParagraphComments } from './comments/paragraph-counts';
 export { setCommentHidden } from './moderation/comment-visibility';
+export {
+  type MyRatingDto,
+  type RatingSummaryDto,
+  type RatingViewer,
+  type RatingsPageDto,
+  type ReviewDto,
+} from './ratings/rating-dto';
+export { type UpsertRatingError, upsertRating } from './ratings/upsert-rating';
+export { deleteRating } from './ratings/delete-rating';
+export { listStoryRatings } from './ratings/list-ratings';
+export { getMyRating } from './ratings/my-rating';
+export { setRatingHidden } from './moderation/rating-visibility';
 export { type ResolvedTarget, createReport } from './reports/create-report';
 export {
   type ReportDto,
@@ -247,6 +259,7 @@ export {
   type StoryContext,
   type UserContext,
 } from './reports/report-context';
+export { type RatingContext } from './reports/rating-report-context';
 export { applyModerationAction } from './moderation/apply-action';
 export { type ModerationError, type ModerationTarget } from './moderation/log-action';
 export { banUser, moderateUser, unbanUser } from './moderation/user-status';

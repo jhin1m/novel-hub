@@ -16,6 +16,7 @@ describe('reportCreateSchema', () => {
       { type: 'chapter', storyPublicId: 'k7m2xq9p', number: 3 },
       { type: 'user', username: 'lam_phong' },
       { type: 'comment', commentId: reportId },
+      { type: 'rating', ratingId: reportId },
     ]) {
       expect(reportCreateSchema.safeParse({ target, reason: 'spam' }).success).toBe(true);
     }
@@ -27,6 +28,7 @@ describe('reportCreateSchema', () => {
       { target: { type: 'story', storyId: reportId }, reason: 'spam' },
       { target: { type: 'chapter', storyPublicId: 'k7m2xq9p' }, reason: 'spam' },
       { target: { type: 'comment', id: reportId }, reason: 'spam' },
+      { target: { type: 'rating', id: reportId }, reason: 'spam' },
       { target: story, reason: 'duplicate' },
       { target: story },
       { target: story, reason: 'spam', detail: 'x'.repeat(1_001) },
@@ -51,6 +53,8 @@ describe('moderationActionSchema', () => {
       { action: 'restore_chapter', storyPublicId: 'k7m2xq9p', number: 1 },
       { action: 'hide_comment', commentId: reportId, reportId },
       { action: 'restore_comment', commentId: reportId },
+      { action: 'hide_rating', ratingId: reportId, reportId },
+      { action: 'restore_rating', ratingId: reportId },
       { action: 'mute_user', username: 'lam_phong' },
       { action: 'unmute_user', username: 'lam_phong' },
       { action: 'ban_user', username: 'lam_phong' },
@@ -70,6 +74,7 @@ describe('moderationActionSchema', () => {
       { action: 'delete_story', storyPublicId: 'k7m2xq9p' },
       { action: 'hide_chapter', storyPublicId: 'k7m2xq9p' },
       { action: 'hide_comment', commentId: 'not-a-uuid' },
+      { action: 'hide_rating', commentId: reportId },
       { action: 'ban_user' },
       { action: 'merge_tag', sourceSlug: 'a' },
       { action: 'dismiss_report', reportId: 'not-a-uuid' },

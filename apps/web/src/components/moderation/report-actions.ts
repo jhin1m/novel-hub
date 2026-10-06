@@ -9,6 +9,8 @@ export const ACTION_LABELS: Record<ModerationAction, () => string> = {
   restore_chapter: m.moderation_action_restore_chapter,
   hide_comment: m.moderation_action_hide_comment,
   restore_comment: m.moderation_action_restore_comment,
+  hide_rating: m.moderation_action_hide_rating,
+  restore_rating: m.moderation_action_restore_rating,
   mute_user: m.moderation_action_mute_user,
   unmute_user: m.moderation_action_unmute_user,
   ban_user: m.moderation_action_ban_user,
@@ -87,14 +89,21 @@ export function actionsFor(report: ReportDto, viewer: Viewer): CardAction[] {
       ? target.user
       : target.type === 'comment'
         ? target.comment.writer
-        : target.type === 'story' || target.type === 'chapter'
-          ? target.story.author
-          : null;
+        : target.type === 'rating'
+          ? target.rating.writer
+          : target.type === 'story' || target.type === 'chapter'
+            ? target.story.author
+            : null;
   if (owner && canActOn(viewer, owner)) {
     if (target.type === 'comment') {
       const { id: commentId, status } = target.comment;
       if (status === 'visible') actions.push({ action: 'hide_comment', commentId });
       if (status === 'hidden_by_mod') actions.push({ action: 'restore_comment', commentId });
+    }
+    if (target.type === 'rating') {
+      const { id: ratingId, status } = target.rating;
+      if (status === 'visible') actions.push({ action: 'hide_rating', ratingId });
+      if (status === 'hidden_by_mod') actions.push({ action: 'restore_rating', ratingId });
     }
     if (target.type === 'chapter' && !target.chapter.deleted) {
       const ref = { storyPublicId: target.story.publicId, number: target.chapter.number };

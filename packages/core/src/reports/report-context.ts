@@ -52,7 +52,8 @@ export interface CommentWithChapter extends ChapterWithStory {
   comment: CommentContext;
 }
 
-const storyColumns = {
+/** Story and author columns every context selects (`users` joined as the story's author). */
+export const storyColumns = {
   storyPublicId: stories.publicId,
   storySlug: stories.slug,
   storyTitle: stories.title,
@@ -63,7 +64,7 @@ const storyColumns = {
   authorStatus: users.status,
 };
 
-interface StoryColumnsRow {
+export interface StoryColumnsRow {
   storyPublicId: string;
   storySlug: string;
   storyTitle: string;
@@ -74,7 +75,7 @@ interface StoryColumnsRow {
   authorStatus: UserStatus;
 }
 
-function toStoryContext(row: StoryColumnsRow): StoryContext {
+export function toStoryContext(row: StoryColumnsRow): StoryContext {
   return {
     publicId: row.storyPublicId,
     slug: row.storySlug,

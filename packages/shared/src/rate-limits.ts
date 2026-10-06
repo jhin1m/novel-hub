@@ -14,7 +14,8 @@ export type RateLimitAction =
   | 'publishChapter'
   | 'report'
   | 'comment'
-  | 'follow';
+  | 'follow'
+  | 'rate';
 
 export interface Limit {
   max: number;
@@ -105,6 +106,15 @@ export const RATE_LIMITS: Readonly<Record<RateLimitAction, RateLimitRule>> = {
       newAccount: { max: 60, windowSec: 10 * MINUTE },
     },
     ip: { max: 120, windowSec: 10 * MINUTE },
+    onStoreError: 'open',
+  },
+  // Rating a story or editing one's review; deleting counts too, so delete/re-post loops stop.
+  rate: {
+    user: {
+      normal: { max: 10, windowSec: 10 * MINUTE },
+      newAccount: { max: 5, windowSec: 10 * MINUTE },
+    },
+    ip: { max: 30, windowSec: 10 * MINUTE },
     onStoreError: 'open',
   },
 };

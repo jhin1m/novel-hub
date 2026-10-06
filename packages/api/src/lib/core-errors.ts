@@ -25,6 +25,7 @@ const CORE_ERROR_STATUS = {
   INVALID_STATE: 409,
   USER_MUTED: 403,
   COMMENT_PARAGRAPH_INVALID: 422,
+  RATING_HIDDEN: 409,
 } as const;
 
 export type CoreErrorCode = keyof typeof CORE_ERROR_STATUS;
@@ -53,6 +54,7 @@ const CORE_ERROR_MESSAGES: Record<CoreErrorCode, string> = {
   INVALID_STATE: 'The target is not in a state this action applies to',
   USER_MUTED: 'This account is muted and cannot post',
   COMMENT_PARAGRAPH_INVALID: 'The paragraph is not in the published chapter',
+  RATING_HIDDEN: 'The rating was hidden by a moderator',
 };
 
 export function coreError<C extends CoreErrorCode>(c: Context, code: C) {

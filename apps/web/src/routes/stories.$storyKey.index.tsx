@@ -4,6 +4,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { ReportButton } from '../components/report/report-button';
 import { NotFoundPage } from '../components/not-found';
 import { MatureGate, useMatureAllowed } from '../components/reader/mature-gate';
+import { StoryRatings } from '../components/ratings/story-ratings';
 import { SiteLayout } from '../components/site-layout';
 import { StoryAuthorCard } from '../components/story/story-author-card';
 import { StoryChapterList } from '../components/story/story-chapter-list';
@@ -113,6 +114,15 @@ function StoryPage() {
                 </div>
                 <StoryChapterList story={story} chapters={chapters} currentNumber={currentNumber} />
               </section>
+
+              {/* Only a story with a chapter to have read can be rated. */}
+              {first ? (
+                <StoryRatings
+                  publicId={story.publicId}
+                  authorUsername={story.author.username}
+                  enabled={!gated}
+                />
+              ) : null}
             </article>
             <aside className="flex min-w-0 flex-[1_1_300px] flex-col gap-3">
               <StoryAuthorCard author={story.author} />

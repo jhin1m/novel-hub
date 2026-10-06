@@ -7,6 +7,10 @@ import { m } from '@novel-hub/shared/messages';
  */
 
 const decimal = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 });
+const score = new Intl.NumberFormat('vi-VN', {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
 
 const date = new Intl.DateTimeFormat('vi-VN', {
   day: '2-digit',
@@ -18,6 +22,11 @@ const date = new Intl.DateTimeFormat('vi-VN', {
 /** A number with at most one decimal, Vietnamese style (`1,5`). */
 export function formatDecimal(value: number): string {
   return decimal.format(value);
+}
+
+/** An average rating, always with one decimal, Vietnamese style (`4,0`). */
+export function formatScore(value: number): string {
+  return score.format(value);
 }
 
 /** A word count in short form: `850`, `12,3 nghìn`, `1,2 triệu`. */

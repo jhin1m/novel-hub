@@ -96,6 +96,17 @@ export {
   paragraphCountsQuerySchema,
 } from './schemas/comment';
 export {
+  RATING_STATUSES,
+  REVIEWS_PAGE_SIZE,
+  type RatingListQuery,
+  type RatingStatus,
+  type RatingUpsertInput,
+  ratingCursorSchema,
+  ratingListQuerySchema,
+  ratingStoryQuerySchema,
+  ratingUpsertSchema,
+} from './schemas/rating';
+export {
   type EditorDocJson,
   type EditorMarkJson,
   type EditorNodeJson,

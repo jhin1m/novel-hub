@@ -7,6 +7,7 @@ import { setCommentHidden } from './comment-visibility';
 import { setChapterHidden, setStoryHidden } from './content-visibility';
 import type { ModerationError, ModerationTarget } from './log-action';
 import { mergeTag } from './merge-tag';
+import { setRatingHidden } from './rating-visibility';
 import { closeReport, isOwnReport, resolveReportsFor } from './resolve-reports';
 import { moderateUser } from './user-status';
 
@@ -44,6 +45,9 @@ function dispatch(
         input.action === 'hide_comment',
         input.note,
       );
+    case 'hide_rating':
+    case 'restore_rating':
+      return setRatingHidden(tx, actor, input.ratingId, input.action === 'hide_rating', input.note);
     case 'mute_user':
     case 'unmute_user':
     case 'ban_user':

@@ -133,6 +133,16 @@ export { storyUrlsByPublicId, storyUrlsEverPublished, urlsFor } from './cdn/urls
 export { type ViewCounter, type ViewRecord, createViewCounter } from './views/view-counter';
 export { type RecordChapterViewDeps, recordChapterView } from './views/record-chapter-view';
 export { flushViewCounters } from './views/flush';
+export { flushStoryReaders } from './views/flush-story-readers';
+export { computeRankings } from './rankings/compute-rankings';
+export { writeRankings } from './rankings/write-rankings';
+export { recomputeAllRankings } from './rankings/recompute-rankings';
+export {
+  type RankingPage,
+  type RankingReader,
+  createRankingReader,
+  readRanking,
+} from './rankings/ranking-reader';
 export {
   type ListOptions,
   type Paged,

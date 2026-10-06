@@ -1,13 +1,14 @@
-import { SEARCH_QUERY_MAX_LENGTH } from '@novel-hub/shared';
+import { SEARCH_QUERY_MAX_LENGTH, canonicalPath } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { Link, useRouterState } from '@tanstack/react-router';
-import { LibraryBigIcon, PenLineIcon, SearchIcon } from 'lucide-react';
+import { LibraryBigIcon, PenLineIcon, SearchIcon, TrophyIcon } from 'lucide-react';
 import { NotificationBell } from '@/components/notifications/notification-bell';
 import { SiteAccountMenu } from '@/components/site-account-menu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { type MainTab, activeMainTab } from '@/lib/main-nav';
 import { useMe } from '@/lib/me';
+import { cn } from '@/lib/utils';
 
 /**
  * Mobile-first: below `md` the header holds only the logo, a search link and the account controls
@@ -39,6 +40,7 @@ export function SiteHeader() {
           </span>
         </Link>
         <HeaderSearch />
+        <HeaderRankingsLink active={pathname.startsWith('/rankings/')} />
         <div className="ml-auto flex min-w-0 items-center gap-1 md:gap-2">
           <Button asChild variant="ghost" size="icon" className="md:hidden">
             <a href="/search" aria-label={m.layout_search()}>
@@ -84,6 +86,25 @@ function HeaderSearch() {
 
 const NAV_PILL =
   'h-[42px] aria-[current=page]:bg-primary-soft aria-[current=page]:text-primary [&_svg]:size-[18px]';
+
+/**
+ * The way into the rankings for everyone on desktop, next to the search box (the footer carries it
+ * on narrow screens). A document link: ranking pages are CDN-cached HTML. Icon only until `lg`, so
+ * the header still fits at `md` with the signed-in links.
+ */
+function HeaderRankingsLink({ active }: { active: boolean }) {
+  return (
+    <Button asChild variant="ghost" className={cn(NAV_PILL, 'hidden shrink-0 md:inline-flex')}>
+      <a
+        href={canonicalPath({ kind: 'ranking', period: 'week' })}
+        aria-current={active ? 'page' : undefined}
+      >
+        <TrophyIcon aria-hidden />
+        <span className="sr-only lg:not-sr-only">{m.ranking_nav()}</span>
+      </a>
+    </Button>
+  );
+}
 
 /**
  * Desktop links to the personal sections, for signed-in accounts only (guests reach them through

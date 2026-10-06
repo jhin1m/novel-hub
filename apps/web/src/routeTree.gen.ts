@@ -25,6 +25,8 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as AuthorsUsernameRouteImport } from './routes/authors.$username'
+import { Route as RankingsIndexRouteImport } from './routes/rankings.index'
+import { Route as RankingsPeriodRouteImport } from './routes/rankings.$period'
 import { Route as SitemapPagesRouteImport } from './routes/sitemap/pages'
 import { Route as TagsTagSlugRouteImport } from './routes/tags.$tagSlug'
 import { Route as WriteIndexRouteImport } from './routes/write/index'
@@ -116,6 +118,16 @@ const AuthorsUsernameRoute = AuthorsUsernameRouteImport.update({
   path: '/authors/$username',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RankingsIndexRoute = RankingsIndexRouteImport.update({
+  id: '/rankings/',
+  path: '/rankings/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RankingsPeriodRoute = RankingsPeriodRouteImport.update({
+  id: '/rankings/$period',
+  path: '/rankings/$period',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapPagesRoute = SitemapPagesRouteImport.update({
   id: '/sitemap/pages',
   path: '/sitemap/pages',
@@ -187,8 +199,10 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/api/$': typeof ApiSplatRoute
   '/authors/$username': typeof AuthorsUsernameRoute
+  '/rankings/$period': typeof RankingsPeriodRoute
   '/sitemap/pages': typeof SitemapPagesRoute
   '/tags/$tagSlug': typeof TagsTagSlugRoute
+  '/rankings/': typeof RankingsIndexRoute
   '/write/': typeof WriteIndexRoute
   '/sitemap/chapters/$page': typeof SitemapChaptersPageRoute
   '/sitemap/stories/$page': typeof SitemapStoriesPageRoute
@@ -215,8 +229,10 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/api/$': typeof ApiSplatRoute
   '/authors/$username': typeof AuthorsUsernameRoute
+  '/rankings/$period': typeof RankingsPeriodRoute
   '/sitemap/pages': typeof SitemapPagesRoute
   '/tags/$tagSlug': typeof TagsTagSlugRoute
+  '/rankings': typeof RankingsIndexRoute
   '/write': typeof WriteIndexRoute
   '/sitemap/chapters/$page': typeof SitemapChaptersPageRoute
   '/sitemap/stories/$page': typeof SitemapStoriesPageRoute
@@ -244,8 +260,10 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/api/$': typeof ApiSplatRoute
   '/authors/$username': typeof AuthorsUsernameRoute
+  '/rankings/$period': typeof RankingsPeriodRoute
   '/sitemap/pages': typeof SitemapPagesRoute
   '/tags/$tagSlug': typeof TagsTagSlugRoute
+  '/rankings/': typeof RankingsIndexRoute
   '/write/': typeof WriteIndexRoute
   '/sitemap/chapters/$page': typeof SitemapChaptersPageRoute
   '/sitemap/stories/$page': typeof SitemapStoriesPageRoute
@@ -274,8 +292,10 @@ export interface FileRouteTypes {
     | '/terms'
     | '/api/$'
     | '/authors/$username'
+    | '/rankings/$period'
     | '/sitemap/pages'
     | '/tags/$tagSlug'
+    | '/rankings/'
     | '/write/'
     | '/sitemap/chapters/$page'
     | '/sitemap/stories/$page'
@@ -302,8 +322,10 @@ export interface FileRouteTypes {
     | '/terms'
     | '/api/$'
     | '/authors/$username'
+    | '/rankings/$period'
     | '/sitemap/pages'
     | '/tags/$tagSlug'
+    | '/rankings'
     | '/write'
     | '/sitemap/chapters/$page'
     | '/sitemap/stories/$page'
@@ -330,8 +352,10 @@ export interface FileRouteTypes {
     | '/terms'
     | '/api/$'
     | '/authors/$username'
+    | '/rankings/$period'
     | '/sitemap/pages'
     | '/tags/$tagSlug'
+    | '/rankings/'
     | '/write/'
     | '/sitemap/chapters/$page'
     | '/sitemap/stories/$page'
@@ -359,8 +383,10 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   ApiSplatRoute: typeof ApiSplatRoute
   AuthorsUsernameRoute: typeof AuthorsUsernameRoute
+  RankingsPeriodRoute: typeof RankingsPeriodRoute
   SitemapPagesRoute: typeof SitemapPagesRoute
   TagsTagSlugRoute: typeof TagsTagSlugRoute
+  RankingsIndexRoute: typeof RankingsIndexRoute
   WriteIndexRoute: typeof WriteIndexRoute
   SitemapChaptersPageRoute: typeof SitemapChaptersPageRoute
   SitemapStoriesPageRoute: typeof SitemapStoriesPageRoute
@@ -485,6 +511,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthorsUsernameRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/rankings/': {
+      id: '/rankings/'
+      path: '/rankings'
+      fullPath: '/rankings/'
+      preLoaderRoute: typeof RankingsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rankings/$period': {
+      id: '/rankings/$period'
+      path: '/rankings/$period'
+      fullPath: '/rankings/$period'
+      preLoaderRoute: typeof RankingsPeriodRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap/pages': {
       id: '/sitemap/pages'
       path: '/sitemap/pages'
@@ -575,8 +615,10 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   ApiSplatRoute: ApiSplatRoute,
   AuthorsUsernameRoute: AuthorsUsernameRoute,
+  RankingsPeriodRoute: RankingsPeriodRoute,
   SitemapPagesRoute: SitemapPagesRoute,
   TagsTagSlugRoute: TagsTagSlugRoute,
+  RankingsIndexRoute: RankingsIndexRoute,
   WriteIndexRoute: WriteIndexRoute,
   SitemapChaptersPageRoute: SitemapChaptersPageRoute,
   SitemapStoriesPageRoute: SitemapStoriesPageRoute,

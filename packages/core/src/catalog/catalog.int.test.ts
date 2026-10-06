@@ -282,8 +282,10 @@ describe('getStoryPage', () => {
   });
 });
 
+const RANKING_PATHS = ['/rankings/day', '/rankings/week', '/rankings/month', '/rankings/rising'];
+
 describe('catalogUrls', () => {
-  it('a chapter change lists the home page, the author page and the canonical tag pages', async () => {
+  it('a chapter change lists the home, author, canonical tag and ranking pages', async () => {
     const author = await makeAuthor(db);
     const s = await makePublishedStory(db, author, 1);
     await linkTag(s.storyId, 'tu-tien');
@@ -300,6 +302,10 @@ describe('catalogUrls', () => {
       '/authors/author',
       '/tags/bao-luc',
       '/tags/tien-hiep',
+      '/rankings/day',
+      '/rankings/week',
+      '/rankings/month',
+      '/rankings/rising',
     ]);
   });
 
@@ -319,6 +325,10 @@ describe('catalogUrls', () => {
       '/authors/author',
       '/tags/do-thi',
       '/tags/tien-hiep',
+      '/rankings/day',
+      '/rankings/week',
+      '/rankings/month',
+      '/rankings/rising',
     ]);
   });
 
@@ -328,12 +338,13 @@ describe('catalogUrls', () => {
     await setStory(s.storyId, { visibility: 'hidden_by_mod' });
     expect(
       await catalogUrls(db, { entity: 'story', action: 'hidden', storyId: s.storyId }),
-    ).toEqual(['/', '/authors/author', '/tags/tien-hiep']);
+    ).toEqual(['/', '/authors/author', '/tags/tien-hiep', ...RANKING_PATHS]);
 
     await db.update(users).set({ status: 'banned' }).where(eq(users.id, author.id));
     expect(await catalogUrls(db, { entity: 'user', action: 'banned', userId: author.id })).toEqual([
       '/',
       '/tags/tien-hiep',
+      ...RANKING_PATHS,
     ]);
   });
 });

@@ -28,6 +28,7 @@ export async function recordChapterView(
   try {
     const counted = await deps.viewCounter.record({
       chapterId: ref.chapterId,
+      storyId: ref.storyId,
       viewer: input.viewer,
       ip: input.ip,
       date: statsDate(input.now),

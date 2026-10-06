@@ -1,5 +1,5 @@
 import { type Db, chapters, stories, storyTags, tags, users } from '@novel-hub/db';
-import { canonicalPath } from '@novel-hub/shared';
+import { RANKING_PERIODS, canonicalPath } from '@novel-hub/shared';
 import { type SQL, and, asc, count, eq, isNotNull, isNull } from 'drizzle-orm';
 import { canReadChapter } from '../access/can-read-chapter';
 import { publicStoryWhere, totalPagesFor } from '../catalog/story-card';
@@ -57,7 +57,7 @@ export async function countSitemap(
 }
 
 /**
- * Home, the static pages, every canonical tag page and every author page that lists at least one
+ * Home, the static pages, the ranking pages, every canonical tag page and every author page that lists at least one
  * sitemap story with a chapter (the condition of those lists). A merged tag counts as the tag at
  * the end of its merge chain; a broken chain is left out.
  */
@@ -93,6 +93,7 @@ export async function listSitemapPages(db: Db): Promise<SitemapEntry[]> {
     page(canonicalPath({ kind: 'home' })),
     page(canonicalPath({ kind: 'static', path: '/terms' })),
     page(canonicalPath({ kind: 'static', path: '/content-policy' })),
+    ...RANKING_PERIODS.map((period) => page(canonicalPath({ kind: 'ranking', period }))),
     ...[...tagSlugs].sort().map((slug) => page(canonicalPath({ kind: 'tag', slug }))),
     ...authors.map((a) => page(canonicalPath({ kind: 'author', username: a.username }))),
   ];

@@ -76,6 +76,25 @@ export const chapterDailyStats = pgTable(
   (t) => [primaryKey({ name: 'chapter_daily_stats_pkey', columns: [t.chapterId, t.date] })],
 );
 
+/**
+ * Distinct readers of a story per stats day, flushed from a per-story HyperLogLog (not summed over
+ * chapters, so reading many chapters counts once). Source of the rankings.
+ */
+export const storyDailyStats = pgTable(
+  'story_daily_stats',
+  {
+    storyId: uuid()
+      .notNull()
+      .references(() => stories.id, { onDelete: 'cascade' }),
+    date: date({ mode: 'string' }).notNull(),
+    uniqueReaders: integer().notNull().default(0),
+  },
+  (t) => [
+    primaryKey({ name: 'story_daily_stats_pkey', columns: [t.storyId, t.date] }),
+    index('story_daily_stats_date_idx').on(t.date),
+  ],
+);
+
 export const badges = pgTable(
   'badges',
   {

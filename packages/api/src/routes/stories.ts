@@ -2,6 +2,7 @@ import {
   createStory,
   getPreferences,
   listStories,
+  readRanking,
   removeStoryCover,
   setStoryCover,
   updateStory,
@@ -26,7 +27,7 @@ const COVER_BODY_LIMIT = Math.round(LIMITS.cover.maxBytes * 1.1);
  * `core`).
  */
 export function createStoryRoutes(
-  deps: Pick<ApiDeps, 'auth' | 'db' | 'storage' | 'rateLimit' | 'clientIp'>,
+  deps: Pick<ApiDeps, 'auth' | 'db' | 'storage' | 'rankings' | 'rateLimit' | 'clientIp'>,
 ) {
   return (
     new Hono()
@@ -36,7 +37,21 @@ export function createStoryRoutes(
       .get('/', validate('query', storyListQuery), async (c) => {
         const { user } = c.var;
         const includeMature = user ? (await getPreferences(deps.db, user.id)).showMature : false;
-        const list = await listStories(deps.db, c.req.valid('query'), { includeMature });
+        const query = c.req.valid('query');
+        if (query.list === 'ranking') {
+          const ranking = await readRanking(deps.db, deps.rankings, query.period, {
+            includeMature,
+          });
+          // An outage is not an empty ranking: the client keeps the server-rendered list.
+          if (!ranking.available) {
+            return c.json(
+              errorBody('RANKINGS_UNAVAILABLE', 'Rankings are temporarily unavailable'),
+              503,
+            );
+          }
+          return c.json({ stories: ranking.stories, page: 1, totalPages: 1 }, 200);
+        }
+        const list = await listStories(deps.db, query, { includeMature });
         if (!list) return coreError(c, 'NOT_FOUND');
         return c.json(list, 200);
       })

@@ -31,7 +31,7 @@ Mỗi lần `/ck:cook` đúng một phase; checkbox spec chỉ đánh `[x]` ở 
 | 2 | [Bình luận theo đoạn](./phase-02-binh-luan-theo-doan.md) | 1 (đánh `[x]`) | Completed |
 | 3 | [Theo dõi và thông báo](./phase-03-theo-doi-va-thong-bao.md) | 2 | Completed |
 | 4 | [Đánh giá và review](./phase-04-danh-gia-va-review.md) | 3 | Completed |
-| 5 | [Xếp hạng](./phase-05-xep-hang.md) | 4 | Pending |
+| 5 | [Xếp hạng](./phase-05-xep-hang.md) | 4 | Completed |
 | 6 | [Dashboard tác giả](./phase-06-dashboard-tac-gia.md) | 5 | Pending |
 | 7 | [Huy hiệu và cột mốc](./phase-07-huy-hieu-va-cot-moc.md) | 6 (phần 1/3) | Pending |
 | 8 | [Truyện nổi bật do mod chọn](./phase-08-truyen-noi-bat-do-mod-chon.md) | 6 (phần 2/3) | Pending |

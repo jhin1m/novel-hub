@@ -10,6 +10,7 @@
  */
 import {
   type MailQueue,
+  type RankingReader,
   type RateLimiter,
   type SearchCtx,
   type StoragePort,
@@ -18,6 +19,7 @@ import {
   createMailQueue,
   createClientIpResolver,
   createProducerConnection,
+  createRankingReader,
   createRateLimiter,
   createS3Storage,
   createSearchCtx,
@@ -67,6 +69,8 @@ export interface Infra {
   mailQueue: MailQueue;
   /** Counts chapter reads on `producerRedis`. */
   viewCounter: ViewCounter;
+  /** Rankings the worker wrote, read on `producerRedis`. */
+  rankings: RankingReader;
   /** Rate limits on `producerRedis`. */
   rateLimit: RateLimiter;
   /** The client address, trusting `CF-Connecting-IP` only with `TRUST_CF_IP`. */
@@ -82,6 +86,8 @@ export interface Infra {
 const REDIS_CONNECT_WAIT_MS = 2_000;
 /** Past this a rate limit check falls back to the rule's `onStoreError` (ms). */
 const RATE_LIMIT_TIMEOUT_MS = 500;
+/** Past this a ranking reads as unavailable and the page renders empty, briefly cached (ms). */
+const RANKINGS_TIMEOUT_MS = 500;
 const POOL_CLOSE_WAIT_MS = 5_000;
 const QUEUE_CLOSE_WAIT_MS = 2_000;
 
@@ -120,6 +126,7 @@ async function createInfra(): Promise<Infra> {
   const mailQueue = createMailQueue(producerRedis, env.QUEUE_PREFIX);
   // Same prefix as the worker that flushes the counters.
   const viewCounter = createViewCounter(producerRedis, env.QUEUE_PREFIX);
+  const rankings = createRankingReader(producerRedis, env.QUEUE_PREFIX, RANKINGS_TIMEOUT_MS);
   const rateLimit = createRateLimiter({
     redis: producerRedis,
     prefix: env.QUEUE_PREFIX,
@@ -143,6 +150,7 @@ async function createInfra(): Promise<Infra> {
     producerRedis,
     mailQueue,
     viewCounter,
+    rankings,
     rateLimit,
     clientIp,
     storage,

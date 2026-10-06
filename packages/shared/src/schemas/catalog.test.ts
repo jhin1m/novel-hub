@@ -43,6 +43,10 @@ describe('storyListQuery', () => {
       list: 'author',
       author: 'lam_phong',
     });
+    expect(storyListQuery.parse({ list: 'ranking', period: 'rising' })).toEqual({
+      list: 'ranking',
+      period: 'rising',
+    });
   });
 
   it('rejects malformed pages, slugs and usernames', () => {
@@ -51,6 +55,8 @@ describe('storyListQuery', () => {
     expect(storyListQuery.safeParse({ list: 'tag', tag: 'Tien Hiep' }).success).toBe(false);
     expect(storyListQuery.safeParse({ list: 'author', author: 'AB' }).success).toBe(false);
     expect(storyListQuery.safeParse({ list: 'popular' }).success).toBe(false);
+    expect(storyListQuery.safeParse({ list: 'ranking', period: 'year' }).success).toBe(false);
+    expect(storyListQuery.safeParse({ list: 'ranking' }).success).toBe(false);
   });
 
   it('drops an includeMature flag sent by the client', () => {

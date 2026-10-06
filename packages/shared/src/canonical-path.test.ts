@@ -12,6 +12,8 @@ describe('canonicalPath', () => {
     ).toBe('/stories/kiem-dao-k7m2xq9p/chapter-3');
     expect(canonicalPath({ kind: 'author', username: 'lam_phong' })).toBe('/authors/lam_phong');
     expect(canonicalPath({ kind: 'static', path: '/terms' })).toBe('/terms');
+    expect(canonicalPath({ kind: 'ranking', period: 'week' })).toBe('/rankings/week');
+    expect(canonicalPath({ kind: 'ranking', period: 'rising' })).toBe('/rankings/rising');
   });
 
   it('adds the page query to tag pages only past the first page', () => {

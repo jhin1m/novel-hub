@@ -55,6 +55,10 @@ describe('purge-urls job (real Postgres, fake CDN)', () => {
       `https://truyen.example/stories/${story.slug}-${story.publicId}`,
       'https://truyen.example/',
       'https://truyen.example/tags/tien-hiep',
+      'https://truyen.example/rankings/day',
+      'https://truyen.example/rankings/week',
+      'https://truyen.example/rankings/month',
+      'https://truyen.example/rankings/rising',
     ]);
   });
 });

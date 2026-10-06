@@ -1,11 +1,21 @@
 import { type Db, logRedisErrors } from '@novel-hub/core';
-import { MAINTENANCE_JOBS, type MaintenanceJobName, QUEUES } from '@novel-hub/shared';
+import {
+  MAINTENANCE_JOBS,
+  type MaintenanceJobName,
+  QUEUES,
+  RANKING_RULES,
+} from '@novel-hub/shared';
 import { type Job, Queue, UnrecoverableError, Worker } from 'bullmq';
 import type { Redis } from 'ioredis';
 import { processPruneNotifications } from './processors/prune-notifications';
+import { processRecomputeRankings } from './processors/recompute-rankings';
 
 export interface MaintenanceJobDeps {
   db: Db;
+  /** Connection the rankings are written on (the stats connection of the view counters). */
+  statsRedis: Redis;
+  /** Same prefix the web reads rankings and counts reads under (`QUEUE_PREFIX`). */
+  queuePrefix: string;
 }
 
 export type MaintenanceQueue = Queue<unknown, void, MaintenanceJobName>;
@@ -15,6 +25,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 /** How often each periodic job runs (ms). */
 export const MAINTENANCE_INTERVALS: Record<MaintenanceJobName, number> = {
   [MAINTENANCE_JOBS.pruneNotifications]: DAY_MS,
+  [MAINTENANCE_JOBS.recomputeRankings]: RANKING_RULES.refreshMinutes * 60_000,
 };
 
 export function routeMaintenanceJob(
@@ -24,6 +35,8 @@ export function routeMaintenanceJob(
   switch (job.name) {
     case MAINTENANCE_JOBS.pruneNotifications:
       return processPruneNotifications(deps);
+    case MAINTENANCE_JOBS.recomputeRankings:
+      return processRecomputeRankings(deps);
     default:
       return Promise.reject(new UnrecoverableError(`no processor for job "${job.name}"`));
   }

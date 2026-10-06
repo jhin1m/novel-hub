@@ -30,6 +30,8 @@ export type PublishingJobName = (typeof PUBLISHING_JOBS)[keyof typeof PUBLISHING
 export const MAINTENANCE_JOBS = {
   /** Deletes old notifications in batches. */
   pruneNotifications: 'prune-notifications',
+  /** Recomputes the ranking sorted sets in Redis from `story_daily_stats`. */
+  recomputeRankings: 'recompute-rankings',
 } as const;
 
 export type MaintenanceJobName = (typeof MAINTENANCE_JOBS)[keyof typeof MAINTENANCE_JOBS];

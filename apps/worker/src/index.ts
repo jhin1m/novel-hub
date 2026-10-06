@@ -100,7 +100,11 @@ function main(): void {
     search,
   });
   const mailWorker = createMailWorker(connection, env.QUEUE_PREFIX, { mailer });
-  const maintenanceWorker = createMaintenanceWorker(connection, env.QUEUE_PREFIX, { db });
+  const maintenanceWorker = createMaintenanceWorker(connection, env.QUEUE_PREFIX, {
+    db,
+    statsRedis,
+    queuePrefix: env.QUEUE_PREFIX,
+  });
   registerSchedulersInBackground('publishing', () => registerPublishingSchedulers(publishingQueue));
   registerSchedulersInBackground('maintenance', () =>
     registerMaintenanceSchedulers(maintenanceQueue),

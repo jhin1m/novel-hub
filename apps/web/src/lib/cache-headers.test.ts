@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DEGRADED_LIST_CACHE,
   LIST_CACHE,
   NOT_FOUND_CACHE,
   NO_STORE,
@@ -39,5 +40,14 @@ describe('publicPageHeaders', () => {
     expect(publicPageHeaders('success', { list: true })).toEqual(LIST_CACHE);
     expect(publicPageHeaders('notFound', { list: true })).toEqual(NOT_FOUND_CACHE);
     expect(publicPageHeaders('error', { list: true })).toEqual(NO_STORE);
+  });
+
+  it('a list rendered empty by an outage is cached for a minute only', () => {
+    expect(DEGRADED_LIST_CACHE['Cache-Control']).toBe('public, s-maxage=60');
+    expect(publicPageHeaders('success', { list: true, degraded: true })).toEqual(
+      DEGRADED_LIST_CACHE,
+    );
+    expect(publicPageHeaders('success', { list: true, degraded: false })).toEqual(LIST_CACHE);
+    expect(publicPageHeaders('error', { list: true, degraded: true })).toEqual(NO_STORE);
   });
 });

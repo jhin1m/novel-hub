@@ -1,5 +1,6 @@
 // Demo seed for local browsing: `pnpm db:seed-demo`. Wipes the database, loads the base seed,
-// then adds ~47 stories with random chapters, extra authors, a reader library and open reports.
+// then adds ~47 stories with random chapters, extra authors, a reader library, open reports and 30
+// days of daily readers for the rankings.
 // Same guard and password (`SEED_USER_PASSWORD`) as `pnpm db:seed`. Run `pnpm search:reindex` after.
 import { renderPublishedContent } from '@novel-hub/core';
 import {
@@ -14,6 +15,7 @@ import {
   libraryItems,
   readingProgress,
   reports,
+  storyDailyStats,
   storyTags,
   tags,
   users,
@@ -24,7 +26,7 @@ import {
   seedDatabase,
   truncatePublicTables,
 } from '@novel-hub/db/seed';
-import { countWords, generatePid, slugify } from '@novel-hub/shared';
+import { countWords, generatePid, slugify, statsDate } from '@novel-hub/shared';
 import { dbEnvSchema, loadServerEnv } from '@novel-hub/shared/env';
 import { hashPassword } from 'better-auth/crypto';
 import { and, asc, eq, inArray } from 'drizzle-orm';
@@ -422,16 +424,31 @@ try {
         })),
       );
 
+      // Thirty days of daily readers so the rankings fill once the worker recomputes them; about a
+      // quarter of the stories grow day by day, so "rising" has entries too.
+      const statRows = storyIds.flatMap((storyId) => {
+        const base = rand.int(3, 400);
+        const growth = rand.chance(0.25) ? 1.08 : 0.99;
+        return Array.from({ length: 30 }, (_, ago) => ({
+          storyId,
+          date: statsDate(new Date(now.getTime() - ago * DAY_MS)),
+          uniqueReaders: Math.round(base * growth ** -ago * (0.7 + rand.next() * 0.6)),
+        }));
+      });
+      await tx.insert(storyDailyStats).values(statRows);
+
       return {
         authors: authorRows.length,
         stories: plans.length,
         chapters: chapterCount,
         libraryItems: libraryStories.length,
         reports: reportTargets.length,
+        storyDailyStats: statRows.length,
       };
     });
     console.log('[seed-demo] demo data:', summary);
     console.log('[seed-demo] next: pnpm search:reindex');
+    console.log('[seed-demo] rankings fill when the worker runs (recomputed every 15 minutes)');
   } finally {
     await pool.end();
   }

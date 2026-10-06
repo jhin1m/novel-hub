@@ -24,7 +24,18 @@ let appPromise: Promise<App> | undefined;
 
 function buildApp(): Promise<App> {
   const promise = getInfra().then(
-    ({ env, db, healthRedis, mailQueue, storage, viewCounter, search, rateLimit, clientIp }) => {
+    ({
+      env,
+      db,
+      healthRedis,
+      mailQueue,
+      storage,
+      viewCounter,
+      rankings,
+      search,
+      rateLimit,
+      clientIp,
+    }) => {
       // Mail goes through the queue and the worker sends it. `createAuth` calls this port
       // fire-and-forget with a timeout and logs failures, so a dead Redis never hangs a request.
       const sendAuthEmail: AuthMailPort = async (msg) => {
@@ -50,6 +61,7 @@ function buildApp(): Promise<App> {
         db,
         storage,
         viewCounter,
+        rankings,
         search,
         rateLimit,
         clientIp,

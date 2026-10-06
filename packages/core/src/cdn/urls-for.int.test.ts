@@ -23,7 +23,8 @@ const storyUrl = (slug: string, publicId: string) => `${APP}/stories/${slug}-${p
 const chapterUrl = (slug: string, publicId: string, n: number) =>
   `${storyUrl(slug, publicId)}/chapter-${n}`;
 /** List pages showing a story by `author` tagged only with its main tag `tien-hiep`. */
-const listUrls = [`${APP}/`, `${APP}/authors/author`, `${APP}/tags/tien-hiep`];
+const rankingUrls = ['day', 'week', 'month', 'rising'].map((p) => `${APP}/rankings/${p}`);
+const listUrls = [`${APP}/`, `${APP}/authors/author`, `${APP}/tags/tien-hiep`, ...rankingUrls];
 
 describe('urlsFor', () => {
   it('a chapter change purges the chapter, its readable neighbours, the story page and its lists', async () => {
@@ -116,6 +117,7 @@ describe('urlsFor', () => {
           chapterUrl(b.slug, b.publicId, 1),
           `${APP}/`,
           `${APP}/tags/tien-hiep`,
+          ...rankingUrls,
         ].sort(),
       );
     }

@@ -1,12 +1,13 @@
-import { chapterDailyStats, chapters } from '@novel-hub/db';
+import { chapterDailyStats, chapters, storyDailyStats } from '@novel-hub/db';
 import { seedTags } from '@novel-hub/db/seed';
 import { createTestDb, truncateAll } from '@novel-hub/db/testing';
 import { loadServerEnv, testEnvSchema } from '@novel-hub/shared/env';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { Redis } from 'ioredis';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { makeAuthor, makePublishedStory } from '../testing/story-fixture';
+import { addChapter, makeAuthor, makePublishedStory } from '../testing/story-fixture';
 import { flushViewCounters } from './flush';
+import { flushStoryReaders } from './flush-story-readers';
 import { recordChapterView } from './record-chapter-view';
 import { createViewCounter } from './view-counter';
 import { viewKeys } from './view-keys';
@@ -139,5 +140,67 @@ describe('view counting (real Redis and Postgres)', () => {
     await db.delete(chapters).where(eq(chapters.storyId, s.storyId));
     expect(await flushViewCounters(redis, db, PREFIX, [DATE])).toEqual({ chapters: 1 });
     expect(await db.select().from(chapterDailyStats)).toEqual([]);
+  });
+
+  it('counts a story reader once however many chapters they read', async () => {
+    const author = await makeAuthor(db);
+    const s = await makePublishedStory(db, author, 5);
+    for (let number = 1; number <= 5; number++) {
+      await recordChapterView(
+        { db, viewCounter },
+        { publicId: s.publicId, number, viewer: 'u:reader', ip: '203.0.113.9', now: NOW },
+      );
+    }
+    // A second person behind the same IP still counts: the IP spent one slot on the first.
+    await recordChapterView(
+      { db, viewCounter },
+      { publicId: s.publicId, number: 1, viewer: 'u:other', ip: '203.0.113.9', now: NOW },
+    );
+    expect(await flushStoryReaders(redis, db, PREFIX, [DATE])).toEqual({ stories: 1 });
+    expect(await db.select().from(storyDailyStats)).toEqual([
+      { storyId: s.storyId, date: DATE, uniqueReaders: 2 },
+    ]);
+    // Nothing changed since: nothing to flush.
+    expect(await flushStoryReaders(redis, db, PREFIX, [DATE])).toEqual({ stories: 0 });
+  });
+
+  it('caps the readers one IP adds to a story per day, across chapters', async () => {
+    const author = await makeAuthor(db);
+    const s = await makePublishedStory(db, author, 1);
+    for (let i = 2; i <= 30; i++) await addChapter(db, author, s.publicId);
+    // One IP rotating its cookie on every chapter: every chapter read counts (under the chapter
+    // caps), but the story gains at most `perIpPerStoryPerDay` readers.
+    let counted = 0;
+    for (let number = 1; number <= 30; number++) {
+      const result = await recordChapterView(
+        { db, viewCounter },
+        { publicId: s.publicId, number, viewer: `a:bot-${number}`, ip: '198.51.100.1', now: NOW },
+      );
+      if (result.ok && result.value.counted) counted++;
+    }
+    expect(counted).toBe(30);
+    // Readers without a known IP are not capped per IP.
+    await recordChapterView(
+      { db, viewCounter },
+      { publicId: s.publicId, number: 1, viewer: 'a:no-ip', ip: null, now: NOW },
+    );
+    await flushStoryReaders(redis, db, PREFIX, [DATE]);
+    const [row] = await db.select().from(storyDailyStats);
+    expect(row?.uniqueReaders).toBe(11);
+  });
+
+  it('marks the stories again when the database write fails', async () => {
+    const author = await makeAuthor(db);
+    const s = await makePublishedStory(db, author, 1);
+    await view(s.publicId, 'u:1');
+    const failing = { execute: () => Promise.reject(new Error('db down')) } as unknown as typeof db;
+    await expect(flushStoryReaders(redis, failing, PREFIX, [DATE])).rejects.toThrow('db down');
+    expect(await redis.scard(viewKeys(PREFIX, DATE).storyDirty)).toBe(1);
+    expect(await flushStoryReaders(redis, db, PREFIX, [DATE])).toEqual({ stories: 1 });
+    // A deleted story is skipped.
+    await view(s.publicId, 'u:2');
+    await db.execute(sql`delete from stories where id = ${s.storyId}`);
+    expect(await flushStoryReaders(redis, db, PREFIX, [DATE])).toEqual({ stories: 1 });
+    expect(await db.select().from(storyDailyStats)).toEqual([]);
   });
 });

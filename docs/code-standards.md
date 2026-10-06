@@ -51,6 +51,7 @@ URL và tên file route cùng là tiếng Anh, vì TanStack Router sinh URL từ
 | Tác giả | `/authors/{username}` | `authors.$username.tsx` |
 | Tag | `/tags/{tagSlug}` | `tags.$tagSlug.tsx` |
 | Tìm kiếm | `/search?q=...` | `search.tsx` |
+| Bảng xếp hạng | `/rankings/{day\|week\|month\|rising}` (`/rankings` → 301 `/rankings/week`) | `rankings.$period.tsx`, `rankings.index.tsx` |
 | Tủ truyện | `/library` | `library.tsx` |
 | Thông báo | `/notifications` | `notifications.tsx` |
 | Cài đặt | `/settings` | `settings.tsx` |

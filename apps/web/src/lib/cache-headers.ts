@@ -17,6 +17,14 @@ export const LIST_CACHE: Record<string, string> = {
   'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=3600',
 };
 
+/**
+ * A list rendered empty because its data store was unavailable (rankings with Redis down): still a
+ * 200 page, but cached briefly so it fills again soon after recovery.
+ */
+export const DEGRADED_LIST_CACHE: Record<string, string> = {
+  'Cache-Control': 'public, s-maxage=60',
+};
+
 /** Missing or unreadable pages: cached briefly, so content that comes back shows up soon. */
 export const NOT_FOUND_CACHE: Record<string, string> = {
   'Cache-Control': 'public, s-maxage=60',
@@ -40,10 +48,10 @@ export const NOINDEX: Record<string, string> = { 'X-Robots-Tag': 'noindex' };
  */
 export function publicPageHeaders(
   status: 'pending' | 'success' | 'error' | 'notFound',
-  opts: { noindex?: boolean; list?: boolean } = {},
+  opts: { noindex?: boolean; list?: boolean; degraded?: boolean } = {},
 ): Record<string, string> {
   if (status === 'notFound') return NOT_FOUND_CACHE;
   if (status !== 'success') return NO_STORE;
-  const cache = opts.list ? LIST_CACHE : PUBLIC_CACHE;
+  const cache = opts.degraded ? DEGRADED_LIST_CACHE : opts.list ? LIST_CACHE : PUBLIC_CACHE;
   return opts.noindex ? { ...cache, ...NOINDEX } : cache;
 }

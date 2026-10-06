@@ -24,6 +24,7 @@ describe('maintenance worker (real Redis)', () => {
     const schedulers = await queue.getJobSchedulers();
     expect(schedulers.map((s) => [s.key, s.every]).sort()).toEqual([
       [MAINTENANCE_JOBS.pruneNotifications, 86_400_000],
+      [MAINTENANCE_JOBS.recomputeRankings, 900_000],
     ]);
   });
 });

@@ -1,3 +1,4 @@
+import type { RankingPeriod } from './rankings';
 import { storyKey } from './story-key';
 
 /** Every public page that has one canonical URL. */
@@ -7,6 +8,7 @@ export type CanonicalTarget =
   | { kind: 'chapter'; slug: string; publicId: string; number: number }
   | { kind: 'author'; username: string }
   | { kind: 'tag'; slug: string; page?: number }
+  | { kind: 'ranking'; period: RankingPeriod }
   | { kind: 'static'; path: '/terms' | '/content-policy' };
 
 /**
@@ -28,6 +30,8 @@ export function canonicalPath(target: CanonicalTarget): string {
       return target.page !== undefined && target.page > 1
         ? `/tags/${target.slug}?page=${target.page}`
         : `/tags/${target.slug}`;
+    case 'ranking':
+      return `/rankings/${target.period}`;
     case 'static':
       return target.path;
   }

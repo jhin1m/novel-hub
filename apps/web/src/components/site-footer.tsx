@@ -14,7 +14,10 @@ export function SiteFooter() {
             name: m.app_name(),
           })}
         </p>
-        <nav aria-label={m.layout_footer_nav()} className="flex gap-4">
+        <nav aria-label={m.layout_footer_nav()} className="flex flex-wrap gap-x-4 gap-y-2">
+          <a href={canonicalPath({ kind: 'ranking', period: 'week' })} className={FOOTER_LINK}>
+            {m.ranking_nav()}
+          </a>
           <a href={canonicalPath({ kind: 'static', path: '/terms' })} className={FOOTER_LINK}>
             {m.layout_terms()}
           </a>

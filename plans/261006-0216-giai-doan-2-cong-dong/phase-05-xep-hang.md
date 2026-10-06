@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Xếp hạng"
-status: pending
+status: completed
 priority: P1
 effort: "2d"
 dependencies: [4]
@@ -94,12 +94,12 @@ maintenance queue: recompute-rankings (15 phút)
 
 ## Function / Interface Checklist
 
-- [ ] `rankingWindow(period, today) → { from, to, prevFrom?, prevTo? }` (thuần)
-- [ ] `ViewRecord` thêm `storyId`; Lua mở rộng; `flushStoryReaders(redis, db, prefix, date)`
-- [ ] `computeRankings(db, period, today)`, `writeRankings(redis, prefix, period, rows)`, `recomputeAllRankings(db, redis, prefix, now)`
-- [ ] `interface RankingReader { top(period, variant, limit): Promise<string[]> }` + `createRankingReader(redis, prefix, timeoutMs)`
-- [ ] `readRanking(db, reader|null, period, {includeMature, limit}) → StoryCardDto[]`
-- [ ] `canonicalPath({kind:'ranking', period})`
+- [x] `rankingWindow(period, today) → { from, to, prevFrom?, prevTo? }` (thuần)
+- [x] `ViewRecord` thêm `storyId`; Lua mở rộng; `flushStoryReaders(redis, db, prefix, date)`
+- [x] `computeRankings(db, period, today)`, `writeRankings(redis, prefix, period, rows)`, `recomputeAllRankings(db, redis, prefix, now)`
+- [x] `interface RankingReader { top(period, variant, limit): Promise<string[]> }` + `createRankingReader(redis, prefix, timeoutMs)`
+- [x] `readRanking(db, reader|null, period, {includeMature, limit}) → StoryCardDto[]`
+- [x] `canonicalPath({kind:'ranking', period})`
 
 ## Implementation Steps
 
@@ -131,20 +131,20 @@ maintenance queue: recompute-rankings (15 phút)
 
 ## Todo List
 
-- [ ] Shared + migration
-- [ ] Đếm người đọc theo truyện + flush
-- [ ] Compute/write/read + purge + sitemap
-- [ ] Worker + API wiring
-- [ ] Route + component + link
-- [ ] Seed-demo, i18n, docs, e2e, gate, `[x]` checkbox 4
+- [x] Shared + migration
+- [x] Đếm người đọc theo truyện + flush
+- [x] Compute/write/read + purge + sitemap
+- [x] Worker + API wiring
+- [x] Route + component + link
+- [x] Seed-demo, i18n, docs, e2e, gate, `[x]` checkbox 4
 
 ## Success Criteria
 
-- [ ] Gate xanh
-- [ ] 4 bảng có dữ liệu sau một lần recompute; HTML SSR không có 18+
-- [ ] Một IP không đẩy được quá 10 người đọc/truyện/ngày
-- [ ] Redis chập: trang xếp hạng vẫn 200; truyện bị ẩn biến khỏi trang xếp hạng ngay khi purge
-- [ ] Checkbox 4 spec `[x]`
+- [x] Gate xanh
+- [x] 4 bảng có dữ liệu sau một lần recompute; HTML SSR không có 18+
+- [x] Một IP không đẩy được quá 10 người đọc/truyện/ngày
+- [x] Redis chập: trang xếp hạng vẫn 200; truyện bị ẩn biến khỏi trang xếp hạng ngay khi purge
+- [x] Checkbox 4 spec `[x]`
 
 ## Risk Assessment
 
@@ -155,6 +155,17 @@ maintenance queue: recompute-rankings (15 phút)
 ## Security Considerations
 
 - Chỉ dữ liệu tổng hợp; bản `all` chỉ trả qua API khi tài khoản đã bật 18+.
+
+## Implementation Notes
+
+- [auto] `RankingReader.top` trả `string[] | null` (null = Redis không đọc được) thay vì throw; `readRanking` trả `{ stories, available }` để trang chọn cache ngắn 60 s khi lỗi. Lý do: trang và API cần phân biệt "rỗng thật" với "sự cố".
+- [auto] API `?list=ranking` đọc thẳng `readRanking` ở route và trả 503 `RANKINGS_UNAVAILABLE` khi Redis lỗi (theo review M1); `listStories` không nhận `ranking`. Lý do: 200 rỗng sẽ xoá danh sách SSR đang có của người bật 18+.
+- [auto] Giới hạn IP theo truyện chỉ tiêu một suất khi HLL thực sự thêm người đọc mới (PFADD = 1). Lý do: một người đọc nhiều chương chỉ chiếm một suất của IP.
+- [auto] Điểm trong sorted set là thứ hạng (n…1), không phải số người đọc. Lý do: giữ đúng tie-break (cập nhật gần nhất, id) mà ZREVRANGE không giữ được; điểm không hiển thị.
+- [auto] Trang xếp hạng chỉ `noindex` khi sự cố (review L1), vì 4 URL luôn có trong sitemap.
+- [auto] Link header: icon từ `md`, kèm chữ từ `lg` để header vừa ở 768px với các link của người đã đăng nhập.
+- Report: `reports/tester-261006-rankings-gate.md`, `reports/code-reviewer-261006-rankings-review.md` (M1, L1–L3 đã sửa; L4: đã `pnpm db:migrate` DB dev, production phải migrate trước khi chạy worker mới).
+- Câu hỏi mở cho user: trần 10 người đọc/IP/truyện/ngày có thể đếm thiếu người đọc dùng chung IP nhà mạng di động (CGNAT); cùng đánh đổi với trần theo chương hiện có.
 
 ## Next Steps
 

@@ -15,11 +15,12 @@ export interface StoryList {
 /**
  * One of the public lists, as the client reloads it once it knows the reader allowed 18+
  * content. `null` when the tag or author has no page (a merged tag is not followed: the pages
- * only ever ask for canonical tags).
+ * only ever ask for canonical tags). Rankings come from Redis and can be unavailable, so they are
+ * read with `readRanking` instead.
  */
 export async function listStories(
   db: Db,
-  query: z.output<typeof storyListQuery>,
+  query: Exclude<z.output<typeof storyListQuery>, { list: 'ranking' }>,
   o: ListOptions,
 ): Promise<StoryList | null> {
   switch (query.list) {

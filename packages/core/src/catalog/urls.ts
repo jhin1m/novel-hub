@@ -1,5 +1,5 @@
 import { type Db, type Tx, stories, storyTags, tags, users } from '@novel-hub/db';
-import { canonicalPath } from '@novel-hub/shared';
+import { RANKING_PERIODS, canonicalPath } from '@novel-hub/shared';
 import { eq, inArray, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import type { ContentChange } from '../content/hooks';
@@ -8,8 +8,9 @@ const canonical = alias(tags, 'canonical');
 
 /**
  * Canonical paths of the cached list pages a change may have altered: the home page, the author
- * page and page 1 of every tag page the story appears on. Later tag pages are left to their short
- * TTL. Read from the current state without any visibility filter, so a story that was just hidden,
+ * page, page 1 of every tag page the story appears on and every ranking page (cheap: four URLs, and
+ * a hidden story must leave them before the next recompute). Later tag pages are left to their
+ * short TTL. Read from the current state without any visibility filter, so a story that was just hidden,
  * or an author who was just banned, still yields the lists they must disappear from.
  */
 export async function catalogUrls(db: Db, change: ContentChange): Promise<string[]> {
@@ -29,6 +30,7 @@ export async function catalogUrls(db: Db, change: ContentChange): Promise<string
         canonicalPath({ kind: 'home' }),
         canonicalPath({ kind: 'author', username: story.username }),
         ...tagPaths(slugs),
+        ...rankingPaths(),
       ];
     }
     case 'user': {
@@ -46,6 +48,7 @@ export async function catalogUrls(db: Db, change: ContentChange): Promise<string
             owned.map((s) => s.id),
           ),
         ),
+        ...rankingPaths(),
       ];
     }
     default: {
@@ -69,4 +72,9 @@ export async function storyTagSlugs(db: Db | Tx, storyIds: string[]): Promise<st
 /** Page 1 of each tag page, deduplicated and sorted. */
 function tagPaths(slugs: string[]): string[] {
   return [...new Set(slugs)].sort().map((slug) => canonicalPath({ kind: 'tag', slug }));
+}
+
+/** Every ranking page. */
+function rankingPaths(): string[] {
+  return RANKING_PERIODS.map((period) => canonicalPath({ kind: 'ranking', period }));
 }

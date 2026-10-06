@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { RANKING_PERIODS } from '../rankings';
 import { tagSlugSchema } from './story';
 import { USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH, USERNAME_PATTERN } from './user';
 
@@ -50,6 +51,7 @@ export const storyListQuery = z.discriminatedUnion('list', [
   z.object({ list: z.literal('notable') }),
   z.object({ list: z.literal('tag'), tag: tagSlugSchema, page: pageQuery }),
   z.object({ list: z.literal('author'), author: usernameParamSchema }),
+  z.object({ list: z.literal('ranking'), period: z.enum(RANKING_PERIODS) }),
 ]);
 
 export type StoryListQuery = z.input<typeof storyListQuery>;

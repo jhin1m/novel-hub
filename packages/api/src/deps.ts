@@ -2,6 +2,7 @@ import type {
   CurrentUser,
   Db,
   HealthReport,
+  RankingReader,
   RateLimiter,
   SearchCtx,
   StoragePort,
@@ -30,6 +31,8 @@ export interface ApiDeps {
   storage: StoragePort | null;
   /** Counts chapter reads in Redis; `null` when unavailable (reads are then not counted). */
   viewCounter: ViewCounter | null;
+  /** Rankings the worker wrote to Redis; `null` when unavailable (rankings then read as empty). */
+  rankings: RankingReader | null;
   /** Search-only Meilisearch client; `null` when not configured (dev): search answers 503. */
   search: SearchCtx | null;
   /** Redis rate limits of writes and auth actions; `null` turns them off (tests that do not need them). */

@@ -72,12 +72,12 @@ async function insertStoryGraph() {
 }
 
 describe('migration', () => {
-  it('creates all 25 tables in the public schema', async () => {
+  it('creates all 26 tables in the public schema', async () => {
     const { rows } = await db.execute<{ count: number }>(sql`
       select count(*)::int as count from information_schema.tables
       where table_schema = 'public' and table_type = 'BASE TABLE'
     `);
-    expect(rows[0]?.count).toBe(25);
+    expect(rows[0]?.count).toBe(26);
   });
 
   it('insert không truyền id → UUID version 7', async () => {

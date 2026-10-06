@@ -26,9 +26,12 @@ describe('job routers', () => {
         },
       ),
     ).rejects.toBeInstanceOf(UnrecoverableError);
-    await expect(routeMaintenanceJob({ name: 'unknown' }, { db })).rejects.toBeInstanceOf(
-      UnrecoverableError,
-    );
+    await expect(
+      routeMaintenanceJob(
+        { name: 'unknown' },
+        { db, statsRedis: {} as Redis, queuePrefix: 'test' },
+      ),
+    ).rejects.toBeInstanceOf(UnrecoverableError);
   });
 
   it('never retries a notify-followers job without a chapter id', async () => {

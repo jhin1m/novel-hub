@@ -1,5 +1,6 @@
 import {
   type CurrentUser,
+  type RankingReader,
   createChapter,
   createStory,
   publishChapter,
@@ -19,9 +20,24 @@ const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 /** Sessions are faked: the `session` cookie carries the user id. */
 const sessions = new Map<string, CurrentUser>();
 
+/**
+ * Rankings as the worker would have written them (the Redis reader is covered in `core`): every
+ * period ranks the stories by title, the general variant without 18+ stories.
+ */
+const rankings: RankingReader = {
+  async top(_period, variant) {
+    const rows = await db
+      .select({ id: stories.id, isMature: stories.isMature })
+      .from(stories)
+      .orderBy(stories.title);
+    return rows.filter((r) => variant === 'all' || !r.isMature).map((r) => r.id);
+  },
+};
+
 const app = createApp(
   makeTestApiDeps({
     db,
+    rankings,
     auth: {
       handler: () => Promise.resolve(new Response(null, { status: 404 })),
       lookupSession: (headers) => {
@@ -120,6 +136,24 @@ describe('GET /api/v1/stories', () => {
     expect(await titles(res)).toEqual(['Truyện Thường']);
   });
 
+  it('lists a ranking in ranking order, without 18+ stories for a guest', async () => {
+    const res = await app.request('/api/v1/stories?list=ranking&period=rising');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('cache-control')).toBe('no-store');
+    expect(await res.json()).toMatchObject({
+      stories: [{ title: 'Truyện Thường' }],
+      page: 1,
+      totalPages: 1,
+    });
+  });
+
+  it('answers 503 when the rankings cannot be read, so the client keeps the cached list', async () => {
+    const down = createApp(makeTestApiDeps({ db, rankings: { top: () => Promise.resolve(null) } }));
+    const res = await down.request('/api/v1/stories?list=ranking&period=week');
+    expect(res.status).toBe(503);
+    expect(await res.json()).toMatchObject({ error: { code: 'RANKINGS_UNAVAILABLE' } });
+  });
+
   it('lists 18+ stories only for an account that turned them on', async () => {
     const off = await makeUser('ban_doc');
     const on = await makeUser('nguoi_lon', true);
@@ -132,6 +166,7 @@ describe('GET /api/v1/stories', () => {
       'list=notable',
       'list=tag&tag=tien-hiep',
       'list=author&author=tac_gia',
+      'list=ranking&period=week',
     ]) {
       const res = await app.request(`/api/v1/stories?${query}`, as(on.id));
       expect(res.status, query).toBe(200);
@@ -154,7 +189,13 @@ describe('GET /api/v1/stories', () => {
   it('answers 404 for an unknown tag or author and 400 for a malformed query', async () => {
     expect((await app.request('/api/v1/stories?list=tag&tag=khong-co')).status).toBe(404);
     expect((await app.request('/api/v1/stories?list=author&author=nobody')).status).toBe(404);
-    for (const query of ['', 'list=popular', 'list=recent&page=0', 'list=tag&tag=Tien']) {
+    for (const query of [
+      '',
+      'list=popular',
+      'list=recent&page=0',
+      'list=tag&tag=Tien',
+      'list=ranking&period=year',
+    ]) {
       expect((await app.request(`/api/v1/stories?${query}`)).status, query).toBe(400);
     }
   });

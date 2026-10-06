@@ -9,6 +9,11 @@ export const VIEW_RULES = {
   perViewerPerDay: 3,
   /** Reads counted per IP per chapter per day. */
   perIpPerDay: 10,
+  /**
+   * Distinct readers one IP may add to a story per day (rankings count readers per story, so
+   * rotating cookies over many chapters cannot raise a story past this).
+   */
+  perIpPerStoryPerDay: 10,
   /** Lifetime of the Redis counters: today plus a day of slack for the flush (s). */
   keyTtlSec: 172_800,
 } as const;

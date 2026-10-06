@@ -129,7 +129,7 @@ core/comments: createComment(+paragraphId), listChapterComments(+paragraph filte
 
 ## Risk Assessment
 
-- Khó phát hiện: người đọc không thấy chỉ báo trong khi đọc → tab "Theo đoạn" + gợi ý một dòng ở khu bình luận ("Bôi chọn một đoạn để bình luận về nó"). Nếu user muốn chỉ báo trong nội dung (kiểu 段评), đó là quyết định spec §8 cần user duyệt, ghi ở câu hỏi mở. [auto]
+- Khó phát hiện: người đọc không thấy chỉ báo trong khi đọc → tab "Theo đoạn" + gợi ý một dòng ở khu bình luận ("Bôi chọn một đoạn để bình luận về nó"). Chỉ báo trong nội dung (kiểu 段评) đã bị loại ở Validation Session 1 [auto] (giữ spec §8); muốn thêm sau thì user đổi spec trước. <!-- Updated: Validation Session 1 - không chỉ báo trong nội dung -->
 - Nhấn giữ trên iOS/Android bật thanh công cụ chọn chữ của hệ điều hành ở gần vùng chọn → nút nổi đặt ở đáy/đỉnh màn hình, không cạnh vùng chọn.
 - Bàn phím: mở luồng đoạn đã có bình luận qua tab "Theo đoạn"; tạo bình luận đoạn mới cần chọn chữ bằng bàn phím (caret browsing) → chấp nhận năm đầu, vẫn bình luận chương được.
 

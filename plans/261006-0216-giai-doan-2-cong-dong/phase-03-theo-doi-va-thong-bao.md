@@ -72,7 +72,7 @@ Web: FollowButton (story hero, author header) ── /api/v1/follows/*
      /notifications route (NO_STORE, client data) ── /api/v1/notifications
 ```
 
-- Migration (gợi ý `notification_grouping`): `notifications.dedupe_key text` null; unique index `notifications_unread_dedupe_key (user_id, dedupe_key) where read_at is null and dedupe_key is not null` (chỉ ràng buộc mục chưa đọc → đọc xong thì chương sau tạo thông báo mới); partial index `notifications_unread_idx (user_id) where read_at is null`.
+- Migration (gợi ý `notification_grouping`): `notifications.dedupe_key text` null; unique index `notifications_unread_dedupe_key (user_id, dedupe_key) where read_at is null` (chỉ ràng buộc mục chưa đọc → đọc xong thì chương sau tạo thông báo mới; `dedupe_key` null không bao giờ trùng vì unique mặc định NULLS DISTINCT). Predicate của index phải **đúng bằng** `WHERE read_at IS NULL` trong `ON CONFLICT`, nếu không Postgres báo "no unique or exclusion constraint matching the ON CONFLICT specification"; int test fan-out bắt lỗi này. Thêm partial index `notifications_unread_idx (user_id) where read_at is null`. <!-- Updated: Validation Session 1 - predicate index khớp ON CONFLICT -->
 - `NOTIFICATION_TYPES = ['chapter_published']` ở shared; payload discriminated union Zod theo `type` (`{storyId, chapterIds: uuid[] ≤ 20, count}`) — danh sách parse payload, type lạ thì bỏ qua. Thêm type sau này phải mở rộng `notificationVisibleWhere` (list và count cùng lúc).
 - Query keys web: `[...meQueryKey, 'notifications', 'unread']`, `[...meQueryKey, 'notifications', 'list']`, `[...meQueryKey, 'follows', storyPublicId|username]` → đăng xuất tự xoá.
 
@@ -115,7 +115,7 @@ Web: FollowButton (story hero, author header) ── /api/v1/follows/*
 3. Core follows + int test (tự theo dõi, truyện nháp/ẩn, tác giả bị ban, idempotent).
 4. Core notifications + int test: fan-out gồm cả hai nguồn, trùng người chỉ một bản, chạy lại cùng chương không tăng `count`, 3 chương liên tiếp → một thông báo `count = 3`, đọc xong rồi chương thứ 4 → thông báo mới, truyện 18+ không hiện (list và count) với người chưa bật, tác giả không nhận, follower bị ban không nhận, chương bị ẩn trước khi xử lý → 0; danh sách bỏ mục chương đã ẩn/xoá; unread khớp danh sách; mark read theo id chỉ tác động thông báo của chính user.
 5. Outbox: map job trong `jobsForChange` (+ unit test), router, processor. Queue `maintenance` + worker + scheduler prune (24h); int test danh sách scheduler theo mẫu `publishing-worker.int.test.ts:134-139`.
-6. API hai sub-app; int test (401 khách, 400 tự theo dõi, 404 mục tiêu, 429).
+6. API hai sub-app; int test (401 khách, 403 `FORBIDDEN` tự theo dõi truyện của mình/chính mình, 404 mục tiêu, 429). <!-- Updated: Validation Session 1 - tự theo dõi là 403 FORBIDDEN theo Requirements, không phải 400 -->
 7. Web: `FollowButton` (SSR/me pending: nút trung tính disabled; khách: link đăng nhập kèm `redirect`; đã đăng nhập: toggle `aria-pressed`, optimistic + rollback như `useSetShelf`), chuông, trang `/notifications`, mục menu tài khoản. Header không nhảy: chuông giữ chỗ 42px khi `me` pending, khách thì không render (như menu tài khoản).
 8. i18n, docs, e2e: A theo dõi truyện của B và tác giả B → B đăng chương qua API → helper chạy fan-out → A reload thấy badge "1", mở `/notifications`, bấm → tới chương, badge về 0; A bỏ theo dõi → chương tiếp theo không tạo thông báo; khách không thấy chuông; trang truyện vẫn `Cache-Control: public`.
 9. Gate xanh → `[x]` checkbox 2.

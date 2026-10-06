@@ -51,7 +51,7 @@ Tag `[auto]` = tự chọn khi user ngủ (phương án Recommended hoặc đơn
 - **Ban:** giữ một cơ chế của Gđ1 — mọi danh sách công khai lọc `users.status <> 'banned'` (bình luận, review, xếp hạng, nổi bật, cuộc thi). Không xoá dữ liệu.
 - **Kiểm duyệt:** target báo cáo thêm `{type:'comment', commentId}` (phase 1) và `{type:'rating', ratingId}` (phase 4) — UUID ở đây là ngoại lệ có chủ đích của quy tắc "báo cáo chỉ dùng khoá công khai" vì hai loại này không có khoá công khai; action one-click `hide_comment`/`restore_comment`, `hide_rating`/`restore_rating` đi qua `applyModerationAction`. Phase 1 tách `MODERATION_LOG_ACTIONS` (superset chỉ-ghi-log cho `logModerationAction`) khỏi `MODERATION_ACTIONS` (body `POST /moderation/actions`); truyện nổi bật (phase 8) và cuộc thi (phase 9) thêm action chỉ-ghi-log. Guard như Gđ1: `canModerateUser` (không tự xử nội dung của mình, mod không xử mod/admin) và `targetOwnerId` mở rộng cho comment/rating; mod không chọn nổi bật/xếp hạng cuộc thi cho truyện của mình.
 - [auto] **Bình luận:** văn bản thuần (≤ 2.000 ký tự, chuẩn NFC, render như text, không linkify); không sửa, chỉ tự xoá mềm (`status = 'deleted'`); trả lời chỉ gắn vào bình luận gốc (trả lời một trả lời → gắn vào gốc của nó); gốc bị xoá/ẩn thì ẩn cả nhánh. Gốc mới nhất trước, trả lời cũ nhất trước. Không thông báo khi có trả lời (spec chỉ yêu cầu thông báo chương mới).
-- [auto] **Bình luận theo đoạn** (Red Team: spec §8 "Không chèn gì vào giữa nội dung"): không chèn node nào vào HTML chương. Bôi chọn chữ trong một phần tử `[data-pid]` (đoạn hoặc heading) → nút nổi ngoài nội dung mở sheet luồng đoạn; khu bình luận cuối chương có tab "Theo đoạn" liệt kê đoạn có bình luận. Đếm theo đoạn tải cùng khu bình luận (lười), bằng `GROUP BY`. Danh sách chương gồm bình luận không gắn đoạn **và** bình luận có pid không còn trong `paragraph_ids` (đoạn đã sửa). Chỉ báo trong nội dung kiểu 段评 là câu hỏi mở cho user.
+- [auto] **Bình luận theo đoạn** (Red Team: spec §8 "Không chèn gì vào giữa nội dung"): không chèn node nào vào HTML chương. Bôi chọn chữ trong một phần tử `[data-pid]` (đoạn hoặc heading) → nút nổi ngoài nội dung mở sheet luồng đoạn; khu bình luận cuối chương có tab "Theo đoạn" liệt kê đoạn có bình luận. Đếm theo đoạn tải cùng khu bình luận (lười), bằng `GROUP BY`. Danh sách chương gồm bình luận không gắn đoạn **và** bình luận có pid không còn trong `paragraph_ids` (đoạn đã sửa). Không chỉ báo trong nội dung kiểu 段评 (Validation Session 1 [auto]).
 - [auto] **Thông báo:** fan-out-on-write bằng một câu `INSERT … SELECT … ON CONFLICT … DO UPDATE` từ `follows` (truyện ∪ tác giả, trừ chính tác giả); **gộp theo truyện**: mỗi người tối đa một thông báo chưa đọc mỗi truyện (`dedupe_key = 'story:{id}'`, unique partial `where read_at is null`), chương mới tăng `count`; payload chỉ lưu id. Một điều kiện hiển thị `notificationVisibleWhere` dùng chung cho danh sách và đếm chưa đọc (chương còn đọc được, truyện 18+ ẩn với người chưa bật). Đếm bằng SQL + partial index, không Redis. Chuông poll 60 giây + khi focus tab. Xoá thông báo > 90 ngày theo lô.
 - [auto] **Đánh giá** (Red Team): không cột tổng trên `stories` (cột `updated_at` tự bump, tổng lệch khi ban); summary + phân bố bằng một `GROUP BY score` trên đánh giá `visible` của người không bị ban. Tác giả không tự đánh giá. Đánh giá đang bị mod ẩn không sửa/xoá được (`RATING_HIDDEN`), để không hồi sinh bằng xoá + đăng lại. Điểm hiện ở khu đánh giá (tải client), không vào HTML SSR.
 - [auto] **Xếp hạng** (Red Team: chống bơm): đếm thêm **người đọc duy nhất theo truyện mỗi ngày** (HLL Redis cạnh bộ đếm chương, giới hạn 10 người/IP/truyện/ngày) → bảng mới `story_daily_stats`. Điểm = tổng `story_daily_stats.unique_readers` trong cửa sổ ngày `Asia/Ho_Chi_Minh`: ngày = hôm nay + hôm qua, tuần = 7 ngày, tháng = 30 ngày; tăng trưởng = (7 ngày gần nhất − 7 ngày trước) / max(7 ngày trước, 20), chỉ xét truyện ≥ 20. Worker tính lại mỗi 15 phút (queue `maintenance`), ghi Redis sorted set (`general` không 18+ / `all`) qua key tạm + `RENAME`, rỗng thì xoá key. Đọc qua port `RankingReader` (timeout) trong `ApiDeps`. URL `/rankings/{day|week|month|rising}`, cache danh sách 10 phút, purge qua `catalogUrls`. Không thêm khu trên trang chủ; lối vào ở header desktop + footer.
@@ -101,7 +101,7 @@ Research có vài gợi ý không dùng (Redis `KEYS` để đếm theo đoạn,
 
 ## Câu hỏi mở
 
-Chờ `/ck:plan validate`. Nơi user dễ muốn đổi nhất:
+Đã trả lời [auto] ở `## Validation Log` Session 1 (giữ phương án hiện tại cho cả 5); sáng user duyệt lại. Nơi user dễ muốn đổi nhất:
 1. Tách phase (9 phase cho 6 checkbox) thay vì đúng một phase mỗi checkbox.
 2. Bình luận theo đoạn: chỉ báo số bình luận ngay trong nội dung (kiểu 段评) có được coi là ngoại lệ của spec §8 "Không chèn gì vào giữa nội dung" không? Plan hiện không chèn.
 3. Hero trang chủ có nên do mod chọn (đổi spec §8) không? Plan hiện giữ hero tự động, mod chỉ chọn khu "Truyện nổi bật".
@@ -140,4 +140,83 @@ Thêm theo câu hỏi của reviewer: dùng lại mã lỗi `NOT_FOUND`/`FORBIDD
 - Files reread: plan.md, phase-01 … phase-09 (grep toàn plan theo thuật ngữ cũ)
 - Decision deltas checked: 14 (`MODERATION_LOG_ACTIONS`; guard mod; bỏ cột tổng đánh giá; `RATING_HIDDEN`; `notificationVisibleWhere` + gộp theo truyện; bỏ thông báo huy hiệu; `story_daily_stats` + HLL theo truyện; `RankingReader`; purge `catalogUrls`; bình luận đoạn không chèn DOM; một slot `home_picks`, hero/spec giữ nguyên; queue `maintenance`; dashboard 30 ngày; mã lỗi dùng lại `NOT_FOUND`/`FORBIDDEN`/`INVALID_STATE`)
 - Stale references reconciled: `rating_count/rating_sum`, `badge_awarded`, `home_hero`, `PUBLISHING_JOBS.*` cho job định kỳ, `getInfra().redis`, `BarChart`/biểu đồ SVG, `useParagraphAnchors`/bong bóng, `follows_target_created_idx`, `COMMENT_NOT_FOUND`/`CHAPTER_NOT_FOUND`/`STORY_NOT_FOUND`/`FOLLOW_SELF`/`CONTEST_NOT_ENDED`…, khu xếp hạng trang chủ, chip dự thi, danh sách migration
+- Unresolved contradictions: 0
+
+## Validation Log
+
+### Session 1 — 2026-10-06
+**Trigger:** `/ck:plan validate` sau red-team, chế độ tự động qua đêm (user ngủ, không AskUserQuestion). Mọi câu trả lời là `[auto]`: chọn phương án Recommended, sáng user duyệt.
+**Questions asked:** 8 (5 câu hỏi mở của plan + 1 quyết định suy rộng spec + 2 lỗi từ verification)
+
+#### Verification Results
+- **Tier:** Full (9 phase) — guard: đã có `## Red Team Review` có bằng chứng grep, nên chỉ spot-check + soát `[UNVERIFIED]`
+- **Claims checked:** 92 (46 symbol, 27 đường dẫn file, 19 claim schema/hành vi: bảng/index `community.ts`/`engagement.ts`, `firstPublish` ở `publishing/changes.ts:15-20`, `uuidv7()` + Postgres 18.6 (`columns.ts:5-8`, `docker-compose.yml:13`), `VIEW_RULES` `views.ts:5-11`, `concurrency: 2` `publishing-worker.ts:57`, getSelection guard `use-nav-visibility.ts:44`, `requireEmailVerification: false` `auth.ts:140`, `LIST_CACHE` `cache-headers.ts:17`, bảng đếm 25 `schema.int.test.ts:75-80`, migration hiện có 0000–0002)
+- **Verified:** 90 | **Failed:** 2 | **Unverified:** 0 (không có tag `[UNVERIFIED]`)
+- Lệch nhỏ không tính lỗi: số dòng `community.ts` lệch 1–2 (ratings :65-81, notifications :85-99); `segmented-link-classes.ts` nằm ở `apps/web/src/components/` (plan chỉ ghi tên file).
+
+#### Failures
+1. [Contract Verifier] Phase 3: unique index `… where read_at is null and dedupe_key is not null` nhưng fan-out dùng `ON CONFLICT (user_id, dedupe_key) WHERE read_at IS NULL` → predicate ON CONFLICT không suy ra được predicate index, Postgres không chọn được index (lỗi runtime ngay lần fan-out đầu).
+2. [Fact Checker] Phase 3 bước 6: int test ghi "400 tự theo dõi", Requirements cùng phase ghi `FORBIDDEN` (403) và mã lỗi hiện có không có 400 cho nghiệp vụ.
+
+#### Questions & Answers
+
+1. **[Scope]** 6 checkbox Gđ2 được tách thành 9 phase (checkbox 1 → 2 phase, checkbox 6 → 3 phase). Giữ hay gộp đúng một phase mỗi checkbox?
+   - Options: Giữ 9 phase, checkbox chỉ `[x]` ở phase cuối của nó (Recommended) | Gộp còn 6 phase
+   - **Answer:** [auto] Giữ 9 phase
+   - **Rationale:** tiền lệ Gđ1 (tách checkbox 6, 11); mỗi cook một context sạch, phase gộp (bình luận 2 cấp + theo đoạn; huy hiệu + nổi bật + cuộc thi) quá lớn cho một gate.
+2. **[Architecture]** Bình luận theo đoạn: có hiện chỉ báo số bình luận ngay cạnh đoạn (kiểu 段评, ngoại lệ spec §8 "Không chèn gì vào giữa nội dung") không?
+   - Options: Không chèn; bôi chọn chữ → nút nổi + tab "Theo đoạn" (Recommended) | Chèn chỉ báo cạnh đoạn, sửa spec §8
+   - **Answer:** [auto] Không chèn
+   - **Rationale:** đúng spec §8 hiện hành; đổi spec là quyết định của user, thêm chỉ báo sau không phá dữ liệu (`paragraph_id` giữ nguyên).
+3. **[Scope]** Hero trang chủ có chuyển sang truyện do mod chọn (sửa spec §8 vừa chốt ở `6868c85`) không?
+   - Options: Giữ hero "Mới đáng chú ý" tự động, mod chọn khu "Truyện nổi bật" riêng (Recommended) | Hero do mod chọn
+   - **Answer:** [auto] Giữ hero tự động
+   - **Rationale:** không đảo quyết định spec user vừa duyệt; slot `home_picks` đủ cho checkbox "khu truyện nổi bật do mod chọn".
+4. **[Assumptions]** Xếp hạng: chỉ số và cửa sổ?
+   - Options: Người đọc duy nhất theo truyện/ngày (HLL, ≤ 10/IP/truyện/ngày); ngày = hôm nay + hôm qua, tuần 7, tháng 30, rising 7 vs 7 ngày, ngưỡng 20 (Recommended) | Ngày = chỉ hôm nay | Tổng lượt xem chương
+   - **Answer:** [auto] Theo plan
+   - **Rationale:** chống bơm qua nhiều chương (red-team #6); "chỉ hôm nay" rỗng lúc 0 giờ VN; tổng view cộng trùng qua chương.
+5. **[Scope]** Danh mục huy hiệu năm đầu?
+   - Options: 8 huy hiệu cột mốc tác giả như phase 7 (Recommended) | Thu gọn 4 (chương, chữ) | Thêm huy hiệu người đọc
+   - **Answer:** [auto] 8 huy hiệu tác giả
+   - **Rationale:** spec §1 "tác giả thấy có người đọc"; mỗi huy hiệu là một câu SQL, không migration; huy hiệu người đọc ngoài phạm vi.
+6. **[Assumptions]** Spec §7 chỉ ghi "muted không đăng bình luận". Muted có bị chặn đánh giá/review không?
+   - Options: Có, một policy `canPostCommunityContent` cho bình luận + review (Recommended) | Không, chỉ chặn bình luận
+   - **Answer:** [auto] Có
+   - **Rationale:** review là văn bản công khai như bình luận; một policy duy nhất (`core/policies`), tránh lối spam qua review.
+7. **[Risk]** (Verification #1) Predicate unique index thông báo không khớp `ON CONFLICT`. Sửa thế nào?
+   - Options: Index chỉ `where read_at is null` (NULL `dedupe_key` vốn không trùng), khớp đúng `ON CONFLICT … WHERE read_at IS NULL` (Recommended) | Giữ hai điều kiện và lặp đủ trong `ON CONFLICT`
+   - **Answer:** [auto] Index chỉ `where read_at is null`
+   - **Rationale:** đơn giản hơn, một predicate một chỗ; int test fan-out bắt lỗi.
+8. **[Consistency]** (Verification #2) Tự theo dõi truyện của mình/chính mình trả mã gì?
+   - Options: 403 `FORBIDDEN` như Requirements phase 3 (Recommended) | 400
+   - **Answer:** [auto] 403 `FORBIDDEN`
+   - **Rationale:** quy ước mã lỗi đã chốt ("dùng lại `NOT_FOUND`/`FORBIDDEN`/`INVALID_STATE`").
+
+#### Confirmed Decisions
+- Tách phase: 9 phase — [auto], tiền lệ Gđ1
+- Bình luận theo đoạn: không chèn node/chỉ báo vào nội dung — [auto], spec §8
+- Hero: giữ tự động, slot `home_picks` riêng — [auto], spec §8 + `6868c85`
+- Xếp hạng: người đọc duy nhất theo truyện, cửa sổ như plan — [auto], chống bơm
+- Huy hiệu: 8 cột mốc tác giả — [auto], YAGNI
+- Muted: chặn cả bình luận lẫn review — [auto], một policy
+- Index thông báo: `where read_at is null` — [auto], sửa lỗi verification
+- Tự theo dõi: 403 `FORBIDDEN` — [auto], quy ước mã lỗi
+
+#### Action Items
+- [x] Phase 3: sửa predicate index `notifications_unread_dedupe_key` + ghi chú khớp `ON CONFLICT`
+- [x] Phase 3 bước 6: 400 → 403 `FORBIDDEN`
+- [x] Phase 2, phase 8, plan.md: thay "câu hỏi mở" bằng quyết định Session 1
+- [ ] Sáng: user duyệt các mục `[auto]` (nhất là câu 2, 3, 6 vì suy rộng/giữ nguyên spec)
+
+#### Impact on Phases
+- Phase 2: mục rủi ro ghi rõ không chỉ báo trong nội dung (không đổi phạm vi).
+- Phase 3: Architecture (migration index) + Implementation step 6 (mã lỗi).
+- Phase 8: mục rủi ro ghi rõ giữ hero tự động (không đổi phạm vi).
+- Phase 1, 4, 5, 6, 7, 9: không đổi.
+
+### Whole-Plan Consistency Sweep
+- Files reread: plan.md, phase-01 … phase-09 (grep toàn plan: `dedupe_key is not null`, `400`, `câu hỏi mở`, `段评`, `hero`, `USER_MUTED`, `canPostCommunityContent`, `notifications_unread`)
+- Decision deltas checked: 8
+- Reconciled stale references: 5 (phase 3 ×2, phase 2 ×1, phase 8 ×1, plan.md quyết định bình luận đoạn ×1; mục "Câu hỏi mở" plan.md trỏ về Session 1)
 - Unresolved contradictions: 0

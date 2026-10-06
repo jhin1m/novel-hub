@@ -120,7 +120,7 @@ routes/index.tsx: <HomeFeaturedPicks stories={picks without hero} />
 ## Risk Assessment
 
 - Slot mới/kết thúc hiện trên production sau tối đa TTL list (10 phút, tới ~70 phút với SWR) → ghi trong moderation-guide; muốn ngay thì `pnpm cdn:purge` trang chủ (lệnh hiện có chỉ purge theo truyện → ngoài phạm vi, ghi chú).
-- Đổi hero sang truyện mod chọn là quyết định spec §8 → câu hỏi mở cho user, không làm ở phase này.
+- Đổi hero sang truyện mod chọn: Validation Session 1 [auto] giữ hero tự động (spec §8); muốn đổi thì user sửa spec trước, không làm ở phase này. <!-- Updated: Validation Session 1 - giữ hero tự động -->
 
 ## Security Considerations
 

@@ -16,7 +16,7 @@ Controller cập nhật cột Trạng thái (`todo` / `doing` / `done <commit>` 
 | Q4 | Validate plan redesign | `/ak:plan validate <plan-dir redesign>` + [chế độ tự động] | done |
 | Q5 | Cook từng phase redesign | `/ak:cook <plan-dir>/phase-XX-*.md --auto`, mỗi phase một worker | done (12/12 phase, HEAD sau phase 12) |
 | Q6 | Plan Giai đoạn 2 | `/ak:plan --deep docs/project-spec.md` + [chế độ tự động] | done (plans/261006-0216-giai-doan-2-cong-dong) |
-| Q7 | Validate plan Giai đoạn 2 | `/ak:plan validate <plan-dir gđ2>` + [chế độ tự động] | todo |
+| Q7 | Validate plan Giai đoạn 2 | `/ak:plan validate <plan-dir gđ2>` + [chế độ tự động] | done |
 | Q8 | Cook từng phase Giai đoạn 2 | như Q5 | todo |
 
 Hết hàng đợi hoặc gặp điểm dừng cứng thì dừng.

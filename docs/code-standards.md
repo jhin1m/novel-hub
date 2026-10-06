@@ -55,7 +55,7 @@ URL và tên file route cùng là tiếng Anh, vì TanStack Router sinh URL từ
 | Tủ truyện | `/library` | `library.tsx` |
 | Thông báo | `/notifications` | `notifications.tsx` |
 | Cài đặt | `/settings` | `settings.tsx` |
-| Khu viết | `/write`, `/write/stories/new`, `/write/stories/{publicId}`, `/write/stories/{publicId}/chapters/{number}` | `write/...` |
+| Khu viết | `/write`, `/write/stories/new`, `/write/stories/{publicId}`, `/write/stories/{publicId}/chapters/{number}`, `/write/stories/{publicId}/stats` | `write/...` |
 | Hàng chờ mod | `/moderation` | `moderation.tsx` |
 | Điều khoản, quy định nội dung | `/terms`, `/content-policy` | `terms.tsx`, `content-policy.tsx` |
 | API | `/api/v1/*` | `api/$.ts` (mount Hono) |

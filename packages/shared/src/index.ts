@@ -166,6 +166,13 @@ export {
   type RankingWindow,
   rankingWindow,
 } from './rankings';
+export {
+  type ChapterStatsRow,
+  STATS_WINDOW_DAYS,
+  type StoryStatsDto,
+  type StoryStatsTotals,
+  authorStatsWindow,
+} from './schemas/author-stats';
 export { type CanonicalTarget, canonicalPath } from './canonical-path';
 export {
   CATALOG_PAGE_SIZE,

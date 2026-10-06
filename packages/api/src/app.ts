@@ -4,6 +4,7 @@ import { handleError, handleNotFound } from './lib/errors';
 import { authRateLimit } from './middleware/auth-rate-limit';
 import { csrf } from './middleware/csrf';
 import { noStore } from './middleware/no-store';
+import { createAuthorStatsRoutes } from './routes/author-stats';
 import { createCommentRoutes } from './routes/comments';
 import { createFollowRoutes } from './routes/follows';
 import { createHealthRoutes } from './routes/health';
@@ -22,6 +23,7 @@ import { createTagRoutes } from './routes/tags';
 function createV1Routes(deps: ApiDeps) {
   return new Hono()
     .use(csrf(deps.appUrl))
+    .route('/author-stats', createAuthorStatsRoutes(deps))
     .route('/comments', createCommentRoutes(deps))
     .route('/follows', createFollowRoutes(deps))
     .route('/health', createHealthRoutes(deps))

@@ -9,6 +9,7 @@ import { StoryForm } from '../../../../components/story-form';
 import { WriterGate } from '../../../../components/writer-gate';
 import { ApiError, apiErrorMessage } from '../../../../lib/api-errors';
 import { useMe } from '../../../../lib/me';
+import { cn } from '../../../../lib/utils';
 import {
   type AuthorStoryView,
   type TagView,
@@ -58,6 +59,13 @@ function EditStory() {
 
   return (
     <div className="flex flex-col gap-10">
+      <Link
+        to="/write/stories/$publicId/stats"
+        params={{ publicId: story.data.publicId }}
+        className={cn(textLinkClass, 'self-start')}
+      >
+        {m.writer_stats_link()}
+      </Link>
       <ChapterList publicId={story.data.publicId} />
       <div className={pageCardClass}>
         <CoverUpload story={story.data} authorName={me.data?.displayName ?? ''} />

@@ -14,7 +14,7 @@ const dateFormat = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium' });
 /**
  * One of the author's stories on `/write`, as a horizontal card. The title is the card's only link,
  * stretched over the whole card, so the cover and the "Quản lý" hint are clickable without a second
- * link competing for the same name.
+ * link competing for the same name. The stats link sits above it with a name of its own.
  */
 export function MyStoryCard({ story, authorName }: { story: AuthorStoryView; authorName: string }) {
   return (
@@ -59,12 +59,19 @@ export function MyStoryCard({ story, authorName }: { story: AuthorStoryView; aut
         <p className="text-xs text-muted-foreground">
           {m.writer_updated_at({ date: dateFormat.format(new Date(story.updatedAt)) })}
         </p>
-        <span
-          aria-hidden="true"
-          className="mt-auto hidden pt-2 text-sm font-bold text-primary md:inline"
-        >
-          {m.writer_manage()} →
-        </span>
+        <div className="mt-auto flex items-center gap-5 pt-2 text-sm font-bold text-primary">
+          <span aria-hidden="true" className="hidden md:inline">
+            {m.writer_manage()} →
+          </span>
+          {/* Above the stretched title link, with a padded hit area so a near-miss is not a manage click. */}
+          <Link
+            to="/write/stories/$publicId/stats"
+            params={{ publicId: story.publicId }}
+            className="relative z-10 -mx-2 -my-2 rounded-full px-2 py-2 underline-offset-4 outline-hidden hover:underline focus-visible:ring-[3px] focus-visible:ring-ring"
+          >
+            {m.writer_stats_link()}
+          </Link>
+        </div>
       </div>
       <ChevronRightIcon
         aria-hidden="true"

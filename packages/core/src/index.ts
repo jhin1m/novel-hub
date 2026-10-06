@@ -255,6 +255,7 @@ export { type UpsertRatingError, upsertRating } from './ratings/upsert-rating';
 export { deleteRating } from './ratings/delete-rating';
 export { listStoryRatings } from './ratings/list-ratings';
 export { getMyRating } from './ratings/my-rating';
+export { getStoryStats } from './author-stats/get-story-stats';
 export { setRatingHidden } from './moderation/rating-visibility';
 export { type ResolvedTarget, createReport } from './reports/create-report';
 export {

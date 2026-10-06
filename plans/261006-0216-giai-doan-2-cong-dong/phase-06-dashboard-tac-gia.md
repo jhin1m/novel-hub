@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "Dashboard tác giả"
-status: pending
+status: completed
 priority: P1
 effort: "1d"
 dependencies: [5]
@@ -73,9 +73,9 @@ Trang số liệu theo truyện `/write/stories/{publicId}/stats` cho chủ truy
 
 ## Function / Interface Checklist
 
-- [ ] `getStoryStats(db, actor, publicId, today) → Result<StoryStatsDto, 'NOT_FOUND'>`
-- [ ] `computeDropOff(reached: Array<{number, reached}>) → Array<{number, reached, dropOffPct: number|null}>` (thuần; chia 0 → null)
-- [ ] Route `GET /author-stats/:publicId` (`requireAuth`)
+- [x] `getStoryStats(db, actor, publicId, today) → Result<StoryStatsDto, 'NOT_FOUND'>`
+- [x] `computeDropOff(reached: Array<{number, reached}>) → Array<{number, reached, dropOffPct: number|null}>` (thuần; chia 0 → null)
+- [x] Route `GET /author-stats/:publicId` (`requireAuth`)
 
 ## Implementation Steps
 
@@ -103,15 +103,15 @@ Trang số liệu theo truyện `/write/stories/{publicId}/stats` cho chủ truy
 
 ## Todo List
 
-- [ ] Shared + core + API
-- [ ] Trang số liệu + link
-- [ ] i18n, docs, e2e, gate, `[x]` checkbox 5
+- [x] Shared + core + API
+- [x] Trang số liệu + link
+- [x] i18n, docs, e2e, gate, `[x]` checkbox 5
 
 ## Success Criteria
 
-- [ ] Gate xanh
-- [ ] Chủ truyện xem được lượt đọc theo chương, tỷ lệ bỏ dở, theo dõi mới (30 ngày); người khác không xem được
-- [ ] Checkbox 5 spec `[x]`
+- [x] Gate xanh
+- [x] Chủ truyện xem được lượt đọc theo chương, tỷ lệ bỏ dở, theo dõi mới (30 ngày); người khác không xem được
+- [x] Checkbox 5 spec `[x]`
 
 ## Risk Assessment
 
@@ -125,3 +125,12 @@ Trang số liệu theo truyện `/write/stories/{publicId}/stats` cho chủ truy
 ## Next Steps
 
 Phase 7: huy hiệu và cột mốc.
+
+## Implementation Notes (2026-10-06)
+
+- [auto] Bảng chỉ liệt kê chương `published` chưa xoá; `totals.views` vẫn cộng lượt đọc của chương đã xoá/bị ẩn trong 30 ngày. Lý do: tổng phản ánh đúng lượt đọc thật, comment ghi trong `get-story-stats.ts`.
+- [auto] Người dừng ở chương đã xoá/ẩn vẫn tính "đã tới" cho mọi chương liệt kê trước nó (`reachedByChapter`). Lý do: họ đã đọc qua các chương đó.
+- [auto] Ô "người đọc" = tổng người đọc khác nhau mỗi ngày, cộng dồn 30 ngày; ghi chú một dòng trên trang. Lý do: `story_daily_stats` không cho số người khác nhau cả kỳ.
+- `addDays` trong `packages/shared/src/rankings.ts` được export để dùng lại cho `authorStatsWindow`.
+- E2E: spec xoá `story_daily_stats` đã seed khi kết thúc, vì xếp hạng tính từ mọi truyện có số liệu (đã làm vỡ `rankings.spec` ở lượt gate đầu).
+- Review: sửa vùng chạm link "Số liệu" trên card và `role="group"` cho `<dl>`; [auto] bỏ qua 3 ghi chú thấp còn lại (mất focus nút "Sau" ở trang cuối khi >100 chương, tổng ≠ tổng bảng, tên link lặp). Lý do: hiếm/có chủ đích, YAGNI.

@@ -36,6 +36,7 @@ import { Route as StoriesStoryKeyIndexRouteImport } from './routes/stories.$stor
 import { Route as StoriesStoryKeyChapterChar123numberChar125RouteImport } from './routes/stories.$storyKey.chapter-{$number}'
 import { Route as WriteStoriesNewRouteImport } from './routes/write/stories/new'
 import { Route as WriteStoriesPublicIdIndexRouteImport } from './routes/write/stories/$publicId/index'
+import { Route as WriteStoriesPublicIdStatsRouteImport } from './routes/write/stories/$publicId/stats'
 import { Route as WriteStoriesPublicIdChaptersNumberRouteImport } from './routes/write/stories/$publicId/chapters/$number'
 
 const IndexRoute = IndexRouteImport.update({
@@ -175,6 +176,12 @@ const WriteStoriesPublicIdIndexRoute =
     path: '/write/stories/$publicId/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const WriteStoriesPublicIdStatsRoute =
+  WriteStoriesPublicIdStatsRouteImport.update({
+    id: '/write/stories/$publicId/stats',
+    path: '/write/stories/$publicId/stats',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const WriteStoriesPublicIdChaptersNumberRoute =
   WriteStoriesPublicIdChaptersNumberRouteImport.update({
     id: '/write/stories/$publicId/chapters/$number',
@@ -209,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/stories/$storyKey/chapter-{$number}': typeof StoriesStoryKeyChapterChar123numberChar125Route
   '/write/stories/new': typeof WriteStoriesNewRoute
   '/stories/$storyKey/': typeof StoriesStoryKeyIndexRoute
+  '/write/stories/$publicId/stats': typeof WriteStoriesPublicIdStatsRoute
   '/write/stories/$publicId/': typeof WriteStoriesPublicIdIndexRoute
   '/write/stories/$publicId/chapters/$number': typeof WriteStoriesPublicIdChaptersNumberRoute
 }
@@ -239,6 +247,7 @@ export interface FileRoutesByTo {
   '/stories/$storyKey/chapter-{$number}': typeof StoriesStoryKeyChapterChar123numberChar125Route
   '/write/stories/new': typeof WriteStoriesNewRoute
   '/stories/$storyKey': typeof StoriesStoryKeyIndexRoute
+  '/write/stories/$publicId/stats': typeof WriteStoriesPublicIdStatsRoute
   '/write/stories/$publicId': typeof WriteStoriesPublicIdIndexRoute
   '/write/stories/$publicId/chapters/$number': typeof WriteStoriesPublicIdChaptersNumberRoute
 }
@@ -270,6 +279,7 @@ export interface FileRoutesById {
   '/stories/$storyKey/chapter-{$number}': typeof StoriesStoryKeyChapterChar123numberChar125Route
   '/write/stories/new': typeof WriteStoriesNewRoute
   '/stories/$storyKey/': typeof StoriesStoryKeyIndexRoute
+  '/write/stories/$publicId/stats': typeof WriteStoriesPublicIdStatsRoute
   '/write/stories/$publicId/': typeof WriteStoriesPublicIdIndexRoute
   '/write/stories/$publicId/chapters/$number': typeof WriteStoriesPublicIdChaptersNumberRoute
 }
@@ -302,6 +312,7 @@ export interface FileRouteTypes {
     | '/stories/$storyKey/chapter-{$number}'
     | '/write/stories/new'
     | '/stories/$storyKey/'
+    | '/write/stories/$publicId/stats'
     | '/write/stories/$publicId/'
     | '/write/stories/$publicId/chapters/$number'
   fileRoutesByTo: FileRoutesByTo
@@ -332,6 +343,7 @@ export interface FileRouteTypes {
     | '/stories/$storyKey/chapter-{$number}'
     | '/write/stories/new'
     | '/stories/$storyKey'
+    | '/write/stories/$publicId/stats'
     | '/write/stories/$publicId'
     | '/write/stories/$publicId/chapters/$number'
   id:
@@ -362,6 +374,7 @@ export interface FileRouteTypes {
     | '/stories/$storyKey/chapter-{$number}'
     | '/write/stories/new'
     | '/stories/$storyKey/'
+    | '/write/stories/$publicId/stats'
     | '/write/stories/$publicId/'
     | '/write/stories/$publicId/chapters/$number'
   fileRoutesById: FileRoutesById
@@ -393,6 +406,7 @@ export interface RootRouteChildren {
   StoriesStoryKeyChapterChar123numberChar125Route: typeof StoriesStoryKeyChapterChar123numberChar125Route
   WriteStoriesNewRoute: typeof WriteStoriesNewRoute
   StoriesStoryKeyIndexRoute: typeof StoriesStoryKeyIndexRoute
+  WriteStoriesPublicIdStatsRoute: typeof WriteStoriesPublicIdStatsRoute
   WriteStoriesPublicIdIndexRoute: typeof WriteStoriesPublicIdIndexRoute
   WriteStoriesPublicIdChaptersNumberRoute: typeof WriteStoriesPublicIdChaptersNumberRoute
 }
@@ -588,6 +602,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WriteStoriesPublicIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/write/stories/$publicId/stats': {
+      id: '/write/stories/$publicId/stats'
+      path: '/write/stories/$publicId/stats'
+      fullPath: '/write/stories/$publicId/stats'
+      preLoaderRoute: typeof WriteStoriesPublicIdStatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/write/stories/$publicId/chapters/$number': {
       id: '/write/stories/$publicId/chapters/$number'
       path: '/write/stories/$publicId/chapters/$number'
@@ -626,6 +647,7 @@ const rootRouteChildren: RootRouteChildren = {
     StoriesStoryKeyChapterChar123numberChar125Route,
   WriteStoriesNewRoute: WriteStoriesNewRoute,
   StoriesStoryKeyIndexRoute: StoriesStoryKeyIndexRoute,
+  WriteStoriesPublicIdStatsRoute: WriteStoriesPublicIdStatsRoute,
   WriteStoriesPublicIdIndexRoute: WriteStoriesPublicIdIndexRoute,
   WriteStoriesPublicIdChaptersNumberRoute:
     WriteStoriesPublicIdChaptersNumberRoute,

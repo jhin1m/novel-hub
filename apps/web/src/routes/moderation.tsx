@@ -9,15 +9,16 @@ import { Link, createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 import { textLinkClass } from '../components/auth-ui';
 import { MergeTagForm } from '../components/moderation/merge-tag-form';
+import { TabLinks } from '../components/moderation/moderation-tab-links';
 import { REPORT_STATUS_LABELS, ReportCard } from '../components/moderation/report-card';
 import { REASON_LABELS } from '../components/report/reason-labels';
+import { PageShell, PageTitle } from '../components/page-shell';
 import { SiteLayout } from '../components/site-layout';
 import { Pagination } from '../components/story/pagination';
 import { ApiError } from '../lib/api-errors';
 import { NO_STORE } from '../lib/cache-headers';
 import { type MeUser, useMe } from '../lib/me';
 import { useReports } from '../lib/moderation';
-import { cn } from '../lib/utils';
 import { seo } from '../lib/seo';
 
 const MODERATION_TABS = ['reports', 'tags'] as const;
@@ -26,7 +27,7 @@ const moderationSearchSchema = reportListQuerySchema.extend({
   tab: z.enum(MODERATION_TABS).optional().catch(undefined),
 });
 
-type ModerationSearch = z.output<typeof moderationSearchSchema>;
+export type ModerationSearch = z.output<typeof moderationSearchSchema>;
 
 /** `/moderation?…` with defaults left out of the URL. */
 function moderationHref(search: ModerationSearch): string {
@@ -56,8 +57,8 @@ function ModerationPage() {
 
   return (
     <SiteLayout>
-      <div className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-10">
-        <h1 className="font-serif text-3xl font-semibold">{m.moderation_title()}</h1>
+      <PageShell>
+        <PageTitle>{m.moderation_title()}</PageTitle>
         {me.isPending ? (
           <p role="status" className="text-muted-foreground">
             {m.moderation_loading()}
@@ -91,52 +92,8 @@ function ModerationPage() {
             )}
           </>
         )}
-      </div>
+      </PageShell>
     </SiteLayout>
-  );
-}
-
-interface TabItem {
-  key: string;
-  label: string;
-  search: ModerationSearch;
-  current: boolean;
-}
-
-/** A row of client-side links that rewrite the search params (the page is never cached). */
-function TabLinks({ label, items, small }: { label: string; items: TabItem[]; small?: boolean }) {
-  return (
-    <nav aria-label={label} className="-mx-4 overflow-x-auto px-4">
-      <ul className={cn('flex gap-1', small ? 'flex-wrap' : 'border-b')}>
-        {items.map((item) => (
-          <li key={item.key}>
-            <Link
-              to="/moderation"
-              search={item.search}
-              aria-current={item.current ? 'page' : undefined}
-              className={cn(
-                'inline-block text-sm whitespace-nowrap',
-                small
-                  ? cn(
-                      'rounded-md border px-2 py-1',
-                      item.current
-                        ? 'border-primary text-foreground'
-                        : 'text-muted-foreground hover:text-foreground',
-                    )
-                  : cn(
-                      '-mb-px border-b-2 px-3 py-2',
-                      item.current
-                        ? 'border-primary font-medium text-foreground'
-                        : 'border-transparent text-muted-foreground hover:text-foreground',
-                    ),
-              )}
-            >
-              {item.label}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </nav>
   );
 }
 

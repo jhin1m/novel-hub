@@ -2,6 +2,7 @@ import { m } from '@novel-hub/shared/messages';
 import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
+import { PageShell, PageTitle } from './page-shell';
 import { SiteLayout } from './site-layout';
 
 function MessagePage({
@@ -15,11 +16,11 @@ function MessagePage({
 }) {
   return (
     <SiteLayout>
-      <div className="mx-auto flex max-w-xl flex-col items-start gap-4 px-4 py-16">
-        <h1 className="font-serif text-3xl font-semibold">{title}</h1>
+      <PageShell width="narrow" className="items-start gap-4 md:py-16">
+        <PageTitle>{title}</PageTitle>
         <p className="text-muted-foreground">{description}</p>
         {action}
-      </div>
+      </PageShell>
     </SiteLayout>
   );
 }

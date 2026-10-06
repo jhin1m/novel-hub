@@ -21,6 +21,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { wordBounds, wordRangeOf } from '@/lib/search';
+import { cn } from '@/lib/utils';
+import { pageCardClass } from '../page-shell';
 import { STORY_STATUS_LABELS } from '../story/story-labels';
 
 /** Radix Select has no empty value, so "any" is its own item. */
@@ -74,7 +76,11 @@ export function SearchForm({
   };
 
   return (
-    <form role="search" onSubmit={submit} className="flex flex-col gap-4">
+    <form
+      role="search"
+      onSubmit={submit}
+      className={cn(pageCardClass, 'flex flex-col gap-4 md:p-6')}
+    >
       <div className="flex gap-2">
         <Label htmlFor={`${id}-q`} className="sr-only">
           {m.search_query_label()}

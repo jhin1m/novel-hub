@@ -4,15 +4,17 @@ import { Link, createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 import { textLinkClass } from '../components/auth-ui';
 import { HistoryList } from '../components/library/history-list';
-import { LibraryItem } from '../components/library/library-item';
+import { LIBRARY_LIST_CLASS, LibraryItem } from '../components/library/library-item';
 import { SHELF_LABELS } from '../components/library/shelf-labels';
+import { PageShell, PageTitle, pageCardClass } from '../components/page-shell';
+import { SEGMENTED_LIST_CLASS, segmentedLinkClass } from '../components/segmented-link-classes';
 import { SiteLayout } from '../components/site-layout';
 import { Pagination } from '../components/story/pagination';
 import { NO_STORE } from '../lib/cache-headers';
 import { useLibraryShelf } from '../lib/library';
 import { useMe } from '../lib/me';
-import { cn } from '../lib/utils';
 import { seo } from '../lib/seo';
+import { cn } from '../lib/utils';
 
 const librarySearchSchema = z.object({
   shelf: libraryTabSchema.catch('reading'),
@@ -40,8 +42,8 @@ function LibraryPage() {
   const me = useMe();
   return (
     <SiteLayout>
-      <div className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-10">
-        <h1 className="font-serif text-3xl font-semibold">{m.library_title()}</h1>
+      <PageShell>
+        <PageTitle>{m.library_title()}</PageTitle>
         {me.isPending ? (
           <p role="status" className="text-muted-foreground">
             {m.library_loading()}
@@ -56,7 +58,7 @@ function LibraryPage() {
             {shelf === 'history' ? <HistoryList /> : <ShelfList shelf={shelf} page={page} />}
           </>
         )}
-      </div>
+      </PageShell>
     </SiteLayout>
   );
 }
@@ -64,20 +66,15 @@ function LibraryPage() {
 /** Shelves and history as tabs; switching is client-side (the page is personal, not cached). */
 function LibraryTabs({ current }: { current: LibraryTab }) {
   return (
-    <nav aria-label={m.library_tabs()} className="-mx-4 overflow-x-auto px-4">
-      <ul className="flex gap-1 border-b">
+    <nav aria-label={m.library_tabs()} className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+      <ul className={SEGMENTED_LIST_CLASS}>
         {LIBRARY_TABS.map((tab) => (
           <li key={tab}>
             <Link
               to="/library"
               search={{ shelf: tab, page: 1 }}
               aria-current={tab === current ? 'page' : undefined}
-              className={cn(
-                '-mb-px inline-block border-b-2 px-3 py-2 text-sm whitespace-nowrap',
-                tab === current
-                  ? 'border-primary font-medium text-foreground'
-                  : 'border-transparent text-muted-foreground hover:text-foreground',
-              )}
+              className={segmentedLinkClass(tab === current)}
             >
               {TAB_LABELS[tab]()}
             </Link>
@@ -117,9 +114,9 @@ function ShelfList({ shelf, page }: { shelf: Shelf; page: number }) {
   }
   return (
     <div className="flex flex-col gap-8">
-      <ul className="flex flex-col gap-6">
+      <ul className={LIBRARY_LIST_CLASS}>
         {items.map((item) => (
-          <li key={item.story.publicId}>
+          <li key={item.story.publicId} className="py-4">
             <LibraryItem story={item.story} shelf={item.shelf} progress={item.progress} />
           </li>
         ))}
@@ -135,7 +132,7 @@ function ShelfList({ shelf, page }: { shelf: Shelf; page: number }) {
 
 function GuestInvite() {
   return (
-    <section className="flex flex-col gap-2">
+    <section className={cn(pageCardClass, 'flex flex-col gap-2')}>
       <p>{m.library_sign_in()}</p>
       <nav className="flex gap-4">
         <Link to="/sign-in" className={textLinkClass}>

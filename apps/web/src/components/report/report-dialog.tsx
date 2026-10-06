@@ -61,7 +61,7 @@ export function ReportDialogContent({ target }: { target: ReportTarget }) {
           }}
         >
           <fieldset className="flex flex-col gap-2">
-            <legend className="mb-2 text-sm font-medium">{m.report_reason_label()}</legend>
+            <legend className="mb-2 text-sm font-bold">{m.report_reason_label()}</legend>
             {USER_REPORT_REASONS.map((value) => (
               <label key={value} className="flex items-center gap-2 text-sm">
                 <input

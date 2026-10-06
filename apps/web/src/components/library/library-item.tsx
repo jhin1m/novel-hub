@@ -3,14 +3,18 @@ import { type Shelf, canonicalPath } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { EllipsisVerticalIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatDate, formatWordCount } from '@/lib/format';
 import { useSetShelf } from '@/lib/library';
+import { StoryFlagBadges } from '../status-badges';
 import { StoryCover } from '../story-cover';
 import { STORY_STATUS_LABELS } from '../story/story-labels';
 import { ResumeLink } from './continue-reading-button';
 import { ShelfMenu } from './shelf-menu';
+
+/** The card that holds a shelf or the history: one row per story, hairlines between rows. */
+export const LIBRARY_LIST_CLASS =
+  'flex flex-col divide-y divide-border rounded-3xl border border-border bg-card px-4 md:px-5';
 
 /**
  * A story in the reader's own lists: small cover, title (a plain document link to the CDN-cached
@@ -29,8 +33,8 @@ export function LibraryStoryRow({ story, children }: { story: StoryCardDto; chil
         className="w-20 shrink-0 sm:w-24"
       />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <h3 className="font-serif leading-snug font-semibold">
-          <a href={href} className="underline-offset-4 hover:underline">
+        <h3 className="text-base leading-snug font-bold">
+          <a href={href} className="underline-offset-4 hover:text-primary hover:underline">
             {story.title}
           </a>
         </h3>
@@ -47,8 +51,7 @@ export function LibraryStoryRow({ story, children }: { story: StoryCardDto; chil
         ) : null}
         {story.isAiAssisted || story.isMature ? (
           <div className="flex flex-wrap gap-1">
-            {story.isAiAssisted ? <Badge variant="outline">{m.story_card_ai()}</Badge> : null}
-            {story.isMature ? <Badge variant="outline">{m.story_card_mature()}</Badge> : null}
+            <StoryFlagBadges isAiAssisted={story.isAiAssisted} isMature={story.isMature} />
           </div>
         ) : null}
         <div className="mt-2 flex flex-wrap items-center gap-2">{children}</div>

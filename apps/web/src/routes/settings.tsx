@@ -1,27 +1,17 @@
 import { m } from '@novel-hub/shared/messages';
 import { useMutation } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
-import { useId, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { FormMessage, textLinkClass } from '../components/auth-ui';
+import { PageShell, PageTitle, pageCardClass } from '../components/page-shell';
+import { MatureSetting, SETTINGS_HEADING_CLASS } from '../components/settings/mature-setting';
 import { SiteLayout } from '../components/site-layout';
 import { authClient } from '../lib/auth-client';
 import { authErrorMessage, throwIfAuthError } from '../lib/auth-errors';
 import { NO_STORE } from '../lib/cache-headers';
 import { type MeUser, useMe, useSignOut } from '../lib/me';
-import { usePatchPreferences } from '../lib/preferences';
 import { seo } from '../lib/seo';
+import { cn } from '../lib/utils';
 
 export const Route = createFileRoute('/settings')({
   // Everything here is personal and loaded in the browser; the page itself is never stored.
@@ -34,8 +24,8 @@ function SettingsPage() {
   const me = useMe();
   return (
     <SiteLayout>
-      <div className="mx-auto flex max-w-xl flex-col gap-10 px-4 py-12">
-        <h1 className="font-serif text-2xl font-semibold">{m.settings_title()}</h1>
+      <PageShell width="narrow">
+        <PageTitle>{m.settings_title()}</PageTitle>
         {me.isPending ? (
           <p>{m.home_loading()}</p>
         ) : me.isError ? (
@@ -48,14 +38,14 @@ function SettingsPage() {
         ) : (
           <GuestInvite />
         )}
-      </div>
+      </PageShell>
     </SiteLayout>
   );
 }
 
 function GuestInvite() {
   return (
-    <section className="flex flex-col gap-2">
+    <section className={cn(pageCardClass, 'flex flex-col gap-2')}>
       <p>{m.home_guest()}</p>
       <nav className="flex gap-4">
         <Link to="/sign-in" className={textLinkClass}>
@@ -86,8 +76,8 @@ function AccountStatus({ user }: { user: MeUser }) {
   });
 
   return (
-    <section aria-labelledby="account-title" className="flex flex-col gap-3">
-      <h2 id="account-title" className="font-serif text-xl font-semibold">
+    <section aria-labelledby="account-title" className={cn(pageCardClass, 'flex flex-col gap-3')}>
+      <h2 id="account-title" className={SETTINGS_HEADING_CLASS}>
         {m.settings_account()}
       </h2>
       <p>{m.home_greeting({ name: user.displayName })}</p>
@@ -122,86 +112,6 @@ function AccountStatus({ user }: { user: MeUser }) {
       >
         {m.home_sign_out()}
       </Button>
-    </section>
-  );
-}
-
-/**
- * "Show 18+ content" (off by default). Turning it on asks the reader to state they are 18 or
- * older first (the server checks the statement too); turning it off applies at once. Either way
- * the cached account and the before-paint hint follow (`usePatchPreferences`).
- */
-function MatureSetting({ user }: { user: MeUser }) {
-  const patch = usePatchPreferences();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [confirmed, setConfirmed] = useState(false);
-  const switchId = useId();
-  const confirmId = useId();
-  const enabled = user.preferences.showMature;
-
-  const enable = () =>
-    patch.mutate(
-      { showMature: true, confirmAdult: true },
-      { onSuccess: () => setDialogOpen(false) },
-    );
-
-  return (
-    <section aria-labelledby="mature-title" className="flex flex-col gap-3">
-      <h2 id="mature-title" className="font-serif text-xl font-semibold">
-        {m.settings_mature_title()}
-      </h2>
-      <div className="flex items-center gap-2">
-        <Checkbox
-          id={switchId}
-          checked={enabled}
-          disabled={patch.isPending}
-          onCheckedChange={(checked) => {
-            patch.reset();
-            if (checked === true) {
-              setConfirmed(false);
-              setDialogOpen(true);
-            } else {
-              patch.mutate({ showMature: false });
-            }
-          }}
-        />
-        <Label htmlFor={switchId}>{m.settings_mature_label()}</Label>
-      </div>
-      <p className="text-sm text-muted-foreground">{m.settings_mature_hint()}</p>
-      {patch.isError && !dialogOpen ? <FormMessage>{m.settings_mature_error()}</FormMessage> : null}
-
-      <Dialog
-        open={dialogOpen}
-        onOpenChange={(open) => {
-          if (!patch.isPending) setDialogOpen(open);
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{m.settings_mature_dialog_title()}</DialogTitle>
-            <DialogDescription>{m.settings_mature_dialog_description()}</DialogDescription>
-          </DialogHeader>
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id={confirmId}
-              checked={confirmed}
-              onCheckedChange={(checked) => setConfirmed(checked === true)}
-            />
-            <Label htmlFor={confirmId}>{m.mature_confirm_adult()}</Label>
-          </div>
-          {patch.isError ? <FormMessage>{m.settings_mature_error()}</FormMessage> : null}
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button type="button" variant="outline" disabled={patch.isPending}>
-                {m.settings_mature_cancel()}
-              </Button>
-            </DialogClose>
-            <Button type="button" disabled={!confirmed || patch.isPending} onClick={enable}>
-              {m.mature_enable()}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </section>
   );
 }

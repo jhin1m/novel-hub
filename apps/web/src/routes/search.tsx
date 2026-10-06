@@ -1,6 +1,7 @@
 import { type SearchQuery, searchQuerySchema } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { createFileRoute, stripSearchParams } from '@tanstack/react-router';
+import { PageShell, PageTitle } from '../components/page-shell';
 import { SearchForm } from '../components/search/search-form';
 import { SearchResults } from '../components/search/search-results';
 import { SiteLayout } from '../components/site-layout';
@@ -36,8 +37,8 @@ function SearchPage() {
   const navigate = Route.useNavigate();
   return (
     <SiteLayout>
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10">
-        <h1 className="font-serif text-3xl font-semibold">{m.search_page_title()}</h1>
+      <PageShell className="gap-8">
+        <PageTitle>{m.search_page_title()}</PageTitle>
         <SearchForm
           // Back/forward changes the URL: start the form over from it.
           key={searchHref(query)}
@@ -46,7 +47,7 @@ function SearchPage() {
           onSubmit={(next) => void navigate({ search: next })}
         />
         <SearchResults query={query} />
-      </div>
+      </PageShell>
     </SiteLayout>
   );
 }

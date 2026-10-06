@@ -18,6 +18,14 @@ const KIND_LABELS: Record<TagKind, () => string> = {
   warning: m.story_tag_kind_warning,
 };
 
+/*
+ * A checked chip is filled with the accent, the colour of the focus ring, so the ring sits on the
+ * chip with an offset. Disabled chips are faded by the checkbox/label themselves and do not react
+ * to hover.
+ */
+const TAG_CHIP_CLASS =
+  'relative flex h-9 items-center gap-2 rounded-full border border-border bg-card px-3.5 transition-colors not-has-disabled:not-has-[[data-state=checked]]:hover:bg-secondary has-focus-visible:ring-[3px] has-focus-visible:ring-ring has-focus-visible:ring-offset-2 has-focus-visible:ring-offset-background has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary has-[[data-state=checked]]:text-primary-foreground';
+
 /** Number of tags the story will have: the main tag plus the other selected ones. */
 export function countTags(mainTag: string, selected: readonly string[]): number {
   return (mainTag ? 1 : 0) + selected.filter((slug) => slug !== mainTag).length;
@@ -80,7 +88,7 @@ export function TagPicker({
       </div>
 
       <fieldset className="flex flex-col gap-4" aria-describedby={`${id}-count`}>
-        <legend className="text-sm font-medium">{m.story_tags_label()}</legend>
+        <legend className="text-sm font-bold">{m.story_tags_label()}</legend>
         <p id={`${id}-count`} className="-mt-2 text-sm text-muted-foreground">
           {m.story_tags_count({ count: String(total), max: String(LIMITS.storyTagsMax) })}
         </p>
@@ -89,15 +97,20 @@ export function TagPicker({
           if (group.length === 0) return null;
           return (
             <div key={kind} className="flex flex-col gap-2">
-              <p className="text-sm text-muted-foreground">{KIND_LABELS[kind]()}</p>
-              <ul className="flex flex-wrap gap-x-5 gap-y-2">
+              <p className="text-xs font-bold tracking-wide text-muted-foreground uppercase">
+                {KIND_LABELS[kind]()}
+              </p>
+              <ul className="flex flex-wrap gap-2">
                 {group.map((tag) => {
                   const checked = selected.includes(tag.slug);
                   const boxId = `${id}-tag-${tag.slug}`;
                   return (
-                    <li key={tag.slug} className="flex items-center gap-2">
+                    // A chip: the whole pill toggles (the label covers it) and fills when checked.
+                    <li key={tag.slug} className={TAG_CHIP_CLASS}>
                       <Checkbox
                         id={boxId}
+                        // Above the label's overlay so a click on the box itself still lands on it.
+                        className="relative z-10 data-[state=checked]:border-primary-foreground"
                         checked={checked}
                         disabled={!checked && full}
                         onCheckedChange={(value) =>
@@ -108,7 +121,10 @@ export function TagPicker({
                           )
                         }
                       />
-                      <Label htmlFor={boxId} className="font-normal">
+                      <Label
+                        htmlFor={boxId}
+                        className="font-semibold after:absolute after:inset-0 after:rounded-full"
+                      >
                         {tag.name}
                       </Label>
                     </li>

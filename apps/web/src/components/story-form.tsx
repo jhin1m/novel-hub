@@ -21,6 +21,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { formText } from '@/lib/form-text';
 import type { AuthorStoryView, TagView } from '@/lib/stories';
 import { SubmitButton } from './auth-ui';
+import { STORY_STATUS_LABELS } from './story/story-labels';
 import { FieldError, TagPicker, countTags } from './tag-picker';
 
 export type StoryFormValues = StoryCreateInput & { status?: StoryStatus };
@@ -32,12 +33,6 @@ const FIELD_ERRORS: Record<FieldName, () => string> = {
   synopsis: m.story_error_synopsis,
   mainTag: m.story_error_main_tag,
   tags: m.story_error_tags,
-};
-
-export const STATUS_LABELS: Record<StoryStatus, () => string> = {
-  ongoing: m.story_status_ongoing,
-  completed: m.story_status_completed,
-  hiatus: m.story_status_hiatus,
 };
 
 /**
@@ -162,7 +157,7 @@ export function StoryForm({
             <SelectContent>
               {STORY_STATUSES.map((value) => (
                 <SelectItem key={value} value={value}>
-                  {STATUS_LABELS[value]()}
+                  {STORY_STATUS_LABELS[value]()}
                 </SelectItem>
               ))}
             </SelectContent>

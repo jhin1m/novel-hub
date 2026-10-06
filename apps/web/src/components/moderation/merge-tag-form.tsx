@@ -16,6 +16,8 @@ import {
 import { apiErrorMessage } from '@/lib/api-errors';
 import { useModerationAction } from '@/lib/moderation';
 import { type TagView, tagsQueryKey, useTags } from '@/lib/stories';
+import { cn } from '@/lib/utils';
+import { pageCardClass } from '../page-shell';
 import { TAG_KIND_LABELS } from '../story/story-labels';
 import { ConfirmDialog } from './confirm-dialog';
 
@@ -78,7 +80,7 @@ export function MergeTagForm() {
     : [];
 
   return (
-    <section className="flex max-w-xl flex-col gap-4">
+    <section className={cn(pageCardClass, 'flex max-w-[560px] flex-col gap-4')}>
       <p className="text-muted-foreground">{m.moderation_merge_intro()}</p>
       <div className="flex flex-col gap-2">
         <Label htmlFor={`${id}-source`}>{m.moderation_merge_source()}</Label>

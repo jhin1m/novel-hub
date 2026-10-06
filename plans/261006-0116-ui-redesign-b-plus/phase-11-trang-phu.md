@@ -1,7 +1,7 @@
 ---
 phase: 11
 title: "Trang phụ"
-status: pending
+status: completed
 priority: P2
 effort: "1d"
 dependencies: [10]
@@ -95,12 +95,12 @@ routes/settings.tsx ── components/settings/mature-setting.tsx
 
 ## Function/interface checklist
 
-- [ ] `PageShell({ children, width?: 'default' | 'narrow', className? })`, `PageTitle({ children })`
-- [ ] `SEGMENTED_LIST_CLASS: string`, `segmentedLinkClass(current: boolean, small?: boolean): string`
-- [ ] `MatureSetting({ user }: { user: MeUser })` (chữ ký hiện tại)
-- [ ] `TabLinks({ label, items, small }: { label: string; items: TabItem[]; small?: boolean })` (chữ ký hiện tại, export)
-- [ ] `report-actions.ts`: export `CardAction`, `storyActions`, `userActions`, `canActOn`, `actionsFor`, `ACTION_LABELS` (chữ ký hiện tại)
-- [ ] `report-target-context.tsx`: export `TargetContext({ report })` (+ `StoryLine`, `ChapterLine`, `UserStatusBadge` nội bộ)
+- [x] `PageShell({ children, width?: 'default' | 'narrow', className? })`, `PageTitle({ children })`
+- [x] `SEGMENTED_LIST_CLASS: string`, `segmentedLinkClass(current: boolean, small?: boolean): string`
+- [x] `MatureSetting({ user }: { user: MeUser })` (chữ ký hiện tại)
+- [x] `TabLinks({ label, items, small }: { label: string; items: TabItem[]; small?: boolean })` (chữ ký hiện tại, export)
+- [x] `report-actions.ts`: export `CardAction`, `storyActions`, `userActions`, `canActOn`, `actionsFor`, `ACTION_LABELS` (chữ ký hiện tại)
+- [x] `report-target-context.tsx`: export `TargetContext({ report })` (+ `StoryLine`, `ChapterLine`, `UserStatusBadge` nội bộ)
 
 ## Dependency map
 
@@ -132,13 +132,13 @@ Không key mới (không thanh tiến độ tủ truyện, không chip lọc, ta
 
 ## Success Criteria
 
-- [ ] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
-- [ ] `routes/settings.tsx`, `routes/moderation.tsx`, `components/moderation/report-card.tsx`, `components/story-form.tsx` và mọi file mới ≤ 200 dòng
+- [x] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
+- [x] `routes/settings.tsx`, `routes/moderation.tsx`, `components/moderation/report-card.tsx`, `components/story-form.tsx` và mọi file mới ≤ 200 dòng
 <!-- Updated: Red Team 2026-10-06 - tiêu chí font-serif theo danh sách file nội dung, loại app.css -->
-- [ ] `rg -l 'font-serif' apps/web/src --glob '*.tsx'` chỉ còn file chứa **nội dung truyện/văn bản đọc** hoặc dấu thương hiệu: `components/story/story-synopsis.tsx` (giới thiệu), `components/reader/chapter-header.tsx` (h1 chương), `components/reader/chapter-end.tsx` (thân lời nhắn), `components/reader/reader-settings-controls.tsx` (ô "Aa"), `components/editor/chapter-editor.tsx` (nội dung), `components/editor/chapter-meta-field.tsx` (ô tên chương), file xem trước revision (`revision-history-sheet.tsx` hoặc `revision-preview.tsx`), `components/static-page.tsx` (thân bài), `components/site-header.tsx` (ô chữ "N" `aria-hidden`). Không tính `styles/app.css` (comment + `--font-serif`). Mỗi hit còn lại phải là phần tử nội dung, không phải h1/h2/h3/nhãn UI
-- [ ] `rg -n "status === 'published' \? 'default'" apps/web/src` rỗng (mẫu badge lặp cũ ở 2 nơi: `chapter-editor.tsx:390`, `chapter-list.tsx:87`; đã thay bằng `status-badges.tsx`, scout-03 mục P7.5)
-- [ ] `rg -n '\bSTATUS_LABELS\b|SegmentedLinks' apps/web/src` rỗng
-- [ ] Không file nào trong `packages/` (trừ `messages/vi.json` nếu cần) đổi; không route/URL/head đổi
+- [x] `rg -l 'font-serif' apps/web/src --glob '*.tsx'` chỉ còn file chứa **nội dung truyện/văn bản đọc** hoặc dấu thương hiệu: `components/story/story-synopsis.tsx` (giới thiệu), `components/reader/chapter-header.tsx` (h1 chương), `components/reader/chapter-end.tsx` (thân lời nhắn), `components/reader/reader-settings-controls.tsx` (ô "Aa"), `components/editor/chapter-editor.tsx` (nội dung), `components/editor/chapter-meta-field.tsx` (ô tên chương), file xem trước revision (`revision-history-sheet.tsx` hoặc `revision-preview.tsx`), `components/static-page.tsx` (thân bài), `components/site-header.tsx` (ô chữ "N" `aria-hidden`). Không tính `styles/app.css` (comment + `--font-serif`). Mỗi hit còn lại phải là phần tử nội dung, không phải h1/h2/h3/nhãn UI
+- [x] `rg -n "status === 'published' \? 'default'" apps/web/src` rỗng (mẫu badge lặp cũ ở 2 nơi: `chapter-editor.tsx:390`, `chapter-list.tsx:87`; đã thay bằng `status-badges.tsx`, scout-03 mục P7.5)
+- [x] `rg -n '\bSTATUS_LABELS\b|SegmentedLinks' apps/web/src` rỗng
+- [x] Không file nào trong `packages/` (trừ `messages/vi.json` nếu cần) đổi; không route/URL/head đổi
 
 ## Risk Assessment
 
@@ -156,3 +156,12 @@ Không key mới (không thanh tiến độ tủ truyện, không chip lọc, ta
 ## Ngoài phạm vi phase
 
 Không thiết kế lại bố cục trang phụ, không chip lọc `/search`, không thanh tiến độ `/library`, không hero trang tác giả, không vẽ trang quản lý truyện, không component tab dùng chung, không sửa `docs/` (phase 12), không đánh `[x]` spec.
+
+## Cook Log (2026-10-06, auto)
+
+- [auto] Không import được `report-card.tsx` trong unit test (alias `@/` không resolve ở vitest gốc, chuỗi phụ thuộc sâu) → chuyển nguyên văn dòng 27–123 sang `report-actions.ts` rồi chạy test trên đó. Lý do: code không đổi một ký tự logic, tương đương test trên code cũ; reviewer đối chiếu từng dòng với HEAD.
+- [auto] `/moderation` dùng `PageShell` mặc định 1240. Lý do: đúng plan; reviewer gợi ý cap ~960 để sáng user quyết.
+- [auto] Form truyện (`/write/stories/new`, `$publicId`) và trang tĩnh dùng cột 720 (`narrow` + `max-w-[720px]`). Lý do: form có textarea giới thiệu, danh sách chương; cũ là 672.
+- [auto] Pagination: trang hiện tại là pill `bg-primary` chứa "Trang x/y", nút trước/sau giữ cỡ 44px. Lý do: không thêm i18n, giữ vùng chạm.
+- [auto] `TabLinks` import `type ModerationSearch` từ route. Lý do: chỉ type, xoá khi build; dời sang `lib/` là refactor ngoài phạm vi.
+- Sau review: chip tag có focus ring offset trên chính chip, bỏ mờ chồng khi disabled, không hover khi disabled/đã chọn; `pageCardClass` dùng `rounded-xl` (24, trong thang radius).

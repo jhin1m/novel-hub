@@ -1,6 +1,7 @@
+import { createTestDb } from '@novel-hub/db/testing';
 import { canonicalPath } from '@novel-hub/shared';
 import { type Locator, type Page, expect, test } from '@playwright/test';
-import { gotoHydrated, signUpVerified } from './helpers/accounts';
+import { gotoHydrated, signUp, signUpVerified } from './helpers/accounts';
 import { type PublishedStory, createPublishedStory } from './helpers/content';
 import { createChapter, createStory } from './helpers/stories';
 
@@ -122,6 +123,42 @@ test.describe('mobile tab bar at 360px', () => {
     // A plain click: it fails if anything fixed sits over the link.
     await page.getByRole('contentinfo').getByRole('link', { name: 'Điều khoản' }).click();
     await expect(page).toHaveURL('/terms');
+  });
+});
+
+test.describe('secondary pages at 360px', () => {
+  test.use({ viewport: { width: 360, height: 800 } });
+
+  test('search, sign-in and the library fit the screen', async ({ page }) => {
+    await gotoHydrated(page, '/search?q=tab');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Tìm', exact: true })).toBeVisible();
+    await expectNoHorizontalScroll(page);
+
+    await gotoHydrated(page, '/sign-in');
+    await expect(page.getByRole('button', { name: 'Đăng nhập', exact: true })).toBeVisible();
+    await expectNoHorizontalScroll(page);
+
+    await signUpVerified(page);
+    await gotoHydrated(page, '/library');
+    // The shelf tabs scroll inside their own row; the page itself does not.
+    await expect(page.getByRole('link', { name: 'Đã xong' })).toBeVisible();
+    await expectNoHorizontalScroll(page);
+  });
+
+  test('the moderation filters wrap instead of overflowing', async ({ page }) => {
+    const mod = await signUp(page);
+    const { pool } = createTestDb();
+    try {
+      await pool.query("update users set role = 'mod' where email = $1", [mod.email]);
+    } finally {
+      await pool.end();
+    }
+    await gotoHydrated(page, '/moderation');
+    await expect(page.getByRole('heading', { name: 'Kiểm duyệt', level: 1 })).toBeVisible();
+    const reasons = page.getByRole('navigation', { name: 'Lọc theo lý do' });
+    await expect(reasons).toBeVisible();
+    await expectNoHorizontalScroll(page);
   });
 });
 

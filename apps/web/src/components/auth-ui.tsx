@@ -1,19 +1,23 @@
 import { m } from '@novel-hub/shared/messages';
+import { CircleCheckIcon } from 'lucide-react';
 import { type InputHTMLAttributes, type ReactNode, useId } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { PageShell, PageTitle, pageCardClass } from './page-shell';
 import { SiteLayout } from './site-layout';
 
-/** Shared frame for auth pages: site header/footer and a narrow form column. */
+/** Shared frame for auth pages: site header/footer and one centred card holding the form. */
 export function AuthPage({ title, children }: { title: string; children: ReactNode }) {
   return (
     <SiteLayout>
-      <div className="mx-auto flex max-w-sm flex-col gap-6 px-4 py-12">
-        <h1 className="font-serif text-2xl font-semibold">{title}</h1>
-        {children}
-      </div>
+      <PageShell width="narrow" className="max-w-[480px] md:py-14">
+        <div className={cn(pageCardClass, 'flex flex-col gap-6')}>
+          <PageTitle>{title}</PageTitle>
+          {children}
+        </div>
+      </PageShell>
     </SiteLayout>
   );
 }
@@ -47,7 +51,10 @@ export function SubmitButton({ pending, children }: { pending: boolean; children
   );
 }
 
-/** Message under a form; `tone="info"` for success notices so they are not styled as errors. */
+/**
+ * Message under a form, one node so a form never holds two alerts: errors are plain red text,
+ * `tone="info"` success notices sit on the soft accent with a check mark.
+ */
 export function FormMessage({
   tone = 'error',
   children,
@@ -58,8 +65,16 @@ export function FormMessage({
   return (
     <p
       role={tone === 'error' ? 'alert' : 'status'}
-      className={cn('text-sm', tone === 'error' && 'text-destructive')}
+      className={cn(
+        'text-sm',
+        tone === 'error'
+          ? 'font-semibold text-destructive'
+          : 'flex items-start gap-2 rounded-md bg-primary-soft px-3.5 py-3 text-foreground',
+      )}
     >
+      {tone === 'info' ? (
+        <CircleCheckIcon aria-hidden className="mt-px size-4 shrink-0 text-primary" />
+      ) : null}
       {children}
     </p>
   );

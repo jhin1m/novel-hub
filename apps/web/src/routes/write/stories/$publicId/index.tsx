@@ -3,6 +3,7 @@ import { Link, createFileRoute } from '@tanstack/react-router';
 import { FormMessage, textLinkClass } from '../../../../components/auth-ui';
 import { ChapterList } from '../../../../components/chapter-list';
 import { CoverUpload } from '../../../../components/cover-upload';
+import { PageShell, PageTitle, pageCardClass } from '../../../../components/page-shell';
 import { SiteLayout } from '../../../../components/site-layout';
 import { StoryForm } from '../../../../components/story-form';
 import { WriterGate } from '../../../../components/writer-gate';
@@ -25,15 +26,15 @@ export const Route = createFileRoute('/write/stories/$publicId/')({
 function EditStoryPage() {
   return (
     <SiteLayout>
-      <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-10">
+      <PageShell width="narrow" className="max-w-[720px]">
         <Link to="/write" className={textLinkClass}>
           {m.writer_back()}
         </Link>
-        <h1 className="font-serif text-2xl font-semibold">{m.story_edit_title()}</h1>
+        <PageTitle>{m.story_edit_title()}</PageTitle>
         <WriterGate>
           <EditStory />
         </WriterGate>
-      </div>
+      </PageShell>
     </SiteLayout>
   );
 }
@@ -58,8 +59,12 @@ function EditStory() {
   return (
     <div className="flex flex-col gap-10">
       <ChapterList publicId={story.data.publicId} />
-      <CoverUpload story={story.data} authorName={me.data?.displayName ?? ''} />
-      <EditStoryForm key={story.data.publicId} story={story.data} tags={tags.data} />
+      <div className={pageCardClass}>
+        <CoverUpload story={story.data} authorName={me.data?.displayName ?? ''} />
+      </div>
+      <div className={pageCardClass}>
+        <EditStoryForm key={story.data.publicId} story={story.data} tags={tags.data} />
+      </div>
     </div>
   );
 }

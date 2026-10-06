@@ -25,7 +25,7 @@ export function Pagination({
       ) : (
         <span />
       )}
-      <span className="text-sm text-muted-foreground">
+      <span className="inline-flex h-11 items-center rounded-full bg-primary px-4 text-sm font-bold text-primary-foreground">
         {m.pagination_status({ page: String(page), total: String(totalPages) })}
       </span>
       {page < totalPages ? (

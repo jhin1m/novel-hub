@@ -1,6 +1,7 @@
 import { m } from '@novel-hub/shared/messages';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
 import { FormMessage, textLinkClass } from '../../../components/auth-ui';
+import { PageShell, PageTitle, pageCardClass } from '../../../components/page-shell';
 import { SiteLayout } from '../../../components/site-layout';
 import { StoryForm } from '../../../components/story-form';
 import { WriterGate } from '../../../components/writer-gate';
@@ -16,15 +17,17 @@ export const Route = createFileRoute('/write/stories/new')({
 function NewStoryPage() {
   return (
     <SiteLayout>
-      <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-10">
+      <PageShell width="narrow" className="max-w-[720px]">
         <Link to="/write" className={textLinkClass}>
           {m.writer_back()}
         </Link>
-        <h1 className="font-serif text-2xl font-semibold">{m.story_new_title()}</h1>
+        <PageTitle>{m.story_new_title()}</PageTitle>
         <WriterGate>
-          <NewStoryForm />
+          <div className={pageCardClass}>
+            <NewStoryForm />
+          </div>
         </WriterGate>
-      </div>
+      </PageShell>
     </SiteLayout>
   );
 }

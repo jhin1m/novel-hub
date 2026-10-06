@@ -2,7 +2,6 @@ import { m } from '@novel-hub/shared/messages';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -22,7 +21,7 @@ import {
   useMyChapters,
 } from '@/lib/chapters';
 import { FormMessage } from './auth-ui';
-import { CHAPTER_STATUS_LABELS } from './story/story-labels';
+import { ChapterStatusBadge } from './status-badges';
 
 const dateFormat = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' });
 
@@ -45,7 +44,7 @@ export function ChapterList({ publicId }: { publicId: string }) {
   return (
     <section className="flex flex-col gap-4" aria-labelledby="chapter-list-title">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 id="chapter-list-title" className="font-serif text-xl font-semibold">
+        <h2 id="chapter-list-title" className="text-xl leading-tight font-extrabold tracking-tight">
           {m.chapter_list_title()}
         </h2>
         <Button type="button" onClick={addChapter} disabled={create.isPending}>
@@ -61,7 +60,7 @@ export function ChapterList({ publicId }: { publicId: string }) {
       ) : chapters.data.length === 0 ? (
         <p className="text-muted-foreground">{m.chapter_list_empty()}</p>
       ) : (
-        <ol className="divide-y rounded-md border">
+        <ol className="divide-y divide-border rounded-lg border border-border bg-card">
           {chapters.data.map((chapter) => (
             <li
               key={chapter.number}
@@ -70,7 +69,7 @@ export function ChapterList({ publicId }: { publicId: string }) {
               <Link
                 to="/write/stories/$publicId/chapters/$number"
                 params={{ publicId, number: String(chapter.number) }}
-                className="font-medium underline-offset-4 after:absolute after:inset-0 hover:underline"
+                className="font-bold underline-offset-4 after:absolute after:inset-0 after:rounded-lg hover:underline"
               >
                 {m.chapter_number({ number: String(chapter.number) })}
                 {': '}
@@ -78,9 +77,7 @@ export function ChapterList({ publicId }: { publicId: string }) {
                   {chapter.title ?? m.chapter_untitled()}
                 </span>
               </Link>
-              <Badge variant={chapter.status === 'published' ? 'default' : 'secondary'}>
-                {CHAPTER_STATUS_LABELS[chapter.status]()}
-              </Badge>
+              <ChapterStatusBadge status={chapter.status} />
               <span className="ml-auto text-sm text-muted-foreground">
                 {m.chapter_updated_at({
                   date: dateFormat.format(new Date(chapter.draftUpdatedAt ?? chapter.updatedAt)),

@@ -46,7 +46,7 @@ Plan riêng do user thêm (không ứng với checkbox nào ở mục 5 spec), c
 | 8 | [Trang write](./phase-08-trang-write.md) | Completed |
 | 9 | [Editor chương: tách file](./phase-09-editor-tach-file.md) | Completed |
 | 10 | [Editor chương: giao diện](./phase-10-editor-giao-dien.md) | Completed |
-| 11 | [Trang phụ](./phase-11-trang-phu.md) | Pending |
+| 11 | [Trang phụ](./phase-11-trang-phu.md) | Completed |
 | 12 | [Tài liệu và spec](./phase-12-tai-lieu-va-spec.md) | Pending |
 
 ## Dependencies

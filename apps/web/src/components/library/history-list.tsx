@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/format';
 import { useHistory, useRemoveFromHistory } from '@/lib/library';
 import { ResumeLink } from './continue-reading-button';
-import { LibraryStoryRow } from './library-item';
+import { LIBRARY_LIST_CLASS, LibraryStoryRow } from './library-item';
 
 /** The reading history, most recent first, with "load more" and removal of single entries. */
 export function HistoryList() {
@@ -30,9 +30,9 @@ export function HistoryList() {
   }
   return (
     <div className="flex flex-col gap-6">
-      <ul className="flex flex-col gap-6">
+      <ul className={LIBRARY_LIST_CLASS}>
         {items.map((item) => (
-          <li key={item.story.publicId}>
+          <li key={item.story.publicId} className="py-4">
             <LibraryStoryRow story={item.story}>
               <ResumeLink
                 story={item.story}

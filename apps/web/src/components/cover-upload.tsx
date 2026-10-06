@@ -50,7 +50,7 @@ export function CoverUpload({ story, authorName }: { story: AuthorStoryView; aut
 
   return (
     <section aria-labelledby={`${id}-title`} className="flex flex-col gap-4">
-      <h2 id={`${id}-title`} className="font-serif text-xl font-semibold">
+      <h2 id={`${id}-title`} className="text-xl leading-tight font-extrabold tracking-tight">
         {m.cover_title()}
       </h2>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
@@ -59,7 +59,7 @@ export function CoverUpload({ story, authorName }: { story: AuthorStoryView; aut
             <img
               src={preview}
               alt={m.cover_preview_alt()}
-              className="aspect-[2/3] w-full rounded-md bg-muted object-cover"
+              className="aspect-[2/3] w-full rounded-md bg-secondary object-cover"
             />
           ) : (
             <StoryCover
@@ -75,7 +75,7 @@ export function CoverUpload({ story, authorName }: { story: AuthorStoryView; aut
           ) : null}
         </div>
         <div className="flex flex-col gap-3">
-          <label htmlFor={`${id}-file`} className="text-sm font-medium">
+          <label htmlFor={`${id}-file`} className="text-sm font-bold">
             {m.cover_choose()}
           </label>
           <input
@@ -84,7 +84,7 @@ export function CoverUpload({ story, authorName }: { story: AuthorStoryView; aut
             type="file"
             accept={COVER_MIME_TYPES.join(',')}
             aria-describedby={`${id}-hint`}
-            className="text-sm file:mr-3 file:rounded-md file:border file:border-input file:bg-transparent file:px-3 file:py-1.5 file:text-sm"
+            className="text-sm file:mr-3 file:h-9 file:rounded-full file:border-[1.5px] file:border-foreground file:bg-transparent file:px-4 file:text-sm file:font-bold"
             onChange={(e) => {
               const picked = e.currentTarget.files?.[0] ?? null;
               upload.reset();

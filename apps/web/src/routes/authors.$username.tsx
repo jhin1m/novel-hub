@@ -1,12 +1,16 @@
 import { canonicalPath, usernameParamSchema } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { createFileRoute } from '@tanstack/react-router';
+import { BookOpenIcon } from 'lucide-react';
 import { NotFoundPage } from '../components/not-found';
+import { PageShell, PageTitle } from '../components/page-shell';
 import { ReportButton } from '../components/report/report-button';
+import { SectionHeading } from '../components/section-heading';
 import { SiteLayout } from '../components/site-layout';
 import { StoryGrid } from '../components/story/story-grid';
 import { publicPageHeaders } from '../lib/cache-headers';
 import { assertCanonical, requestLocation } from '../lib/canonical';
+import { formatInitial } from '../lib/format';
 import { seo, siteConfig } from '../lib/seo';
 import { throwNotFound } from '../lib/route-signals';
 import { useMatureAwareList } from '../lib/use-mature-aware-list';
@@ -52,30 +56,39 @@ function AuthorPage() {
   );
   return (
     <SiteLayout>
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10">
-        <header className="flex max-w-2xl flex-col gap-3">
-          <h1 className="font-serif text-3xl font-semibold">{author.displayName}</h1>
-          {author.bio ? (
-            <p className="leading-relaxed whitespace-pre-line text-muted-foreground">
-              {author.bio}
-            </p>
-          ) : null}
-          <ReportButton
-            target={{ type: 'user', username: author.username }}
-            className="self-start"
-          />
+      <PageShell className="gap-10">
+        <header className="flex max-w-[720px] items-start gap-4">
+          <span
+            aria-hidden="true"
+            className="flex size-16 shrink-0 items-center justify-center rounded-full bg-primary-soft text-2xl font-extrabold text-primary"
+          >
+            {formatInitial(author.displayName)}
+          </span>
+          <div className="flex min-w-0 flex-col gap-2">
+            <div>
+              <PageTitle>{author.displayName}</PageTitle>
+              <p className="text-sm text-muted-foreground">@{author.username}</p>
+            </div>
+            {author.bio ? (
+              <p className="leading-relaxed whitespace-pre-line text-muted-foreground">
+                {author.bio}
+              </p>
+            ) : null}
+            <ReportButton
+              target={{ type: 'user', username: author.username }}
+              className="self-start"
+            />
+          </div>
         </header>
-        <section aria-labelledby="author-stories" className="flex flex-col gap-4">
-          <h2 id="author-stories" className="font-serif text-xl font-semibold">
-            {m.author_page_stories()}
-          </h2>
+        <section aria-labelledby="author-stories" className="flex flex-col gap-5">
+          <SectionHeading id="author-stories" icon={BookOpenIcon} title={m.author_page_stories()} />
           {list.stories.length > 0 ? (
             <StoryGrid stories={list.stories} priorityCount={6} />
           ) : (
             <p className="text-muted-foreground">{m.author_page_empty()}</p>
           )}
         </section>
-      </div>
+      </PageShell>
     </SiteLayout>
   );
 }

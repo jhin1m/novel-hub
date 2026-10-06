@@ -2,10 +2,12 @@ import { canonicalPageParam, canonicalPath, tagSlugSchema } from '@novel-hub/sha
 import { m } from '@novel-hub/shared/messages';
 import { createFileRoute } from '@tanstack/react-router';
 import { NotFoundPage } from '../components/not-found';
+import { PageShell, PageTitle } from '../components/page-shell';
 import { SiteLayout } from '../components/site-layout';
 import { Pagination } from '../components/story/pagination';
 import { TAG_KIND_LABELS } from '../components/story/story-labels';
 import { StoryGrid } from '../components/story/story-grid';
+import { Badge } from '../components/ui/badge';
 import { publicPageHeaders } from '../lib/cache-headers';
 import { assertCanonical, requestLocation } from '../lib/canonical';
 import { seo, siteConfig } from '../lib/seo';
@@ -62,10 +64,10 @@ function TagPage() {
   );
   return (
     <SiteLayout>
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10">
-        <header className="flex flex-col gap-1">
-          <p className="text-sm text-muted-foreground">{TAG_KIND_LABELS[tag.kind]()}</p>
-          <h1 className="font-serif text-3xl font-semibold">{tag.name}</h1>
+      <PageShell className="gap-8">
+        <header className="flex flex-col items-start gap-2">
+          <Badge>{TAG_KIND_LABELS[tag.kind]()}</Badge>
+          <PageTitle>{tag.name}</PageTitle>
         </header>
         {list.stories.length > 0 ? (
           <StoryGrid stories={list.stories} priorityCount={6} />
@@ -78,7 +80,7 @@ function TagPage() {
           totalPages={Math.max(list.totalPages, list.page)}
           href={(page) => canonicalPath({ kind: 'tag', slug: tag.slug, page })}
         />
-      </div>
+      </PageShell>
     </SiteLayout>
   );
 }

@@ -1,1 +1,0 @@
-- [Verify research claims](feedback-verify-research-claims.md) — controller [auto] decisions override research; re-grep scout line numbers before citing

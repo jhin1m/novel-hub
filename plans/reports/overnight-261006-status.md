@@ -32,12 +32,13 @@ Cập nhật: 2026-10-06 07:34
 - Q5 p06: vạch tiến độ dùng cùng cách đo tiến độ đọc (chương ngắn mở ra đã ~50%); xoá reader_by_author, reader_author_note
 - Q5 p07: 1024–1279px cột chữ co lại khi panel mở (chọn Vừa/Rộng chỉ thấy khác sau khi đóng); tab chọn thêm viền + cao 40px; viền ô màu 'Sáng' mờ chưa sửa (quyết định thiết kế)
 - Q5 p08: giữ dải số liệu ở /write; nhãn 'Tổng quan truyện của bạn' đặt trên dl như plan
+- Fix test chập chờn: không sửa registerPublishingSchedulers (chạy job ngay khi đăng ký là đúng ở production)
 
 ## Chặn / lỗi
 - Q3 (nhẹ): 'ck plan add-phase --after' lỗi afterId.toLowerCase; worker đổi tên phase bằng tay, 'ck plan validate' xác nhận
 - Thư mục .claude/ (settings.local.json, agent-memory của code-reviewer) do subagent tạo ở gốc repo, chưa track; controller không commit, sáng xem rồi xoá hoặc gitignore
 - Q5 p05 (controller): lần đầu đóng worker khi nó còn chạy e2e nền (chưa in RESULT) → e2e mồ côi cổng 3100 chạy chồng gate, test int publishing-worker đỏ. Đã kill tiến trình mồ côi, sửa controller chỉ đóng worker khi có RESULT, cook lại phase 5 trên working tree; không tính là lần sửa gate
-- Test chập chờn apps/worker/src/publishing-worker.int.test.ts (chạy riêng 1/3 đỏ); câu hỏi mở: sửa bằng chờ đúng job id? Chưa sửa vì ngoài phạm vi redesign
+- (đã sửa) Test chập chờn publishing-worker.int.test.ts
 
 ## Lệnh tiếp theo cho user
 - (đang chạy)

@@ -20,7 +20,7 @@ export function WriterGate({ children }: { children: ReactNode }) {
   if (me.isError && me.data === undefined) return <FormMessage>{m.error_generic()}</FormMessage>;
   if (!me.data) {
     return (
-      <div className="flex flex-col items-start gap-3">
+      <div className="flex flex-col items-start gap-4 rounded-3xl border border-border bg-card p-6 md:p-8">
         <p>{m.writer_sign_in_required()}</p>
         <Button asChild>
           <Link to="/sign-in">{m.writer_sign_in()}</Link>
@@ -47,7 +47,7 @@ function VerifyEmailNotice() {
   });
 
   return (
-    <div className="flex flex-col items-start gap-3">
+    <div className="flex flex-col items-start gap-4 rounded-[20px] bg-warning-soft p-6 text-warning-foreground md:p-8">
       <p>{m.writer_verify_required()}</p>
       {resend.isSuccess ? (
         <FormMessage tone="info">{m.writer_verification_sent()}</FormMessage>
@@ -55,6 +55,7 @@ function VerifyEmailNotice() {
         <Button
           type="button"
           variant="outline"
+          className="border-current hover:bg-warning-foreground/10"
           disabled={resend.isPending}
           onClick={() => resend.mutate()}
         >

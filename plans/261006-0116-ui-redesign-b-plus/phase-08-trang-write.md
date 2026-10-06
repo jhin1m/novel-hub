@@ -1,7 +1,7 @@
 ---
 phase: 8
 title: "Trang write"
-status: pending
+status: completed
 priority: P1
 effort: "0.5d"
 dependencies: [7]
@@ -69,9 +69,9 @@ Không unit test riêng cho phép cộng (3 phép cộng inline, e2e trên kiể
 
 ## Function/interface checklist
 
-- [ ] `WriterStats({ stories }: { stories: readonly { chapterCount: number; wordCount: number }[] })` (trong route)
-- [ ] `MyStoryCard({ story, authorName })` (story: `AuthorStoryView` từ `@novel-hub/core`, như route hiện tại)
-- [ ] `WriterEmptyState()` (trong route)
+- [x] `WriterStats({ stories }: { stories: readonly { chapterCount: number; wordCount: number }[] })` (trong route)
+- [x] `MyStoryCard({ story, authorName })` (story: `AuthorStoryView` từ `@novel-hub/core`, như route hiện tại)
+- [x] `WriterEmptyState()` (trong route)
 
 ## Dependency map
 
@@ -104,11 +104,11 @@ Link "Truyện của tôi" (trang sửa truyện), link "Tạo truyện mới" (
 
 ## Success Criteria
 
-- [ ] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
-- [ ] Không đổi `lib/stories.ts`, `packages/*` (trừ `messages/vi.json`)
-- [ ] User chưa có truyện: DOM chỉ có một link "Tạo truyện mới"
-- [ ] `rg -n 'font-serif|\bSTATUS_LABELS\b' apps/web/src/routes/write/index.tsx apps/web/src/components/write` rỗng (chỉ còn `STORY_STATUS_LABELS`)
-- [ ] Mọi file ≤ 200 dòng
+- [x] Gate `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm test:int && pnpm test:e2e` xanh
+- [x] Không đổi `lib/stories.ts`, `packages/*` (trừ `messages/vi.json`)
+- [x] User chưa có truyện: DOM chỉ có một link "Tạo truyện mới"
+- [x] `rg -n 'font-serif|\bSTATUS_LABELS\b' apps/web/src/routes/write/index.tsx apps/web/src/components/write` rỗng (chỉ còn `STORY_STATUS_LABELS`)
+- [x] Mọi file ≤ 200 dòng
 
 ## Risk Assessment
 
@@ -125,3 +125,11 @@ Link "Truyện của tôi" (trang sửa truyện), link "Tạo truyện mới" (
 ## Ngoài phạm vi phase
 
 Không vẽ lại `/write/stories/new`, `/write/stories/$publicId` (phase 11 chỉ áp token); không dashboard số liệu; không lọc trạng thái; không API số chương nháp; không xoá `STATUS_LABELS` ở `story-form.tsx` (phase 11).
+
+## Kết quả cook (2026-10-06)
+
+- Gate xanh: typecheck, lint, format:check, test (672), test:int (302; `publishing-worker.int.test.ts` fail 1 lần do timing, chạy lại xanh, không liên quan UI), test:e2e (90).
+- [auto] `aria-label` giữ trên `dl` như plan (review gợi ý chuyển sang `section`): theo plan đã chốt, e2e dùng `getByLabel`; để phase 11/12 cân nhắc nếu cần.
+- [auto] Số liệu mobile `text-xl` (desktop 28px) để "345,7 nghìn" ít xuống dòng ở 360px; link thẻ `outline-hidden` để giữ focus ở chế độ tương phản cao (review low).
+- [auto] Khối gate sát mép màn trong editor chương (`chapters/$number.tsx` không có container): để phase 10 (giao diện editor) xử lý, ngoài phạm vi phase này.
+- [auto] Thẻ dùng `h2` bọc link tên truyện (ngữ nghĩa danh sách dưới h1); khối rỗng là `--card` bo 24 có viền.

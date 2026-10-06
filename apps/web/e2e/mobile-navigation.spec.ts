@@ -2,6 +2,7 @@ import { canonicalPath } from '@novel-hub/shared';
 import { type Locator, type Page, expect, test } from '@playwright/test';
 import { gotoHydrated, signUpVerified } from './helpers/accounts';
 import { type PublishedStory, createPublishedStory } from './helpers/content';
+import { createStory } from './helpers/stories';
 
 const MAIN_NAV = { name: 'Điều hướng chính' } as const;
 const TABS = ['Trang chủ', 'Khám phá', 'Tủ truyện', 'Viết', 'Tôi'];
@@ -80,6 +81,25 @@ test.describe('mobile tab bar at 360px', () => {
       'page',
     );
     expect(await page.evaluate(() => (window as unknown as { __nav?: number }).__nav)).toBe(1);
+  });
+
+  test('the writing page: "Viết" is current, the totals show, no horizontal scroll', async ({
+    page,
+  }) => {
+    await signUpVerified(page);
+    const title = `Truyện Của Tôi ${Date.now().toString(36)}`;
+    await createStory(page, title);
+    await gotoHydrated(page, '/write');
+    await expect(
+      page.getByRole('navigation', MAIN_NAV).getByRole('link', { name: 'Viết' }),
+    ).toHaveAttribute('aria-current', 'page');
+
+    const stats = page.getByLabel('Tổng quan truyện của bạn');
+    await expect(stats.locator('dt').first()).toHaveText('truyện');
+    await expect(stats.locator('dd').first()).toHaveText('1');
+    await expect(page.getByRole('listitem').filter({ hasText: title })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Tạo truyện mới' })).toHaveCount(1);
+    await expectNoHorizontalScroll(page);
   });
 
   test('the story page has no tab bar, no horizontal scroll and one sticky reading link', async ({

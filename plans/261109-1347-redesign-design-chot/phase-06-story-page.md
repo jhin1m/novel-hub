@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "Trang truyện"
-status: pending
+status: done
 priority: P1
 effort: "4h"
 dependencies: [3, 5]
@@ -9,7 +9,7 @@ dependencies: [3, 5]
 
 # Phase 6: Trang truyện
 
-**Status:** pending
+**Status:** done
 
 ## Bối cảnh chung
 

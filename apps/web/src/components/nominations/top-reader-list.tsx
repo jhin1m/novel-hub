@@ -11,7 +11,7 @@ export function TopReaderList({ readers }: { readers: TopReaderDto[] }) {
           <span className="sr-only">{m.ranking_rank({ rank: String(reader.rank) })}</span>
           <span
             aria-hidden="true"
-            className="w-7 shrink-0 text-center text-lg leading-none font-bold text-muted-foreground tabular-nums"
+            className="w-7 shrink-0 text-center text-xl leading-none font-bold text-primary tabular-nums"
           >
             {reader.rank}
           </span>

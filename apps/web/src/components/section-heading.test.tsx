@@ -18,6 +18,13 @@ describe('SectionHeading', () => {
     expect(html).toMatch(/<span aria-hidden="true"[^>]*><svg/);
   });
 
+  it('without an icon it has no tile and is the larger plain title', () => {
+    const html = renderToStaticMarkup(<SectionHeading id="a" title="Giới thiệu" />);
+    expect(html).not.toContain('aria-hidden');
+    expect(html).toMatch(/<h2 id="a"[^>]*md:text-\[26px\][^>]*>Giới thiệu<\/h2>/);
+    expect(html).toContain('leading-tight');
+  });
+
   it('switches the icon tile to the card surface on the band strip', () => {
     const plain = renderToStaticMarkup(<SectionHeading id="a" icon={BookOpen} title="A" />);
     const band = renderToStaticMarkup(<SectionHeading id="a" icon={BookOpen} title="A" onBand />);

@@ -80,17 +80,17 @@ export function StoryChapterListView({
         </a>
       ) : null}
       {visible.length > 0 ? (
-        <ol className="grid grid-cols-[repeat(auto-fill,minmax(min(300px,100%),1fr))] gap-1">
+        <ol className="grid grid-cols-[repeat(auto-fill,minmax(min(280px,100%),1fr))] gap-x-7">
           {visible.map((chapter) => {
             const current = chapter.number === currentNumber;
             return (
-              <li key={chapter.number}>
+              <li key={chapter.number} className="border-b border-band">
                 <a
                   id={`${CHAPTER_ID_PREFIX}${chapter.number}`}
                   href={href(chapter.number)}
                   className={cn(
-                    'flex min-w-0 items-baseline gap-2.5 rounded-xl px-3 py-2.5 outline-none hover:bg-secondary focus-visible:ring-[3px] focus-visible:ring-ring',
-                    current && 'bg-primary-soft hover:bg-primary-soft',
+                    'flex min-w-0 items-baseline gap-2.5 rounded-sm px-1 py-[13px] underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring',
+                    current && 'bg-primary-soft',
                   )}
                 >
                   <span className="shrink-0 text-sm text-muted-foreground tabular-nums">

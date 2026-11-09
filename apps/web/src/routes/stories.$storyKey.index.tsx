@@ -8,6 +8,7 @@ import { ReportButton } from '../components/report/report-button';
 import { NotFoundPage } from '../components/not-found';
 import { MatureGate, useMatureAllowed } from '../components/reader/mature-gate';
 import { StoryRatings } from '../components/ratings/story-ratings';
+import { SectionHeading } from '../components/section-heading';
 import { SiteLayout } from '../components/site-layout';
 import { StoryAuthorCard } from '../components/story/story-author-card';
 import { StoryChapterList } from '../components/story/story-chapter-list';
@@ -77,23 +78,22 @@ function StoryPage() {
             chaptersPerWeek={chaptersPerWeek}
             firstChapterNumber={first?.number ?? null}
           />
-          <div className="relative mx-auto -mt-7 flex max-w-[1240px] flex-wrap items-start gap-6 rounded-t-[28px] bg-background pt-4 px-safe-4 pb-12 md:-mt-14 md:rounded-none md:bg-transparent md:px-safe-8">
-            <article className="flex min-w-0 flex-[999_1_560px] flex-col gap-8 rounded-[18px] border border-border bg-card p-5 md:rounded-[28px] md:p-8">
+          {/* Above the hero, whose `isolate` makes it a stacking context of its own. */}
+          <div className="relative z-10 mx-auto -mt-7 flex max-w-[1240px] flex-wrap items-start gap-6 rounded-t-[28px] bg-background pt-4 px-safe-4 pb-12 md:-mt-16 md:rounded-none md:bg-transparent md:pt-0 md:px-safe-8 md:pb-[72px]">
+            <article className="flex min-w-0 flex-[999_1_560px] flex-col gap-8 rounded-[18px] border border-border bg-card p-5 md:gap-[38px] md:rounded-[28px] md:p-[clamp(22px,3.4vw,40px)]">
+              {story.synopsis ? (
+                <section aria-labelledby="synopsis-title" className="flex flex-col gap-2.5">
+                  <SectionHeading id="synopsis-title" title={m.story_page_synopsis()} />
+                  <StorySynopsis text={story.synopsis} />
+                </section>
+              ) : null}
+
               {announcement ? (
                 <StoryAnnouncement announcement={announcement}>
                   <ReportButton
                     target={{ type: 'announcement', announcementId: announcement.id }}
                   />
                 </StoryAnnouncement>
-              ) : null}
-
-              {story.synopsis ? (
-                <section aria-labelledby="synopsis-title" className="flex flex-col gap-3">
-                  <h2 id="synopsis-title" className="text-xl font-extrabold tracking-tight">
-                    {m.story_page_synopsis()}
-                  </h2>
-                  <StorySynopsis text={story.synopsis} />
-                </section>
               ) : null}
 
               {tagGroups.length > 0 ? (
@@ -113,11 +113,9 @@ function StoryPage() {
                 </dl>
               ) : null}
 
-              <section aria-labelledby="toc-title" className="flex flex-col gap-4">
+              <section aria-labelledby="toc-title" className="flex flex-col gap-3">
                 <div className="flex items-baseline justify-between gap-3">
-                  <h2 id="toc-title" className="text-xl font-extrabold tracking-tight">
-                    {m.story_page_toc()}
-                  </h2>
+                  <SectionHeading id="toc-title" title={m.story_page_toc()} />
                   {chapters.length > 0 ? (
                     <p className="text-sm text-muted-foreground">
                       {m.story_page_toc_count({ count: String(chapters.length) })}
@@ -141,11 +139,7 @@ function StoryPage() {
             </article>
             <aside className="flex min-w-0 flex-[1_1_300px] flex-col gap-6">
               <StoryAuthorCard author={story.author} />
-              <RelatedStories
-                publicId={story.publicId}
-                mainTagName={story.mainTag.name}
-                enabled={!gated}
-              />
+              <RelatedStories publicId={story.publicId} enabled={!gated} />
               <TopReaders publicId={story.publicId} isMature={story.isMature} />
               <ReportButton
                 target={{ type: 'story', storyPublicId: story.publicId }}

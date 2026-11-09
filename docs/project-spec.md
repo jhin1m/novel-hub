@@ -225,7 +225,7 @@ Nguồn: `plans/reports/brief-261109-1347-redesign-design-chot-report.md`.
 - [x] Hero trang chủ và thanh Đọc tiếp của thành viên
 - [x] Bốn ô thể loại
 - [x] Kệ truyện, xếp hạng, khối mời viết
-- [ ] Trang truyện
+- [x] Trang truyện
 - [ ] Cập nhật docs
 - [ ] Báo cáo so ảnh 1440px/390px sáng tối
 - [ ] Thanh Đọc tiếp cho khách

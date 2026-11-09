@@ -370,6 +370,7 @@
   "story_card_ai": "Có dùng AI",
   "story_card_mature": "18+",
   "story_page_title": "{title} – {author}",
+  "story_hero_by": "của {name}",
   "author_page_description": "Truyện chữ sáng tác gốc của {name}.",
   "story_page_start": "Đọc từ đầu",
   "story_page_synopsis": "Giới thiệu",
@@ -923,7 +924,5 @@
   "top_readers_empty": "Chưa có độc giả nào đủ điều kiện.",
   "top_readers_loading": "Đang tải…",
   "top_readers_error": "Không tải được danh sách.",
-  "related_heading": "Truyện liên quan",
-  "related_same_author": "Cùng tác giả",
-  "related_same_tag": "Cùng thể loại {tag}"
+  "related_heading": "Truyện liên quan"
 }

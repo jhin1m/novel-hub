@@ -207,6 +207,40 @@ test.describe('safe areas', () => {
   });
 });
 
+test('a 150-character title wraps between words and never widens a phone page', async ({
+  page,
+}) => {
+  const title = `Người Kể Chuyện Trong Căn Nhà Cũ Bên Bờ Sông ${Date.now().toString(36)} `
+    .repeat(4)
+    .slice(0, 150)
+    .trim();
+  const long = await createPublishedStory({ title });
+  const path = canonicalPath({ kind: 'story', slug: long.slug, publicId: long.publicId });
+
+  for (const width of [360, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    await gotoHydrated(page, path);
+    const heading = page.locator('#story-title');
+    await expect(heading).toHaveText(title);
+    const brokenWords = await heading.evaluate((el) => {
+      const node = el.firstChild as Text;
+      const range = document.createRange();
+      let offset = 0;
+      return node.data.split(' ').filter((word) => {
+        range.setStart(node, offset);
+        range.setEnd(node, offset + word.length);
+        offset += word.length + 1;
+        return range.getClientRects().length > 1;
+      });
+    });
+    expect(brokenWords).toEqual([]);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBe(0);
+  }
+});
+
 test('the moderation queue is a 960px column', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   const mod = await signUp(page);

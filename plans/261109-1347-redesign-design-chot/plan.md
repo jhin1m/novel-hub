@@ -36,7 +36,7 @@ Nghiên cứu: `research/researcher-01-font-and-blur-hero-report.md`, `research/
 | 3 | [Hero trang chủ và thanh Đọc tiếp của thành viên](./phase-03-home-hero-and-member-continue-bar.md) | mục 2 | Done |
 | 4 | [Bốn ô thể loại](./phase-04-home-genre-tiles.md) | mục 4 | Done |
 | 5 | [Kệ truyện, xếp hạng, khối mời viết](./phase-05-home-shelves-rankings-and-write-band.md) | mục 5 | Done |
-| 6 | [Trang truyện](./phase-06-story-page.md) | mục 3 | Pending |
+| 6 | [Trang truyện](./phase-06-story-page.md) | mục 3 | Done |
 | 7 | [Cập nhật docs](./phase-07-update-docs.md) | mục 9 | Pending |
 | 8 | [Báo cáo so ảnh 1440px/390px sáng tối](./phase-08-visual-comparison-report.md) | "Xong khi" | Pending |
 | 9 | [Thanh Đọc tiếp cho khách](./phase-09-guest-continue-reading-bar.md) (phase cuối) | mục 8 | Pending |

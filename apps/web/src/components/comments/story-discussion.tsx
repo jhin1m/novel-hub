@@ -1,5 +1,4 @@
 import { m } from '@novel-hub/shared/messages';
-import { MessagesSquareIcon } from 'lucide-react';
 import { useId, useRef } from 'react';
 import { type CommentScope, useStoryDiscussion } from '@/lib/comments';
 import { useMe } from '@/lib/me';
@@ -34,7 +33,6 @@ export function StoryDiscussion({ publicId, enabled }: { publicId: string; enabl
     >
       <SectionHeading
         id={`${id}-heading`}
-        icon={MessagesSquareIcon}
         title={
           total == null ? m.discussion_heading() : m.discussion_heading_count({ count: total })
         }

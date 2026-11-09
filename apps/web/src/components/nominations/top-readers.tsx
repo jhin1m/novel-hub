@@ -1,11 +1,9 @@
 import { m } from '@novel-hub/shared/messages';
-import { UsersIcon } from 'lucide-react';
 import { useId, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useMe } from '@/lib/me';
 import { useTopReaders } from '@/lib/nominations';
 import { useNearViewport } from '@/lib/use-near-viewport';
-import { SectionHeading } from '../section-heading';
 import { TopReaderList } from './top-reader-list';
 
 /**
@@ -22,13 +20,17 @@ export function TopReaders({ publicId, isMature }: { publicId: string; isMature:
   if (isMature) return null;
 
   return (
-    <section ref={ref} aria-labelledby={`${id}-heading`} className="flex flex-col gap-3">
-      <SectionHeading
-        id={`${id}-heading`}
-        icon={UsersIcon}
-        title={m.top_readers_title()}
-        subtitle={m.top_readers_hint()}
-      />
+    <section
+      ref={ref}
+      aria-labelledby={`${id}-heading`}
+      className="flex flex-col gap-2 rounded-[24px] border border-border bg-card p-5"
+    >
+      <div>
+        <h2 id={`${id}-heading`} className="text-[22px] leading-tight font-bold tracking-tight">
+          {m.top_readers_title()}
+        </h2>
+        <p className="mt-0.5 text-[13px] text-muted-foreground">{m.top_readers_hint()}</p>
+      </div>
       {!near ? null : readers.isPending ? (
         <p role="status" className="text-sm text-muted-foreground">
           {m.top_readers_loading()}

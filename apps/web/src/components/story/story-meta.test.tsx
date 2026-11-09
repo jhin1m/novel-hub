@@ -9,8 +9,8 @@ describe('StoryMeta', () => {
     const html = renderToStaticMarkup(
       <StoryMeta {...base} chaptersPerWeek={1.5} lastChapterAt="2026-10-04T18:30:00Z" />,
     );
-    expect(html).toContain('<dt class="text-xs font-semibold">chương</dt>');
-    expect(html).toMatch(/<dd[^>]*>12<\/dd>/);
+    expect(html).toMatch(/<dt[^>]*>chương<\/dt><dd[^>]*>12<\/dd>/);
+    expect(html).not.toContain('divide-x');
     expect(html).toMatch(/<dd[^>]*>12,3 nghìn<\/dd>/);
     expect(html).toMatch(/<dd[^>]*>~1,5\/tuần<\/dd>/);
     // Vietnam time: already the next day.

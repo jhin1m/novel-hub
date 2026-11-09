@@ -104,11 +104,10 @@ test.describe('story page sections', () => {
     await page.keyboard.press('End');
     const related = page.getByRole('region', { name: 'Truyện liên quan' });
     await expect(related).toBeVisible();
-    const byAuthor = related.getByRole('region', { name: 'Cùng tác giả' });
-    await expect(byAuthor.getByRole('link', { name: sibling.title })).toBeVisible();
-    await expect(byAuthor.getByText(origin.title)).toHaveCount(0);
-    const byTag = related.getByRole('region', { name: 'Cùng thể loại Tiên hiệp' });
-    await expect(byTag.getByRole('link', { name: sameTag.title })).toBeVisible();
+    await expect(related.getByRole('link', { name: sameTag.title })).toBeVisible();
+    await expect(related.getByRole('link').first()).toHaveText(sibling.title);
+    await expect(related.getByText(origin.title)).toHaveCount(0);
+    await expect(related.getByRole('region')).toHaveCount(0);
     await expect(related.getByText(matureSibling.title)).toHaveCount(0);
     await expect(related.getByText(thin.title)).toHaveCount(0);
   });
@@ -123,9 +122,17 @@ test.describe('story page sections', () => {
     await seedAnnouncement(story.publicId, `Thông báo cũ ${run}`, 60);
     await seedAnnouncement(story.publicId, latest, 5);
 
+    await query('update stories set synopsis = $2 where public_id = $1', [
+      story.publicId,
+      `Giới thiệu ${run}`,
+    ]);
+
     const html = await (await page.request.get(storyPath(story))).text();
     expect(html).toContain(latest);
     expect(html).not.toContain(`Thông báo cũ ${run}`);
+    expect(html.indexOf('id="synopsis-title"')).toBeGreaterThan(-1);
+    expect(html.indexOf('id="synopsis-title"')).toBeLessThan(html.indexOf('id="announcements"'));
+    expect(html.indexOf('id="announcements"')).toBeLessThan(html.indexOf('id="toc-title"'));
 
     await signUp(page);
     await gotoHydrated(page, storyPath(story));

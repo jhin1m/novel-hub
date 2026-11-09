@@ -1,5 +1,4 @@
 import { m } from '@novel-hub/shared/messages';
-import { StarIcon } from 'lucide-react';
 import { useId, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useMe } from '@/lib/me';
@@ -35,7 +34,7 @@ export function StoryRatings({
 
   return (
     <section ref={ref} aria-labelledby={`${id}-heading`} className="flex flex-col gap-5">
-      <SectionHeading id={`${id}-heading`} icon={StarIcon} title={m.rating_heading()} />
+      <SectionHeading id={`${id}-heading`} title={m.rating_heading()} />
       {!near ? null : ratings.isPending ? (
         <p role="status" className="text-sm text-muted-foreground">
           {m.rating_loading()}

@@ -19,11 +19,13 @@ export function NominateButton({
   publicId,
   ownerUsername,
   tone = 'default',
+  className,
 }: {
   publicId: string;
   /** Username of the story's author, who cannot nominate it. */
   ownerUsername: string;
   tone?: 'default' | 'on-cover';
+  className?: string;
 }) {
   const me = useMe();
   const signedIn = !!me.data;
@@ -37,7 +39,7 @@ export function NominateButton({
     status: status.data,
     statusNotFound: status.error instanceof ApiError && status.error.code === 'NOT_FOUND',
   });
-  const buttonClass = cn(tone === 'on-cover' && ON_COVER_OUTLINE);
+  const buttonClass = cn(tone === 'on-cover' && ON_COVER_OUTLINE, className);
   const noteClass = cn('text-sm font-semibold', tone === 'default' && 'text-muted-foreground');
 
   switch (view.kind) {

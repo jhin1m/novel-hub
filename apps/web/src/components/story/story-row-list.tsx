@@ -12,7 +12,7 @@ export function StoryRowList({
   /** Covers on the first screen load eagerly. */
   priorityCount?: number;
   /**
-   * Below `md`, only the first 12 rows show. Hidden with CSS, so the HTML is the same on every
+   * Below `md`, only the first 6 rows show. Hidden with CSS, so the HTML is the same on every
    * device (one cached page); Tailwind needs the class written out.
    */
   compactOnMobile?: boolean;
@@ -21,7 +21,7 @@ export function StoryRowList({
     <ul
       className={cn(
         'grid grid-cols-[repeat(auto-fill,minmax(min(330px,100%),1fr))] gap-1 rounded-[22px] border border-border bg-card p-2',
-        compactOnMobile && 'max-md:[&>li:nth-child(n+13)]:hidden',
+        compactOnMobile && 'max-md:[&>li:nth-child(n+7)]:hidden',
       )}
     >
       {stories.map((story, index) => (

@@ -1,3 +1,4 @@
+import { CONTESTS_ENABLED } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { AnnouncementManager } from '../../../../components/announcements/announcement-manager';
@@ -71,7 +72,7 @@ function EditStory() {
         </div>
         {/* Empty when no contest is open: hidden, so it takes no row and no gap. */}
         <div className="empty:hidden lg:col-span-2">
-          <ContestEntryPanel publicId={story.data.publicId} />
+          {CONTESTS_ENABLED && <ContestEntryPanel publicId={story.data.publicId} />}
         </div>
         {/* The cover card's row layout needs more than 340px, so it stacks there. */}
         <div

@@ -1,3 +1,4 @@
+export { CONTESTS_ENABLED } from './features';
 export { foldVietnamese, slugify } from './slug';
 export {
   PUBLIC_ID_ALPHABET,

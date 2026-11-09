@@ -81,6 +81,8 @@ Trang công khai được Cloudflare cache: sau khi ẩn hoặc khoá, worker pu
 
 ## Cuộc thi theo chủ đề
 
+> **Đang tắt tạm** vì chưa có cộng đồng: không có link, không có khối trên trang chủ, `/contests` trả 404, không có tab trong `/moderation`, không có khung tham gia ở trang quản lý truyện. Bật lại: đặt `CONTESTS_ENABLED = true` trong `packages/shared/src/features.ts`. Dữ liệu và code giữ nguyên.
+
 - Tab "Cuộc thi" trong `/moderation`: nhập tên (2–150 ký tự), chủ đề và thể lệ (văn bản thuần ≤ 5.000 ký tự, giữ xuống dòng, không HTML), thời gian bắt đầu/kết thúc theo giờ Việt Nam (mặc định từ bây giờ, 30 ngày; tối đa 180 ngày), bấm "Tạo cuộc thi". URL `/contests/{slug}` sinh từ tên (trùng thì thêm `-2`, `-3`) và **không đổi** khi sửa tên.
 - Trạng thái suy ra từ thời gian: sắp diễn ra, đang diễn ra (nhận bài), đã kết thúc. Muốn kết thúc sớm: sửa giờ kết thúc. Khi đã có bài dự thi thì không đổi được giờ bắt đầu (điều kiện dự thi dựa vào nó).
 - Tác giả tự đưa truyện vào hoặc rút ra ở trang quản lý truyện, chỉ khi cuộc thi đang diễn ra. Truyện hợp lệ: của chính tác giả, công khai và có chương đã đăng, không 18+, tạo sau giờ bắt đầu cuộc thi.

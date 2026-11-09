@@ -15,7 +15,8 @@ export function RankingList({
   priority?: boolean;
 }) {
   return (
-    <ol className="grid gap-1 rounded-[22px] border border-border bg-card p-2 lg:grid-cols-2">
+    // `grid-cols-1` caps the column at the page width, so a long row truncates instead of widening it.
+    <ol className="grid grid-cols-1 gap-1 rounded-[22px] border border-border bg-card p-2 lg:grid-cols-2">
       {stories.map((story, index) => (
         <li key={story.publicId} className="flex items-center gap-1">
           <span className="sr-only">{m.ranking_rank({ rank: String(index + 1) })}</span>

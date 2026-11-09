@@ -1,4 +1,9 @@
-import { canonicalPageParam, canonicalPath, contestSlugSchema } from '@novel-hub/shared';
+import {
+  CONTESTS_ENABLED,
+  canonicalPageParam,
+  canonicalPath,
+  contestSlugSchema,
+} from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { createFileRoute } from '@tanstack/react-router';
 import { textLinkClass } from '../components/auth-ui';
@@ -21,6 +26,7 @@ export const Route = createFileRoute('/contests/$slug')({
   // router reload the data when it changes.
   loaderDeps: ({ search }) => ({ page: (search as { page?: unknown }).page }),
   loader: async ({ params, location }) => {
+    if (!CONTESTS_ENABLED) throwNotFound();
     const request = requestLocation(location);
     const slug = contestSlugSchema.safeParse(params.slug.toLowerCase());
     if (!slug.success) throwNotFound();

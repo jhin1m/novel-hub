@@ -1,5 +1,5 @@
 import { createTestDb } from '@novel-hub/db/testing';
-import { slugify } from '@novel-hub/shared';
+import { CONTESTS_ENABLED, slugify } from '@novel-hub/shared';
 import { expect, test } from '@playwright/test';
 import { gotoHydrated, signUp, signUpVerified } from './helpers/accounts';
 import { chapterText } from './helpers/content';
@@ -21,6 +21,7 @@ test('a moderator runs a contest: an author enters a new story, the moderator aw
   page,
   browser,
 }) => {
+  test.skip(!CONTESTS_ENABLED, 'Contests are switched off');
   const contestTitle = `Mùa Thu ${run}`;
   const slug = slugify(contestTitle);
 
@@ -95,4 +96,15 @@ test('a moderator runs a contest: an author enters a new story, the moderator aw
   await expect(
     page.getByRole('contentinfo').getByRole('link', { name: 'Cuộc thi', exact: true }),
   ).toHaveAttribute('href', '/contests');
+});
+
+test('contests switched off: the page is a 404 and the footer has no link', async ({ page }) => {
+  test.skip(CONTESTS_ENABLED, 'Contests are switched on');
+  const res = await page.goto('/contests');
+  expect(res?.status()).toBe(404);
+
+  await page.goto('/');
+  const footer = page.getByRole('contentinfo');
+  await expect(footer).toBeVisible();
+  await expect(footer.getByRole('link', { name: 'Cuộc thi', exact: true })).toHaveCount(0);
 });

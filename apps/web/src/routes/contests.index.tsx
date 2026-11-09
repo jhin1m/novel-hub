@@ -1,4 +1,4 @@
-import { canonicalPath } from '@novel-hub/shared';
+import { CONTESTS_ENABLED, canonicalPath } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { createFileRoute } from '@tanstack/react-router';
 import { ContestList } from '../components/contests/contest-list';
@@ -7,11 +7,13 @@ import { PageShell, PageTitle } from '../components/page-shell';
 import { SiteLayout } from '../components/site-layout';
 import { publicPageHeaders } from '../lib/cache-headers';
 import { assertCanonical, requestLocation } from '../lib/canonical';
+import { throwNotFound } from '../lib/route-signals';
 import { seo, siteConfig } from '../lib/seo';
 import { getContestsPage } from '../server-fns/contests';
 
 export const Route = createFileRoute('/contests/')({
   loader: async ({ location }) => {
+    if (!CONTESTS_ENABLED) throwNotFound();
     assertCanonical(requestLocation(location), canonicalPath({ kind: 'contests' }));
     return getContestsPage();
   },

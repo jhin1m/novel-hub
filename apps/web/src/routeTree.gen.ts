@@ -15,6 +15,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LibraryRouteImport } from './routes/library'
 import { Route as ModerationRouteImport } from './routes/moderation'
 import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SearchRouteImport } from './routes/search'
@@ -29,6 +30,7 @@ import { Route as ContestsIndexRouteImport } from './routes/contests.index'
 import { Route as ContestsSlugRouteImport } from './routes/contests.$slug'
 import { Route as RankingsIndexRouteImport } from './routes/rankings.index'
 import { Route as RankingsPeriodRouteImport } from './routes/rankings.$period'
+import { Route as RankingsNominationsRouteImport } from './routes/rankings.nominations'
 import { Route as SitemapPagesRouteImport } from './routes/sitemap/pages'
 import { Route as TagsTagSlugRouteImport } from './routes/tags.$tagSlug'
 import { Route as WriteIndexRouteImport } from './routes/write/index'
@@ -69,6 +71,11 @@ const ModerationRoute = ModerationRouteImport.update({
 const NotificationsRoute = NotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -141,6 +148,11 @@ const RankingsPeriodRoute = RankingsPeriodRouteImport.update({
   path: '/rankings/$period',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RankingsNominationsRoute = RankingsNominationsRouteImport.update({
+  id: '/rankings/nominations',
+  path: '/rankings/nominations',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapPagesRoute = SitemapPagesRouteImport.update({
   id: '/sitemap/pages',
   path: '/sitemap/pages',
@@ -208,6 +220,7 @@ export interface FileRoutesByFullPath {
   '/library': typeof LibraryRoute
   '/moderation': typeof ModerationRoute
   '/notifications': typeof NotificationsRoute
+  '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/search': typeof SearchRoute
@@ -220,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/authors/$username': typeof AuthorsUsernameRoute
   '/contests/$slug': typeof ContestsSlugRoute
   '/rankings/$period': typeof RankingsPeriodRoute
+  '/rankings/nominations': typeof RankingsNominationsRoute
   '/sitemap/pages': typeof SitemapPagesRoute
   '/tags/$tagSlug': typeof TagsTagSlugRoute
   '/contests/': typeof ContestsIndexRoute
@@ -241,6 +255,7 @@ export interface FileRoutesByTo {
   '/library': typeof LibraryRoute
   '/moderation': typeof ModerationRoute
   '/notifications': typeof NotificationsRoute
+  '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/search': typeof SearchRoute
@@ -253,6 +268,7 @@ export interface FileRoutesByTo {
   '/authors/$username': typeof AuthorsUsernameRoute
   '/contests/$slug': typeof ContestsSlugRoute
   '/rankings/$period': typeof RankingsPeriodRoute
+  '/rankings/nominations': typeof RankingsNominationsRoute
   '/sitemap/pages': typeof SitemapPagesRoute
   '/tags/$tagSlug': typeof TagsTagSlugRoute
   '/contests': typeof ContestsIndexRoute
@@ -275,6 +291,7 @@ export interface FileRoutesById {
   '/library': typeof LibraryRoute
   '/moderation': typeof ModerationRoute
   '/notifications': typeof NotificationsRoute
+  '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/search': typeof SearchRoute
@@ -287,6 +304,7 @@ export interface FileRoutesById {
   '/authors/$username': typeof AuthorsUsernameRoute
   '/contests/$slug': typeof ContestsSlugRoute
   '/rankings/$period': typeof RankingsPeriodRoute
+  '/rankings/nominations': typeof RankingsNominationsRoute
   '/sitemap/pages': typeof SitemapPagesRoute
   '/tags/$tagSlug': typeof TagsTagSlugRoute
   '/contests/': typeof ContestsIndexRoute
@@ -310,6 +328,7 @@ export interface FileRouteTypes {
     | '/library'
     | '/moderation'
     | '/notifications'
+    | '/privacy'
     | '/reset-password'
     | '/robots.txt'
     | '/search'
@@ -322,6 +341,7 @@ export interface FileRouteTypes {
     | '/authors/$username'
     | '/contests/$slug'
     | '/rankings/$period'
+    | '/rankings/nominations'
     | '/sitemap/pages'
     | '/tags/$tagSlug'
     | '/contests/'
@@ -343,6 +363,7 @@ export interface FileRouteTypes {
     | '/library'
     | '/moderation'
     | '/notifications'
+    | '/privacy'
     | '/reset-password'
     | '/robots.txt'
     | '/search'
@@ -355,6 +376,7 @@ export interface FileRouteTypes {
     | '/authors/$username'
     | '/contests/$slug'
     | '/rankings/$period'
+    | '/rankings/nominations'
     | '/sitemap/pages'
     | '/tags/$tagSlug'
     | '/contests'
@@ -376,6 +398,7 @@ export interface FileRouteTypes {
     | '/library'
     | '/moderation'
     | '/notifications'
+    | '/privacy'
     | '/reset-password'
     | '/robots.txt'
     | '/search'
@@ -388,6 +411,7 @@ export interface FileRouteTypes {
     | '/authors/$username'
     | '/contests/$slug'
     | '/rankings/$period'
+    | '/rankings/nominations'
     | '/sitemap/pages'
     | '/tags/$tagSlug'
     | '/contests/'
@@ -410,6 +434,7 @@ export interface RootRouteChildren {
   LibraryRoute: typeof LibraryRoute
   ModerationRoute: typeof ModerationRoute
   NotificationsRoute: typeof NotificationsRoute
+  PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SearchRoute: typeof SearchRoute
@@ -422,6 +447,7 @@ export interface RootRouteChildren {
   AuthorsUsernameRoute: typeof AuthorsUsernameRoute
   ContestsSlugRoute: typeof ContestsSlugRoute
   RankingsPeriodRoute: typeof RankingsPeriodRoute
+  RankingsNominationsRoute: typeof RankingsNominationsRoute
   SitemapPagesRoute: typeof SitemapPagesRoute
   TagsTagSlugRoute: typeof TagsTagSlugRoute
   ContestsIndexRoute: typeof ContestsIndexRoute
@@ -479,6 +505,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -579,6 +612,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RankingsPeriodRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/rankings/nominations': {
+      id: '/rankings/nominations'
+      path: '/rankings/nominations'
+      fullPath: '/rankings/nominations'
+      preLoaderRoute: typeof RankingsNominationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap/pages': {
       id: '/sitemap/pages'
       path: '/sitemap/pages'
@@ -666,6 +706,7 @@ const rootRouteChildren: RootRouteChildren = {
   LibraryRoute: LibraryRoute,
   ModerationRoute: ModerationRoute,
   NotificationsRoute: NotificationsRoute,
+  PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SearchRoute: SearchRoute,
@@ -678,6 +719,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthorsUsernameRoute: AuthorsUsernameRoute,
   ContestsSlugRoute: ContestsSlugRoute,
   RankingsPeriodRoute: RankingsPeriodRoute,
+  RankingsNominationsRoute: RankingsNominationsRoute,
   SitemapPagesRoute: SitemapPagesRoute,
   TagsTagSlugRoute: TagsTagSlugRoute,
   ContestsIndexRoute: ContestsIndexRoute,

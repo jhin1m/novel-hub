@@ -1,4 +1,4 @@
-import { canonicalPath } from '@novel-hub/shared';
+import { CONTESTS_ENABLED, canonicalPath } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 
 const FOOTER_LINK = 'rounded-sm underline-offset-4 hover:text-foreground hover:underline';
@@ -18,9 +18,11 @@ export function SiteFooter() {
           <a href={canonicalPath({ kind: 'ranking', period: 'week' })} className={FOOTER_LINK}>
             {m.ranking_nav()}
           </a>
-          <a href={canonicalPath({ kind: 'contests' })} className={FOOTER_LINK}>
-            {m.contest_nav()}
-          </a>
+          {CONTESTS_ENABLED && (
+            <a href={canonicalPath({ kind: 'contests' })} className={FOOTER_LINK}>
+              {m.contest_nav()}
+            </a>
+          )}
           <a href={canonicalPath({ kind: 'static', path: '/terms' })} className={FOOTER_LINK}>
             {m.layout_terms()}
           </a>

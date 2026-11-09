@@ -1,4 +1,5 @@
 import {
+  CONTESTS_ENABLED,
   FEATURED_RULES,
   HOME_COMPLETED_LIMIT,
   NEW_STORY_SPOTLIGHT,
@@ -129,7 +130,7 @@ function HomePage() {
             </div>
           </section>
         ) : null}
-        <HomeWriteBand contests={contests} />
+        <HomeWriteBand contests={CONTESTS_ENABLED ? contests : []} />
       </div>
     </SiteLayout>
   );

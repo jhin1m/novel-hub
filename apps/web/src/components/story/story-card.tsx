@@ -16,13 +16,24 @@ export function StoryCard({
   story,
   layout = 'grid',
   priority = false,
+  showLatestChapter = false,
 }: {
   story: StoryCardDto;
   layout?: 'grid' | 'row';
   priority?: boolean;
+  /** Grid cards only: rows always name the latest chapter when the list carries it. */
+  showLatestChapter?: boolean;
 }) {
   const href = canonicalPath({ kind: 'story', slug: story.slug, publicId: story.publicId });
   const words = m.story_card_words({ count: formatWordCount(story.wordCount) });
+  const latestChapter = story.latestChapter
+    ? story.latestChapter.title
+      ? m.story_card_latest_chapter_titled({
+          number: String(story.latestChapter.number),
+          title: story.latestChapter.title,
+        })
+      : m.story_card_latest_chapter({ number: String(story.latestChapter.number) })
+    : null;
   const title = (
     <a
       href={href}
@@ -63,15 +74,8 @@ export function StoryCard({
                 : null}
             </span>
           </p>
-          {story.latestChapter ? (
-            <p className="truncate text-xs text-muted-foreground">
-              {story.latestChapter.title
-                ? m.story_card_latest_chapter_titled({
-                    number: String(story.latestChapter.number),
-                    title: story.latestChapter.title,
-                  })
-                : m.story_card_latest_chapter({ number: String(story.latestChapter.number) })}
-            </p>
+          {latestChapter ? (
+            <p className="truncate text-xs text-muted-foreground">{latestChapter}</p>
           ) : null}
           {story.isAiAssisted || story.isMature ? (
             <div className="flex flex-wrap gap-1">
@@ -93,6 +97,9 @@ export function StoryCard({
           {story.mainTag.name} · {m.story_card_chapters({ count: String(story.chapterCount) })} ·{' '}
           {words}
         </p>
+        {showLatestChapter && latestChapter ? (
+          <p className="truncate text-xs text-muted-foreground">{latestChapter}</p>
+        ) : null}
         {story.lastChapterAt ? (
           <p className="text-xs text-muted-foreground">
             {m.story_card_updated({ date: formatDate(story.lastChapterAt) })}

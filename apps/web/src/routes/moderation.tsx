@@ -1,4 +1,5 @@
 import {
+  CONTESTS_ENABLED,
   REPORT_REASONS,
   REPORT_STATUSES,
   type ReportListQuery,
@@ -38,7 +39,12 @@ const TAB_LABELS: Record<(typeof MODERATION_TABS)[number], () => string> = {
 };
 
 const moderationSearchSchema = reportListQuerySchema.extend({
-  tab: z.enum(MODERATION_TABS).optional().catch(undefined),
+  tab: z
+    .enum(MODERATION_TABS)
+    .optional()
+    .catch(undefined)
+    .transform((tab) => (tab === 'contests' && !CONTESTS_ENABLED ? undefined : tab))
+    .optional(),
   /** Featured tab: the story a suggestion put in the form, by public id. */
   story: z.string().refine(isValidPublicId).optional().catch(undefined),
 });
@@ -95,17 +101,19 @@ function ModerationPage() {
           <>
             <TabLinks
               label={m.moderation_tabs()}
-              items={MODERATION_TABS.map((tab) => ({
-                key: tab,
-                label: TAB_LABELS[tab](),
-                search: {
-                  ...search,
-                  tab: tab === 'reports' ? undefined : tab,
-                  page: 1,
-                  story: undefined,
-                },
-                current: (search.tab ?? 'reports') === tab,
-              }))}
+              items={MODERATION_TABS.filter((tab) => CONTESTS_ENABLED || tab !== 'contests').map(
+                (tab) => ({
+                  key: tab,
+                  label: TAB_LABELS[tab](),
+                  search: {
+                    ...search,
+                    tab: tab === 'reports' ? undefined : tab,
+                    page: 1,
+                    story: undefined,
+                  },
+                  current: (search.tab ?? 'reports') === tab,
+                }),
+              )}
             />
             {search.tab === 'tags' ? (
               <MergeTagForm />

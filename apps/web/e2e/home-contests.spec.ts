@@ -1,5 +1,8 @@
 import { createTestDb } from '@novel-hub/db/testing';
+import { CONTESTS_ENABLED } from '@novel-hub/shared';
 import { expect, test } from '@playwright/test';
+
+test.skip(!CONTESTS_ENABLED, 'Contests are switched off');
 
 // Unique to this run: other specs share the test database and may leave contests running.
 const run = Date.now().toString(36);

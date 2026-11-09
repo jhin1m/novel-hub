@@ -51,7 +51,7 @@ export function ChapterTocSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="adaptive-left" className="gap-0" {...panelFocus}>
+      <SheetContent side="adaptive-left" className="gap-0 font-medium" {...panelFocus}>
         <SheetHeader className="pr-12">
           <SheetTitle className="text-lg font-extrabold">{m.reader_toc()}</SheetTitle>
           <SheetDescription asChild>

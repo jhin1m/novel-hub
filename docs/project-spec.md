@@ -216,6 +216,20 @@ Nguồn: `plans/reports/brainstorm-261009-direction-launch-first-report.md`. Ưu
 - [ ] CI GitHub Actions chạy `pnpm typecheck`, `pnpm lint`, `pnpm test` cho mỗi PR (cần bật lại push).
 - [ ] Duyệt dồn các quyết định `[auto]` còn treo trong `plans/reports/`.
 
+### Giai đoạn RD: Đưa design đã chốt vào code (user chốt 2026-11-09)
+
+Nguồn: `plans/reports/brief-261109-1347-redesign-design-chot-report.md`.
+
+- [x] Font và token màu
+- [ ] Header và footer
+- [ ] Hero trang chủ và thanh Đọc tiếp của thành viên
+- [ ] Bốn ô thể loại
+- [ ] Kệ truyện, xếp hạng, khối mời viết
+- [ ] Trang truyện
+- [ ] Cập nhật docs
+- [ ] Báo cáo so ảnh 1440px/390px sáng tối
+- [ ] Thanh Đọc tiếp cho khách
+
 ### Giai đoạn 3 (sau cùng)
 
 AI Hub và kiếm tiền. Không làm cho tới khi được yêu cầu rõ ràng.

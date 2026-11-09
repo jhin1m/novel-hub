@@ -55,7 +55,7 @@ export function ReaderSettingsSheet({
       <SheetContent
         side="adaptive-right"
         overlayClassName="bg-transparent"
-        className="gap-0 overflow-y-auto lg:max-w-(--reader-panel-width)"
+        className="gap-0 overflow-y-auto font-medium lg:max-w-(--reader-panel-width)"
         {...panelFocus}
       >
         <SheetHeader className="pr-12">

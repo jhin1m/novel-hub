@@ -223,10 +223,10 @@ importers:
       '@fontsource-variable/noto-serif':
         specifier: 5.3.0
         version: 5.3.0
-      '@fontsource-variable/plus-jakarta-sans':
+      '@fontsource-variable/source-serif-4':
         specifier: 5.3.0
         version: 5.3.0
-      '@fontsource-variable/source-serif-4':
+      '@fontsource/be-vietnam-pro':
         specifier: 5.3.0
         version: 5.3.0
       '@novel-hub/api':
@@ -1301,11 +1301,11 @@ packages:
   '@fontsource-variable/noto-serif@5.3.0':
     resolution: {integrity: sha512-GxGAScLRifXH02gDoJGroO/NIX83It7m1TYPPp1bhNPaii6/+GBYKxl/uL5GabFe0PBfiUV92wA4MdMdEDUu6A==}
 
-  '@fontsource-variable/plus-jakarta-sans@5.3.0':
-    resolution: {integrity: sha512-/l/4r0yyWK9JzAlmA0LiYgGgmJe/Gswt4jTJEzr5QhJfwMbvJZDmYWyW0M4X7yCK69BajMVlV/Lx8g7WDc1+sw==}
-
   '@fontsource-variable/source-serif-4@5.3.0':
     resolution: {integrity: sha512-9vch9WqxjaaA+1o9Ur8pOgIGbCYLjRReOUel23A6lOpD1syptgjtkORevvNmldJ5kGXQL29onQUqI5Ltz0s3bQ==}
+
+  '@fontsource/be-vietnam-pro@5.3.0':
+    resolution: {integrity: sha512-xhAQBGHDxP5BF8IJxedy5MoWUmc1DlPCcZbMLhvnPkf8TaYCbbUVs3LjpuJ4BYdTrdiCLaewNaY8z+owq/FqFw==}
 
   '@hono/zod-validator@0.9.1':
     resolution: {integrity: sha512-iiv6w0qrIc0arfvCtUqBWsvl4fXjzaTcQcCJTTtCnkawF9HHGE+KjEl0ox3gQJ6rKZEgE3mLExlQCF72M+mNuw==}
@@ -5217,9 +5217,9 @@ snapshots:
 
   '@fontsource-variable/noto-serif@5.3.0': {}
 
-  '@fontsource-variable/plus-jakarta-sans@5.3.0': {}
-
   '@fontsource-variable/source-serif-4@5.3.0': {}
+
+  '@fontsource/be-vietnam-pro@5.3.0': {}
 
   '@hono/zod-validator@0.9.1(hono@4.13.12)(zod@4.6.5)':
     dependencies:

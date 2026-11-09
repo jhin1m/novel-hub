@@ -2,6 +2,8 @@ import { canonicalPath, parseChapterNumber, parseStoryKey } from '@novel-hub/sha
 import { m } from '@novel-hub/shared/messages';
 import { createFileRoute } from '@tanstack/react-router';
 import { useRef, useState } from 'react';
+import sourceSerif4Latin from '@fontsource-variable/source-serif-4/files/source-serif-4-latin-wght-normal.woff2?url';
+import sourceSerif4Vietnamese from '@fontsource-variable/source-serif-4/files/source-serif-4-vietnamese-wght-normal.woff2?url';
 import { ChapterComments } from '../components/comments/chapter-comments';
 import { ParagraphCommentFab } from '../components/comments/paragraph-comment-fab';
 import {
@@ -20,6 +22,7 @@ import { ReaderTopBar } from '../components/reader/reader-top-bar';
 import { NotFoundPage } from '../components/not-found';
 import { publicPageHeaders } from '../lib/cache-headers';
 import { assertCanonical, requestLocation } from '../lib/canonical';
+import { fontPreloadLink } from '../lib/font-preload';
 import { seo, siteConfig } from '../lib/seo';
 import { throwNotFound } from '../lib/route-signals';
 import { chapterHeading } from '../lib/reader/chapter-heading';
@@ -33,6 +36,8 @@ import { useChapterSpeech } from '../lib/reader/tts/use-chapter-speech';
 import { useViewBeacon } from '../lib/reader/use-view-beacon';
 import { useMe } from '../lib/me';
 import { getChapterPage } from '../server-fns/reader';
+
+const CONTENT_FONTS = [sourceSerif4Latin, sourceSerif4Vietnamese];
 
 export const Route = createFileRoute('/stories/$storyKey/chapter-{$number}')({
   // Never reads the session: the HTML is the same for every visitor and cached by the CDN.
@@ -54,7 +59,7 @@ export const Route = createFileRoute('/stories/$storyKey/chapter-{$number}')({
   head: ({ loaderData, matches }) => {
     if (!loaderData) return {};
     const { story, chapter } = loaderData;
-    return seo({
+    const head = seo({
       appUrl: siteConfig(matches)?.appUrl,
       path: canonicalPath({ kind: 'chapter', ...story, number: chapter.number }),
       title: m.reader_page_title({ chapter: chapterHeading(chapter).heading, story: story.title }),
@@ -74,6 +79,8 @@ export const Route = createFileRoute('/stories/$storyKey/chapter-{$number}')({
       type: 'article',
       mature: story.isMature,
     });
+    // Only this route shows story text at first paint, so only it preloads the content font.
+    return { ...head, links: [...head.links, ...CONTENT_FONTS.map(fontPreloadLink)] };
   },
   notFoundComponent: NotFoundPage,
   component: ReaderPage,

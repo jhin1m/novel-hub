@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "Font và token màu"
-status: pending
+status: done
 priority: P1
 effort: "2h"
 dependencies: []
@@ -9,7 +9,7 @@ dependencies: []
 
 # Phase 1: Font và token màu
 
-**Status:** pending
+**Status:** done
 
 ## Bối cảnh chung
 

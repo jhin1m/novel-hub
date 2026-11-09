@@ -64,7 +64,7 @@ export function ParagraphCommentsSheet({
       <SheetContent
         side="adaptive-right"
         overlayClassName="bg-transparent"
-        className="site-comment-colors gap-0 max-lg:max-h-[60dvh] lg:max-w-(--reader-panel-width)"
+        className="site-comment-colors gap-0 font-medium max-lg:max-h-[60dvh] lg:max-w-(--reader-panel-width)"
         onOpenAutoFocus={(event) => {
           event.preventDefault();
           (event.currentTarget as HTMLElement | null)?.focus();

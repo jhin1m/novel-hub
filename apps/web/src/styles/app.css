@@ -4,10 +4,15 @@
 /*
  * Self-hosted fonts. Fontsource `@font-face` rules carry `unicode-range` and browsers only fetch a
  * woff2 once text actually uses that face, so Literata/Noto Serif (optional reader fonts) are not
- * downloaded on regular pages. Plus Jakarta Sans (UI) and Source Serif 4 (content) are preloaded
- * in `__root.tsx`.
+ * downloaded on regular pages. The UI face is preloaded in `__root.tsx`, the content face (Source
+ * Serif 4) on the reading route. The UI face is named only by `--font-ui`; the full per-weight files
+ * are imported because the single-subset ones carry no `unicode-range`.
  */
-@import '@fontsource-variable/plus-jakarta-sans/wght.css';
+@import '@fontsource/be-vietnam-pro/400.css';
+@import '@fontsource/be-vietnam-pro/500.css';
+@import '@fontsource/be-vietnam-pro/600.css';
+@import '@fontsource/be-vietnam-pro/700.css';
+@import '@fontsource/be-vietnam-pro/800.css';
 @import '@fontsource-variable/source-serif-4/wght.css';
 @import '@fontsource-variable/source-serif-4/wght-italic.css';
 @import '@fontsource-variable/literata/wght.css';
@@ -81,7 +86,7 @@
   }
 
   body {
-    @apply bg-background font-sans text-[15px] font-medium text-foreground antialiased;
+    @apply bg-background font-sans text-[15px] font-normal text-foreground antialiased;
   }
 }
 
@@ -131,7 +136,7 @@
 /* Revision previews render the same HTML, so they share the editor's typography. */
 .chapter-editor-content,
 .chapter-preview-content {
-  /* Story text stays regular; the 500 weight on `body` is for the interface only. */
+  /* Story text stays regular, whatever weight the surrounding interface uses. */
   font-weight: 400;
 
   & > * + * {

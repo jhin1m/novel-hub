@@ -26,13 +26,15 @@
   min-height: 100dvh;
   background: var(--reader-bg);
   color: var(--reader-fg);
+  /* Reading bars and buttons; `.reader-column` resets the story text to regular. */
+  font-weight: 500;
 }
 
 .reader-column {
   max-width: var(--reader-column);
   margin-inline: auto;
   font-family: var(--reader-font);
-  /* Story text stays regular; the 500 weight on `body` is for the interface only. */
+  /* Story text stays regular; the 500 weight on `.reader-page` is for the reading controls only. */
   font-weight: 400;
   font-size: var(--reader-font-size);
   line-height: var(--reader-line-height);

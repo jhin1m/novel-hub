@@ -146,8 +146,8 @@ const cover: Scope = {
   '--cover-4': '#2f5d50',
   '--cover-5': '#2e5266',
   '--cover-6': '#2c3e66',
-  '--cover-7': '#5b3a64',
-  '--cover-8': '#7e3b54',
+  '--cover-7': '#a8431f',
+  '--cover-8': '#5c5346',
   '--cover-9': '#3a3632',
   '--cover-fg': '#f6f1e7',
 };

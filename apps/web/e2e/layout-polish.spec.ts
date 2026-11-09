@@ -187,7 +187,7 @@ test('terms and content policy are set in the UI face', async ({ page }) => {
     const body = page.locator('article section p').first();
     await expect(body).toBeVisible();
     const family = await body.evaluate((el) => getComputedStyle(el).fontFamily);
-    expect(family.startsWith('"Plus Jakarta Sans')).toBe(true);
+    expect(family.startsWith('"Be Vietnam Pro')).toBe(true);
   }
 });
 

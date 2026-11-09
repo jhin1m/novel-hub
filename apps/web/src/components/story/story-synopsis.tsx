@@ -17,7 +17,7 @@ export function StorySynopsis({ text }: { text: string }) {
       <p
         id="story-synopsis"
         className={cn(
-          'font-serif text-[17px] leading-[1.7] whitespace-pre-line md:text-[19px] md:leading-[1.75]',
+          'text-[17px] leading-[1.7] whitespace-pre-line md:text-[19px] md:leading-[1.75]',
           clampable && !expanded && 'max-md:line-clamp-5',
         )}
       >

@@ -2,25 +2,21 @@ import { m } from '@novel-hub/shared/messages';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router';
 import { type ReactNode, useState } from 'react';
-import plusJakartaSansLatin from '@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2?url';
-import plusJakartaSansVietnamese from '@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-vietnamese-wght-normal.woff2?url';
-import sourceSerif4Latin from '@fontsource-variable/source-serif-4/files/source-serif-4-latin-wght-normal.woff2?url';
-import sourceSerif4Vietnamese from '@fontsource-variable/source-serif-4/files/source-serif-4-vietnamese-wght-normal.woff2?url';
+import uiLatin400 from '@fontsource/be-vietnam-pro/files/be-vietnam-pro-latin-400-normal.woff2?url';
+import uiLatin700 from '@fontsource/be-vietnam-pro/files/be-vietnam-pro-latin-700-normal.woff2?url';
+import uiVietnamese400 from '@fontsource/be-vietnam-pro/files/be-vietnam-pro-vietnamese-400-normal.woff2?url';
+import uiVietnamese700 from '@fontsource/be-vietnam-pro/files/be-vietnam-pro-vietnamese-700-normal.woff2?url';
 import { SiteThemeSync } from '../components/site-theme-sync';
 import { BOOT_SCRIPT } from '../lib/boot-script';
+import { fontPreloadLink } from '../lib/font-preload';
 import { rootSeo } from '../lib/seo';
 import { getSiteConfig } from '../server-fns/site-config';
 import appCss from '../styles/app.css?url';
 
-// Preload the UI font and the content font (both variable, upright), latin + vietnamese subsets.
-// The `?url` imports resolve to the same files `app.css` references, so the browser reuses the
-// preloaded copies.
-const PRELOAD_FONTS = [
-  plusJakartaSansLatin,
-  plusJakartaSansVietnamese,
-  sourceSerif4Latin,
-  sourceSerif4Vietnamese,
-];
+// Preload the two weights of the UI font that carry most text, latin + vietnamese subsets. The
+// other weights would compete with the LCP image. The `?url` imports resolve to the same files
+// `app.css` references, so the browser reuses the preloaded copies.
+const PRELOAD_FONTS = [uiLatin400, uiVietnamese400, uiLatin700, uiVietnamese700];
 
 export const Route = createRootRoute({
   // The site origin for absolute URLs in every page head. Read once: it never changes at runtime.
@@ -38,16 +34,7 @@ export const Route = createRootRoute({
         { property: 'og:site_name', content: m.app_name() },
         { property: 'og:locale', content: 'vi_VN' },
       ],
-      links: [
-        { rel: 'stylesheet', href: appCss },
-        ...PRELOAD_FONTS.map((href) => ({
-          rel: 'preload',
-          as: 'font',
-          type: 'font/woff2',
-          href,
-          crossOrigin: 'anonymous' as const,
-        })),
-      ],
+      links: [{ rel: 'stylesheet', href: appCss }, ...PRELOAD_FONTS.map(fontPreloadLink)],
     };
   },
   shellComponent: RootShell,

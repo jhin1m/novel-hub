@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { gotoHydrated, signUpVerified } from './helpers/accounts';
+import { createPublishedStory } from './helpers/content';
 
 test('home page has a header and footer; guests sign in from the account menu', async ({
   page,
@@ -26,24 +27,44 @@ test('unknown path returns 404 and renders the 404 page with a home link', async
   await expect(page.getByRole('link', { name: 'Về trang chủ' })).toHaveAttribute('href', '/');
 });
 
-test('home page HTML preloads UI and content fonts and sets no cookie', async ({ request }) => {
+function fontPreloads(html: string): string[] {
+  return [...html.matchAll(/<link[^>]*rel="preload"[^>]*>/g)]
+    .map(([tag]) => tag)
+    .filter((tag) => tag.includes('as="font"'));
+}
+
+test('home page HTML preloads only the UI font and sets no cookie', async ({ request }) => {
   const res = await request.get('/');
   expect(res.status()).toBe(200);
   expect(res.headers()['set-cookie']).toBeUndefined();
 
-  const html = await res.text();
-  const preloads = [...html.matchAll(/<link[^>]*rel="preload"[^>]*>/g)].map(([tag]) => tag);
-  const fontPreloads = preloads.filter((tag) => tag.includes('as="font"'));
+  const preloads = fontPreloads(await res.text());
   for (const file of [
-    'plus-jakarta-sans-latin-wght-normal',
-    'plus-jakarta-sans-vietnamese-wght-normal',
+    'be-vietnam-pro-latin-400-normal',
+    'be-vietnam-pro-vietnamese-400-normal',
+    'be-vietnam-pro-latin-700-normal',
+    'be-vietnam-pro-vietnamese-700-normal',
+  ]) {
+    expect(preloads.some((tag) => tag.includes(file))).toBe(true);
+  }
+  expect(preloads).toHaveLength(4);
+  for (const tag of preloads) expect(tag).toContain('crossorigin');
+  expect(preloads.filter((tag) => tag.includes('source-serif-4'))).toEqual([]);
+});
+
+test('the reading page also preloads the content font', async ({ request }) => {
+  const story = await createPublishedStory({ published: 1 });
+  const res = await request.get(story.chapterPath(1));
+  expect(res.status()).toBe(200);
+
+  const preloads = fontPreloads(await res.text());
+  for (const file of [
     'source-serif-4-latin-wght-normal',
     'source-serif-4-vietnamese-wght-normal',
   ]) {
-    expect(fontPreloads.some((tag) => tag.includes(file))).toBe(true);
+    const tag = preloads.find((candidate) => candidate.includes(file));
+    expect(tag, file).toContain('crossorigin');
   }
-  expect(fontPreloads).toHaveLength(4);
-  for (const tag of fontPreloads) expect(tag).toContain('crossorigin');
 });
 
 test('regular pages do not download the optional reader fonts (Literata, Noto Serif)', async ({
@@ -56,7 +77,7 @@ test('regular pages do not download the optional reader fonts (Literata, Noto Se
   await page.goto('/');
   await page.waitForLoadState('networkidle');
 
-  expect(fonts.some((url) => url.includes('plus-jakarta-sans'))).toBe(true);
+  expect(fonts.some((url) => url.includes('be-vietnam-pro'))).toBe(true);
   expect(fonts.filter((url) => /literata|noto-serif/.test(url))).toEqual([]);
 });
 

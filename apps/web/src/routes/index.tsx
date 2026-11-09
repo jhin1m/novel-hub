@@ -12,7 +12,7 @@ import { SparklesIcon } from 'lucide-react';
 import { HomeContinueReading } from '../components/home/home-continue-reading';
 import { HomeFeaturedHero } from '../components/home/home-featured-hero';
 import { HomeFeaturedPicks } from '../components/home/home-featured-picks';
-import { HomeGenreChips } from '../components/home/home-genre-chips';
+import { HomeGenreTiles } from '../components/home/home-genre-tiles';
 import { HomeNewSpotlight } from '../components/home/home-new-spotlight';
 import { HomeRankings } from '../components/home/home-rankings';
 import { HomeRecentlyCompleted } from '../components/home/home-recently-completed';
@@ -52,7 +52,7 @@ export const Route = createFileRoute('/')({
 });
 
 function HomePage() {
-  const { hero, recent, notable, picks, genres, spotlight, completed, contests, rankings } =
+  const { hero, recent, notable, picks, genreTiles, spotlight, completed, contests, rankings } =
     Route.useLoaderData();
   const recentList = useMatureAwareList(
     { stories: recent, page: 1, totalPages: 1 },
@@ -106,7 +106,7 @@ function HomePage() {
       </div>
       <div className="flex flex-col gap-[52px] py-8 md:py-10">
         <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-[52px] px-safe-4 md:px-safe-8">
-          {genres.length > 0 ? <HomeGenreChips genres={genres} /> : null}
+          {genreTiles.length > 0 ? <HomeGenreTiles tiles={genreTiles} /> : null}
           {pickedStories.length > 0 ? <HomeFeaturedPicks stories={pickedStories} /> : null}
           <HomeRankings rankings={rankings} />
           <HomeRecentUpdates stories={recentList.stories} />

@@ -223,7 +223,7 @@ Nguồn: `plans/reports/brief-261109-1347-redesign-design-chot-report.md`.
 - [x] Font và token màu
 - [x] Header và footer
 - [x] Hero trang chủ và thanh Đọc tiếp của thành viên
-- [ ] Bốn ô thể loại
+- [x] Bốn ô thể loại
 - [ ] Kệ truyện, xếp hạng, khối mời viết
 - [ ] Trang truyện
 - [ ] Cập nhật docs

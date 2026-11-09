@@ -34,7 +34,7 @@ Nghiên cứu: `research/researcher-01-font-and-blur-hero-report.md`, `research/
 | 1 | [Font và token màu](./phase-01-font-and-tokens.md) | mục 1, 7 | Done |
 | 2 | [Header và footer](./phase-02-header-and-footer.md) | mục 6 | Done |
 | 3 | [Hero trang chủ và thanh Đọc tiếp của thành viên](./phase-03-home-hero-and-member-continue-bar.md) | mục 2 | Done |
-| 4 | [Bốn ô thể loại](./phase-04-home-genre-tiles.md) | mục 4 | Pending |
+| 4 | [Bốn ô thể loại](./phase-04-home-genre-tiles.md) | mục 4 | Done |
 | 5 | [Kệ truyện, xếp hạng, khối mời viết](./phase-05-home-shelves-rankings-and-write-band.md) | mục 5 | Pending |
 | 6 | [Trang truyện](./phase-06-story-page.md) | mục 3 | Pending |
 | 7 | [Cập nhật docs](./phase-07-update-docs.md) | mục 9 | Pending |

@@ -169,6 +169,7 @@ export { awardMilestoneBadges, badgeRuleQuery } from './badges/award-badges';
 export { type UserBadgeDto, listUserBadges } from './badges/user-badges';
 export { type TagPageResult, canonicalTagSlug, getTagPage } from './catalog/tag-page';
 export { type HomeHero, listGenres, listNotable, listRecentlyUpdated } from './catalog/home';
+export { type HomeGenreTile, listHomeGenreTiles } from './catalog/home-genre-tiles';
 export { type HomePageData, getHomePage } from './catalog/home-page';
 export { listRecentlyCompleted } from './catalog/recently-completed';
 export { type ExploreEntry, getExploreEntry } from './catalog/explore-entry';

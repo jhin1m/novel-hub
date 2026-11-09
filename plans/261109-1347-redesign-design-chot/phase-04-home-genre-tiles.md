@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Bốn ô thể loại"
-status: pending
+status: done
 priority: P1
 effort: "3h"
 dependencies: [3]
@@ -9,7 +9,7 @@ dependencies: [3]
 
 # Phase 4: Bốn ô thể loại
 
-**Status:** pending
+**Status:** done
 
 ## Bối cảnh chung
 

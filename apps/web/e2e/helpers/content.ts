@@ -60,6 +60,8 @@ export async function createPublishedStory(
     chapterTitles?: string[];
     /** Story status once its chapters are out (stories start `ongoing`). */
     status?: StoryStatus;
+    /** Stored 600px cover URL; stories have none otherwise. */
+    coverUrl?: string;
   } = {},
 ): Promise<PublishedStory> {
   counter += 1;
@@ -131,6 +133,13 @@ export async function createPublishedStory(
     if (opts.status !== undefined) {
       await pool.query('update stories set status = $1 where public_id = $2', [
         opts.status,
+        publicId,
+      ]);
+    }
+
+    if (opts.coverUrl !== undefined) {
+      await pool.query('update stories set cover_url = $1 where public_id = $2', [
+        opts.coverUrl,
         publicId,
       ]);
     }

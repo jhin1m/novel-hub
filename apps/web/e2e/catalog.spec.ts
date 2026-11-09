@@ -16,17 +16,27 @@ let latest: PublishedStory;
 let completed: PublishedStory;
 let matureCompleted: PublishedStory;
 
+// Cover files unique to this run: a genre tile prints no title, only the cover shows who it used.
+const publicCover = `public-cover-${run}`;
+const matureCover = `mature-cover-${run}`;
+// Same origin: the 404 comes back at once, where an unresolvable host would hold up `networkidle`.
+const coverUrl = (name: string) => `/missing-covers/${name}-600.webp`;
+
 /** Past the home listing threshold: 3 published chapters, 5,100 words. */
 const LISTED = { published: 3, wordsPerChapter: 1_700 };
 
 test.beforeAll(async () => {
   normal = await createPublishedStory({ title: `Truyện Thường ${run}`, ...LISTED });
   // One short chapter: on the tag and author pages, never in the home lists.
-  other = await createPublishedStory({ title: `Truyện Khác ${run}` });
+  other = await createPublishedStory({
+    title: `Truyện Khác ${run}`,
+    coverUrl: coverUrl(publicCover),
+  });
   mature = await createPublishedStory({
     title: `Truyện Người Lớn ${run}`,
     isMature: true,
     warningTags: ['noi-dung-18'],
+    coverUrl: coverUrl(matureCover),
     ...LISTED,
   });
   draft = await createPublishedStory({ title: `Truyện Nháp ${run}`, published: 0, drafts: 1 });
@@ -73,6 +83,32 @@ test('home, tag and author pages list public stories, never 18+ or drafts, and a
   expect(home).not.toContain('Biên tập chọn');
   // Loaded in the browser for signed-in readers only.
   expect(home).not.toContain('Bạn đang đọc dở');
+});
+
+test('genre tiles link to real tags on public covers, never one of an 18+ story', async ({
+  page,
+  request,
+}) => {
+  // The newest cover of the genre is the 18+ story's: the raw HTML, loader data included.
+  const html = await (await request.get('/')).text();
+  expect(html).toContain(publicCover);
+  expect(html).not.toContain(matureCover);
+
+  await gotoHydrated(page, '/');
+  const tiles = page.getByRole('region', { name: 'Hôm nay đọc gì?' }).getByRole('link');
+  await expect(tiles).toHaveCount(4);
+  expect(await tiles.evaluateAll((links) => links.map((a) => a.getAttribute('href')))).toEqual([
+    '/tags/ngon-tinh',
+    '/tags/tien-hiep',
+    '/tags/kinh-di',
+    '/tags/huyen-huyen',
+  ]);
+  await expect(page.getByRole('link', { name: /^Tiên hiệp/ })).toContainText(
+    'Kiếm hiệp, tu tiên, một đường tới đỉnh',
+  );
+  for (const path of ['/tags/ngon-tinh', '/tags/tien-hiep', '/tags/kinh-di', '/tags/huyen-huyen']) {
+    expect((await request.get(path, { maxRedirects: 0 })).status(), path).toBe(200);
+  }
 });
 
 test('"new stories that need readers" lists new stories past the threshold, never the hero', async ({

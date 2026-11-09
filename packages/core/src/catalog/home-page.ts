@@ -9,8 +9,8 @@ import {
 } from '@novel-hub/shared';
 import { listOpenContests } from '../contests/open-contests';
 import { listActiveFeatured } from '../featured/active-featured';
-import type { TagView } from '../stories/story-view';
-import { type HomeHero, listGenres, listNotable, loadHomeHero, recentlyUpdatedWhere } from './home';
+import { type HomeHero, listNotable, loadHomeHero, recentlyUpdatedWhere } from './home';
+import { type HomeGenreTile, listHomeGenreTiles } from './home-genre-tiles';
 import { withLatestChapters } from './latest-chapters';
 import { listNewStoriesSpotlight } from './new-stories-spotlight';
 import { listRecentlyCompleted } from './recently-completed';
@@ -31,7 +31,8 @@ export interface HomePageData {
    * so the block stays full once the page drops it.
    */
   picks: StoryCardDto[];
-  genres: TagView[];
+  /** The "what to read today" tiles, never a cover of an 18+ story. */
+  genreTiles: HomeGenreTile[];
   /** "New stories that need readers": rotates every hour, never an 18+ story. */
   spotlight: StoryCardDto[];
   /** "Recently completed", with `HOME_DEDUPE_SLACK` more as `notable`. */
@@ -44,22 +45,23 @@ export interface HomePageData {
 export async function getHomePage(db: Db, now: Date = new Date()): Promise<HomePageData> {
   const o = { includeMature: false };
   // Only the first page shows, so no total is counted.
-  const [recentRows, notable, picks, genres, spotlight, completed, contests] = await Promise.all([
-    selectStoryCards(db)
-      .where(recentlyUpdatedWhere(o))
-      .orderBy(...recentlyUpdatedOrder)
-      .limit(CATALOG_PAGE_SIZE),
-    listNotable(db, { ...o, now, limit: NOTABLE_LIMIT + HOME_DEDUPE_SLACK }),
-    listActiveFeatured(db, now, FEATURED_RULES.homeLimit + 1),
-    listGenres(db),
-    listNewStoriesSpotlight(db, now, NEW_STORY_SPOTLIGHT.size + HOME_DEDUPE_SLACK),
-    listRecentlyCompleted(db, o),
-    listOpenContests(db, now),
-  ]);
+  const [recentRows, notable, picks, genreTiles, spotlight, completed, contests] =
+    await Promise.all([
+      selectStoryCards(db)
+        .where(recentlyUpdatedWhere(o))
+        .orderBy(...recentlyUpdatedOrder)
+        .limit(CATALOG_PAGE_SIZE),
+      listNotable(db, { ...o, now, limit: NOTABLE_LIMIT + HOME_DEDUPE_SLACK }),
+      listActiveFeatured(db, now, FEATURED_RULES.homeLimit + 1),
+      listHomeGenreTiles(db),
+      listNewStoriesSpotlight(db, now, NEW_STORY_SPOTLIGHT.size + HOME_DEDUPE_SLACK),
+      listRecentlyCompleted(db, o),
+      listOpenContests(db, now),
+    ]);
   const heroCard = notable.find((story) => story.chapterCount > 0);
   const [recent, hero] = await Promise.all([
     withLatestChapters(db, recentRows),
     heroCard ? loadHomeHero(db, heroCard) : null,
   ]);
-  return { hero, recent, notable, picks, genres, spotlight, completed, contests };
+  return { hero, recent, notable, picks, genreTiles, spotlight, completed, contests };
 }

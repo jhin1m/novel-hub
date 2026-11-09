@@ -3,6 +3,13 @@
 /** A story shows in the home page lists only once it has this much published text. */
 export const HOME_LISTING_RULES = { minChapters: 3, minWords: 5_000 } as const;
 
+/** The home page's "what to read today" tiles, in display order: tag slugs of four genres. */
+export const HOME_GENRE_TILE_SLUGS = ['ngon-tinh', 'tien-hiep', 'kinh-di', 'huyen-huyen'] as const;
+export type HomeGenreTileSlug = (typeof HOME_GENRE_TILE_SLUGS)[number];
+
+/** Covers a home genre tile shows at most: the blurred backdrop is the first of them. */
+export const HOME_GENRE_TILE_COVERS = 3;
+
 /** "New stories that need readers": stories younger than `maxAgeDays`, `size` per rotation. */
 export const NEW_STORY_SPOTLIGHT = { maxAgeDays: 30, size: 8 } as const;
 

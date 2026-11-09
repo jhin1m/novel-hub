@@ -1,4 +1,5 @@
 import {
+  chapters,
   contentEvents,
   contestEntries,
   contests,
@@ -10,7 +11,7 @@ import {
 import { seedTags } from '@novel-hub/db/seed';
 import { createTestDb, truncateAll } from '@novel-hub/db/testing';
 import { HOME_DEDUPE_SLACK, NOTABLE_LIMIT, STORY_VISIBILITIES } from '@novel-hub/shared';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { isStoryPubliclyVisible } from '../access/can-read-chapter';
 import type { StoryActor } from '../policies/story';
@@ -196,6 +197,46 @@ describe('listRecentlyUpdated', () => {
 });
 
 describe('getHomePage', () => {
+  it('heroes the first notable story, never 18+, with its synopsis and first readable chapter', async () => {
+    const author = await makeAuthor(db);
+    const story = await makePublishedStory(db, author, 3, 'Truyện Chính');
+    await setStory(story.storyId, {
+      ...LISTED,
+      synopsis: 'Giới thiệu truyện chính.',
+      createdAt: daysAgo(60),
+    });
+    const number = (n: number) => and(eq(chapters.storyId, story.storyId), eq(chapters.number, n));
+    await db.update(chapters).set({ deletedAt: NOW }).where(number(1));
+    await db.update(chapters).set({ status: 'draft' }).where(number(2));
+    const mature = await makePublishedStory(db, author, 3, 'Truyện Người Lớn');
+    await setStory(mature.storyId, { ...LISTED, isMature: true, createdAt: daysAgo(1) });
+
+    const { hero } = await getHomePage(db, NOW);
+    expect(hero).toMatchObject({
+      title: 'Truyện Chính',
+      synopsis: 'Giới thiệu truyện chính.',
+      firstChapterNumber: 3,
+    });
+  });
+
+  it('has no first chapter when the counters are stale and no synopsis when none was written', async () => {
+    const author = await makeAuthor(db);
+    const story = await makePublishedStory(db, author, 0, 'Không Còn Chương');
+    await setStory(story.storyId, {
+      ...LISTED,
+      visibility: 'published',
+      lastChapterAt: daysAgo(1),
+      synopsis: '',
+    });
+
+    const { hero } = await getHomePage(db, NOW);
+    expect(hero).toMatchObject({ synopsis: null, firstChapterNumber: null });
+  });
+
+  it('has no hero without a listed story', async () => {
+    expect((await getHomePage(db, NOW)).hero).toBeNull();
+  });
+
   it('shows the contests running now on the home page, never an ended one', async () => {
     const mod = await makeAuthor(db, 'contest_mod');
     const contest = (slug: string, startsAt: Date, endsAt: Date) => ({

@@ -10,13 +10,15 @@ import {
 import { listOpenContests } from '../contests/open-contests';
 import { listActiveFeatured } from '../featured/active-featured';
 import type { TagView } from '../stories/story-view';
-import { listGenres, listNotable, recentlyUpdatedWhere } from './home';
+import { type HomeHero, listGenres, listNotable, loadHomeHero, recentlyUpdatedWhere } from './home';
 import { withLatestChapters } from './latest-chapters';
 import { listNewStoriesSpotlight } from './new-stories-spotlight';
 import { listRecentlyCompleted } from './recently-completed';
 import { type StoryCardDto, recentlyUpdatedOrder, selectStoryCards } from './story-card';
 
 export interface HomePageData {
+  /** The first `notable` story with a chapter, never 18+; `null` when there is none. */
+  hero: HomeHero | null;
   /** Most recently updated first, each with its latest chapter. */
   recent: StoryCardDto[];
   /**
@@ -54,6 +56,10 @@ export async function getHomePage(db: Db, now: Date = new Date()): Promise<HomeP
     listRecentlyCompleted(db, o),
     listOpenContests(db, now),
   ]);
-  const recent = await withLatestChapters(db, recentRows);
-  return { recent, notable, picks, genres, spotlight, completed, contests };
+  const heroCard = notable.find((story) => story.chapterCount > 0);
+  const [recent, hero] = await Promise.all([
+    withLatestChapters(db, recentRows),
+    heroCard ? loadHomeHero(db, heroCard) : null,
+  ]);
+  return { hero, recent, notable, picks, genres, spotlight, completed, contests };
 }

@@ -15,7 +15,8 @@ interface StoryRef {
 /**
  * A link to chapter `number` that opens it where the reader left it: a click hands the position to
  * the chapter page, then loads the (CDN-cached) chapter as a full document. The URL never carries
- * the position, so a new tab or a copied link opens the chapter at the top.
+ * the position, so a new tab or a copied link opens the chapter at the top. A short visible `label`
+ * keeps the full "Continue chapter N" as the accessible name.
  */
 export function ResumeLink({
   story,
@@ -23,18 +24,22 @@ export function ResumeLink({
   scrollPct,
   size,
   className,
+  label,
 }: {
   story: StoryRef;
   number: number;
   scrollPct: number;
   size?: 'sm' | 'lg';
   className?: string;
+  label?: string;
 }) {
   const href = canonicalPath({ kind: 'chapter', ...story, number });
+  const fullLabel = m.continue_reading({ number: String(number) });
   return (
     <Button asChild size={size} className={className}>
       <a
         href={href}
+        aria-label={label ? fullLabel : undefined}
         onClick={(event) => {
           if (
             event.button !== 0 ||
@@ -50,7 +55,7 @@ export function ResumeLink({
           window.location.assign(href);
         }}
       >
-        {m.continue_reading({ number: String(number) })}
+        {label ?? fullLabel}
       </a>
     </Button>
   );

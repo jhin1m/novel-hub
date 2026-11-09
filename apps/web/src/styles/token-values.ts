@@ -152,7 +152,20 @@ const cover: Scope = {
   '--cover-fg': '#f6f1e7',
 };
 
-export const TOKEN_VALUES = { light, dark, reader, cover } as const;
+/** Blurred-cover surfaces; the same in light and dark, like the covers. */
+const hero: Scope = {
+  '--hero-base': '#241d18',
+  '--hero-ink': '#2b2722',
+};
+
+/** `--hero-scrim`: the CSS as written in `tokens.css`, and its parts for the contrast check. */
+export const HERO_SCRIM = {
+  css: 'rgb(22 17 13 / 0.64)',
+  channels: [22, 17, 13],
+  alpha: 0.64,
+} as const;
+
+export const TOKEN_VALUES = { light, dark, reader, cover, hero } as const;
 
 /** Names of the `--cover-N` background variables, in palette order. */
 export function coverBackgrounds(): string[] {

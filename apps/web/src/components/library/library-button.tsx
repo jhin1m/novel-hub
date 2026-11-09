@@ -10,19 +10,21 @@ import { ShelfMenu } from './shelf-menu';
 import { SignInPromptLink } from '../sign-in-prompt-link';
 
 /**
- * "Add to library" on the story page. The server renders the neutral button (the page is cached
+ * "Add to library" on the story page and the home hero. The server renders the neutral button (the page is cached
  * publicly); the reader's real shelf loads in the browser. Guests are sent to sign in.
- * `tone="on-cover"` is for the cover-coloured story hero and applies to every state.
+ * `tone="on-cover"` is for a hero on a cover colour or blurred cover and applies to every state.
  */
 export function LibraryButton({
   publicId,
   tone = 'default',
+  className: extraClassName,
 }: {
   publicId: string;
   tone?: 'default' | 'on-cover';
+  className?: string;
 }) {
   const me = useMe();
-  const className = cn(tone === 'on-cover' && ON_COVER_OUTLINE);
+  const className = cn(tone === 'on-cover' && ON_COVER_OUTLINE, extraClassName);
   const signedIn = !!me.data;
   const shelf = useShelf(publicId, signedIn);
   const setShelf = useSetShelf();

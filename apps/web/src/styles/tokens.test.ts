@@ -1,13 +1,19 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { COVER_PALETTE_SIZE } from '../lib/cover-palette';
-import { contrastViolations } from '../lib/contrast';
+import { contrastRatio, contrastViolations } from '../lib/contrast';
 import {
   CONTRAST_PAIRS,
   COVER_CONTRAST_PAIRS,
   READER_CONTRAST_PAIRS,
 } from './token-contrast-pairs';
-import { READER_PRESETS, TOKEN_VALUES, coverBackgrounds, resolvedScopes } from './token-values';
+import {
+  HERO_SCRIM,
+  READER_PRESETS,
+  TOKEN_VALUES,
+  coverBackgrounds,
+  resolvedScopes,
+} from './token-values';
 
 const tokensCss = readFileSync(new URL('./tokens.css', import.meta.url), 'utf8');
 
@@ -25,6 +31,7 @@ function declarations(): Array<[string, string]> {
     TOKEN_VALUES.light,
     TOKEN_VALUES.dark,
     TOKEN_VALUES.cover,
+    TOKEN_VALUES.hero,
     ...Object.values(TOKEN_VALUES.reader),
   ];
   return scopes.flatMap((scope) => Object.entries(scope));
@@ -87,6 +94,36 @@ describe('design tokens', () => {
 
   it('every default cover colour meets AA against the cover text colour', () => {
     expect(contrastViolations(TOKEN_VALUES.cover, COVER_CONTRAST_PAIRS)).toEqual([]);
+  });
+
+  describe('blurred-cover hero', () => {
+    const coverFg = TOKEN_VALUES.cover['--cover-fg'] as string;
+    /** The scrim flattened over a pure white image, the worst cover the blur can show. */
+    const scrimOverWhite = `#${HERO_SCRIM.channels
+      .map((channel) =>
+        Math.round(channel * HERO_SCRIM.alpha + 255 * (1 - HERO_SCRIM.alpha))
+          .toString(16)
+          .padStart(2, '0'),
+      )
+      .join('')}`;
+
+    it('declares the scrim as the contrast check assumes', () => {
+      expect(tokensCss).toContain(`--hero-scrim: ${HERO_SCRIM.css};`);
+    });
+
+    it('text stays AA over a pure white cover', () => {
+      expect(scrimOverWhite).toBe('#6a6764');
+      expect(contrastRatio(coverFg, scrimOverWhite)).toBeGreaterThanOrEqual(4.5);
+    });
+
+    it('text stays AA on the base colour, and the solid button is AA', () => {
+      expect(contrastRatio(coverFg, TOKEN_VALUES.hero['--hero-base'] as string)).toBeGreaterThan(
+        4.5,
+      );
+      expect(contrastRatio(coverFg, TOKEN_VALUES.hero['--hero-ink'] as string)).toBeGreaterThan(
+        4.5,
+      );
+    });
   });
 
   it('the cover palette has exactly COVER_PALETTE_SIZE colours, in TS and in the CSS', () => {

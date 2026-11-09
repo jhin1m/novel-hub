@@ -23,9 +23,9 @@ describe('initialCssValue', () => {
 
 describe('parseAccountHint', () => {
   it('reads a stored hint', () => {
-    expect(parseAccountHint('{"initial":272,"continueRows":2}')).toEqual({
+    expect(parseAccountHint('{"initial":272,"continueRows":1}')).toEqual({
       initial: 272,
-      continueRows: 2,
+      continueRows: 1,
     });
   });
 

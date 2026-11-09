@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Hero trang chủ và thanh Đọc tiếp của thành viên"
-status: pending
+status: done
 priority: P1
 effort: "4h"
 dependencies: [1]
@@ -9,7 +9,7 @@ dependencies: [1]
 
 # Phase 3: Hero trang chủ và thanh Đọc tiếp của thành viên
 
-**Status:** pending
+**Status:** done
 
 ## Bối cảnh chung
 

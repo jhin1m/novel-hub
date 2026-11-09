@@ -1,6 +1,6 @@
 /*
- * Buttons on a story hero, whose background is the main tag's cover colour (`--story-tint`). Only
- * the cover pair is used (`--cover-fg` on any `--cover-N` is at least 5:1), because the site
+ * Buttons on a hero over a cover: the story hero's main tag colour, or the home hero's blurred
+ * cover. `--story-tint` is the solid button's text colour. Only the cover pair is used (`--cover-fg` on any `--cover-N` is at least 5:1), because the site
  * colours are not: outline text in `--foreground` or a `--primary` fill would sink into some
  * covers. The solid button's focus mark is an outline set off from it, since a ring in its own
  * colour would just look like a bigger button.

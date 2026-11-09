@@ -23,7 +23,6 @@ import { SiteLayout } from '../components/site-layout';
 import { StoryGrid } from '../components/story/story-grid';
 import { publicPageHeaders } from '../lib/cache-headers';
 import { assertCanonical, requestLocation } from '../lib/canonical';
-import { pickHero } from '../lib/home';
 import { pickDefaultPeriod } from '../lib/home-rankings';
 import { claimSections } from '../lib/home-sections';
 import { seo, siteConfig } from '../lib/seo';
@@ -53,7 +52,7 @@ export const Route = createFileRoute('/')({
 });
 
 function HomePage() {
-  const { recent, notable, picks, genres, spotlight, completed, contests, rankings } =
+  const { hero, recent, notable, picks, genres, spotlight, completed, contests, rankings } =
     Route.useLoaderData();
   const recentList = useMatureAwareList(
     { stories: recent, page: 1, totalPages: 1 },
@@ -67,9 +66,6 @@ function HomePage() {
     { stories: notable, page: 1, totalPages: 1 },
     { list: 'notable' },
   );
-  // From the server-rendered list, so the hero is the same in the HTML and after hydration and
-  // is never an 18+ story.
-  const hero = pickHero(notable);
   // One story, one section, in this order ("recently updated" is a timeline and may repeat). The
   // rankings stay true to their order and only keep the stories of the period shown first out of
   // the sections after them. The completed and notable lists may swap in their 18+ variant once
@@ -103,13 +99,14 @@ function HomePage() {
   return (
     <SiteLayout>
       <h1 className="sr-only">{m.app_name()}</h1>
+      {/* From the loader, not a client list: the same in the HTML and after hydration, never 18+. */}
+      {hero ? <HomeFeaturedHero story={hero} /> : null}
+      <div className="mx-auto w-full max-w-[1240px] px-safe-4 md:px-safe-8">
+        <HomeContinueReading overlapHero={hero?.coverUrl != null} />
+      </div>
       <div className="flex flex-col gap-[52px] py-8 md:py-10">
         <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-[52px] px-safe-4 md:px-safe-8">
           {genres.length > 0 ? <HomeGenreChips genres={genres} /> : null}
-          <div className="flex flex-wrap gap-6 empty:hidden">
-            {hero ? <HomeFeaturedHero story={hero} /> : null}
-            <HomeContinueReading />
-          </div>
           {pickedStories.length > 0 ? <HomeFeaturedPicks stories={pickedStories} /> : null}
           <HomeRankings rankings={rankings} />
           <HomeRecentUpdates stories={recentList.stories} />

@@ -186,9 +186,7 @@
  */
 :root:not([data-signed-in]) .signed-in-hint,
 :root[data-signed-in] .guest-hint,
-:root:not([data-continue-rows]) .continue-hint,
-:root[data-continue-rows='1'] .continue-hint-row:nth-child(n + 2),
-:root[data-continue-rows='2'] .continue-hint-row:nth-child(n + 3) {
+:root:not([data-continue-rows]) .continue-hint {
   display: none;
 }
 

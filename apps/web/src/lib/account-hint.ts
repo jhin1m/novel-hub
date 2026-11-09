@@ -1,18 +1,18 @@
 /**
  * localStorage key of the "this browser was last signed in" hint. Public pages are full document
  * loads of cookie-free HTML, so `useMe()` only knows the account a moment after hydration; until
- * then the header and the home "Continue reading" box render placeholders. `BOOT_SCRIPT` reads this
+ * then the header and the home "Continue reading" bar render placeholders. `BOOT_SCRIPT` reads this
  * hint before paint and marks `<html>`:
  * - `data-signed-in`: the placeholders show the signed-in header (`.signed-in-hint`) instead of the
  *   guest one (`.guest-hint`);
  * - `--account-initial`: the avatar letter, as a CSS string made only of a hex escape;
- * - `data-continue-rows`: how many "Continue reading" rows the home page showed last time.
+ * - `data-continue-rows`: set when the home page showed a "Continue reading" bar last time.
  * Display hint only, never access control: the real account replaces it once loaded.
  */
 export const ACCOUNT_HINT_KEY = 'nh:account';
 
-/** The most rows the home "Continue reading" box shows. */
-export const CONTINUE_ROWS_MAX = 3;
+/** The most stories the home "Continue reading" bar shows. */
+export const CONTINUE_ROWS_MAX = 1;
 
 export interface AccountHint {
   /** Code point of the avatar letter. */

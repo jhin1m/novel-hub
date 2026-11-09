@@ -1,6 +1,6 @@
-import { type Db, stories, tags } from '@novel-hub/db';
+import { type Db, chapters, stories, tags } from '@novel-hub/db';
 import { CATALOG_PAGE_SIZE, HOME_LISTING_RULES, NOTABLE_LIMIT } from '@novel-hub/shared';
-import { type SQL, and, desc, eq, gte, isNotNull, isNull, notInArray } from 'drizzle-orm';
+import { type SQL, and, desc, eq, gte, isNotNull, isNull, min, notInArray } from 'drizzle-orm';
 import { type TagView, compareTags } from '../stories/story-view';
 import { withLatestChapters } from './latest-chapters';
 import {
@@ -100,6 +100,40 @@ export async function listNotable(
     .orderBy(desc(stories.createdAt), desc(stories.id))
     .limit(limit - qualifying.length);
   return [...qualifying, ...filler].map(toStoryCard);
+}
+
+/** The story the home hero shows: a card plus what only the hero needs. */
+export type HomeHero = StoryCardDto & {
+  /** `null` when the author wrote none. */
+  synopsis: string | null;
+  /** Lowest published, undeleted chapter: numbers can skip, so it is not always 1. */
+  firstChapterNumber: number | null;
+};
+
+/**
+ * Adds the hero's own fields to a card already read for the public list, so the whole `notable`
+ * list does not have to carry a synopsis. Joined rather than a correlated subquery: on a
+ * single-table select Drizzle drops the table name from columns inside `sql`.
+ */
+export async function loadHomeHero(db: Db, card: StoryCardDto): Promise<HomeHero> {
+  const [row] = await db
+    .select({ synopsis: stories.synopsis, firstChapterNumber: min(chapters.number) })
+    .from(stories)
+    .leftJoin(
+      chapters,
+      and(
+        eq(chapters.storyId, stories.id),
+        eq(chapters.status, 'published'),
+        isNull(chapters.deletedAt),
+      ),
+    )
+    .where(eq(stories.publicId, card.publicId))
+    .groupBy(stories.id);
+  return {
+    ...card,
+    synopsis: row?.synopsis || null,
+    firstChapterNumber: row?.firstChapterNumber ?? null,
+  };
 }
 
 /** Canonical genre tags, the home page's way into the tag pages. */

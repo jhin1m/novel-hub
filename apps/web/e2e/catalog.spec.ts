@@ -72,7 +72,7 @@ test('home, tag and author pages list public stories, never 18+ or drafts, and a
   expect(home).toContain('Mới cập nhật');
   expect(home).not.toContain('Biên tập chọn');
   // Loaded in the browser for signed-in readers only.
-  expect(home).not.toContain('id="continue-title"');
+  expect(home).not.toContain('Bạn đang đọc dở');
 });
 
 test('"new stories that need readers" lists new stories past the threshold, never the hero', async ({
@@ -301,6 +301,8 @@ test('"continue reading" on the home page hides 18+ stories unless the account s
   await allowMatureContent(account.email);
   await gotoHydrated(page, '/');
   await expect(aside).toContainText(mature.title);
+  // Only the latest story: the 18+ one was read last.
+  await expect(aside).not.toContainText(normal.title);
 });
 
 test('terms and content policy are public pages linked from the footer', async ({

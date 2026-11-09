@@ -90,9 +90,10 @@ const account = (patch: Record<string, unknown>) => JSON.stringify(patch);
 
 const ACCOUNT_FIXTURES: Array<[string, string | null]> = [
   ['nothing stored', null],
-  ['letter and rows', account({ initial: 0x110, continueRows: 2 })],
-  ['letter outside the BMP', account({ initial: 0x1f600, continueRows: 3 })],
+  ['letter and rows', account({ initial: 0x110, continueRows: 1 })],
+  ['letter outside the BMP', account({ initial: 0x1f600, continueRows: 1 })],
   ['no rows', account({ initial: 65, continueRows: 0 })],
+  ['more rows than the bar holds', account({ initial: 65, continueRows: 3 })],
   ['too many rows', account({ initial: 65, continueRows: 4 })],
   ['rows as a string', account({ initial: 65, continueRows: '2' })],
   ['fractional values', account({ initial: 65.5, continueRows: 1.5 })],
@@ -217,8 +218,8 @@ describe('BOOT_SCRIPT', () => {
   });
 
   it('marks a browser last signed in, with the avatar letter as a hex escape', () => {
-    expect(runWithAccount(account({ initial: 0x110, continueRows: 2 }))).toEqual({
-      attributes: { 'data-signed-in': '', 'data-continue-rows': '2' },
+    expect(runWithAccount(account({ initial: 0x110, continueRows: 1 }))).toEqual({
+      attributes: { 'data-signed-in': '', 'data-continue-rows': '1' },
       styles: { '--account-initial': '"\\110 "' },
     });
   });

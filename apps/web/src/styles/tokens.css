@@ -68,6 +68,15 @@
   --cover-9: #3a3632;
   --cover-fg: #f6f1e7;
 
+  /*
+   * Blurred-cover surfaces (`CoverBackdrop`), shared by light and dark like the covers. The scrim
+   * is the one colour with alpha; text on it is only ever `--cover-fg`, which keeps 4.5:1 even over
+   * a pure white cover (`tokens.test.ts`). `--hero-base` shows until the image loads, or if it fails.
+   */
+  --hero-base: #241d18;
+  --hero-ink: #2b2722;
+  --hero-scrim: rgb(22 17 13 / 0.64);
+
   --font-ui: 'Be Vietnam Pro', system-ui, sans-serif;
   --font-content: 'Source Serif 4 Variable', Georgia, serif;
   --font-reader-literata: 'Literata Variable', Georgia, serif;

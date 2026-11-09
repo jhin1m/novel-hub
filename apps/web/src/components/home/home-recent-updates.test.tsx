@@ -1,13 +1,7 @@
 import type { StoryCardDto } from '@novel-hub/core';
-import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { HomeRecentUpdates } from './home-recent-updates';
-
-// The UI kit imports through the `@/` alias, which unit tests do not resolve.
-vi.mock('../ui/button', () => ({
-  Button: ({ children }: { children: ReactNode }) => children,
-}));
 
 const stories = (count: number): StoryCardDto[] =>
   Array.from({ length: count }, (_, i) => ({
@@ -25,17 +19,14 @@ const stories = (count: number): StoryCardDto[] =>
     isMature: false,
   }));
 
-const lists = (html: string) => html.match(/<ul/g)?.length ?? 0;
-
 describe('HomeRecentUpdates', () => {
-  it('shows the latest six as covers and at most twelve more as rows', () => {
+  it('shows exactly ten covers however long the list is', () => {
     const html = renderToStaticMarkup(<HomeRecentUpdates stories={stories(24)} />);
-    expect(html.match(/<article/g)).toHaveLength(18);
-    expect(lists(html)).toBe(2);
-    expect(html).not.toContain('Truyện 18<');
+    expect(html.match(/<article/g)).toHaveLength(10);
+    expect(html).not.toContain('Truyện 10<');
   });
 
-  it('names the latest chapter on a cover card too', () => {
+  it('names the latest chapter and the genre, not the chapter title', () => {
     const [story] = stories(1);
     if (!story) throw new Error('no story');
     const html = renderToStaticMarkup(
@@ -43,12 +34,26 @@ describe('HomeRecentUpdates', () => {
         stories={[{ ...story, latestChapter: { number: 3, title: 'Đỉnh núi' } }]}
       />,
     );
-    expect(html).toContain('Chương 3 · Đỉnh núi');
+    expect(html).toContain('>Chương 3 · Tiên hiệp<');
+    expect(html).not.toContain('Đỉnh núi');
   });
 
-  it('leaves out the rows when every story fits among the covers', () => {
-    const html = renderToStaticMarkup(<HomeRecentUpdates stories={stories(4)} />);
-    expect(html.match(/<article/g)).toHaveLength(4);
-    expect(lists(html)).toBe(1);
+  it('falls back to the chapter count without a latest chapter', () => {
+    const html = renderToStaticMarkup(<HomeRecentUpdates stories={stories(1)} />);
+    expect(html).toContain('>3 chương · Tiên hiệp<');
+  });
+
+  it('links to the full list and can take the whole row without the rankings', () => {
+    const html = renderToStaticMarkup(<HomeRecentUpdates stories={stories(1)} />);
+    expect(html).toMatch(
+      /<a href="\/search\?sort=updated" aria-label="Xem thêm truyện mới cập nhật"[^>]*>Xem thêm</,
+    );
+    expect(html).toContain('flex-[999_1_560px]');
+  });
+
+  it('says so when there is no story, without a link', () => {
+    const html = renderToStaticMarkup(<HomeRecentUpdates stories={[]} />);
+    expect(html).toContain('Chưa có truyện nào.');
+    expect(html).not.toContain('<a ');
   });
 });

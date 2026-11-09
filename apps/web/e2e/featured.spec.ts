@@ -66,7 +66,7 @@ test('a moderator features a story on the home page, then ends it', async ({ pag
   await expect(ended.getByRole('article').filter({ hasText: picked.title })).toHaveCount(1);
 
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Mới cập nhật' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Vừa có chương mới' })).toBeVisible();
   await expect(
     page
       .getByRole('region', { name: 'Truyện nổi bật', exact: true })

@@ -6,7 +6,7 @@ import { USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH, USERNAME_PATTERN } from './us
 /** Stories per page of a tag page, and per page of the "recently updated" list. */
 export const CATALOG_PAGE_SIZE = 24;
 
-/** Stories in the "notable new stories" block of the home page. */
+/** Stories in the "notable new stories" list of the API; the home page only uses the first. */
 export const NOTABLE_LIMIT = 12;
 
 /** Highest page number accepted anywhere; far beyond any real list. */

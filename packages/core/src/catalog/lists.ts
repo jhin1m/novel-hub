@@ -33,8 +33,7 @@ export async function listStories(
       return { stories: items, page, totalPages };
     }
     case 'notable':
-      // As many as the home page loads, so it still has a full band once it drops stories shown
-      // higher up.
+      // With some to spare, so a client can drop stories it already shows and still fill a list.
       return {
         stories: await listNotable(db, { ...o, limit: NOTABLE_LIMIT + HOME_DEDUPE_SLACK }),
         page: 1,

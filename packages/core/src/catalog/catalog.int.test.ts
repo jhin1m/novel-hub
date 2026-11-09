@@ -10,7 +10,12 @@ import {
 } from '@novel-hub/db';
 import { seedTags } from '@novel-hub/db/seed';
 import { createTestDb, truncateAll } from '@novel-hub/db/testing';
-import { HOME_DEDUPE_SLACK, NOTABLE_LIMIT, STORY_VISIBILITIES } from '@novel-hub/shared';
+import {
+  HOME_DEDUPE_SLACK,
+  HOME_RECENT_LIMIT,
+  NOTABLE_LIMIT,
+  STORY_VISIBILITIES,
+} from '@novel-hub/shared';
 import { and, desc, eq } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { isStoryPubliclyVisible } from '../access/can-read-chapter';
@@ -292,14 +297,14 @@ describe('listNotable', () => {
     expect(notable.map((s) => s.title)).toEqual(['Đủ Chuẩn', 'Đạt Ngưỡng']);
   });
 
-  it('loads extra stories on the home page and the API, for sections that drop repeats', async () => {
+  it('gives the API extra stories, and the home page only the covers of its shelf', async () => {
     const author = await makeAuthor(db);
     const extra = NOTABLE_LIMIT + HOME_DEDUPE_SLACK;
     for (let i = 0; i <= extra; i++) {
       const s = await makePublishedStory(db, author, 0, `Truyện ${i}`);
       await setStory(s.storyId, { ...LISTED, visibility: 'published', lastChapterAt: daysAgo(1) });
     }
-    expect((await getHomePage(db, NOW)).notable).toHaveLength(extra);
+    expect((await getHomePage(db, NOW)).recent).toHaveLength(HOME_RECENT_LIMIT);
     const api = await listStories(db, { list: 'notable' }, { includeMature: false });
     expect(api?.stories).toHaveLength(extra);
   });

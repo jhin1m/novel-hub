@@ -111,8 +111,8 @@ export type HomeHero = StoryCardDto & {
 };
 
 /**
- * Adds the hero's own fields to a card already read for the public list, so the whole `notable`
- * list does not have to carry a synopsis. Joined rather than a correlated subquery: on a
+ * Adds the hero's own fields to a card already read for the public list, so the `notable` list
+ * does not have to carry a synopsis. Joined rather than a correlated subquery: on a
  * single-table select Drizzle drops the table name from columns inside `sql`.
  */
 export async function loadHomeHero(db: Db, card: StoryCardDto): Promise<HomeHero> {

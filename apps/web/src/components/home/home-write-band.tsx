@@ -1,6 +1,6 @@
 import { type ContestSummaryDto, canonicalPath } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
-import { PenLineIcon, TrophyIcon } from 'lucide-react';
+import { TrophyIcon } from 'lucide-react';
 import { formatDateTime } from '../../lib/format';
 import { SectionHeading } from '../section-heading';
 
@@ -29,18 +29,41 @@ function ContestCard({ contest }: { contest: ContestSummaryDto }) {
 /**
  * The band closing the home page: the contests running now and an invitation to write, as plain
  * cards (no image, no banner). The same for everyone (the HTML is cached): `/write` sends a guest
- * to sign in. Without a running contest, only the invitation is left and titles the band.
+ * to sign in. Without a running contest, the invitation alone fills the band.
  */
 export function HomeWriteBand({ contests }: { contests: ContestSummaryDto[] }) {
   const hasContests = contests.length > 0;
+  if (!hasContests) {
+    return (
+      <section aria-labelledby="write-band-title" className="bg-band">
+        <div className="mx-auto max-w-[760px] py-16 px-safe-4 text-center md:px-safe-8">
+          <h2
+            id="write-band-title"
+            className="text-[clamp(34px,4vw,48px)] leading-[1.24] font-bold tracking-[-0.02em]"
+          >
+            {m.home_invite_band_before()}
+            <span className="text-primary">{m.home_invite_band_accent()}</span>
+            {m.home_invite_band_after()}
+          </h2>
+          <p className="mt-3.5 mb-[26px] text-base text-muted-foreground">{m.home_invite_body()}</p>
+          <a
+            href="/write"
+            className="inline-flex h-[52px] items-center rounded-full bg-primary px-[30px] font-bold text-primary-foreground outline-none hover:bg-primary/90 focus-visible:ring-[3px] focus-visible:ring-ring"
+          >
+            {m.home_invite_cta()}
+          </a>
+        </div>
+      </section>
+    );
+  }
   return (
     <section aria-labelledby="write-band-title" className="bg-band py-11">
       <div className="mx-auto flex max-w-[1240px] flex-col gap-5 px-safe-4 md:px-safe-8">
         <SectionHeading
           id="write-band-title"
-          icon={hasContests ? TrophyIcon : PenLineIcon}
-          title={hasContests ? m.home_contests_title() : m.home_invite_title()}
-          subtitle={hasContests ? m.home_contests_subtitle() : undefined}
+          icon={TrophyIcon}
+          title={m.home_contests_title()}
+          subtitle={m.home_contests_subtitle()}
           onBand
         />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -48,9 +71,7 @@ export function HomeWriteBand({ contests }: { contests: ContestSummaryDto[] }) {
             <ContestCard key={contest.slug} contest={contest} />
           ))}
           <div className={CARD}>
-            {hasContests ? (
-              <h3 className="text-lg leading-snug font-bold">{m.home_invite_title()}</h3>
-            ) : null}
+            <h3 className="text-lg leading-snug font-bold">{m.home_invite_title()}</h3>
             <p className="text-sm text-muted-foreground">{m.home_invite_body()}</p>
             <a
               href="/write"
@@ -60,16 +81,14 @@ export function HomeWriteBand({ contests }: { contests: ContestSummaryDto[] }) {
             </a>
           </div>
         </div>
-        {hasContests ? (
-          <div className="flex justify-center">
-            <a
-              href={canonicalPath({ kind: 'contests' })}
-              className="inline-flex h-11 items-center justify-center rounded-full border-[1.5px] border-foreground px-5 text-sm font-bold outline-none hover:bg-secondary focus-visible:ring-[3px] focus-visible:ring-ring"
-            >
-              {m.home_contests_view_all()}
-            </a>
-          </div>
-        ) : null}
+        <div className="flex justify-center">
+          <a
+            href={canonicalPath({ kind: 'contests' })}
+            className="inline-flex h-11 items-center justify-center rounded-full border-[1.5px] border-foreground px-5 text-sm font-bold outline-none hover:bg-secondary focus-visible:ring-[3px] focus-visible:ring-ring"
+          >
+            {m.home_contests_view_all()}
+          </a>
+        </div>
       </div>
     </section>
   );

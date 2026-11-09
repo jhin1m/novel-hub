@@ -35,6 +35,7 @@
   --warning-soft: #fff1dc;
   --warning-foreground: #8a4b00;
   --band: #efe6d4;
+  --shelf-line: #d8ceb9;
   --border: #e6dece;
   --input: #8c8377;
   --ring: #0e6b5b;
@@ -107,6 +108,7 @@
     --warning-soft: #2e2312;
     --warning-foreground: #f2b866;
     --band: #161a18;
+    --shelf-line: #3a413d;
     --border: #2c322f;
     --input: #6e7771;
     --ring: #4fc2a8;
@@ -145,6 +147,7 @@
   --warning-soft: #2e2312;
   --warning-foreground: #f2b866;
   --band: #161a18;
+  --shelf-line: #3a413d;
   --border: #2c322f;
   --input: #6e7771;
   --ring: #4fc2a8;

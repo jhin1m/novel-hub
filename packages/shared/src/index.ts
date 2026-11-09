@@ -317,6 +317,7 @@ export {
 } from './schemas/reports';
 export {
   HOME_COMPLETED_LIMIT,
+  HOME_RECENT_LIMIT,
   HOME_CONTESTS_LIMIT,
   HOME_DEDUPE_SLACK,
   HOME_GENRE_TILE_COVERS,

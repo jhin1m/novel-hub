@@ -224,7 +224,7 @@ Nguồn: `plans/reports/brief-261109-1347-redesign-design-chot-report.md`.
 - [x] Header và footer
 - [x] Hero trang chủ và thanh Đọc tiếp của thành viên
 - [x] Bốn ô thể loại
-- [ ] Kệ truyện, xếp hạng, khối mời viết
+- [x] Kệ truyện, xếp hạng, khối mời viết
 - [ ] Trang truyện
 - [ ] Cập nhật docs
 - [ ] Báo cáo so ảnh 1440px/390px sáng tối

@@ -18,20 +18,9 @@ const story = (publicId: string): StoryCardDto => ({
   isMature: false,
 });
 
-const HIDE_PAST_6_ON_PHONES = 'max-md:[&amp;&gt;li:nth-child(n+7)]:hidden';
-
 describe('StoryRowList', () => {
-  const stories = ['a', 'b', 'c'].map(story);
-
-  it('renders every row in the HTML and hides none by default', () => {
-    const html = renderToStaticMarkup(<StoryRowList stories={stories} />);
+  it('renders every row in the HTML', () => {
+    const html = renderToStaticMarkup(<StoryRowList stories={['a', 'b', 'c'].map(story)} />);
     expect(html.match(/<li>/g)).toHaveLength(3);
-    expect(html).not.toContain('nth-child');
-  });
-
-  it('hides rows past the 6th below md with CSS when compactOnMobile', () => {
-    const html = renderToStaticMarkup(<StoryRowList stories={stories} compactOnMobile />);
-    expect(html.match(/<li>/g)).toHaveLength(3);
-    expect(html).toContain(HIDE_PAST_6_ON_PHONES);
   });
 });

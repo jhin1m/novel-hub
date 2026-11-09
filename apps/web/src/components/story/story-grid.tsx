@@ -10,13 +10,11 @@ export function StoryGrid({
   stories,
   priorityCount = 0,
   scroll = false,
-  showLatestChapter = false,
 }: {
   stories: StoryCardDto[];
   /** Covers on the first screen load eagerly. */
   priorityCount?: number;
   scroll?: boolean;
-  showLatestChapter?: boolean;
 }) {
   return (
     <ul
@@ -27,11 +25,7 @@ export function StoryGrid({
     >
       {stories.map((story, index) => (
         <li key={story.publicId} className={cn(scroll && 'max-sm:w-[140px] max-sm:shrink-0')}>
-          <StoryCard
-            story={story}
-            priority={index < priorityCount}
-            showLatestChapter={showLatestChapter}
-          />
+          <StoryCard story={story} priority={index < priorityCount} />
         </li>
       ))}
     </ul>

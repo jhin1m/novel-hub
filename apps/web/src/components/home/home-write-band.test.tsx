@@ -30,7 +30,9 @@ describe('HomeWriteBand', () => {
 
   it('keeps only the invitation, titling the band, without a running contest', () => {
     const html = render([]);
-    expect(html).toMatch(/<h2 id="write-band-title"[^>]*>Bắt đầu viết truyện của bạn</);
+    expect(html).toMatch(
+      /<h2 id="write-band-title"[^>]*>Có truyện muốn <span class="text-primary">kể<\/span>\?<\/h2>/,
+    );
     expect(html).not.toContain('<h3');
     expect(html).not.toContain('Cuộc thi đang diễn ra');
     expect(html).not.toContain('href="/contests');

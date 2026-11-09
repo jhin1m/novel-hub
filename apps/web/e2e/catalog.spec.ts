@@ -1,7 +1,12 @@
 import { canonicalPath } from '@novel-hub/shared';
 import { expect, test } from '@playwright/test';
 import { gotoHydrated, signUp } from './helpers/accounts';
-import { type PublishedStory, allowMatureContent, createPublishedStory } from './helpers/content';
+import {
+  type PublishedStory,
+  allowMatureContent,
+  createPublishedStory,
+  markJustUpdated,
+} from './helpers/content';
 
 const LIST_CACHE = 'public, s-maxage=600, stale-while-revalidate=3600';
 const PAGE_CACHE = 'public, s-maxage=86400, stale-while-revalidate=3600';
@@ -67,6 +72,7 @@ const storyPath = (s: PublishedStory) => canonicalPath({ kind: 'story', ...s });
 test('home, tag and author pages list public stories, never 18+ or drafts, and are cached', async ({
   request,
 }) => {
+  await markJustUpdated(normal, mature);
   for (const path of ['/', '/tags/tien-hiep', `/authors/${normal.username}`]) {
     const res = await request.get(path, { maxRedirects: 0 });
     expect(res.status(), path).toBe(200);
@@ -79,7 +85,7 @@ test('home, tag and author pages list public stories, never 18+ or drafts, and a
   }
   const home = await (await request.get('/')).text();
   expect(home).not.toContain(other.title);
-  expect(home).toContain('Mới cập nhật');
+  expect(home).toContain('Vừa có chương mới');
   expect(home).not.toContain('Biên tập chọn');
   // Loaded in the browser for signed-in readers only.
   expect(home).not.toContain('Bạn đang đọc dở');
@@ -118,7 +124,6 @@ test('"new stories that need readers" lists new stories past the threshold, neve
   const heroTitle = (await page.locator('#featured-title').textContent()) ?? '';
   expect(heroTitle).not.toBe('');
   const spotlight = page.getByRole('region', { name: 'Truyện mới cần độc giả' });
-  await expect(spotlight.getByText('Truyện mới ra, đổi mỗi giờ')).toBeVisible();
   // Which qualifying stories make the 8 depends on the hour; the int tests pin the selection.
   const cards = spotlight.getByRole('listitem');
   await expect(cards.first()).toBeVisible();
@@ -127,14 +132,20 @@ test('"new stories that need readers" lists new stories past the threshold, neve
   }
 });
 
-test('"recently updated" rows show the latest readable chapter and link to the full list', async ({
+test('the new-chapter shelf names the latest readable chapter and links to the full list', async ({
+  page,
   request,
 }) => {
+  await markJustUpdated(latest);
   const html = await (await request.get('/')).text();
-  expect(html).toContain(`Chương 3 · Đỉnh núi ${run}`);
   expect(html).not.toContain(`Bản nháp ${run}`);
   expect(html).toMatch(
-    /<a [^>]*href="\/search\?sort=updated"[^>]*>Xem thêm truyện mới cập nhật<\/a>/,
+    /<a [^>]*href="\/search\?sort=updated"[^>]*aria-label="Xem thêm truyện mới cập nhật"[^>]*>Xem thêm<\/a>/,
+  );
+  await gotoHydrated(page, '/');
+  const shelf = page.locator('section[aria-labelledby="recent-title"]');
+  await expect(shelf.getByRole('listitem').filter({ hasText: latest.title })).toContainText(
+    'Chương 3 · Tiên hiệp',
   );
 });
 
@@ -145,12 +156,11 @@ test('"recently completed" lists completed stories, never 18+, and links to all 
   const html = await (await request.get('/')).text();
   expect(html).not.toContain(matureCompleted.title);
   expect(html).toMatch(
-    /<a [^>]*href="\/search\?status=completed"[^>]*>Xem truyện đã hoàn thành<\/a>/,
+    /<a [^>]*href="\/search\?status=completed"[^>]*aria-label="Xem thêm truyện đã hoàn thành"[^>]*>Xem thêm<\/a>/,
   );
 
   await gotoHydrated(page, '/');
-  const section = page.getByRole('region', { name: 'Vừa hoàn thành' });
-  await expect(section.getByText('Truyện đã ra đủ, đọc một mạch')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Trọn bộ, đọc một mạch' })).toBeVisible();
   const link = (id: string) =>
     page
       .locator(`section[aria-labelledby="${id}"]`)
@@ -158,20 +168,16 @@ test('"recently completed" lists completed stories, never 18+, and links to all 
   // The hero comes first: a section never repeats it (the notable list may pick any new story).
   const isHero = (await page.locator('#featured-title').textContent()) === completed.title;
   await expect(link('completed-title')).toHaveCount(isHero ? 0 : 1);
-  for (const id of ['spotlight-title', 'notable-title']) await expect(link(id)).toHaveCount(0);
+  await expect(link('spotlight-title')).toHaveCount(0);
 });
 
-test('a story shows in at most one of the hero, picks, completed, "need readers" and notable sections', async ({
+test('a story shows in at most one of the hero, picks, completed and "need readers" sections', async ({
   page,
 }) => {
   await gotoHydrated(page, '/');
-  const sections = [
-    'featured-title',
-    'picks-title',
-    'completed-title',
-    'spotlight-title',
-    'notable-title',
-  ].map((id) => page.locator(`section[aria-labelledby="${id}"]`));
+  const sections = ['featured-title', 'picks-title', 'completed-title', 'spotlight-title'].map(
+    (id) => page.locator(`section[aria-labelledby="${id}"]`),
+  );
   for (const title of [normal.title, latest.title, completed.title, `Truyện Mới ${run}`]) {
     let shownIn = 0;
     for (const section of sections) {
@@ -232,6 +238,7 @@ test('moving between public pages loads documents, never server functions', asyn
   page.on('request', (req) => {
     if (req.url().includes('/_serverFn/')) serverFnCalls.push(req.url());
   });
+  await markJustUpdated(normal);
   await gotoHydrated(page, '/');
   await page.getByRole('link', { name: normal.title }).first().click();
   await expect(page).toHaveURL(storyPath(normal));
@@ -304,8 +311,14 @@ test('turning 18+ on in settings (with the age statement) adds 18+ stories to th
   await expect(dialog).toBeHidden();
   await expect(toggle).toBeChecked();
 
+  await markJustUpdated(mature);
   await gotoHydrated(page, '/');
-  await expect(page.getByRole('link', { name: mature.title }).first()).toBeVisible();
+  const matureCard = page
+    .locator('section[aria-labelledby="recent-title"]')
+    .getByRole('listitem')
+    .filter({ hasText: mature.title });
+  await expect(matureCard).toBeVisible();
+  await expect(matureCard.getByText('18+', { exact: true })).toBeVisible();
   await gotoHydrated(page, storyPath(mature));
   await expect(page.getByRole('alertdialog')).toBeHidden();
 

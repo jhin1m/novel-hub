@@ -62,7 +62,7 @@ describe('claimSections', () => {
 });
 
 describe('claimSections on the home page order', () => {
-  // hero, picks, rankings (period shown first), recently completed, spotlight, notable.
+  // hero, picks, rankings (period shown first), recently completed, spotlight.
   const home = (o: { ranking: Story[]; completed: Story[]; completedSsr?: Story[] }) =>
     ids(
       claimSections([
@@ -70,8 +70,7 @@ describe('claimSections on the home page order', () => {
         section(list('p'), 3),
         section(o.ranking, 5, { filtered: false }),
         section(o.completed, 12, { alsoClaim: o.completedSsr ?? o.completed }),
-        section(list('c', 'n1', 'r'), 8),
-        section(list('c', 'n2', 'r'), 12),
+        section(list('h', 'c', 'n1', 'r'), 8),
       ]),
     );
 
@@ -79,21 +78,19 @@ describe('claimSections on the home page order', () => {
     expect(home({ ranking: list('r'), completed: list('r', 'c') })[3]).toEqual(['c']);
   });
 
-  it('shows a completed new story there only, not in the spotlight or the notable band', () => {
-    const [, , , completed, spotlight, notable] = home({ ranking: [], completed: list('c') });
+  it('shows a completed new story there only, and never the hero in the spotlight', () => {
+    const [, , , completed, spotlight] = home({ ranking: [], completed: list('c') });
     expect(completed).toEqual(['c']);
     expect(spotlight).toEqual(['n1', 'r']);
-    expect(notable).toEqual(['n2']);
   });
 
   it('still claims a server-rendered story the 18+ list pushed out, for the sections below', () => {
-    const [, , , completed, spotlight, notable] = home({
+    const [, , , completed, spotlight] = home({
       ranking: [],
       completed: list('m'),
       completedSsr: list('c'),
     });
     expect(completed).toEqual(['m']);
     expect(spotlight).toEqual(['n1', 'r']);
-    expect(notable).toEqual(['n2']);
   });
 });

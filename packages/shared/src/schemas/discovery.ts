@@ -22,6 +22,9 @@ export const HOME_DEDUPE_SLACK = 8;
 /** Most stories the home page's "recently completed" section shows. */
 export const HOME_COMPLETED_LIMIT = 12;
 
+/** Covers on the home page's "just got a new chapter" shelf. */
+export const HOME_RECENT_LIMIT = 10;
+
 /** Most running contests the home page shows, ending soonest first. */
 export const HOME_CONTESTS_LIMIT = 2;
 

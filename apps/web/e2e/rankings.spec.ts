@@ -76,7 +76,7 @@ test('the home page shows the top of every period, without 18+, switching in the
   expect(html).not.toContain(mature.title);
 
   await gotoHydrated(page, '/');
-  const section = page.getByRole('region', { name: 'Bảng xếp hạng' });
+  const section = page.getByRole('region', { name: 'Đang được đọc nhiều' });
   const titles = () => section.getByRole('list').getByRole('heading').allTextContents();
   await expect(section.getByRole('button', { name: 'Tuần' })).toHaveAttribute(
     'aria-pressed',
@@ -86,10 +86,6 @@ test('the home page shows the top of every period, without 18+, switching in the
   await expect(section.getByRole('link', { name: 'Xem đủ bảng tuần' })).toHaveAttribute(
     'href',
     '/rankings/week',
-  );
-  await expect(section.getByRole('link', { name: 'Được đề cử nhiều' })).toHaveAttribute(
-    'href',
-    '/rankings/nominations',
   );
 
   // Every period is in the page already: switching sends no request.

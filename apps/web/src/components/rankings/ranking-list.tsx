@@ -5,15 +5,9 @@ import { StoryCard } from '../story/story-card';
 
 /**
  * A ranking: a large rank number on the left of each compact story row, best first. The score is
- * never shown, only the order. `priority` loads the first covers eagerly (off below the fold).
+ * never shown, only the order. The first covers load eagerly.
  */
-export function RankingList({
-  stories,
-  priority = true,
-}: {
-  stories: StoryCardDto[];
-  priority?: boolean;
-}) {
+export function RankingList({ stories }: { stories: StoryCardDto[] }) {
   return (
     // `grid-cols-1` caps the column at the page width, so a long row truncates instead of widening it.
     <ol className="grid grid-cols-1 gap-1 rounded-[22px] border border-border bg-card p-2 lg:grid-cols-2">
@@ -30,7 +24,7 @@ export function RankingList({
             {index + 1}
           </span>
           <div className="min-w-0 flex-1">
-            <StoryCard story={story} layout="row" priority={priority && index < 4} />
+            <StoryCard story={story} layout="row" priority={index < 4} />
           </div>
         </li>
       ))}

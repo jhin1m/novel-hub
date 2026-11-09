@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Kệ truyện, xếp hạng, khối mời viết"
-status: pending
+status: done
 priority: P1
 effort: "4h"
 dependencies: [3, 4]
@@ -9,7 +9,7 @@ dependencies: [3, 4]
 
 # Phase 5: Kệ truyện, xếp hạng, khối mời viết
 
-**Status:** pending
+**Status:** done
 
 ## Bối cảnh chung
 

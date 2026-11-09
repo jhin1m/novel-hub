@@ -177,6 +177,18 @@ export async function allowMatureContent(email: string): Promise<void> {
   }
 }
 
+/** Puts stories first among the recently updated: the home shelf only has room for a few. */
+export async function markJustUpdated(...stories: PublishedStory[]): Promise<void> {
+  const { pool } = createTestDb();
+  try {
+    await pool.query('update stories set last_chapter_at = now() where public_id = any($1)', [
+      stories.map((story) => story.publicId),
+    ]);
+  } finally {
+    await pool.end();
+  }
+}
+
 /**
  * Publishes the next chapter of `story` as its author, straight in the test database (the same
  * `core` call the publish route makes). Returns the new chapter's path.

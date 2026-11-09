@@ -1,7 +1,7 @@
 ---
 phase: 8
 title: "Báo cáo so ảnh 1440px/390px sáng tối"
-status: pending
+status: done
 priority: P1
 effort: "2h"
 dependencies: [1, 2, 3, 4, 5, 6, 7]
@@ -9,7 +9,7 @@ dependencies: [1, 2, 3, 4, 5, 6, 7]
 
 # Phase 8: Báo cáo so ảnh 1440px/390px sáng tối
 
-**Status:** pending
+**Status:** done
 
 ## Bối cảnh chung
 

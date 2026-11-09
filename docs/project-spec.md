@@ -227,7 +227,7 @@ Nguồn: `plans/reports/brief-261109-1347-redesign-design-chot-report.md`.
 - [x] Kệ truyện, xếp hạng, khối mời viết
 - [x] Trang truyện
 - [x] Cập nhật docs
-- [ ] Báo cáo so ảnh 1440px/390px sáng tối
+- [x] Báo cáo so ảnh 1440px/390px sáng tối
 - [ ] Thanh Đọc tiếp cho khách
 
 ### Giai đoạn 3 (sau cùng)

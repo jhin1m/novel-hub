@@ -38,7 +38,7 @@ Nghiên cứu: `research/researcher-01-font-and-blur-hero-report.md`, `research/
 | 5 | [Kệ truyện, xếp hạng, khối mời viết](./phase-05-home-shelves-rankings-and-write-band.md) | mục 5 | Done |
 | 6 | [Trang truyện](./phase-06-story-page.md) | mục 3 | Done |
 | 7 | [Cập nhật docs](./phase-07-update-docs.md) | mục 9 | Done |
-| 8 | [Báo cáo so ảnh 1440px/390px sáng tối](./phase-08-visual-comparison-report.md) | "Xong khi" | Pending |
+| 8 | [Báo cáo so ảnh 1440px/390px sáng tối](./phase-08-visual-comparison-report.md) | "Xong khi" | Done |
 | 9 | [Thanh Đọc tiếp cho khách](./phase-09-guest-continue-reading-bar.md) (phase cuối) | mục 8 | Pending |
 
 Thứ tự tuần tự. Phụ thuộc chính: 3 cần 1; 4 và 6 dùng `CoverBackdrop` của 3; 6 dùng `StoryShelfCard` của 5; 9 dùng thanh của 3 và nối thêm vào báo cáo của 8. Phase 9 đứng cuối theo yêu cầu, nên phase 7 và 8 làm trước nó, và phase 9 tự bổ sung docs và ảnh của mình.

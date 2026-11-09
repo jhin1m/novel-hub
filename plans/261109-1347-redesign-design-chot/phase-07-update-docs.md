@@ -1,7 +1,7 @@
 ---
 phase: 7
 title: "Cập nhật docs"
-status: pending
+status: done
 priority: P2
 effort: "1.5h"
 dependencies: [1, 2, 3, 4, 5, 6]
@@ -9,7 +9,7 @@ dependencies: [1, 2, 3, 4, 5, 6]
 
 # Phase 7: Cập nhật docs
 
-**Status:** pending
+**Status:** done
 
 ## Bối cảnh chung
 

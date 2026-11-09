@@ -34,7 +34,7 @@ Toàn bộ TypeScript, một monorepo, type dùng chung từ DB tới UI. Pin ve
 | Auth | Better Auth (adapter Drizzle) | Email/mật khẩu + OAuth Google; bắt buộc xác thực email trước khi đăng truyện, chương, bình luận |
 | Editor | Tiptap (ProseMirror) | Lưu JSON, render HTML khi đăng |
 | UI styling | Tailwind CSS v4 + CSS variables; shadcn/ui chỉ thêm component cần dùng | Tokens khai báo một nơi (mục 8); kèm dependency bắt buộc của shadcn (Radix, clsx, tailwind-merge, class-variance-authority) |
-| Font | `@fontsource-variable/plus-jakarta-sans` (giao diện), `@fontsource-variable/source-serif-4` (nội dung), `@fontsource-variable/literata`, `@fontsource-variable/noto-serif` (tuỳ chọn trang đọc) | Self-host, subset tiếng Việt; không gọi Google Fonts |
+| Font | `@fontsource/be-vietnam-pro` (giao diện, 400-800; user đồng ý 2026-11-09, tạm chấp nhận, đổi qua `--font-ui`), `@fontsource-variable/source-serif-4` (chỉ nội dung chương), `@fontsource-variable/literata`, `@fontsource-variable/noto-serif` (tuỳ chọn trang đọc) | Self-host, subset tiếng Việt; không gọi Google Fonts |
 | i18n | Paraglide JS (inlang) | Compile-time, type-safe, tree-shake; tiếng Việt mặc định |
 | Sanitize HTML | `sanitize-html` | Chạy phía server khi đăng chương; whitelist đúng các thẻ Tiptap sinh ra |
 | Xử lý ảnh | `sharp` | Resize, chuyển WebP |
@@ -226,7 +226,7 @@ Nguồn: `plans/reports/brief-261109-1347-redesign-design-chot-report.md`.
 - [x] Bốn ô thể loại
 - [x] Kệ truyện, xếp hạng, khối mời viết
 - [x] Trang truyện
-- [ ] Cập nhật docs
+- [x] Cập nhật docs
 - [ ] Báo cáo so ảnh 1440px/390px sáng tối
 - [ ] Thanh Đọc tiếp cho khách
 
@@ -304,10 +304,11 @@ Hướng "ấm, như một ứng dụng đọc", mobile-first. Khu đọc gần 
 
 **Nền tảng chung**
 
-- Màu: nền ngà ấm, nội dung đặt trên thẻ trắng, một màu nhấn duy nhất (mòng két) chỉ cho hành động chính, mục đang chọn, tiến độ, focus. Khai báo bằng CSS variables. Hai theme site: Ngà (sáng, mặc định) và Tối; người dùng chọn Theo hệ thống (mặc định), Ngà hoặc Tối ở menu tài khoản và `/settings`; khách lưu localStorage, người đã đăng nhập đồng bộ thêm vào `users.preferences`. Theme áp bằng script inline trước khi vẽ, HTML không phụ thuộc cookie. Khu đọc vẫn có 6 preset riêng; không chọn preset thì theo theme site (user chốt 2026-10-07, [auto]).
-- Chữ: Source Serif 4 cho nội dung truyện, Plus Jakarta Sans cho giao diện. Self-host font, subset đủ tiếng Việt.
+- Màu: nền ngà ấm, nội dung đặt trên thẻ trắng, một màu nhấn duy nhất (mòng két) chỉ cho hành động chính, mục đang chọn, tiến độ, focus; ngoại lệ: một từ nhấn trong tiêu đề khu trang chủ, logo (ô dấu trang và chữ "Say"), số thứ hạng 1-3. Khai báo bằng CSS variables. Hai theme site: Ngà (sáng, mặc định) và Tối; người dùng chọn Theo hệ thống (mặc định), Ngà hoặc Tối ở công tắc giao diện dưới footer, menu tài khoản và `/settings`; khách lưu localStorage, người đã đăng nhập đồng bộ thêm vào `users.preferences`. Theme áp bằng script inline trước khi vẽ, HTML không phụ thuộc cookie. Khu đọc vẫn có 6 preset riêng; không chọn preset thì theo theme site (user chốt 2026-10-07, [auto]).
+- Chữ: Source Serif 4 cho nội dung chương, Be Vietnam Pro cho giao diện. Self-host font, subset đủ tiếng Việt.
 - Nguồn chuẩn về thiết kế: `docs/design-guidelines.md` (ghi link Design System và mockup) và file tokens trong `apps/web/src/styles/`. Khi hai nơi lệch nhau, file tokens trong repo là chuẩn.
-- Nhiều khoảng trắng, bo góc mềm, nút và chip dạng viên, bóng đổ chỉ ở bìa nổi và lớp nổi (dialog), không gradient.
+- Nhiều khoảng trắng, bo góc mềm, nút và chip dạng viên, bóng đổ chỉ ở bìa nổi và lớp nổi (dialog), không gradient. Hero trang chủ, ô thể loại và trang truyện dùng bìa làm mờ bằng CSS, chỉ `<img>` + `filter` + lớp phủ trơn.
+- Header của khách có Đăng nhập, Đăng ký (dưới 768px gộp vào menu của nút tròn).
 - Không thêm thanh tiến trình chuyển trang ở đầu màn hình.
 - Không hiển thị ID nội bộ ra giao diện.
 - Mọi chuỗi hiển thị đi qua hệ thống i18n (tiếng Việt mặc định), không hardcode.
@@ -317,7 +318,7 @@ Hướng "ấm, như một ứng dụng đọc", mobile-first. Khu đọc gần 
 - Cỡ chữ mặc định 18–20px trên mobile, line-height 1.75–1.9 (dấu tiếng Việt chồng nhiều tầng), độ dài dòng 60–75 ký tự trên desktop.
 - Bảng tuỳ chỉnh (mở từ nút cài đặt trên thanh điều hướng, xem trước ngay khi chỉnh):
   - Màu nền: bộ preset có sẵn (sáng, ngà, sepia, xanh dịu, xám tối, đen OLED); mỗi preset đi kèm màu chữ đạt tương phản WCAG AA. Không có bảng chọn màu tự do.
-  - Font: Source Serif 4 (mặc định), Literata, Noto Serif, Plus Jakarta Sans (tối đa 4, đều self-host subset tiếng Việt). Font khác mặc định chỉ tải khi người đọc chọn.
+  - Font: Source Serif 4 (mặc định), Literata, Noto Serif, Be Vietnam Pro (tối đa 4, đều self-host subset tiếng Việt). Literata, Noto Serif chỉ tải khi người đọc chọn; Be Vietnam Pro là font giao diện nên luôn có sẵn.
   - Cỡ chữ 14–28px, khoảng cách dòng 1.5–2.2, khoảng cách đoạn, độ rộng cột chữ (hẹp/vừa/rộng, chỉ trên desktop), căn lề trái/đều.
   - Nút "Khôi phục mặc định".
 - Lưu cài đặt ở localStorage để script inline áp dụng trước khi vẽ trang; người đã đăng nhập đồng bộ thêm vào `users.preferences` để dùng chung trên nhiều thiết bị.
@@ -328,9 +329,9 @@ Hướng "ấm, như một ứng dụng đọc", mobile-first. Khu đọc gần 
 **Khu khám phá**
 
 - Bìa là trung tâm thị giác, tỷ lệ 2:3. Bìa mặc định dạng chữ (tên truyện, bút danh, màu nền sinh từ tag chính, gáy sách bên trái, chữ cái đầu lớn mờ) phải đủ đẹp để một lưới toàn bìa mặc định vẫn chỉnh tề.
-- Thẻ truyện hiện: tag chính, số chương, tổng số chữ, trạng thái, lần cập nhật gần nhất, nhãn có dùng AI nếu có.
-- Trang chủ có hero truyện nổi bật, chip thể loại, dải nền tông trơn (`--band`) sau một khu; mobile có thanh tab dưới 5 mục (Trang chủ, Khám phá, Tủ truyện, Viết, Tôi).
-- Trang truyện: dải màu tag chính chứa bìa, tên, tác giả và hàng số liệu (số chương, số chữ, tần suất ra chương, lần cập nhật); nội dung đặt trên tấm nền chồng lên dải; mobile có nút đọc dính đáy.
+- Thẻ truyện hiện: tag chính, số chương, tổng số chữ, trạng thái, lần cập nhật gần nhất, nhãn có dùng AI nếu có. Riêng kệ trang chủ chỉ hiện bìa, tên truyện, một dòng meta ("Chương N · thể loại" ở kệ "Vừa có chương mới", "N chương · thể loại" ở các kệ còn lại) và nhãn AI, 18+.
+- Trang chủ, từ trên xuống: hero bìa mờ (truyện nổi bật mới; truyện chưa có bìa thì nền trang và bìa chữ), thanh "Đọc tiếp", 4 ô thể loại, kệ bìa "Vừa có chương mới" cạnh "Đang được đọc nhiều", "Truyện nổi bật" của mod, "Trọn bộ, đọc một mạch", "Truyện mới cần độc giả", khối "Có truyện muốn kể?" trên dải nền tông trơn (`--band`); mobile có thanh tab dưới 5 mục (Trang chủ, Khám phá, Tủ truyện, Viết, Tôi).
+- Trang truyện: nền bìa làm mờ (truyện chưa có bìa thì nền trang và bìa chữ) chứa bìa, tên, tác giả và hàng số liệu (số chương, số chữ, tần suất ra chương, lần cập nhật); nội dung đặt trên tấm nền chồng lên phần đầu trang, giới thiệu truyện đứng đầu nội dung; mobile có nút đọc dính đáy.
 
 **Khu viết**
 

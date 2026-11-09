@@ -89,7 +89,10 @@ test.describe('story ratings', () => {
     const story = await createPublishedStory({ title: `Tác Giả Xem ${run}`, published: 1 });
     await gotoHydrated(page, storyPath(story));
     let section = await scrollToRatings(page);
-    await expect(section.getByRole('link', { name: 'Đăng nhập' })).toBeVisible();
+    await expect(section.getByRole('link', { name: 'Đăng nhập' })).toHaveAttribute(
+      'href',
+      /^\/sign-in\?redirect=[^&]+&reason=rating$/,
+    );
     await expect(section.getByRole('radio')).toHaveCount(0);
 
     const author = await signUpVerified(page);

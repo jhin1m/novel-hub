@@ -27,6 +27,15 @@ describe('RankingList', () => {
     expect(html.indexOf('Truyện 2')).toBeLessThan(html.indexOf('Truyện 5'));
     expect(html.indexOf('Truyện 5')).toBeLessThan(html.indexOf('Truyện 3'));
   });
+
+  it('loads the first four covers eagerly unless `priority` is off', () => {
+    const withCover = (n: number) => ({ ...story(n), coverUrl: `https://img.example/${n}.webp` });
+    const stories = [1, 2, 3, 4, 5].map(withCover);
+    const eager = renderToStaticMarkup(<RankingList stories={stories} />);
+    expect(eager.match(/loading="eager"/g)).toHaveLength(4);
+    const lazy = renderToStaticMarkup(<RankingList stories={stories} priority={false} />);
+    expect(lazy).not.toContain('loading="eager"');
+  });
 });
 
 describe('RankingTabs', () => {

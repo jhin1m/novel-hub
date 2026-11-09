@@ -11,6 +11,10 @@ export const ACTION_LABELS: Record<ModerationAction, () => string> = {
   restore_comment: m.moderation_action_restore_comment,
   hide_rating: m.moderation_action_hide_rating,
   restore_rating: m.moderation_action_restore_rating,
+  hide_announcement: m.moderation_action_hide_announcement,
+  restore_announcement: m.moderation_action_restore_announcement,
+  unpin_comment: m.moderation_action_unpin_comment,
+  warn_user: m.moderation_action_warn_user,
   mute_user: m.moderation_action_mute_user,
   unmute_user: m.moderation_action_unmute_user,
   ban_user: m.moderation_action_ban_user,
@@ -42,6 +46,7 @@ export function storyActions(story: StoryContext): CardAction[] {
   return actions;
 }
 
+/** Warning comes first: the lightest step, before muting or banning. */
 export function userActions(
   username: string,
   status: StoryContext['author']['status'],
@@ -49,17 +54,24 @@ export function userActions(
   switch (status) {
     case 'active':
       return [
+        { action: 'warn_user', username },
         { action: 'mute_user', username },
         { action: 'ban_user', username },
       ];
     case 'muted':
       return [
+        { action: 'warn_user', username },
         { action: 'unmute_user', username },
         { action: 'ban_user', username },
       ];
     case 'banned':
       return [{ action: 'unban_user', username }];
   }
+}
+
+/** Actions the moderator's note is sent with to the user, so they wait for a note. */
+export function needsNote(action: CardAction): boolean {
+  return action.action === 'warn_user';
 }
 
 /** The viewer as the action list needs them. */
@@ -80,25 +92,45 @@ export function canActOn(
   return owner.role !== 'mod' || viewer.role === 'admin';
 }
 
+/**
+ * The account a target belongs to (mirror of `reportTargetOwner` in core): the user, the writer of
+ * the comment or rating, or the author of the story, chapter or announcement.
+ */
+export function reportOwner(target: ReportDto['target']): UserContext | null {
+  switch (target.type) {
+    case 'user':
+      return target.user;
+    case 'comment':
+      return target.comment.writer;
+    case 'rating':
+      return target.rating.writer;
+    case 'story':
+    case 'chapter':
+    case 'announcement':
+      return target.story.author;
+    case 'missing':
+      return null;
+  }
+}
+
 /** Every action the viewer may take on the report's target in its current state. */
 export function actionsFor(report: ReportDto, viewer: Viewer): CardAction[] {
   const actions: CardAction[] = [];
   const { target } = report;
-  const owner =
-    target.type === 'user'
-      ? target.user
-      : target.type === 'comment'
-        ? target.comment.writer
-        : target.type === 'rating'
-          ? target.rating.writer
-          : target.type === 'story' || target.type === 'chapter'
-            ? target.story.author
-            : null;
+  const owner = reportOwner(target);
   if (owner && canActOn(viewer, owner)) {
     if (target.type === 'comment') {
       const { id: commentId, status } = target.comment;
       if (status === 'visible') actions.push({ action: 'hide_comment', commentId });
       if (status === 'hidden_by_mod') actions.push({ action: 'restore_comment', commentId });
+      if (target.comment.pinnedAt !== null) actions.push({ action: 'unpin_comment', commentId });
+    }
+    if (target.type === 'announcement') {
+      const { id: announcementId, status } = target.announcement;
+      if (status === 'visible') actions.push({ action: 'hide_announcement', announcementId });
+      if (status === 'hidden_by_mod') {
+        actions.push({ action: 'restore_announcement', announcementId });
+      }
     }
     if (target.type === 'rating') {
       const { id: ratingId, status } = target.rating;

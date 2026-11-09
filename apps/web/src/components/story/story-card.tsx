@@ -63,6 +63,16 @@ export function StoryCard({
                 : null}
             </span>
           </p>
+          {story.latestChapter ? (
+            <p className="truncate text-xs text-muted-foreground">
+              {story.latestChapter.title
+                ? m.story_card_latest_chapter_titled({
+                    number: String(story.latestChapter.number),
+                    title: story.latestChapter.title,
+                  })
+                : m.story_card_latest_chapter({ number: String(story.latestChapter.number) })}
+            </p>
+          ) : null}
           {story.isAiAssisted || story.isMature ? (
             <div className="flex flex-wrap gap-1">
               <StoryFlagBadges isAiAssisted={story.isAiAssisted} isMature={story.isMature} />

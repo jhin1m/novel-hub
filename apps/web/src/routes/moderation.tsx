@@ -2,14 +2,16 @@ import {
   REPORT_REASONS,
   REPORT_STATUSES,
   type ReportListQuery,
+  isValidPublicId,
   reportListQuerySchema,
 } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
-import { Link, createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { z } from 'zod';
 import { textLinkClass } from '../components/auth-ui';
 import { ContestAdminList } from '../components/moderation/contest-admin-list';
 import { ContestForm } from '../components/moderation/contest-form';
+import { FeatureSuggestions } from '../components/moderation/feature-suggestions';
 import { FeaturedSlotForm } from '../components/moderation/featured-slot-form';
 import { FeaturedSlotList } from '../components/moderation/featured-slot-list';
 import { MergeTagForm } from '../components/moderation/merge-tag-form';
@@ -17,6 +19,7 @@ import { TabLinks } from '../components/moderation/moderation-tab-links';
 import { REPORT_STATUS_LABELS, ReportCard } from '../components/moderation/report-card';
 import { REASON_LABELS } from '../components/report/reason-labels';
 import { PageShell, PageTitle } from '../components/page-shell';
+import { SignInPromptLink } from '../components/sign-in-prompt-link';
 import { SiteLayout } from '../components/site-layout';
 import { Pagination } from '../components/story/pagination';
 import { ApiError } from '../lib/api-errors';
@@ -36,6 +39,8 @@ const TAB_LABELS: Record<(typeof MODERATION_TABS)[number], () => string> = {
 
 const moderationSearchSchema = reportListQuerySchema.extend({
   tab: z.enum(MODERATION_TABS).optional().catch(undefined),
+  /** Featured tab: the story a suggestion put in the form, by public id. */
+  story: z.string().refine(isValidPublicId).optional().catch(undefined),
 });
 
 export type ModerationSearch = z.output<typeof moderationSearchSchema>;
@@ -47,6 +52,7 @@ function moderationHref(search: ModerationSearch): string {
   if (search.status !== 'open') params.set('status', search.status);
   if (search.reason) params.set('reason', search.reason);
   if (search.page > 1) params.set('page', String(search.page));
+  if (search.story) params.set('story', search.story);
   const query = params.toString();
   return query ? `/moderation?${query}` : '/moderation';
 }
@@ -62,13 +68,15 @@ export const Route = createFileRoute('/moderation')({
 
 function ModerationPage() {
   const search = Route.useSearch();
+  const navigate = useNavigate();
   const me = useMe();
   const role = me.data?.role;
   const allowed = role === 'mod' || role === 'admin';
 
   return (
     <SiteLayout>
-      <PageShell>
+      {/* A working queue reads better as one narrower column than across the full site grid. */}
+      <PageShell className="max-w-[960px]">
         <PageTitle>{m.moderation_title()}</PageTitle>
         {me.isPending ? (
           <p role="status" className="text-muted-foreground">
@@ -79,9 +87,7 @@ function ModerationPage() {
         ) : !me.data ? (
           <p>
             {m.moderation_sign_in()}{' '}
-            <Link to="/sign-in" className={textLinkClass}>
-              {m.home_sign_in()}
-            </Link>
+            <SignInPromptLink className={textLinkClass}>{m.home_sign_in()}</SignInPromptLink>
           </p>
         ) : !allowed ? (
           <p role="alert">{m.moderation_forbidden()}</p>
@@ -92,7 +98,12 @@ function ModerationPage() {
               items={MODERATION_TABS.map((tab) => ({
                 key: tab,
                 label: TAB_LABELS[tab](),
-                search: { ...search, tab: tab === 'reports' ? undefined : tab, page: 1 },
+                search: {
+                  ...search,
+                  tab: tab === 'reports' ? undefined : tab,
+                  page: 1,
+                  story: undefined,
+                },
                 current: (search.tab ?? 'reports') === tab,
               }))}
             />
@@ -100,7 +111,13 @@ function ModerationPage() {
               <MergeTagForm />
             ) : search.tab === 'featured' ? (
               <div className="flex flex-col gap-8">
-                <FeaturedSlotForm />
+                <FeatureSuggestions />
+                <FeaturedSlotForm
+                  initialStory={search.story}
+                  onCreated={() =>
+                    void navigate({ to: '/moderation', search: { ...search, story: undefined } })
+                  }
+                />
                 <FeaturedSlotList />
               </div>
             ) : search.tab === 'contests' ? (
@@ -166,7 +183,7 @@ function ReportQueue({ search, viewer }: { search: ModerationSearch; viewer: MeU
           <ul className="flex flex-col gap-4">
             {list.data.items.map((report) => (
               <li key={report.reportId}>
-                <ReportCard report={report} viewer={viewer} />
+                <ReportCard report={report} viewer={viewer} warnings={list.data.warnings} />
               </li>
             ))}
           </ul>

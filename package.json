@@ -16,6 +16,7 @@
     "db:seed": "pnpm --filter @novel-hub/auth db:seed",
     "db:seed-demo": "pnpm --filter @novel-hub/auth db:seed-demo",
     "db:seed-tags": "pnpm --filter @novel-hub/auth db:seed-tags",
+    "user:set-role": "pnpm --filter @novel-hub/auth user:set-role",
     "cdn:purge": "pnpm --filter @novel-hub/worker cdn:purge",
     "search:reindex": "pnpm --filter @novel-hub/worker search:reindex",
     "typecheck": "pnpm -r --parallel typecheck",

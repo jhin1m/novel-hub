@@ -1,0 +1,217 @@
+# Production stack: cloudflared (profile `tunnel`), web, worker, one-shot migrate, postgres, redis,
+# meilisearch. Run it from the repo root with the production `.env` next to this file:
+#   docker compose -f docker-compose.prod.yml build
+# Step-by-step instructions (first deploy, update, rollback): docs/deployment-guide.md.
+#
+# No host port is published (the server may be shared with other sites): Cloudflare reaches the
+# web service through the tunnel (http://web:3000) and checks run with `docker compose exec`.
+# Use `-p <name>` to run a second copy next to this one (tests).
+#
+# The server is shared with other sites, so every service has a hard memory cap and no-new-privileges.
+# The caps leave room for the heaviest normal workload (image build excluded: it runs outside the
+# containers); raise one only after `docker stats` shows it near the cap.
+
+name: novel-hub-prod
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '3'
+
+x-hardening: &hardening
+  security_opt: ['no-new-privileges:true']
+
+# Both app services read the same env file; each one blanks the secrets it never uses (an empty
+# value counts as unset), so a compromised process holds only what it needs.
+x-app-env-file: &app-env-file ${APP_ENV_FILE:-.env}
+
+services:
+  postgres:
+    image: postgres:18.6-alpine
+    restart: unless-stopped
+    mem_limit: 2g
+    <<: *hardening
+    logging: *logging
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER missing in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD missing in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB missing in .env}
+    volumes:
+      # PG18 keeps PGDATA under a major-version directory inside /var/lib/postgresql.
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      # -h 127.0.0.1: probe over TCP, the temporary init server only listens on the unix socket.
+      test: ['CMD-SHELL', 'pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:8.10-alpine
+    restart: unless-stopped
+    mem_limit: 768m
+    <<: *hardening
+    logging: *logging
+    # AOF (spec: operations); BullMQ requires noeviction, so the cap makes writes fail loudly
+    # instead of evicting queue keys. maxmemory sits below mem_limit to leave room for the AOF
+    # rewrite fork and buffers.
+    command: >-
+      redis-server --appendonly yes --appendfsync everysec --maxmemory 512mb
+      --maxmemory-policy noeviction
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.54
+    restart: unless-stopped
+    mem_limit: 2g
+    <<: *hardening
+    logging: *logging
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:?MEILI_MASTER_KEY missing in .env}
+      MEILI_ENV: production
+      MEILI_NO_ANALYTICS: 'true'
+    volumes:
+      - meilidata:/meili_data
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:7700/health']
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  # Applies pending migrations once, before web and worker start.
+  migrate:
+    image: novel-hub-worker:${IMAGE_TAG:-latest}
+    pull_policy: never
+    restart: 'no'
+    mem_limit: 512m
+    <<: *hardening
+    logging: *logging
+    command: ['node', '--import', 'tsx', '../../packages/db/src/migrate.ts']
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL missing in .env}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      target: web
+    image: novel-hub-web:${IMAGE_TAG:-latest}
+    pull_policy: never
+    restart: unless-stopped
+    mem_limit: 1g
+    <<: *hardening
+    logging: *logging
+    init: true
+    stop_grace_period: 30s
+    env_file: *app-env-file
+    environment:
+      # Postgres and the tunnel are configured elsewhere; the app only needs DATABASE_URL.
+      POSTGRES_PASSWORD: ''
+      CLOUDFLARE_TUNNEL_TOKEN: ''
+      # The web never calls Cloudflare or sends mail (the worker does).
+      CF_API_TOKEN: ''
+      SMTP_PASS: ''
+      # MEILI_MASTER_KEY stays set on purpose: the web only reads it to refuse a search key that
+      # equals the master key.
+    healthcheck:
+      # /api/v1/health also opens the lazy connections, so a wrong env shows up as unhealthy.
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/v1/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      target: worker
+    image: novel-hub-worker:${IMAGE_TAG:-latest}
+    pull_policy: never
+    restart: unless-stopped
+    mem_limit: 1g
+    <<: *hardening
+    logging: *logging
+    init: true
+    stop_grace_period: 30s
+    env_file: *app-env-file
+    environment:
+      # Postgres and the tunnel are configured elsewhere; the app only needs DATABASE_URL.
+      POSTGRES_PASSWORD: ''
+      CLOUDFLARE_TUNNEL_TOKEN: ''
+      # The worker never signs users in and does not use object storage.
+      BETTER_AUTH_SECRET: ''
+      GOOGLE_CLIENT_SECRET: ''
+      S3_SECRET_ACCESS_KEY: ''
+      WORKER_HEARTBEAT_FILE: /tmp/worker-heartbeat
+    healthcheck:
+      # Healthy while the heartbeat file was refreshed in the last 90 seconds.
+      test:
+        - CMD
+        - node
+        - -e
+        - "try{process.exit(Date.now()-require('fs').statSync('/tmp/worker-heartbeat').mtimeMs<90000?0:1)}catch{process.exit(1)}"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+
+  # Started with `--profile tunnel` once CLOUDFLARE_TUNNEL_TOKEN is set.
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.0
+    profiles: [tunnel]
+    restart: unless-stopped
+    mem_limit: 256m
+    <<: *hardening
+    logging: *logging
+    command: tunnel --no-autoupdate run
+    environment:
+      # No `:?` guard: compose interpolates inactive profiles too, so a required variable would
+      # break every command that does not use the tunnel. cloudflared exits without a token.
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+      # Fixed address so the healthcheck can reach the metrics server inside the container.
+      TUNNEL_METRICS: 127.0.0.1:20241
+    healthcheck:
+      test: ['CMD', 'cloudflared', 'tunnel', '--metrics', '127.0.0.1:20241', 'ready']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      web:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  redisdata:
+  meilidata:

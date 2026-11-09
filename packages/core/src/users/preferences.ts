@@ -26,9 +26,9 @@ export async function getPreferences(db: Db, userId: string): Promise<UserPrefer
 }
 
 /**
- * Changes only the given fields; `reader` is replaced as a whole. The row is locked while merging
- * so two tabs (one turning 18+ on, one changing the font size) never drop each other's change.
- * Turning 18+ on requires the reader to state they are 18 or older.
+ * Changes only the given fields; `reader` and `siteTheme` are each replaced as a whole. The row is
+ * locked while merging so two tabs (one turning 18+ on, one changing the font size) never drop
+ * each other's change. Turning 18+ on requires the reader to state they are 18 or older.
  */
 export async function updatePreferences(
   db: Db,
@@ -49,6 +49,7 @@ export async function updatePreferences(
       ...parseStored(row.preferences),
       ...(patch.showMature !== undefined && { showMature: patch.showMature }),
       ...(patch.reader !== undefined && { reader: patch.reader }),
+      ...(patch.siteTheme !== undefined && { siteTheme: patch.siteTheme }),
     });
     await tx.update(users).set({ preferences: next }).where(eq(users.id, userId));
     return ok(next);

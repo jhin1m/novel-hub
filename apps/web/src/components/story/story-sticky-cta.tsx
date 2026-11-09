@@ -13,7 +13,10 @@ export function StoryStickyCta({
   firstChapterNumber: number;
 }) {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card px-4 pt-[11px] pb-[calc(12px+env(safe-area-inset-bottom))] md:hidden">
+    <div
+      data-bottom-bar="md"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card pt-[11px] px-safe-4 pb-[calc(12px+env(safe-area-inset-bottom))] md:hidden"
+    >
       <ContinueReadingButton
         story={story}
         firstChapterNumber={firstChapterNumber}

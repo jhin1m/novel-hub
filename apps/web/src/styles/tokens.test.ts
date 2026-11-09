@@ -11,6 +11,14 @@ import { READER_PRESETS, TOKEN_VALUES, coverBackgrounds, resolvedScopes } from '
 
 const tokensCss = readFileSync(new URL('./tokens.css', import.meta.url), 'utf8');
 
+/** The CSS without comments, for checks on selectors and their order. */
+const tokensRules = tokensCss.replace(/\/\*[\s\S]*?\*\//g, '');
+
+/** Dark site theme on a dark system unless ivory is chosen (inside the dark media query). */
+const SYSTEM_DARK = ":root:where(:not([data-theme='ivory'])) {";
+/** Dark site theme chosen, whatever the system scheme. */
+const FORCED_DARK = ":root:where([data-theme='dark']) {";
+
 /** Every `--name: #hex;` declaration listed in `TOKEN_VALUES`. */
 function declarations(): Array<[string, string]> {
   const scopes = [
@@ -31,6 +39,26 @@ function missingDeclarations(css: string, decls: Array<[string, string]>): strin
   return decls
     .map(([name, value]) => `${name}: ${value};`.toLowerCase())
     .filter((line) => !haystack.includes(line));
+}
+
+/** Text between the `{` that ends `opening` and its matching `}`; empty when `opening` is absent. */
+function blockBody(css: string, opening: string): string {
+  const start = css.indexOf(opening);
+  if (start === -1) return '';
+  let depth = 1;
+  for (let i = start + opening.length; i < css.length; i++) {
+    if (css[i] === '{') depth++;
+    else if (css[i] === '}' && --depth === 0) return css.slice(start + opening.length, i);
+  }
+  return '';
+}
+
+/** Trimmed `property: value;` lines of a comment-free block body. */
+function declarationLines(body: string): string[] {
+  return body
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.endsWith(';'));
 }
 
 describe('design tokens', () => {
@@ -75,6 +103,35 @@ describe('design tokens', () => {
 
   it('every TOKEN_VALUES entry appears verbatim in tokens.css', () => {
     expect(missingDeclarations(tokensCss, declarations())).toEqual([]);
+  });
+
+  it('the forced dark block repeats the system dark block', () => {
+    const media = blockBody(tokensRules, '@media (prefers-color-scheme: dark) {');
+    const system = declarationLines(blockBody(media, SYSTEM_DARK));
+    const forced = declarationLines(blockBody(tokensRules, FORCED_DARK));
+    expect(system.length).toBeGreaterThan(0);
+    expect(forced).toEqual(system);
+  });
+
+  it('theme blocks keep the specificity of :root', () => {
+    expect(tokensRules).not.toContain(':root:not(');
+    expect(tokensRules.match(/^\s*:root\S*\s*\{/gm)?.map((line) => line.trim())).toEqual([
+      ':root {',
+      SYSTEM_DARK,
+      FORCED_DARK,
+    ]);
+    // Any other rule keyed on `data-theme` (e.g. `html[data-theme='dark']`) would outrank the presets.
+    expect(
+      tokensRules.match(/^[^{}\n]*data-theme[^{}\n]*\{/gm)?.map((line) => line.trim()),
+    ).toEqual([SYSTEM_DARK, FORCED_DARK]);
+  });
+
+  it('reader presets come after the theme blocks', () => {
+    const forcedDark = tokensRules.indexOf(FORCED_DARK);
+    expect(forcedDark).toBeGreaterThan(-1);
+    for (const preset of READER_PRESETS) {
+      expect(tokensRules.indexOf(`[data-reader-theme='${preset}']`)).toBeGreaterThan(forcedDark);
+    }
   });
 
   it('detects values that drift between TOKEN_VALUES and the CSS', () => {

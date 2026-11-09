@@ -2,6 +2,7 @@ import { m } from '@novel-hub/shared/messages';
 import { Link } from '@tanstack/react-router';
 import type { Editor } from '@tiptap/react';
 import { ArrowLeft } from 'lucide-react';
+import { useId } from 'react';
 import { ChapterStatusBadge } from '@/components/status-badges';
 import { Badge } from '@/components/ui/badge';
 import type { SaveStatus } from '@/lib/autosave';
@@ -11,7 +12,8 @@ import { useMediaQuery } from '@/lib/use-media-query';
 import { DESKTOP_QUERY, wordCountText } from './chapter-editor-helpers';
 import { EditorToolbar } from './editor-toolbar';
 import { FocusToggle } from './focus-toggle';
-import { PublishDialog } from './publish-dialog';
+import { publishBlockReason } from './publish-block-reason';
+import { PublishDialog, publishBlockReasonText } from './publish-dialog';
 import { RevisionHistorySheet } from './revision-history-sheet';
 import { SaveStatusText } from './save-status';
 
@@ -21,10 +23,16 @@ import { SaveStatusText } from './save-status';
  * phone the word count and the unpublished pill move to `MobileChapterMeta` instead.
  */
 const HEADER_GRID =
-  'grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-2 px-3 ' +
+  'grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-2 px-safe-3 ' +
   "[grid-template-areas:'back_title_actions'_'back_status_actions'] " +
-  'md:h-[68px] md:grid-cols-[auto_minmax(0,auto)_minmax(0,1fr)_auto_auto_auto] md:gap-x-4 md:px-6 ' +
+  'md:h-[68px] md:grid-cols-[auto_minmax(0,auto)_minmax(0,1fr)_auto_auto_auto] md:gap-x-4 md:px-safe-6 ' +
   "md:[grid-template-areas:'back_title_pill_status_words_actions']";
+
+/**
+ * From here the header has room for the publish-lock reason beside the button; below it the
+ * reason takes its own line under the header row, which is already full at tablet widths.
+ */
+const WIDE_HEADER_QUERY = '(min-width: 1024px)';
 
 function UnpublishedPill({ className }: { className?: string }) {
   return (
@@ -83,7 +91,22 @@ export function EditorHeader({
   onRestore: (revision: RevisionSummary) => Promise<string | null>;
 }) {
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
+  const isWide = useMediaQuery(WIDE_HEADER_QUERY);
   const storyTitle = useMyStory(publicId).data?.title;
+  const reasonId = useId();
+  const blockReason = publishBlockReason(words, chapter.status);
+  const reason = blockReason ? (
+    <p
+      id={reasonId}
+      className={
+        isWide
+          ? 'line-clamp-2 max-w-[240px] text-right text-xs text-muted-foreground'
+          : 'px-3 pb-2 text-right text-[13px] text-muted-foreground md:px-6'
+      }
+    >
+      {publishBlockReasonText(blockReason)}
+    </p>
+  ) : null;
 
   if (focus) {
     return (
@@ -135,6 +158,7 @@ export function EditorHeader({
           <div className="flex items-center gap-1 [grid-area:actions] md:gap-2">
             <RevisionHistorySheet publicId={publicId} number={number} onRestore={onRestore} />
             <FocusToggle focus={focus} onChange={onFocusChange} />
+            {isWide ? reason : null}
             <PublishDialog
               number={number}
               status={chapter.status}
@@ -143,9 +167,11 @@ export function EditorHeader({
               error={dialogError}
               onPublish={onPublish}
               onSchedule={onSchedule}
+              describedBy={reason ? reasonId : undefined}
             />
           </div>
         </div>
+        {isWide ? null : reason}
       </header>
       {editor ? <EditorToolbar editor={editor} /> : null}
     </>

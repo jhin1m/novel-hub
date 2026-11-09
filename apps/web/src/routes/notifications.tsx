@@ -1,5 +1,5 @@
 import { m } from '@novel-hub/shared/messages';
-import { Link, createFileRoute } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { textLinkClass } from '../components/auth-ui';
 import { NotificationList } from '../components/notifications/notification-list';
 import { PageShell, PageTitle, pageCardClass } from '../components/page-shell';
@@ -8,6 +8,7 @@ import { NO_STORE } from '../lib/cache-headers';
 import { useMe } from '../lib/me';
 import { seo } from '../lib/seo';
 import { cn } from '../lib/utils';
+import { SignInPromptLink } from '../components/sign-in-prompt-link';
 
 export const Route = createFileRoute('/notifications')({
   // Everything here is personal and loaded in the browser; the page itself is never stored.
@@ -31,9 +32,7 @@ function NotificationsPage() {
         ) : !me.data ? (
           <section className={cn(pageCardClass, 'flex flex-col gap-2')}>
             <p>{m.notification_sign_in()}</p>
-            <Link to="/sign-in" className={textLinkClass}>
-              {m.home_sign_in()}
-            </Link>
+            <SignInPromptLink className={textLinkClass}>{m.home_sign_in()}</SignInPromptLink>
           </section>
         ) : (
           <NotificationList />

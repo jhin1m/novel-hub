@@ -12,6 +12,7 @@ import { ChapterContent } from '../components/reader/chapter-content';
 import { ChapterEnd } from '../components/reader/chapter-end';
 import { ChapterHeader } from '../components/reader/chapter-header';
 import { ChapterTocSheet } from '../components/reader/chapter-toc-sheet';
+import { ListenBar } from '../components/reader/listen-bar';
 import { MatureGate, useMatureAllowed } from '../components/reader/mature-gate';
 import { type ReaderPanel, ReaderControls } from '../components/reader/reader-controls';
 import { ReaderSettingsSheet } from '../components/reader/reader-settings-sheet';
@@ -28,9 +29,9 @@ import { findParagraph } from '../lib/reader/paragraph-elements';
 import { useParagraphSelection } from '../lib/reader/use-paragraph-selection';
 import { useReadingProgress } from '../lib/reader/use-reading-progress';
 import { useResumeScroll } from '../lib/reader/use-resume-scroll';
+import { useChapterSpeech } from '../lib/reader/tts/use-chapter-speech';
 import { useViewBeacon } from '../lib/reader/use-view-beacon';
 import { useMe } from '../lib/me';
-import { cn } from '../lib/utils';
 import { getChapterPage } from '../server-fns/reader';
 
 export const Route = createFileRoute('/stories/$storyKey/chapter-{$number}')({
@@ -112,7 +113,41 @@ function ReaderPage() {
     setPanel((current) => (current === next ? null : next));
   };
   const onOpenChange = (name: ReaderPanel) => (open: boolean) => setPanel(open ? name : null);
-  const controls = { prevHref, nextHref, activePanel: openPanel, onOpen, hidden, inert: gated };
+  // Listening: the player is not a panel, it stays open while the text is read and scrolled.
+  const speech = useChapterSpeech(contentRef, {
+    publicId: story.publicId,
+    number: chapter.number,
+    next: nextNumber === null || !nextHref ? null : { number: nextNumber, href: nextHref },
+    enabled: !gated,
+  });
+  const listenTrigger = useRef<HTMLButtonElement>(null);
+  const listening = speech.state !== 'idle';
+  const stopListening = () => {
+    speech.stop();
+    // Opened by the previous chapter, the player has no trigger: focus the visible listen control.
+    const fallback = [
+      ...document.querySelectorAll<HTMLButtonElement>('.reader-page nav button[aria-pressed]'),
+    ].find((button) => button.offsetParent !== null);
+    (listenTrigger.current ?? fallback)?.focus();
+  };
+  const listen = {
+    supported: speech.supported,
+    active: listening,
+    onToggle: (button: HTMLButtonElement) => {
+      listenTrigger.current = button;
+      if (listening) speech.stop();
+      else speech.start();
+    },
+  };
+  const controls = {
+    prevHref,
+    nextHref,
+    activePanel: openPanel,
+    onOpen,
+    hidden,
+    inert: gated,
+    listen,
+  };
   // Comments about a paragraph: selecting text in one offers them; the list at the end opens them too.
   const selected = useParagraphSelection(contentRef, !gated);
   const [paragraph, setParagraph] = useState<OpenParagraph | null>(null);
@@ -129,7 +164,13 @@ function ReaderPage() {
 
   return (
     <>
-      <div className="reader-page">
+      <div
+        className="reader-page"
+        // The bottom bar shows below `lg`: marks the page for the shared bottom-bar scroll padding.
+        data-bottom-bar="lg"
+        // The player covers the bottom of the page: room is kept so the end stays reachable.
+        data-listening={listening || undefined}
+      >
         {/* While the 18+ screen shows, everything behind it is out of reach. */}
         <ReaderTopBar
           story={story}
@@ -141,12 +182,9 @@ function ReaderPage() {
         />
         <ReaderControls variant="bar" {...controls} />
         <ReaderControls variant="rail" {...controls} />
-        {/* On wide screens the settings and paragraph-comment panels sit beside the text: the column moves left. */}
+        {/* Side insets keep the text clear of a landscape notch; the bottom one clears the bar and the home indicator. */}
         <main
-          className={cn(
-            'px-4 pt-[76px] pb-28 lg:pt-[84px] lg:pb-16',
-            (openPanel === 'settings' || paragraph?.open) && 'lg:pr-96',
-          )}
+          className="pt-[76px] pr-[max(1rem,env(safe-area-inset-right))] pb-[calc(7rem+env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] lg:pt-[84px] lg:pb-16"
           inert={gated}
         >
           <div className="reader-column">
@@ -183,6 +221,7 @@ function ReaderPage() {
           onOpenChange={onOpenChange('toc')}
           trigger={trigger}
         />
+        {listening ? <ListenBar speech={speech} onStop={stopListening} /> : null}
         <ReaderSettingsSheet
           open={openPanel === 'settings'}
           onOpenChange={onOpenChange('settings')}
@@ -190,7 +229,8 @@ function ReaderPage() {
         />
         {selected && !paragraph?.open && !openPanel ? (
           <ParagraphCommentFab
-            placement={selected.placement}
+            // The player takes the bottom of the screen.
+            placement={listening ? 'top' : selected.placement}
             onOpen={() => openParagraph(selected.pid, false)}
           />
         ) : null}

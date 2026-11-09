@@ -44,6 +44,11 @@ export const queueEnvSchema = z.object({
   QUEUE_PREFIX: z.string().default('novelhub'),
 });
 
+/** Worker liveness file for container healthchecks; unset (dev) disables the heartbeat. */
+export const workerHeartbeatEnvSchema = z.object({
+  WORKER_HEARTBEAT_FILE: z.string().min(1).optional(),
+});
+
 export const testEnvSchema = z.object({
   TEST_DATABASE_URL: postgresUrl,
   TEST_REDIS_URL: redisUrl,

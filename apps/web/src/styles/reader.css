@@ -9,6 +9,11 @@
   --reader-paragraph-gap: 1em;
   /* Text column on desktop: ~60-75 characters per line. */
   --reader-column: 68ch;
+  /*
+   * Right-hand panels from `lg` up (settings, paragraph comments); they portal out of the page and
+   * lie over its right side, so the text column never moves or changes width when one opens.
+   */
+  --reader-panel-width: 24rem;
 }
 
 .reader-page {
@@ -115,10 +120,29 @@
   scroll-margin-top: 5.5rem;
 }
 
+/*
+ * The paragraph being read aloud, marked the same way. Declared before the comment mark so a
+ * paragraph whose comments are open keeps that look while it is read.
+ */
+.reader-content [data-tts-active] {
+  border-radius: 0.375rem;
+  background: var(--reader-primary-soft);
+  outline: 0.375rem solid var(--reader-primary-soft);
+}
+
 .reader-content [data-pc-active] {
   border-radius: 0.375rem;
   background: var(--reader-card);
   outline: 0.375rem solid var(--reader-card);
+}
+
+/* The listening player covers the bottom of the screen: the end of the page stays reachable. */
+.reader-page[data-listening] > main {
+  padding-bottom: calc(10rem + env(safe-area-inset-bottom));
+
+  @media (min-width: 1024px) {
+    padding-bottom: 7rem;
+  }
 }
 
 /* Comments outside the reading page (the paragraph sheet portals to <body>) take site colours. */
@@ -127,6 +151,17 @@
   --reader-muted: var(--muted-foreground);
   --reader-card: var(--secondary);
   --reader-bg: var(--card);
+}
+
+/* Reading bars keep their controls clear of a landscape notch; their background runs edge to edge. */
+.reader-top-bar {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.reader-bottom-bar {
+  padding-left: max(0.5rem, env(safe-area-inset-left));
+  padding-right: max(0.5rem, env(safe-area-inset-right));
 }
 
 /* Reading bars: they get out of the way while scrolling down (`data-hidden`). */

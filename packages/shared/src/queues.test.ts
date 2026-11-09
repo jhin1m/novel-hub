@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { duplicateReportDetail, fingerprintChapterPayload, sendAuthEmailPayload } from './queues';
+import {
+  duplicateReportDetail,
+  fingerprintChapterPayload,
+  notifyAnnouncementPayload,
+  sendAuthEmailPayload,
+} from './queues';
 
 const valid = {
   kind: 'verify',
@@ -40,5 +45,13 @@ describe('duplicateReportDetail', () => {
     expect(duplicateReportDetail.parse(JSON.parse(JSON.stringify(detail)))).toEqual(detail);
     expect(duplicateReportDetail.safeParse({ ...detail, jaccard: 1.2 }).success).toBe(false);
     expect(duplicateReportDetail.safeParse({ ...detail, hamming: 65 }).success).toBe(false);
+  });
+});
+
+describe('notifyAnnouncementPayload', () => {
+  it('carries the announcement id only', () => {
+    const announcementId = '01920000-0000-7000-8000-000000000001';
+    expect(notifyAnnouncementPayload.parse({ announcementId })).toEqual({ announcementId });
+    expect(notifyAnnouncementPayload.safeParse({ announcementId: 'x' }).success).toBe(false);
   });
 });

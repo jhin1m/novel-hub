@@ -10,6 +10,16 @@ export function pathAndQuery(url: string): string {
   return path.split('#')[0] ?? path;
 }
 
+/**
+ * Whether a tag page URL asks to hide stories written with AI, from every `noAi` value in its
+ * query (`searchParams.getAll`). Lenient like `canonicalPageParam`: `1` or `true` (the first value)
+ * turn it on, anything else off; the route then redirects to `canonicalPath`, where it is `noAi=1`.
+ */
+export function noAiParam(raw: readonly string[]): boolean {
+  const first = raw[0]?.trim().toLowerCase();
+  return first === '1' || first === 'true';
+}
+
 /** Path and query of the document request on the server; `null` in the browser. */
 const serverRequestHref = createIsomorphicFn()
   .server((): string | null => pathAndQuery(getRequest().url))

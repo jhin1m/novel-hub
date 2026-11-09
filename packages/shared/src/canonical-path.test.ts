@@ -14,11 +14,27 @@ describe('canonicalPath', () => {
     expect(canonicalPath({ kind: 'static', path: '/terms' })).toBe('/terms');
     expect(canonicalPath({ kind: 'ranking', period: 'week' })).toBe('/rankings/week');
     expect(canonicalPath({ kind: 'ranking', period: 'rising' })).toBe('/rankings/rising');
+    expect(canonicalPath({ kind: 'nominations' })).toBe('/rankings/nominations');
     expect(canonicalPath({ kind: 'contests' })).toBe('/contests');
     expect(canonicalPath({ kind: 'contest', slug: 'mua-thu' })).toBe('/contests/mua-thu');
     expect(canonicalPath({ kind: 'contest', slug: 'mua-thu', page: 1 })).toBe('/contests/mua-thu');
     expect(canonicalPath({ kind: 'contest', slug: 'mua-thu', page: 3 })).toBe(
       '/contests/mua-thu?page=3',
+    );
+  });
+
+  it('puts the AI filter before the page on tag pages, only when on', () => {
+    expect(canonicalPath({ kind: 'tag', slug: 'tien-hiep', noAi: true })).toBe(
+      '/tags/tien-hiep?noAi=1',
+    );
+    expect(canonicalPath({ kind: 'tag', slug: 'tien-hiep', page: 3, noAi: true })).toBe(
+      '/tags/tien-hiep?noAi=1&page=3',
+    );
+    expect(canonicalPath({ kind: 'tag', slug: 'tien-hiep', page: 1, noAi: true })).toBe(
+      '/tags/tien-hiep?noAi=1',
+    );
+    expect(canonicalPath({ kind: 'tag', slug: 'tien-hiep', page: 3, noAi: false })).toBe(
+      '/tags/tien-hiep?page=3',
     );
   });
 

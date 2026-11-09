@@ -1,14 +1,17 @@
 import { expect, test } from '@playwright/test';
+import { gotoHydrated, signUpVerified } from './helpers/accounts';
 
-test('home page has a header and footer; guests see sign-in links after hydration', async ({
+test('home page has a header and footer; guests sign in from the account menu', async ({
   page,
 }) => {
   await page.goto('/');
   const header = page.getByRole('banner');
   await expect(header).toBeVisible();
-  await expect(page.getByRole('contentinfo')).toContainText('Novel Hub');
-  await expect(header.getByRole('link', { name: 'Đăng nhập' })).toBeVisible();
-  await expect(header.getByRole('link', { name: 'Đăng ký' })).toBeVisible();
+  await expect(page.getByRole('contentinfo')).toContainText('SayNovel');
+  await header.getByRole('button', { name: 'Tài khoản', exact: true }).click();
+  const menu = page.getByRole('menu');
+  await expect(menu.getByRole('menuitem', { name: 'Đăng nhập' })).toBeVisible();
+  await expect(menu.getByRole('menuitem', { name: 'Đăng ký' })).toBeVisible();
 });
 
 test('unknown path returns 404 and renders the 404 page with a home link', async ({
@@ -55,4 +58,27 @@ test('regular pages do not download the optional reader fonts (Literata, Noto Se
 
   expect(fonts.some((url) => url.includes('plus-jakarta-sans'))).toBe(true);
   expect(fonts.filter((url) => /literata|noto-serif/.test(url))).toEqual([]);
+});
+
+test('at 768px the signed-in header (explore, rankings, library, write) fits without scrolling', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 768, height: 900 });
+  await signUpVerified(page);
+  await gotoHydrated(page, '/');
+  const header = page.getByRole('banner');
+  await expect(header.getByRole('button', { name: /^Tài khoản: / })).toBeVisible();
+  for (const name of ['Khám phá', 'Bảng xếp hạng', 'Tủ truyện', 'Viết truyện']) {
+    await expect(header.getByRole('link', { name, exact: true }), name).toBeVisible();
+  }
+  const { scrollWidth, clientWidth } = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+  }));
+  expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
+  const headerBox = await header.boundingBox();
+  const lastLink = await header.getByRole('button', { name: /^Tài khoản: / }).boundingBox();
+  expect((lastLink?.x ?? Infinity) + (lastLink?.width ?? 0)).toBeLessThanOrEqual(
+    (headerBox?.x ?? 0) + (headerBox?.width ?? 0),
+  );
 });

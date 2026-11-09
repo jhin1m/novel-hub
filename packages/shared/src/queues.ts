@@ -51,6 +51,8 @@ export const CONTENT_JOBS = {
   fingerprintChapter: 'fingerprint-chapter',
   /** Creates or bumps the "new chapter" notification of the followers of a chapter's story and author. */
   notifyFollowers: 'notify-followers',
+  /** Notifies the followers of a story about its author's new announcement. */
+  notifyAnnouncement: 'notify-announcement',
 } as const;
 
 export type ContentJobName = (typeof CONTENT_JOBS)[keyof typeof CONTENT_JOBS];
@@ -62,6 +64,10 @@ export type FingerprintChapterPayload = z.infer<typeof fingerprintChapterPayload
 export const notifyFollowersPayload = z.object({ chapterId: z.uuid() });
 
 export type NotifyFollowersPayload = z.infer<typeof notifyFollowersPayload>;
+
+export const notifyAnnouncementPayload = z.object({ announcementId: z.uuid() });
+
+export type NotifyAnnouncementPayload = z.infer<typeof notifyAnnouncementPayload>;
 
 /**
  * `reports.detail` of an automatic duplicate report. Internal ids only: the moderation API maps

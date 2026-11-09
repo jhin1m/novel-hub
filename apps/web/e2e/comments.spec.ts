@@ -99,7 +99,10 @@ test.describe('chapter comments', () => {
     await scrollToComments(page);
     const section = page.getByRole('region', { name: /^Bình luận/ });
     await expect(section.getByText('Bình luận cho khách xem')).toBeVisible();
-    await expect(section.getByRole('link', { name: 'Đăng nhập' })).toBeVisible();
+    await expect(section.getByRole('link', { name: 'Đăng nhập' })).toHaveAttribute(
+      'href',
+      /^\/sign-in\?redirect=[^&]+&reason=comment$/,
+    );
     await expect(section.getByRole('textbox')).toHaveCount(0);
   });
 

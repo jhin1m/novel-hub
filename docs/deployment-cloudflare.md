@@ -106,7 +106,9 @@ Mọi chỗ cần IP (rate limit đăng ký/đăng nhập/viết, giới hạn l
 - `TRUST_CF_IP=false` (mặc định): dùng `request.ip` của srvx (IP kết nối TCP), bỏ qua `X-Forwarded-For` và `CF-Connecting-IP`. **Sau Cloudflare đó là IP edge**, nên mọi người chung một bucket: rate limit chặn oan, đếm lượt đọc lệch.
 - `TRUST_CF_IP=true`: dùng `CF-Connecting-IP`. Chỉ bật khi firewall của origin **chỉ nhận kết nối từ dải IP Cloudflare** (https://www.cloudflare.com/ips/), nếu không ai cũng tự đặt được header này và lách giới hạn.
 
-Khi đặt origin sau Cloudflare: bật firewall như trên rồi đặt `TRUST_CF_IP=true`. Lần đầu nhận request, log web in một dòng `[rate-limit] client IP source: <cf-connecting-ip|peer|none>` (không in IP) để kiểm; `none` nghĩa là mọi người chung một bucket, phải xử lý trước khi mở public.
+**Origin sau Cloudflare Tunnel** (cách deploy trong `docs/deployment-guide.md`): `cloudflared` kết nối ra Cloudflare và chuyển request tới `web:3000` trong mạng Docker; web không publish cổng nào ra host. Không có đường nào khác tới web từ ngoài, nên đặt `TRUST_CF_IP=true` là an toàn và không cần allowlist dải IP Cloudflare. Request tới web qua tunnel luôn mang `CF-Connecting-IP`, nên log `client IP source` phải là `cf-connecting-ip`; thấy `peer` nghĩa là request không đi qua Cloudflare (ví dụ curl thẳng từ host).
+
+Khi đặt origin sau Cloudflare mà không dùng Tunnel: bật firewall như trên rồi đặt `TRUST_CF_IP=true`. Lần đầu nhận request, log web in một dòng `[rate-limit] client IP source: <cf-connecting-ip|peer|none>` (không in IP) để kiểm; `none` nghĩa là mọi người chung một bucket, phải xử lý trước khi mở public.
 
 `NODE_ENV=production` mà `TRUST_CF_IP=false` thì web vẫn khởi động nhưng log một cảnh báo `[rate-limit] TRUST_CF_IP=false in production: ...` (một lần mỗi process, khi web nạp env lúc nhận request đầu tiên). Origin nhận kết nối trực tiếp không qua Cloudflare thì bỏ qua cảnh báo này; đứng sau Cloudflare thì phải bật như trên.
 
@@ -122,6 +124,26 @@ Giới hạn theo email toàn cục (mọi IP cộng lại, `RATE_LIMITS` trong 
 Gộp lại, chủ tài khoản dùng mật khẩu có thể bị khoá tới 24 giờ. Chủ có liên kết Google OAuth vẫn đăng nhập được (OAuth không đi qua giới hạn theo email). Phiên đang đăng nhập không bị đăng xuất.
 
 Chấp nhận cho năm đầu (ít người dùng, chưa có giá trị để nhắm). **Xem lại khi có người dùng thật**: theo dõi log 429 của `/sign-in/email` và `/request-password-reset`; hướng xử lý khi cần là bỏ qua giới hạn email toàn cục cho thiết bị đã từng đăng nhập thành công, hoặc thêm CAPTCHA (Turnstile) sau vài lần sai.
+
+## Domain phụ `saynovel.net` (chỉ redirect)
+
+`saynovel.net` (zone `e871eec6cd8f5a798b31972201f627ec`) không có origin, chỉ chuyển về `saynovel.com`:
+
+1. DNS (proxied, đám mây cam): `AAAA @ 100::` và `AAAA www 100::` (địa chỉ giả, request không bao giờ tới origin).
+2. Rules → Redirect Rules → Single Redirect: khi hostname là `saynovel.net` hoặc `www.saynovel.net`; Dynamic: `concat("https://saynovel.com", http.request.uri.path)`, bật **Preserve query string**, status `301`.
+3. Kiểm: `curl -sI 'https://saynovel.net/stories/x?y=1'` phải trả `301` với `location: https://saynovel.com/stories/x?y=1`.
+
+## Kiểm token (chỉ đọc)
+
+Không in token ra terminal hay log. Hai lệnh dưới chỉ đọc, không đổi gì trên Cloudflare:
+
+```sh
+# CF_API_TOKEN, CF_ZONE_ID lấy từ .env (không gõ trực tiếp vào lệnh để khỏi lưu vào history)
+curl -s -H "Authorization: Bearer $CF_API_TOKEN" https://api.cloudflare.com/client/v4/user/tokens/verify | grep -o '"status":"[a-z]*"'
+curl -s -H "Authorization: Bearer $CF_API_TOKEN" "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID" | grep -o '"name":"[^"]*"' | head -1
+```
+
+Kỳ vọng: `"status":"active"` và `"name":"saynovel.com"`. Zone id của `saynovel.com` là `92dbe28efce88d7126842ba595f3ddde`. Token có quyền Cache Purge mới purge được; việc purge thật kiểm sau deploy (mục 5 của `launch-checklist.md`).
 
 ## Kiểm tra sau khi áp
 

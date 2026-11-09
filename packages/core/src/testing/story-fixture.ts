@@ -24,19 +24,23 @@ export async function makeAuthor(db: Db, username = 'author'): Promise<StoryActo
   return { id: row.id, role: row.role, status: row.status, emailVerified: row.emailVerified };
 }
 
-/** A story with `published` published chapters; returns its public id, internal id and slug. */
+/**
+ * A story with `published` published chapters; returns its public id, internal id and slug.
+ * `opts.isMature` flags it 18+.
+ */
 export async function makePublishedStory(
   db: Db,
   author: StoryActor,
   published: number,
   title = 'Kiếm Đạo Độc Tôn',
+  opts: { isMature?: boolean } = {},
 ): Promise<{ publicId: string; storyId: string; slug: string }> {
   const created = await createStory(db, author, {
     title,
     synopsis: '',
     mainTag: 'tien-hiep',
     tags: [],
-    isMature: false,
+    isMature: opts.isMature ?? false,
     isAiAssisted: false,
   });
   if (!created.ok) throw new Error(created.error);

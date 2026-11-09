@@ -5,9 +5,15 @@ import { StoryCard } from '../story/story-card';
 
 /**
  * A ranking: a large rank number on the left of each compact story row, best first. The score is
- * never shown, only the order.
+ * never shown, only the order. `priority` loads the first covers eagerly (off below the fold).
  */
-export function RankingList({ stories }: { stories: StoryCardDto[] }) {
+export function RankingList({
+  stories,
+  priority = true,
+}: {
+  stories: StoryCardDto[];
+  priority?: boolean;
+}) {
   return (
     <ol className="grid gap-1 rounded-[22px] border border-border bg-card p-2 lg:grid-cols-2">
       {stories.map((story, index) => (
@@ -16,14 +22,14 @@ export function RankingList({ stories }: { stories: StoryCardDto[] }) {
           <span
             aria-hidden="true"
             className={cn(
-              'w-11 shrink-0 text-center font-serif text-[28px] leading-none font-bold tabular-nums',
+              'w-11 shrink-0 text-center text-[28px] leading-none font-bold tabular-nums',
               index < 3 ? 'text-primary' : 'text-muted-foreground',
             )}
           >
             {index + 1}
           </span>
           <div className="min-w-0 flex-1">
-            <StoryCard story={story} layout="row" priority={index < 4} />
+            <StoryCard story={story} layout="row" priority={priority && index < 4} />
           </div>
         </li>
       ))}

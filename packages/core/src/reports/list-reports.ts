@@ -10,34 +10,22 @@ import { type SQL, and, count, desc, eq, inArray } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { totalPagesFor } from '../catalog/story-card';
 import { type Result, err, ok } from '../lib/result';
+import { type WarningSummary, countRecentWarnings } from '../moderation/recent-warnings';
 import { canModerate } from '../policies/moderation';
 import type { CurrentUser } from '../users/current-user';
+import { loadAnnouncementContexts } from './announcement-report-context';
+import { loadRatingContexts } from './rating-report-context';
 import {
   type ChapterContext,
-  type ChapterWithStory,
-  type CommentContext,
-  type CommentWithChapter,
   type StoryContext,
-  type UserContext,
   loadChapterContexts,
   loadCommentContexts,
   loadStoryContexts,
   loadUserContexts,
 } from './report-context';
-import {
-  type RatingContext,
-  type RatingWithStory,
-  loadRatingContexts,
-} from './rating-report-context';
+import { type ReportTargetDto, reportTargetOwner, targetDto } from './report-target-dto';
 
-export type ReportTargetDto =
-  | { type: 'story'; story: StoryContext }
-  | { type: 'chapter'; story: StoryContext; chapter: ChapterContext }
-  | { type: 'user'; user: UserContext }
-  | { type: 'comment'; story: StoryContext; chapter: ChapterContext; comment: CommentContext }
-  | { type: 'rating'; story: StoryContext; rating: RatingContext }
-  /** The target no longer exists (or the row names an unknown type). */
-  | { type: 'missing' };
+export type { ReportTargetDto } from './report-target-dto';
 
 /** A queue entry with its context translated to public keys; `reportId` is the only internal id. */
 export interface ReportDto {
@@ -61,6 +49,11 @@ export interface ReportListPage {
   items: ReportDto[];
   page: number;
   totalPages: number;
+  /**
+   * Recent warnings of the accounts the page's targets belong to (`reportTargetOwner`), by
+   * username; an account without any is absent.
+   */
+  warnings: Record<string, WarningSummary>;
 }
 
 const reporter = alias(users, 'reporter');
@@ -86,6 +79,7 @@ export async function listReports(
   db: Db,
   actor: CurrentUser,
   query: ReportListQuery,
+  now: Date = new Date(),
 ): Promise<Result<ReportListPage, 'FORBIDDEN'>> {
   if (!canModerate(actor)) return err('FORBIDDEN');
 
@@ -114,7 +108,7 @@ export async function listReports(
     .orderBy(desc(reports.createdAt), desc(reports.id))
     .limit(REPORTS_PAGE_SIZE)
     .offset((query.page - 1) * REPORTS_PAGE_SIZE);
-  if (rows.length === 0) return ok({ items: [], page: query.page, totalPages });
+  if (rows.length === 0) return ok({ items: [], page: query.page, totalPages, warnings: {} });
 
   const duplicates = new Map(
     rows
@@ -124,23 +118,25 @@ export async function listReports(
   const idsOf = (type: string) =>
     rows.filter((row) => row.targetType === type).map((row) => row.targetId);
   const matchedIds = [...duplicates.values()].flatMap((d) => (d ? [d.matchedChapterId] : []));
-  const [storyMap, chapterMap, userMap, commentMap, ratingMap, openCounts] = await Promise.all([
-    loadStoryContexts(db, idsOf('story')),
-    loadChapterContexts(db, [...idsOf('chapter'), ...matchedIds]),
-    loadUserContexts(db, idsOf('user')),
-    loadCommentContexts(db, idsOf('comment')),
-    loadRatingContexts(db, idsOf('rating')),
-    db
-      .select({ targetType: reports.targetType, targetId: reports.targetId, n: count() })
-      .from(reports)
-      .where(
-        and(
-          eq(reports.status, 'open'),
-          inArray(reports.targetId, [...new Set(rows.map((row) => row.targetId))]),
-        ),
-      )
-      .groupBy(reports.targetType, reports.targetId),
-  ]);
+  const [storyMap, chapterMap, userMap, commentMap, ratingMap, announcementMap, openCounts] =
+    await Promise.all([
+      loadStoryContexts(db, idsOf('story')),
+      loadChapterContexts(db, [...idsOf('chapter'), ...matchedIds]),
+      loadUserContexts(db, idsOf('user')),
+      loadCommentContexts(db, idsOf('comment')),
+      loadRatingContexts(db, idsOf('rating')),
+      loadAnnouncementContexts(db, idsOf('announcement')),
+      db
+        .select({ targetType: reports.targetType, targetId: reports.targetId, n: count() })
+        .from(reports)
+        .where(
+          and(
+            eq(reports.status, 'open'),
+            inArray(reports.targetId, [...new Set(rows.map((row) => row.targetId))]),
+          ),
+        )
+        .groupBy(reports.targetType, reports.targetId),
+    ]);
   const openKey = (type: string, id: string) => `${type}:${id}`;
   const openMap = new Map(openCounts.map((c) => [openKey(c.targetType, c.targetId), c.n]));
 
@@ -162,6 +158,7 @@ export async function listReports(
         userMap,
         commentMap,
         ratingMap,
+        announcementMap,
       }),
       duplicateOf:
         duplicate && matched
@@ -169,40 +166,7 @@ export async function listReports(
           : null,
     };
   });
-  return ok({ items, page: query.page, totalPages });
-}
-
-function targetDto(
-  type: string,
-  id: string,
-  maps: {
-    storyMap: Map<string, StoryContext>;
-    chapterMap: Map<string, ChapterWithStory>;
-    userMap: Map<string, UserContext>;
-    commentMap: Map<string, CommentWithChapter>;
-    ratingMap: Map<string, RatingWithStory>;
-  },
-): ReportTargetDto {
-  const { storyMap, chapterMap, userMap, commentMap, ratingMap } = maps;
-  if (type === 'story') {
-    const story = storyMap.get(id);
-    return story ? { type, story } : { type: 'missing' };
-  }
-  if (type === 'chapter') {
-    const found = chapterMap.get(id);
-    return found ? { type, ...found } : { type: 'missing' };
-  }
-  if (type === 'user') {
-    const user = userMap.get(id);
-    return user ? { type, user } : { type: 'missing' };
-  }
-  if (type === 'comment') {
-    const found = commentMap.get(id);
-    return found ? { type, ...found } : { type: 'missing' };
-  }
-  if (type === 'rating') {
-    const found = ratingMap.get(id);
-    return found ? { type, ...found } : { type: 'missing' };
-  }
-  return { type: 'missing' };
+  const owners = items.flatMap((item) => reportTargetOwner(item.target)?.username ?? []);
+  const warnings = Object.fromEntries(await countRecentWarnings(db, owners, now));
+  return ok({ items, page: query.page, totalPages, warnings });
 }

@@ -49,7 +49,18 @@ export const usernameParamSchema = z
 export const storyListQuery = z.discriminatedUnion('list', [
   z.object({ list: z.literal('recent'), page: pageQuery }),
   z.object({ list: z.literal('notable') }),
-  z.object({ list: z.literal('tag'), tag: tagSlugSchema, page: pageQuery }),
+  z.object({ list: z.literal('completed') }),
+  z.object({
+    list: z.literal('tag'),
+    tag: tagSlugSchema,
+    page: pageQuery,
+    // A query string value, like `page`: `1` turns the filter on, `0` (as `/api/v1/search`
+    // accepts) leaves it off; any other spelling is a 400.
+    noAi: z
+      .enum(['0', '1'])
+      .optional()
+      .transform((value) => value === '1'),
+  }),
   z.object({ list: z.literal('author'), author: usernameParamSchema }),
   z.object({ list: z.literal('ranking'), period: z.enum(RANKING_PERIODS) }),
 ]);

@@ -1,0 +1,11 @@
+# Throwaway Postgres used by restore-test.sh, run as its own compose project
+# (-p novel-hub-restore-test-<pid>) so it never touches the real stack.
+# No network at all: the restored data cannot leave and nothing can reach it.
+# The anonymous data volume is removed by `down -v` when the test ends.
+services:
+  restore:
+    image: ${RESTORE_IMAGE:?RESTORE_IMAGE is set by restore-test.sh}
+    network_mode: none
+    environment:
+      POSTGRES_PASSWORD: ${RESTORE_PASSWORD:?RESTORE_PASSWORD is set by restore-test.sh}
+      POSTGRES_DB: restore_test

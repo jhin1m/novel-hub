@@ -15,7 +15,10 @@ export type RateLimitAction =
   | 'report'
   | 'comment'
   | 'follow'
-  | 'rate';
+  | 'rate'
+  | 'announce'
+  | 'nominate'
+  | 'importChapters';
 
 export interface Limit {
   max: number;
@@ -41,6 +44,9 @@ export interface RateLimitRule {
 }
 
 export const NEW_ACCOUNT_DAYS = 3;
+
+/** Minimum account age (days) for nominating stories and importing many chapters at once. */
+export const TRUSTED_ACCOUNT_DAYS = 7;
 
 const MINUTE = 60;
 const HOUR = 60 * MINUTE;
@@ -115,6 +121,28 @@ export const RATE_LIMITS: Readonly<Record<RateLimitAction, RateLimitRule>> = {
       newAccount: { max: 5, windowSec: 10 * MINUTE },
     },
     ip: { max: 30, windowSec: 10 * MINUTE },
+    onStoreError: 'open',
+  },
+  // Author notices to followers; the per-story daily cap is enforced in core.
+  announce: {
+    user: { normal: { max: 5, windowSec: DAY }, newAccount: { max: 2, windowSec: DAY } },
+    ip: { max: 20, windowSec: DAY },
+    onStoreError: 'open',
+  },
+  // Stops request spam only; the weekly quota lives in core. The new-account tier never applies:
+  // accounts younger than `TRUSTED_ACCOUNT_DAYS` (> `NEW_ACCOUNT_DAYS`) cannot nominate at all.
+  nominate: {
+    user: {
+      normal: { max: 10, windowSec: 10 * MINUTE },
+      newAccount: { max: 10, windowSec: 10 * MINUTE },
+    },
+    ip: { max: 30, windowSec: 10 * MINUTE },
+    onStoreError: 'open',
+  },
+  // One request imports up to a hundred chapters. Same note on the new-account tier as `nominate`.
+  importChapters: {
+    user: { normal: { max: 3, windowSec: DAY }, newAccount: { max: 3, windowSec: DAY } },
+    ip: { max: 10, windowSec: DAY },
     onStoreError: 'open',
   },
 };

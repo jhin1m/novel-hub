@@ -1,8 +1,9 @@
 import type { CurrentUser, ViewCounter } from '@novel-hub/core';
 import { createChapter, createStory, publishChapter, saveDraft } from '@novel-hub/core';
-import { readingProgress, users } from '@novel-hub/db';
+import { ratings, readingProgress, stories, users } from '@novel-hub/db';
 import { seedTags } from '@novel-hub/db/seed';
 import { createTestDb, truncateAll } from '@novel-hub/db/testing';
+import { eq } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../app';
 import { TEST_APP_URL, makeTestApiDeps } from '../testing';
@@ -190,5 +191,33 @@ describe('view', () => {
     const res = await app.request('/api/v1/reading/view', json('POST', { publicId, number: 1 }));
     expect(res.status).toBe(204);
     error.mockRestore();
+  });
+});
+
+describe('top readers', () => {
+  it('lists ranks and names for guests, never scores, uncached', async () => {
+    const publicId = await publishedStory();
+    const [story] = await db.select().from(stories).where(eq(stories.publicId, publicId));
+    if (!story) throw new Error('story missing');
+    const fan = await insertUser('fan');
+    await db.insert(ratings).values({ storyId: story.id, userId: fan.id, score: 5 });
+
+    const res = await appAs(null).request(`/api/v1/reading/top-readers/${publicId}`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('cache-control')).toBe('no-store');
+    expect(await res.json()).toEqual({ readers: [{ rank: 1, username: 'fan', displayName: 'U' }] });
+
+    expect((await appAs(null).request('/api/v1/reading/top-readers/zzzzzzzz')).status).toBe(404);
+    expect((await appAs(null).request('/api/v1/reading/top-readers/x')).status).toBe(400);
+  });
+
+  it('an 18+ story answers 403 MATURE_CONTENT_DISABLED without the 18+ preference', async () => {
+    const publicId = await publishedStory();
+    await db.update(stories).set({ isMature: true }).where(eq(stories.publicId, publicId));
+    const res = await appAs(await insertUser('reader')).request(
+      `/api/v1/reading/top-readers/${publicId}`,
+    );
+    expect(res.status).toBe(403);
+    expect(await res.json()).toMatchObject({ error: { code: 'MATURE_CONTENT_DISABLED' } });
   });
 });

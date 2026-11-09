@@ -7,6 +7,7 @@ import { formatInitial } from '../../lib/format';
 import { FollowButton } from '../follow/follow-button';
 import { ContinueReadingButton } from '../library/continue-reading-button';
 import { LibraryButton } from '../library/library-button';
+import { NominateButton } from '../nominations/nominate-button';
 import { StoryCover } from '../story-cover';
 import { STORY_STATUS_LABELS } from './story-labels';
 import { StoryMeta } from './story-meta';
@@ -57,7 +58,7 @@ export function StoryHero({
       className="bg-(--story-tint) text-(--cover-fg)"
       style={tint}
     >
-      <div className="mx-auto max-w-[1240px] px-4 pt-4 pb-[52px] md:px-8 md:pt-5 md:pb-24">
+      <div className="mx-auto max-w-[1240px] pt-4 px-safe-4 pb-[52px] md:pt-5 md:px-safe-8 md:pb-24">
         <nav aria-label={m.story_page_breadcrumb()} className="mb-4 text-[13px] font-semibold">
           <ol className="flex flex-wrap items-center gap-1.5">
             <li>
@@ -142,6 +143,11 @@ export function StoryHero({
             <LibraryButton publicId={story.publicId} tone="on-cover" />
             <FollowButton
               target={{ kind: 'story', publicId: story.publicId }}
+              ownerUsername={story.author.username}
+              tone="on-cover"
+            />
+            <NominateButton
+              publicId={story.publicId}
               ownerUsername={story.author.username}
               tone="on-cover"
             />

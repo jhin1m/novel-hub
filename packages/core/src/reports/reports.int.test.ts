@@ -239,6 +239,11 @@ describe('listReports', () => {
       { target: { type: 'user' }, handledBy: { username: 'mod_one' }, openOnTarget: 0 },
     ]);
     expect((await list({ reason: 'copyright' })).items).toEqual([]);
-    expect(await list({ page: '5' })).toEqual({ items: [], page: 5, totalPages: 1 });
+    expect(await list({ page: '5' })).toEqual({
+      items: [],
+      page: 5,
+      totalPages: 1,
+      warnings: {},
+    });
   });
 });

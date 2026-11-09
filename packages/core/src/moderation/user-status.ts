@@ -1,5 +1,5 @@
-import { type Tx, sessions, users } from '@novel-hub/db';
-import { eq } from 'drizzle-orm';
+import { type Tx, comments, sessions, users } from '@novel-hub/db';
+import { and, eq, isNotNull } from 'drizzle-orm';
 import { recordContentChanges } from '../content/outbox';
 import { type Result, err, ok } from '../lib/result';
 import { canModerateUser } from '../policies/moderation';
@@ -18,8 +18,9 @@ const ALLOWED_FROM: Record<UserAction, readonly UserStatus[]> = {
 };
 
 /**
- * Bans a user: status `banned`, every session deleted, logged and put in the outbox, all in the
- * caller's transaction (the invariant of `policies/user.ts`). Stories are not touched: public
+ * Bans a user: status `banned`, every session deleted, the pins on their comments dropped (their
+ * comments disappear, and must not keep holding pinned places), logged and put in the outbox, all
+ * in the caller's transaction (the invariant of `policies/user.ts`). Stories are not touched: public
  * queries already leave out banned authors, the outbox purges the CDN and resyncs search.
  * Permission and state are checked by the caller: outside tests, only `applyModerationAction` calls
  * this.
@@ -32,6 +33,10 @@ export async function banUser(
 ): Promise<void> {
   await tx.update(users).set({ status: 'banned' }).where(eq(users.id, targetUserId));
   await tx.delete(sessions).where(eq(sessions.userId, targetUserId));
+  await tx
+    .update(comments)
+    .set({ pinnedAt: null })
+    .where(and(eq(comments.userId, targetUserId), isNotNull(comments.pinnedAt)));
   await logModerationAction(tx, actor, { type: 'user', id: targetUserId }, 'ban_user', note);
   await recordContentChanges(tx, [{ entity: 'user', action: 'banned', userId: targetUserId }]);
 }

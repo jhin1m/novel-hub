@@ -38,9 +38,8 @@ export const comments = pgTable(
   'comments',
   {
     id: uuidPk(),
-    chapterId: uuid()
-      .notNull()
-      .references(() => chapters.id, { onDelete: 'cascade' }),
+    /** `null` = a story-level discussion comment, not tied to any chapter. */
+    chapterId: uuid().references(() => chapters.id, { onDelete: 'cascade' }),
     storyId: uuid()
       .notNull()
       .references(() => stories.id, { onDelete: 'cascade' }),
@@ -58,6 +57,10 @@ export const comments = pgTable(
     body: text().notNull(),
     /** `visible` / `deleted` (by its writer) / `hidden_by_mod`; values validated in `shared`. */
     status: text().notNull().default('visible'),
+    /** Set while the story's author keeps the comment pinned on top; `null` = not pinned. */
+    pinnedAt: timestamptz(),
+    /** Last time the writer edited the body; `null` = never edited. */
+    editedAt: timestamptz(),
     createdAt: createdAt(),
   },
   (t) => [
@@ -70,6 +73,10 @@ export const comments = pgTable(
     index('comments_chapter_paragraph_idx')
       .on(t.chapterId, t.paragraphId)
       .where(sql`${t.paragraphId} IS NOT NULL AND ${t.parentId} IS NULL`),
+    // Top-level story discussion comments, read backwards for newest first (keyset on created_at, id).
+    index('comments_story_discussion_roots_idx')
+      .on(t.storyId, t.createdAt, t.id)
+      .where(sql`${t.chapterId} IS NULL AND ${t.parentId} IS NULL`),
     // Replies of a thread, oldest first.
     index('comments_parent_idx').on(t.parentId, t.createdAt, t.id),
     index('comments_story_id_idx').on(t.storyId),

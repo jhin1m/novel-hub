@@ -6,6 +6,7 @@ import {
   createStory,
   publishChapter,
   saveDraft,
+  updatePreferences,
 } from '@novel-hub/core';
 import { chapterContents, comments, reports, users } from '@novel-hub/db';
 import { seedTags } from '@novel-hub/db/seed';
@@ -67,13 +68,13 @@ async function addChapter(author: CurrentUser, publicId: string, draft = false):
   return created.value.number;
 }
 
-async function makeStory(author: CurrentUser): Promise<string> {
+async function makeStory(author: CurrentUser, isMature = false): Promise<string> {
   const story = await createStory(db, author, {
     title: 'Truyện Bình Luận',
     synopsis: '',
     mainTag: 'tien-hiep',
     tags: [],
-    isMature: false,
+    isMature,
     isAiAssisted: false,
   });
   if (!story.ok) throw new Error(story.error);
@@ -339,5 +340,249 @@ describe('/api/v1/comments', () => {
     );
     expect(onDraft.status).toBe(404);
     expect(await errorCode(onDraft)).toBe('NOT_FOUND');
+  });
+});
+
+describe('/api/v1/comments under an 18+ story', () => {
+  it('answers 403 MATURE_CONTENT_DISABLED until the account turned 18+ on', async () => {
+    const author = await makeUser('tac_gia', 'author');
+    const publicId = await makeStory(author, true);
+    const adult = await makeUser('doc_gia_bat');
+    const reader = await makeUser('doc_gia_tat');
+    const turnedOn = await updatePreferences(db, adult.id, {
+      showMature: true,
+      confirmAdult: true,
+    });
+    if (!turnedOn.ok) throw new Error(turnedOn.error);
+
+    const created = await appAs(adult).request(
+      '/api/v1/comments',
+      send('POST', { publicId, chapterNumber: 1, body: 'Bình luận đầu' }),
+    );
+    expect(created.status).toBe(201);
+    const { comment } = (await created.json()) as { comment: { id: string } };
+
+    const reads = [
+      `/api/v1/comments?story=${publicId}&chapter=1`,
+      `/api/v1/comments/paragraph-counts?story=${publicId}&chapter=1`,
+      `/api/v1/comments/${comment.id}/replies`,
+    ];
+    for (const viewer of [null, reader]) {
+      for (const path of reads) {
+        const res = await appAs(viewer).request(path);
+        expect(res.status).toBe(403);
+        expect(await errorCode(res)).toBe('MATURE_CONTENT_DISABLED');
+      }
+    }
+    for (const path of reads) {
+      expect((await appAs(adult).request(path)).status).toBe(200);
+    }
+
+    const refused = await appAs(reader).request(
+      '/api/v1/comments',
+      send('POST', { publicId, chapterNumber: 1, body: 'Trả lời', parentId: comment.id }),
+    );
+    expect(refused.status).toBe(403);
+    expect(await errorCode(refused)).toBe('MATURE_CONTENT_DISABLED');
+
+    // A guest posting is stopped by the session check first.
+    const guest = await appAs(null).request(
+      '/api/v1/comments',
+      send('POST', { publicId, chapterNumber: 1, body: 'Khách' }),
+    );
+    expect(guest.status).toBe(401);
+    expect(await errorCode(guest)).toBe('UNAUTHENTICATED');
+  });
+});
+
+describe('/api/v1/comments edit, pin and discussion', () => {
+  async function postComment(user: CurrentUser, publicId: string, body: string) {
+    const res = await appAs(user).request(
+      '/api/v1/comments',
+      send('POST', { publicId, chapterNumber: 1, body }),
+    );
+    return ((await res.json()) as { comment: { id: string } }).comment.id;
+  }
+
+  it('edits the writer’s own comment and refuses anyone else', async () => {
+    const author = await makeUser('tac_gia', 'author');
+    const publicId = await makeStory(author);
+    const reader = await makeUser('doc_gia');
+    const id = await postComment(reader, publicId, 'Bản đầu');
+
+    const edited = await appAs(reader).request(
+      `/api/v1/comments/${id}`,
+      send('PATCH', { body: '  Bản sửa  ' }),
+    );
+    expect(edited.status).toBe(200);
+    const { comment } = (await edited.json()) as {
+      comment: { body: string; editedAt: string | null };
+    };
+    expect(comment.body).toBe('Bản sửa');
+    expect(comment.editedAt).not.toBeNull();
+
+    const other = await appAs(author).request(
+      `/api/v1/comments/${id}`,
+      send('PATCH', { body: 'x' }),
+    );
+    expect(other.status).toBe(403);
+    expect(await errorCode(other)).toBe('FORBIDDEN');
+
+    const empty = await appAs(reader).request(
+      `/api/v1/comments/${id}`,
+      send('PATCH', { body: ' ' }),
+    );
+    expect(empty.status).toBe(400);
+    const guest = await appAs(null).request(`/api/v1/comments/${id}`, send('PATCH', { body: 'x' }));
+    expect(guest.status).toBe(401);
+
+    await db.insert(reports).values({
+      reporterId: author.id,
+      targetType: 'comment',
+      targetId: id,
+      reason: 'spam',
+    });
+    const reported = await appAs(reader).request(
+      `/api/v1/comments/${id}`,
+      send('PATCH', { body: 'Bản khác' }),
+    );
+    expect(reported.status).toBe(409);
+    expect(await errorCode(reported)).toBe('COMMENT_UNDER_REVIEW');
+  });
+
+  it('lets the story’s author pin up to three comments, first in the list', async () => {
+    const author = await makeUser('tac_gia', 'author');
+    const publicId = await makeStory(author);
+    const reader = await makeUser('doc_gia');
+    const ids = [];
+    for (let i = 0; i < 4; i++) ids.push(await postComment(reader, publicId, `Bình luận ${i}`));
+
+    const notAuthor = await appAs(reader).request(
+      `/api/v1/comments/${ids[0]}/pin`,
+      send('PUT', { pinned: true }),
+    );
+    expect(notAuthor.status).toBe(403);
+    for (const id of ids.slice(0, 3)) {
+      const pinned = await appAs(author).request(
+        `/api/v1/comments/${id}/pin`,
+        send('PUT', { pinned: true }),
+      );
+      expect(pinned.status).toBe(200);
+      expect(((await pinned.json()) as { pinnedAt: string | null }).pinnedAt).not.toBeNull();
+    }
+    const fourth = await appAs(author).request(
+      `/api/v1/comments/${ids[3]}/pin`,
+      send('PUT', { pinned: true }),
+    );
+    expect(fourth.status).toBe(409);
+    expect(await errorCode(fourth)).toBe('COMMENT_PIN_LIMIT');
+
+    const asAuthor = await appAs(author).request(`/api/v1/comments?story=${publicId}&chapter=1`);
+    const page = (await asAuthor.json()) as {
+      total: number;
+      viewerCanPin: boolean;
+      pinned: { body: string }[];
+      items: { body: string }[];
+    };
+    expect(page).toMatchObject({ total: 4, viewerCanPin: true });
+    expect(page.pinned.map((t) => t.body)).toEqual(['Bình luận 0', 'Bình luận 1', 'Bình luận 2']);
+    expect(page.items.map((t) => t.body)).toEqual(['Bình luận 3']);
+
+    const unpinned = await appAs(author).request(
+      `/api/v1/comments/${ids[0]}/pin`,
+      send('PUT', { pinned: false }),
+    );
+    expect(await unpinned.json()).toEqual({ pinnedAt: null });
+    const broken = await appAs(author).request(
+      `/api/v1/comments/${ids[0]}/pin`,
+      send('PUT', { pinned: 'yes' }),
+    );
+    expect(broken.status).toBe(400);
+  });
+
+  it('posts to and lists the story discussion', async () => {
+    const author = await makeUser('tac_gia', 'author');
+    const publicId = await makeStory(author);
+    const reader = await makeUser('doc_gia');
+
+    const created = await appAs(reader).request(
+      '/api/v1/comments/discussion',
+      send('POST', { publicId, body: 'Truyện hay' }),
+    );
+    expect(created.status).toBe(201);
+    const { comment } = (await created.json()) as { comment: { id: string } };
+    const reply = await appAs(author).request(
+      '/api/v1/comments/discussion',
+      send('POST', { publicId, body: 'Cảm ơn', parentId: comment.id }),
+    );
+    expect(reply.status).toBe(201);
+
+    const listed = await appAs(null).request(`/api/v1/comments/discussion?story=${publicId}`);
+    expect(listed.status).toBe(200);
+    expect(listed.headers.get('cache-control')).toContain('no-store');
+    expect(await listed.json()).toMatchObject({
+      total: 2,
+      pinned: [],
+      viewerCanPin: false,
+      items: [{ body: 'Truyện hay', replyCount: 1, replies: [{ body: 'Cảm ơn' }] }],
+    });
+    const chapterList = await appAs(null).request(`/api/v1/comments?story=${publicId}&chapter=1`);
+    expect(((await chapterList.json()) as { total: number }).total).toBe(0);
+
+    const missing = await appAs(null).request('/api/v1/comments/discussion?story=k7m2xq9p');
+    expect(missing.status).toBe(404);
+    const broken = await appAs(null).request('/api/v1/comments/discussion?story=x');
+    expect(broken.status).toBe(400);
+    const guest = await appAs(null).request(
+      '/api/v1/comments/discussion',
+      send('POST', { publicId, body: 'x' }),
+    );
+    expect(guest.status).toBe(401);
+  });
+
+  it('rate limits editing and discussion posts as comments', async () => {
+    const author = await makeUser('tac_gia', 'author');
+    const publicId = await makeStory(author);
+    const reader = await makeUser('doc_gia');
+    const id = await postComment(reader, publicId, 'Bản đầu');
+    const check = vi.fn<RateLimiter['check']>(() =>
+      Promise.resolve({ allowed: false, retryAfterSec: 60 }),
+    );
+    const limiter: RateLimiter = {
+      check,
+      recordFailure: () => Promise.resolve(),
+      clearFailures: () => Promise.resolve(),
+    };
+    const edit = await appAs(reader, limiter).request(
+      `/api/v1/comments/${id}`,
+      send('PATCH', { body: 'x' }),
+    );
+    expect(edit.status).toBe(429);
+    const discuss = await appAs(reader, limiter).request(
+      '/api/v1/comments/discussion',
+      send('POST', { publicId, body: 'x' }),
+    );
+    expect(discuss.status).toBe(429);
+    expect(check).toHaveBeenCalledTimes(2);
+    expect(check).toHaveBeenNthCalledWith(1, 'comment', expect.anything());
+    expect(check).toHaveBeenNthCalledWith(2, 'comment', expect.anything());
+  });
+
+  it('keeps an 18+ discussion to accounts that turned 18+ on', async () => {
+    const author = await makeUser('tac_gia', 'author');
+    const publicId = await makeStory(author, true);
+    const reader = await makeUser('doc_gia');
+    const listed = await appAs(reader).request(`/api/v1/comments/discussion?story=${publicId}`);
+    expect(listed.status).toBe(403);
+    expect(await errorCode(listed)).toBe('MATURE_CONTENT_DISABLED');
+    const posted = await appAs(reader).request(
+      '/api/v1/comments/discussion',
+      send('POST', { publicId, body: 'x' }),
+    );
+    expect(posted.status).toBe(403);
+    const on = await updatePreferences(db, reader.id, { showMature: true, confirmAdult: true });
+    if (!on.ok) throw new Error(on.error);
+    const allowed = await appAs(reader).request(`/api/v1/comments/discussion?story=${publicId}`);
+    expect(allowed.status).toBe(200);
   });
 });

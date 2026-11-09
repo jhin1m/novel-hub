@@ -7,3 +7,4 @@ export * from './engagement';
 export * from './moderation';
 export * from './content-events';
 export * from './contests';
+export * from './story-community';

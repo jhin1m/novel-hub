@@ -26,7 +26,7 @@ describe('seo', () => {
     });
     expect(links).toEqual([{ rel: 'canonical', href: `${APP_URL}/stories/kiem-dao-k7m2xq9p` }]);
     expect(metaContent(meta, 'og:url')).toBe(`${APP_URL}/stories/kiem-dao-k7m2xq9p`);
-    expect(meta).toContainEqual({ title: 'Kiếm Đạo – Lâm Phong · Novel Hub' });
+    expect(meta).toContainEqual({ title: 'Kiếm Đạo – Lâm Phong · SayNovel' });
     expect(metaContent(meta, 'og:title')).toBe('Kiếm Đạo – Lâm Phong');
     expect(metaContent(meta, 'og:type')).toBe('book');
     expect(metaContent(meta, 'description')).toBe('Giới thiệu.');
@@ -41,8 +41,8 @@ describe('seo', () => {
 
   it('titles the home page with the site name only', () => {
     const { meta } = seo({ appUrl: APP_URL, path: '/' });
-    expect(meta).toContainEqual({ title: 'Novel Hub' });
-    expect(metaContent(meta, 'og:title')).toBe('Novel Hub');
+    expect(meta).toContainEqual({ title: 'SayNovel' });
+    expect(metaContent(meta, 'og:title')).toBe('SayNovel');
   });
 
   it('drops the canonical link and og:url on a noindex page', () => {
@@ -98,11 +98,11 @@ describe('seo on an 18+ page', () => {
   });
 
   it('keeps the title but shows a neutral description in place of the synopsis', () => {
-    expect(mature.meta).toContainEqual({ title: 'Chương 1 – Kiếm Đạo · Novel Hub' });
+    expect(mature.meta).toContainEqual({ title: 'Chương 1 – Kiếm Đạo · SayNovel' });
     expect(metaContent(mature.meta, 'og:title')).toBe('Chương 1 – Kiếm Đạo');
-    expect(metaContent(mature.meta, 'description')).toBe('Truyện có nội dung 18+ trên Novel Hub.');
+    expect(metaContent(mature.meta, 'description')).toBe('Truyện có nội dung 18+ trên SayNovel.');
     expect(metaContent(mature.meta, 'og:description')).toBe(
-      'Truyện có nội dung 18+ trên Novel Hub.',
+      'Truyện có nội dung 18+ trên SayNovel.',
     );
     expect(JSON.stringify(mature)).not.toContain('Giới thiệu');
   });
@@ -121,7 +121,7 @@ describe('seo on an 18+ page', () => {
 
   it('describes the page even when it has no description of its own', () => {
     const { meta } = seo({ appUrl: APP_URL, title: 'Kiếm Đạo', mature: true });
-    expect(metaContent(meta, 'description')).toBe('Truyện có nội dung 18+ trên Novel Hub.');
+    expect(metaContent(meta, 'description')).toBe('Truyện có nội dung 18+ trên SayNovel.');
   });
 });
 

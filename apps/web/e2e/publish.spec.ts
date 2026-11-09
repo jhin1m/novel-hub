@@ -92,11 +92,26 @@ test('short chapters cannot be published; scheduling, unscheduling and deleting'
   await signUpVerified(page);
   const publicId = await createStory(page);
   await chapterWithWords(page, publicId, 299);
-  await expect(page.getByRole('button', { name: 'Đăng', exact: true })).toBeDisabled();
+  const publish = page.getByRole('button', { name: 'Đăng', exact: true });
+  await expect(publish).toBeDisabled();
+  const reason = page.getByText('Cần ít nhất 300 chữ để đăng, còn thiếu 1 chữ.');
+  await expect(reason).toBeVisible();
+  const reasonId = await reason.getAttribute('id');
+  expect(reasonId).toBeTruthy();
+  await expect(publish).toHaveAttribute('aria-describedby', reasonId ?? '');
+
+  // The locked button stays in the tab order so the reason is read, but it does not open.
+  await publish.focus();
+  await expect(publish).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
 
   await caretToEnd(page);
   await page.keyboard.type(' đủ');
-  await expect(page.getByText('300 chữ')).toBeVisible();
+  await expect(page.getByText('300 chữ', { exact: true })).toBeVisible();
+  await expect(page.getByText(/^Cần ít nhất/)).toHaveCount(0);
+  await expect(publish).toBeEnabled();
+  await expect(publish).not.toHaveAttribute('aria-describedby');
   await expect(page.getByText(/^Đã lưu lúc/)).toBeVisible({ timeout: 10_000 });
 
   await page.getByRole('button', { name: 'Đăng', exact: true }).click();
@@ -116,7 +131,34 @@ test('short chapters cannot be published; scheduling, unscheduling and deleting'
   await page.getByRole('link', { name: 'Về trang truyện' }).click();
   const item = page.getByRole('listitem').filter({ hasText: 'Chương 1' });
   await expect(item).toContainText('Nháp');
+  await expect(item.getByRole('link')).toHaveAccessibleName('Chương 1: Chưa đặt tên');
   await item.getByRole('button', { name: 'Xoá chương 1' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Xoá chương' }).click();
   await expect(page.getByText('Chưa có chương nào.')).toBeVisible();
+});
+
+test('below the wide layout the publish-lock reason sits under the header row', async ({
+  page,
+}) => {
+  await signUpVerified(page);
+  const publicId = await createStory(page);
+  await page.setViewportSize({ width: 800, height: 900 });
+  await chapterWithWords(page, publicId, 1);
+
+  for (const viewport of [
+    { width: 800, height: 900 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const reason = header(page).getByText('Cần ít nhất 300 chữ để đăng, còn thiếu 299 chữ.');
+    await expect(reason).toBeVisible();
+    await expect(header(page).getByRole('button', { name: 'Đăng', exact: true })).toBeVisible();
+    const title = header(page).getByText('Chương 1', { exact: true });
+    await expect(title).toBeVisible();
+    const titleBox = await title.boundingBox();
+    const reasonBox = await reason.boundingBox();
+    expect(titleBox?.width ?? 0).toBeGreaterThan(0);
+    // The reason takes its own line below the row holding the chapter heading.
+    expect(reasonBox?.y ?? 0).toBeGreaterThanOrEqual((titleBox?.y ?? 0) + (titleBox?.height ?? 0));
+  }
 });

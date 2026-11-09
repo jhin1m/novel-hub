@@ -33,12 +33,13 @@ export type TagPageResult =
 /**
  * A tag page: `redirect` when the tag was merged (to the canonical tag at the end of the chain),
  * otherwise the public stories with chapters tagged with it or with any tag merged into it, most
- * recently updated first. `null` for an unknown tag or a broken merge chain.
+ * recently updated first. `noAi` leaves out stories declared as written with AI, from the list and
+ * from both page counts. `null` for an unknown tag or a broken merge chain.
  */
 export async function getTagPage(
   db: Db,
   slug: string,
-  o: ListOptions & { page: number; pageSize?: number },
+  o: ListOptions & { page: number; pageSize?: number; noAi?: boolean },
 ): Promise<TagPageResult | null> {
   const [tag] = await db
     .select({
@@ -77,6 +78,7 @@ export async function getTagPage(
         .from(storyTags)
         .where(and(eq(storyTags.storyId, stories.id), inArray(storyTags.tagId, tagIds))),
     ),
+    o.noAi ? eq(stories.isAiAssisted, false) : undefined,
   ) as SQL;
   const where = o.includeMature ? listed : (and(listed, eq(stories.isMature, false)) as SQL);
   const [rows, [counts]] = await Promise.all([

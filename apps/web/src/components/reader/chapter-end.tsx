@@ -6,7 +6,8 @@ import { ReportButton } from '../report/report-button';
 
 /**
  * After the text: the author's note, a large next-chapter link, the previous chapter, then a
- * quiet report button. The comments follow (`ChapterComments`).
+ * quiet report button. The comments follow (`ChapterComments`). Only the author's note can be
+ * selected, so selecting text near it never drags the navigation labels along.
  */
 export function ChapterEnd({
   prevHref,
@@ -39,30 +40,33 @@ export function ChapterEnd({
         </section>
       ) : null}
       {nextHref ? (
-        <Button asChild size="lg" className="h-16 w-full text-base">
+        <Button asChild size="lg" className="h-16 w-full text-base select-none">
           <a href={nextHref} rel="next">
             {m.reader_end_next()}
           </a>
         </Button>
       ) : (
-        <p className="text-center text-reader-muted">{m.reader_end_latest()}</p>
+        <p className="text-center text-reader-muted select-none">{m.reader_end_latest()}</p>
       )}
       {prevHref ? (
         <Button
           asChild
           variant="ghost"
           size="lg"
-          className="w-full bg-reader-card text-reader-fg hover:bg-reader-card/80 hover:text-reader-fg"
+          className="w-full bg-reader-card text-reader-fg select-none hover:bg-reader-card/80 hover:text-reader-fg"
         >
           <a href={prevHref} rel="prev">
             {m.reader_prev()}
           </a>
         </Button>
       ) : null}
-      <p className="hidden text-center text-[13px] text-reader-muted lg:block">
+      <p className="hidden text-center text-[13px] text-reader-muted select-none lg:block">
         {m.reader_keyboard_hint()}
       </p>
-      <ReportButton target={reportTarget} className="mt-4 self-center text-reader-muted" />
+      <ReportButton
+        target={reportTarget}
+        className="mt-4 self-center text-reader-muted select-none"
+      />
     </footer>
   );
 }

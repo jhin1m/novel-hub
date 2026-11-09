@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# Browser (Playwright) tests are intentionally not run here: they need browsers, a dev server
+# and the full service stack. CI therefore is not the full local gate; run `pnpm test:e2e`
+# locally before merging. The S3 integration test skips itself when no S3 endpoint is configured.
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      # No version given: pnpm/action-setup reads it from the packageManager field.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      # The postinstall hook compiles Paraglide messages, which typecheck depends on.
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NODE_ENV: test
+      TEST_DATABASE_URL: postgres://novel_hub:novel_hub@localhost:5432/novel_hub_test
+      TEST_REDIS_URL: redis://localhost:6379/1
+      MEILI_URL: http://localhost:7700
+      # Throwaway key for the ephemeral Meilisearch service below; never reuse it anywhere else.
+      MEILI_MASTER_KEY: ci-only-meili-master-key-0123456789
+    services:
+      postgres:
+        image: postgres:18.6-alpine
+        env:
+          POSTGRES_USER: novel_hub
+          POSTGRES_PASSWORD: novel_hub
+          # The test database is created directly; migrations run in the vitest globalSetup.
+          POSTGRES_DB: novel_hub_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U novel_hub -d novel_hub_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:8.10-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      meilisearch:
+        image: getmeili/meilisearch:v1.54
+        env:
+          MEILI_MASTER_KEY: ci-only-meili-master-key-0123456789
+          MEILI_NO_ANALYTICS: 'true'
+        ports:
+          - 7700:7700
+        options: >-
+          --health-cmd "curl -fsS http://localhost:7700/health"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:int

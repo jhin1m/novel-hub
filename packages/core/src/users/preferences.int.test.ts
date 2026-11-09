@@ -1,5 +1,9 @@
 import { users } from '@novel-hub/db';
-import { DEFAULT_READER_SETTINGS, type ReaderSettings } from '@novel-hub/shared';
+import {
+  DEFAULT_READER_SETTINGS,
+  type ReaderSettings,
+  type SiteThemeSettings,
+} from '@novel-hub/shared';
 import { eq } from 'drizzle-orm';
 import { createTestDb, truncateAll } from '@novel-hub/db/testing';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
@@ -40,9 +44,18 @@ describe('getPreferences', () => {
       showMature: false,
     });
   });
+
+  it('drops a stored site theme that no longer parses', async () => {
+    const userId = await userWith({
+      showMature: true,
+      siteTheme: { choice: 'neon', updatedAt: 1 },
+    });
+    expect(await getPreferences(db, userId)).toEqual({ showMature: true });
+  });
 });
 
 const sepia: ReaderSettings = { ...DEFAULT_READER_SETTINGS, theme: 'sepia', updatedAt: 1000 };
+const dark: SiteThemeSettings = { choice: 'dark', updatedAt: 1500 };
 
 async function stored(userId: string): Promise<unknown> {
   const [row] = await db
@@ -89,6 +102,28 @@ describe('updatePreferences', () => {
     const larger = { ...sepia, fontSize: 24, updatedAt: 2000 };
     await updatePreferences(db, userId, { reader: larger });
     expect(await getPreferences(db, userId)).toEqual({ showMature: true, reader: larger });
+  });
+
+  it('changing the site theme keeps 18+ and the reader settings, and the other way round', async () => {
+    const userId = await userWith({ showMature: true, reader: sepia });
+    await updatePreferences(db, userId, { siteTheme: dark });
+    expect(await getPreferences(db, userId)).toEqual({
+      showMature: true,
+      reader: sepia,
+      siteTheme: dark,
+    });
+
+    const larger = { ...sepia, fontSize: 24, updatedAt: 2000 };
+    await updatePreferences(db, userId, { reader: larger });
+    expect(await getPreferences(db, userId)).toEqual({
+      showMature: true,
+      reader: larger,
+      siteTheme: dark,
+    });
+
+    const ivory: SiteThemeSettings = { choice: 'ivory', updatedAt: 3000 };
+    await updatePreferences(db, userId, { siteTheme: ivory });
+    expect(await stored(userId)).toEqual({ showMature: true, reader: larger, siteTheme: ivory });
   });
 
   it('an update waits for a concurrent writer and keeps its change', async () => {

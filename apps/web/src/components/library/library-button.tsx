@@ -1,5 +1,4 @@
 import { m } from '@novel-hub/shared/messages';
-import { Link } from '@tanstack/react-router';
 import { BookmarkCheckIcon, BookmarkPlusIcon, ChevronDownIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSetShelf, useShelf } from '@/lib/library';
@@ -8,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { ON_COVER_OUTLINE } from '../story/on-cover-classes';
 import { SHELF_LABELS } from './shelf-labels';
 import { ShelfMenu } from './shelf-menu';
+import { SignInPromptLink } from '../sign-in-prompt-link';
 
 /**
  * "Add to library" on the story page. The server renders the neutral button (the page is cached
@@ -43,10 +43,10 @@ export function LibraryButton({
   if (!signedIn) {
     return (
       <Button asChild variant="outline" className={className}>
-        <Link to="/sign-in">
+        <SignInPromptLink reason="library">
           <BookmarkPlusIcon aria-hidden />
           {m.library_add()}
-        </Link>
+        </SignInPromptLink>
       </Button>
     );
   }

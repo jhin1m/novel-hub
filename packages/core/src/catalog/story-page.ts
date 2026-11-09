@@ -3,6 +3,8 @@ import type { StoryStatus } from '@novel-hub/shared';
 import { eq, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { isStoryPubliclyVisible } from '../access/can-read-chapter';
+import type { AnnouncementDto } from '../announcements/announcement-dto';
+import { listStoryAnnouncements } from '../announcements/list-announcements';
 import { listReadableChapters } from '../reader/get-chapter-for-reading';
 import { type TagView, compareTags } from '../stories/story-view';
 import { chaptersPerWeek } from './frequency';
@@ -30,6 +32,8 @@ export interface StoryPageData {
   chapters: { number: number; title: string | null }[];
   /** Release pace over the last 30 days; `null` when there is too little to tell. */
   chaptersPerWeek: number | null;
+  /** The author's latest visible announcement; purged with the page when it changes. */
+  announcement: AnnouncementDto | null;
 }
 
 const canonical = alias(tags, 'canonical');
@@ -78,7 +82,7 @@ export async function getStoryPage(
   )
     return null;
 
-  const [tagRows, chapters] = await Promise.all([
+  const [tagRows, chapters, announcements] = await Promise.all([
     db
       .select({
         slug: sql<string>`coalesce(${canonical.slug}, ${tags.slug})`,
@@ -90,6 +94,7 @@ export async function getStoryPage(
       .leftJoin(canonical, eq(canonical.id, tags.canonicalId))
       .where(eq(storyTags.storyId, row.id)),
     listReadableChapters(db, row.id),
+    listStoryAnnouncements(db, row.id, { limit: 1 }),
   ]);
 
   // A merged tag and its canonical tag can both be linked: keep one entry per canonical slug.
@@ -121,5 +126,6 @@ export async function getStoryPage(
       chapters.map((c) => c.publishedAt),
       now,
     ),
+    announcement: announcements[0] ?? null,
   };
 }

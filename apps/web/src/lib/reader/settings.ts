@@ -91,10 +91,13 @@ export function writeLocalSettings(
   }
 }
 
-/** Which copy should win: the more recently changed one; equal times mean nothing to do. */
-export function pickNewer(
-  local: ReaderSettings | null,
-  server: ReaderSettings | null,
+/**
+ * Which copy of a synced setting (reader settings, site theme) should win: the more recently
+ * changed one; equal times mean nothing to do.
+ */
+export function pickNewer<T extends { updatedAt: number }>(
+  local: T | null,
+  server: T | null,
 ): 'local' | 'server' | 'none' {
   if (!local && !server) return 'none';
   if (!server) return 'local';

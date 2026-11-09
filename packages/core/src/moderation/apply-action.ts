@@ -3,6 +3,8 @@ import type { ModerationAction, ModerationActionInput } from '@novel-hub/shared'
 import { type Result, err, ok } from '../lib/result';
 import { canModerate } from '../policies/moderation';
 import type { CurrentUser } from '../users/current-user';
+import { setAnnouncementHidden } from './announcement-visibility';
+import { unpinCommentAsMod } from './comment-pin-moderation';
 import { setCommentHidden } from './comment-visibility';
 import { setChapterHidden, setStoryHidden } from './content-visibility';
 import type { ModerationError, ModerationTarget } from './log-action';
@@ -10,6 +12,7 @@ import { mergeTag } from './merge-tag';
 import { setRatingHidden } from './rating-visibility';
 import { closeReport, isOwnReport, resolveReportsFor } from './resolve-reports';
 import { moderateUser } from './user-status';
+import { warnUser } from './warn-user';
 
 function dispatch(
   tx: Tx,
@@ -45,9 +48,22 @@ function dispatch(
         input.action === 'hide_comment',
         input.note,
       );
+    case 'unpin_comment':
+      return unpinCommentAsMod(tx, actor, input.commentId, input.note);
+    case 'hide_announcement':
+    case 'restore_announcement':
+      return setAnnouncementHidden(
+        tx,
+        actor,
+        input.announcementId,
+        input.action === 'hide_announcement',
+        input.note,
+      );
     case 'hide_rating':
     case 'restore_rating':
       return setRatingHidden(tx, actor, input.ratingId, input.action === 'hide_rating', input.note);
+    case 'warn_user':
+      return warnUser(tx, actor, input.username, input.note, { reportId: input.reportId });
     case 'mute_user':
     case 'unmute_user':
     case 'ban_user':

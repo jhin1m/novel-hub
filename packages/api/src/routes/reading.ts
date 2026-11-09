@@ -1,5 +1,6 @@
 import {
   getContinueReading,
+  getTopReaders,
   listHistory,
   recordChapterView,
   removeFromHistory,
@@ -29,8 +30,8 @@ const VIEWER_COOKIE_MAX_AGE = 365 * 24 * 60 * 60;
 const VIEWER_ID = /^[A-Za-z0-9_-]{22}$/;
 
 /**
- * Reading activity: progress and history of signed-in readers (their own rows only) and counted
- * reads. Never cached.
+ * Reading activity: progress and history of signed-in readers (their own rows only), counted reads
+ * and a story's top readers. Never cached.
  */
 export function createReadingRoutes(
   deps: Pick<ApiDeps, 'auth' | 'db' | 'appUrl' | 'viewCounter' | 'clientIp'>,
@@ -76,6 +77,16 @@ export function createReadingRoutes(
           return c.json({ progress }, 200);
         },
       )
+      // A story's most engaged readers (guests too); ranks only, never scores.
+      .get('/top-readers/:publicId', validate('param', publicIdParamSchema), async (c) => {
+        const result = await getTopReaders(
+          deps.db,
+          c.var.user ?? null,
+          c.req.valid('param').publicId,
+        );
+        if (!result.ok) return coreError(c, result.error);
+        return c.json({ readers: result.value }, 200);
+      })
       .get('/history', requireAuth, validate('query', historyQuery), async (c) => {
         const page = await listHistory(deps.db, c.var.authUser.id, c.req.valid('query').cursor);
         return c.json(page, 200);

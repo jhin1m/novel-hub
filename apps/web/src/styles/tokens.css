@@ -7,30 +7,36 @@
  * `--accent` is only the component hover background, not the accent colour.
  * Surfaces step up from the page: `--background` → `--band` (plain strip behind a section) →
  * `--card` (cards, sheets, inputs). Hierarchy comes from these steps, not from shadows.
+ *
+ * Two site themes: ivory (`:root`, the default) and dark. `data-theme` on `<html>`
+ * forces one (`ivory` | `dark`); without it the system scheme decides. The dark blocks use
+ * `:root:where(...)` so they keep the specificity of `:root` (0,1,0): the reader presets below,
+ * declared later with the same specificity, still win over `--reader-*`. `:root:not(...)` would
+ * be 0,2,0 and silently override every preset.
  */
 
 :root {
-  --background: #f5f4ef;
-  --foreground: #1c1d1b;
+  --background: #f8f3e8;
+  --foreground: #2b2722;
   --card: #ffffff;
-  --card-foreground: #1c1d1b;
+  --card-foreground: #2b2722;
   --popover: #ffffff;
-  --popover-foreground: #1c1d1b;
+  --popover-foreground: #2b2722;
   --primary: #0e6b5b;
   --primary-foreground: #ffffff;
   --primary-soft: #ddefea;
-  --secondary: #eceae3;
-  --secondary-foreground: #1c1d1b;
-  --muted: #eceae3;
-  --muted-foreground: #5d5f59;
-  --accent: #eceae3;
-  --accent-foreground: #1c1d1b;
+  --secondary: #efe8da;
+  --secondary-foreground: #2b2722;
+  --muted: #efe8da;
+  --muted-foreground: #675f55;
+  --accent: #efe8da;
+  --accent-foreground: #2b2722;
   --destructive: #b3261e;
   --warning-soft: #fff1dc;
   --warning-foreground: #8a4b00;
-  --band: #ece8df;
-  --border: #e3e1d9;
-  --input: #8a8c85;
+  --band: #efe6d4;
+  --border: #e6dece;
+  --input: #8c8377;
   --ring: #0e6b5b;
 
   /*
@@ -71,7 +77,8 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  /* No choice (follow the system) or dark chosen, on a dark system. */
+  :root:where(:not([data-theme='ivory'])) {
     --background: #101312;
     --foreground: #e8ece9;
     --card: #181c1a;
@@ -108,9 +115,46 @@
   }
 }
 
+/* Dark chosen, whatever the system scheme. Keep identical to the block above (`tokens.test.ts`). */
+:root:where([data-theme='dark']) {
+  --background: #101312;
+  --foreground: #e8ece9;
+  --card: #181c1a;
+  --card-foreground: #e8ece9;
+  --popover: #181c1a;
+  --popover-foreground: #e8ece9;
+  --primary: #4fc2a8;
+  --primary-foreground: #0b1f1a;
+  --primary-soft: #17332c;
+  --secondary: #222724;
+  --secondary-foreground: #e8ece9;
+  --muted: #222724;
+  --muted-foreground: #9aa39e;
+  --accent: #222724;
+  --accent-foreground: #e8ece9;
+  --destructive: #f2877c;
+  --warning-soft: #2e2312;
+  --warning-foreground: #f2b866;
+  --band: #161a18;
+  --border: #2c322f;
+  --input: #6e7771;
+  --ring: #4fc2a8;
+
+  /* Reader default when no preset is chosen: dark grey (`dark-gray`). */
+  --reader-bg: #2b2b2b;
+  --reader-fg: #d6d3ce;
+  --reader-muted: #a3a09b;
+  --reader-card: #363636;
+  --reader-primary: #4fc2a8;
+  --reader-primary-foreground: #0b1f1a;
+  --reader-primary-soft: #17332c;
+
+  color-scheme: dark;
+}
+
 /*
  * Reader background presets, selected by setting `data-reader-theme` on the root element. Each
- * carries the light or dark accent that stays readable on it, whatever the system scheme is.
+ * carries the light or dark accent that stays readable on it, whatever the site theme is.
  */
 [data-reader-theme='white'] {
   --reader-bg: #ffffff;

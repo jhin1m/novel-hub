@@ -1,8 +1,6 @@
-import { type Db, chapters, comments, stories, users } from '@novel-hub/db';
+import { type Db, comments, users } from '@novel-hub/db';
 import { COMMENTS_PAGE_SIZE } from '@novel-hub/shared';
 import { and, asc, eq } from 'drizzle-orm';
-import { alias } from 'drizzle-orm/pg-core';
-import { canReadChapter } from '../access/can-read-chapter';
 import { type Result, err, ok } from '../lib/result';
 import {
   type CommentDto,
@@ -12,6 +10,8 @@ import {
   visibleCommentWhere,
 } from './comment-dto';
 import { commentKeysetWhere, decodeCommentCursor, encodeCommentCursor } from './comment-cursor';
+import { findCommentTarget } from './comment-target';
+import { matureCommentAccess } from './mature-comment-access';
 
 export interface CommentRepliesPage {
   items: CommentDto[];
@@ -19,43 +19,33 @@ export interface CommentRepliesPage {
 }
 
 /**
- * Whether `commentId` is a thread anyone may see: a top-level comment, visible, its writer not
- * banned, under a chapter `canReadChapter` allows. The id alone must never open a hidden thread.
+ * The thread `commentId` names when anyone may see it (a top-level comment, shown, under a chapter
+ * `canReadChapter` allows or in the discussion of a public story), with whether its story is 18+;
+ * `null` for any other reason. The id alone must never open a hidden thread.
  */
-async function isShownThread(db: Db, commentId: string): Promise<boolean> {
-  const threadAuthor = alias(users, 'thread_author');
-  const [row] = await db
-    .select({
-      parentId: comments.parentId,
-      status: comments.status,
-      threadAuthorStatus: threadAuthor.status,
-      chapterStatus: chapters.status,
-      deletedAt: chapters.deletedAt,
-      visibility: stories.visibility,
-      authorStatus: users.status,
-    })
-    .from(comments)
-    .innerJoin(threadAuthor, eq(threadAuthor.id, comments.userId))
-    .innerJoin(chapters, eq(chapters.id, comments.chapterId))
-    .innerJoin(stories, eq(stories.id, chapters.storyId))
-    .innerJoin(users, eq(users.id, stories.authorId))
-    .where(eq(comments.id, commentId));
-  if (!row || row.parentId !== null || row.status !== 'visible') return false;
-  if (row.threadAuthorStatus === 'banned') return false;
-  return canReadChapter(null, {
-    status: row.chapterStatus,
-    deletedAt: row.deletedAt,
-    story: { visibility: row.visibility, authorStatus: row.authorStatus },
-  }).readable;
+async function isShownThread(
+  db: Db,
+  commentId: string,
+): Promise<{ isMature: boolean; authorId: string } | null> {
+  const thread = await findCommentTarget(db, commentId);
+  if (!thread || thread.parentId !== null || !thread.shown || !thread.readable) return null;
+  return { isMature: thread.isMature, authorId: thread.storyAuthorId };
 }
 
-/** Visible replies of a shown thread, oldest first, a page at a time after `cursor`. */
+/**
+ * Visible replies of a shown thread, oldest first, a page at a time after `cursor`. A thread not
+ * shown is `NOT_FOUND` before the 18+ check, so an 18+ story never tells hidden ids apart.
+ */
 export async function listCommentReplies(
   db: Db,
   viewer: CommentViewer,
   query: { commentId: string; cursor?: string | undefined },
-): Promise<Result<CommentRepliesPage, 'NOT_FOUND'>> {
-  if (!(await isShownThread(db, query.commentId))) return err('NOT_FOUND');
+): Promise<Result<CommentRepliesPage, 'NOT_FOUND' | 'MATURE_CONTENT_DISABLED'>> {
+  const thread = await isShownThread(db, query.commentId);
+  if (!thread) return err('NOT_FOUND');
+  if (!(await matureCommentAccess(db, viewer?.id ?? null, thread.isMature, thread.authorId))) {
+    return err('MATURE_CONTENT_DISABLED');
+  }
   const cursor = query.cursor ? decodeCommentCursor(query.cursor) : null;
   const rows = await db
     .select(commentColumns(users))

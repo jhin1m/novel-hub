@@ -1,6 +1,6 @@
 import { isRedirect } from '@tanstack/react-router';
 import { describe, expect, it } from 'vitest';
-import { assertCanonical, pathAndQuery } from './canonical';
+import { assertCanonical, noAiParam, pathAndQuery } from './canonical';
 
 const CANONICAL = '/stories/kiem-dao-k7m2xq9p/chapter-3';
 
@@ -58,5 +58,21 @@ describe('pathAndQuery', () => {
     );
     expect(pathAndQuery('https://example.com/x?')).toBe('/x?');
     expect(pathAndQuery('https://example.com')).toBe('/');
+  });
+});
+
+describe('noAiParam', () => {
+  it.each([
+    [[], false],
+    [['1'], true],
+    [['true'], true],
+    [[' TRUE '], true],
+    [['0'], false],
+    [['yes'], false],
+    [[''], false],
+    [['1', '0'], true],
+    [['0', '1'], false],
+  ])('reads %j as %s', (raw, expected) => {
+    expect(noAiParam(raw)).toBe(expected);
   });
 });

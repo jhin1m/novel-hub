@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { readerSettingsSchema } from './reader';
+import { siteThemeSettingsSchema } from './site-theme';
 
 /**
  * A user's settings, stored in `users.preferences` (jsonb). Every read goes through this schema
@@ -10,6 +11,8 @@ export const userPreferencesSchema = z.object({
   showMature: z.boolean().default(false),
   /** Reading page settings synced across devices. A stored value that no longer parses is dropped. */
   reader: readerSettingsSchema.optional().catch(undefined),
+  /** Site colour theme synced across devices. A stored value that no longer parses is dropped. */
+  siteTheme: siteThemeSettingsSchema.optional().catch(undefined),
 });
 
 export type UserPreferences = z.infer<typeof userPreferencesSchema>;
@@ -19,6 +22,8 @@ export const preferencesPatchSchema = z
   .object({
     /** Replaces the stored reader settings as a whole. */
     reader: readerSettingsSchema.optional(),
+    /** Replaces the stored site theme choice as a whole. */
+    siteTheme: siteThemeSettingsSchema.optional(),
     showMature: z.boolean().optional(),
     /** The reader states they are 18 or older; required to turn `showMature` on. */
     confirmAdult: z.boolean().optional(),

@@ -8,7 +8,12 @@ import {
 } from '@novel-hub/core';
 import { users } from '@novel-hub/db';
 import { createTestDb } from '@novel-hub/db/testing';
-import { canonicalPath, parseChapterSegment, parseStoryKey } from '@novel-hub/shared';
+import {
+  type StoryStatus,
+  canonicalPath,
+  parseChapterSegment,
+  parseStoryKey,
+} from '@novel-hub/shared';
 
 let counter = 0;
 
@@ -22,10 +27,14 @@ export interface PublishedStory {
   chapterPath: (number: number) => string;
 }
 
-/** The text of chapter `number`: 320 words, opening with a line that names the chapter. */
-export function chapterText(number: number): string {
-  const words = Array.from({ length: 316 }, (_, i) => `chữ${i}`).join(' ');
-  return `Mở đầu chương ${number}. ${words}`;
+/**
+ * The text of chapter `number`: `words` words (320 by default), opening with a line that names the
+ * chapter.
+ */
+export function chapterText(number: number, words = 320): string {
+  // The opening line is 4 words.
+  const filler = Array.from({ length: words - 4 }, (_, i) => `chữ${i}`).join(' ');
+  return `Mở đầu chương ${number}. ${filler}`;
 }
 
 /**
@@ -42,6 +51,15 @@ export async function createPublishedStory(
     authorNote?: string;
     /** Paragraphs added after the opening one of every chapter. */
     extraParagraphs?: string[];
+    /**
+     * Words in the opening paragraph of every chapter (default 320). The home lists need 3
+     * published chapters and 5,000 words: `published: 3, wordsPerChapter: 1_700`.
+     */
+    wordsPerChapter?: number;
+    /** Titles of chapters 1, 2, … (published or draft); chapters past the list stay untitled. */
+    chapterTitles?: string[];
+    /** Story status once its chapters are out (stories start `ongoing`). */
+    status?: StoryStatus;
   } = {},
 ): Promise<PublishedStory> {
   counter += 1;
@@ -84,11 +102,13 @@ export async function createPublishedStory(
       const saved = await saveDraft(db, author, publicId, number, {
         doc: {
           type: 'doc',
-          content: [chapterText(number), ...(opts.extraParagraphs ?? [])].map((text) => ({
-            type: 'paragraph',
-            attrs: { pid: null },
-            content: [{ type: 'text', text }],
-          })),
+          content: [chapterText(number, opts.wordsPerChapter), ...(opts.extraParagraphs ?? [])].map(
+            (text) => ({
+              type: 'paragraph',
+              attrs: { pid: null },
+              content: [{ type: 'text', text }],
+            }),
+          ),
         },
         baseUpdatedAt: draftUpdatedAt ?? '',
       });
@@ -98,6 +118,21 @@ export async function createPublishedStory(
         baseUpdatedAt: saved.value.updatedAt,
       });
       if (!published.ok) throw new Error(published.error);
+    }
+
+    for (const [index, chapterTitle] of (opts.chapterTitles ?? []).entries()) {
+      await pool.query(
+        `update chapters set title = $1
+         where number = $2 and story_id = (select id from stories where public_id = $3)`,
+        [chapterTitle, index + 1, publicId],
+      );
+    }
+
+    if (opts.status !== undefined) {
+      await pool.query('update stories set status = $1 where public_id = $2', [
+        opts.status,
+        publicId,
+      ]);
     }
 
     if (opts.authorNote !== undefined) {

@@ -28,9 +28,11 @@ const chapterNumber = z.coerce.number().int().positive().max(2_147_483_647);
 /** A paragraph of the published chapter by its `data-pid`; whether it exists is the server's call. */
 const paragraphId = z.string().refine(isValidPid);
 
+const publicId = z.string().refine(isValidPublicId);
+
 /** A chapter by its public keys. */
 const chapterQuery = {
-  story: z.string().refine(isValidPublicId),
+  story: publicId,
   chapter: chapterNumber,
 };
 
@@ -55,26 +57,49 @@ export const commentRepliesQuerySchema = z.object({ cursor: commentCursorSchema 
 export const commentIdParamSchema = z.object({ id: z.uuid() });
 
 /**
- * Body of `POST /api/v1/comments`. The text is normalised here (`normalizePlainText`), so what the
- * service stores is already clean; the raw input is capped first so normalising stays cheap.
+ * Comment text, normalised here (`normalizePlainText`) so what the service stores is already clean;
+ * the raw input is capped first so normalising stays cheap.
  */
+const commentBody = z
+  .string()
+  .max(LIMITS.commentMax * 4)
+  .transform((raw, ctx) => {
+    const body = normalizePlainText(raw, LIMITS.commentMax);
+    if (body === null) {
+      ctx.addIssue({ code: 'custom', message: 'Empty or too long' });
+      return z.NEVER;
+    }
+    return body;
+  });
+
+/** Body of `POST /api/v1/comments`. */
 export const commentCreateSchema = z.object({
-  publicId: z.string().refine(isValidPublicId),
+  publicId,
   chapterNumber: z.number().int().positive().max(2_147_483_647),
   /** Replying to a reply attaches to its top-level comment (threads are two levels). */
   parentId: z.uuid().optional(),
   /** The paragraph a top-level comment is about; a reply takes its thread's instead. */
   paragraphId: paragraphId.optional(),
-  body: z
-    .string()
-    .max(LIMITS.commentMax * 4)
-    .transform((raw, ctx) => {
-      const body = normalizePlainText(raw, LIMITS.commentMax);
-      if (body === null) {
-        ctx.addIssue({ code: 'custom', message: 'Empty or too long' });
-        return z.NEVER;
-      }
-      return body;
-    }),
+  body: commentBody,
 });
 export type CommentCreateInput = z.output<typeof commentCreateSchema>;
+
+/** Comments the story's author may pin in one chapter, or in the story's discussion. */
+export const COMMENT_PIN_MAX = 3;
+
+/** Body of `PATCH /api/v1/comments/:id`: the writer replaces the text of their comment. */
+export const commentEditSchema = z.object({ body: commentBody }).strict();
+export type CommentEditInput = z.output<typeof commentEditSchema>;
+
+/** Body of `PUT /api/v1/comments/:id/pin`: the story's author pins or unpins a top-level comment. */
+export const commentPinSchema = z.object({ pinned: z.boolean() }).strict();
+
+/** Query of the story discussion list: top-level comments not tied to any chapter. */
+export const discussionListQuerySchema = z.object({ story: publicId, cursor: commentCursorSchema });
+export type DiscussionListQuery = z.output<typeof discussionListQuerySchema>;
+
+/** Body of a new story discussion comment; same body rules as a chapter comment, no chapter. */
+export const discussionCreateSchema = z
+  .object({ publicId, parentId: z.uuid().optional(), body: commentBody })
+  .strict();
+export type DiscussionCreateInput = z.output<typeof discussionCreateSchema>;

@@ -48,6 +48,7 @@ export function ChoiceGroup<T extends string>({
   variant = 'tile',
   className,
   fieldsetClassName,
+  legendClassName = 'mb-2 text-sm font-semibold',
 }: {
   legend: string;
   options: readonly T[];
@@ -58,11 +59,13 @@ export function ChoiceGroup<T extends string>({
   variant?: keyof typeof OPTION_STYLES;
   className?: string;
   fieldsetClassName?: string;
+  /** Replaces the legend's look, e.g. `sr-only` when a visible heading already names the group. */
+  legendClassName?: string;
 }) {
   const name = useId();
   return (
     <fieldset className={cn('flex flex-col gap-2', fieldsetClassName)}>
-      <legend className="mb-2 text-sm font-semibold">{legend}</legend>
+      <legend className={legendClassName}>{legend}</legend>
       <div className={cn(variant === 'segment' && 'rounded-full bg-secondary p-1', className)}>
         {options.map((option) => {
           const label = labels[option]();
@@ -94,7 +97,7 @@ export function ChoiceGroup<T extends string>({
   );
 }
 
-/** The six reading presets, each previewed in its own colours ("Aa" in the content serif). */
+/** The six reading presets, each previewed in its own colours ("Aa" in the UI face). */
 export function ThemeSwatches({
   value,
   onChange,
@@ -117,8 +120,8 @@ export function ThemeSwatches({
             data-reader-theme={theme}
             aria-hidden
             className={cn(
-              'flex size-12 items-center justify-center rounded-full bg-reader-bg font-serif text-base text-reader-fg',
-              checked ? 'border-2 border-primary' : 'border border-border',
+              'flex size-12 items-center justify-center rounded-full bg-reader-bg text-base text-reader-fg',
+              checked ? 'border-2 border-primary' : 'border border-input',
             )}
           >
             Aa

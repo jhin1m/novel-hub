@@ -84,7 +84,10 @@ async function makeUser(username: string, showMature = false) {
   return row;
 }
 
-/** A published story with one chapter; `isMature` set straight in the database. */
+/**
+ * A published story with 3 chapters of 1,700 words, past the home listing threshold so the home
+ * lists (`recent`, `notable`) show it too.
+ */
 async function publishedStory(
   author: Awaited<ReturnType<typeof makeUser>>,
   title: string,
@@ -101,21 +104,24 @@ async function publishedStory(
   });
   if (!created.ok) throw new Error(created.error);
   const { publicId } = created.value;
-  const chapter = await createChapter(db, actor, publicId);
-  if (!chapter.ok) throw new Error(chapter.error);
-  const text = Array.from({ length: 320 }, (_, i) => `chữ${i}`).join(' ');
-  const saved = await saveDraft(db, actor, publicId, 1, {
-    doc: {
-      type: 'doc',
-      content: [{ type: 'paragraph', attrs: { pid: null }, content: [{ type: 'text', text }] }],
-    },
-    baseUpdatedAt: chapter.value.draftUpdatedAt ?? '',
-  });
-  if (!saved.ok) throw new Error(saved.error);
-  const published = await publishChapter(db, actor, publicId, 1, {
-    baseUpdatedAt: saved.value.updatedAt,
-  });
-  if (!published.ok) throw new Error(published.error);
+  const text = Array.from({ length: 1_700 }, (_, i) => `chữ${i}`).join(' ');
+  for (let i = 0; i < 3; i++) {
+    const chapter = await createChapter(db, actor, publicId);
+    if (!chapter.ok) throw new Error(chapter.error);
+    const { number, draftUpdatedAt } = chapter.value;
+    const saved = await saveDraft(db, actor, publicId, number, {
+      doc: {
+        type: 'doc',
+        content: [{ type: 'paragraph', attrs: { pid: null }, content: [{ type: 'text', text }] }],
+      },
+      baseUpdatedAt: draftUpdatedAt ?? '',
+    });
+    if (!saved.ok) throw new Error(saved.error);
+    const published = await publishChapter(db, actor, publicId, number, {
+      baseUpdatedAt: saved.value.updatedAt,
+    });
+    if (!published.ok) throw new Error(published.error);
+  }
   return publicId;
 }
 
@@ -172,6 +178,35 @@ describe('GET /api/v1/stories', () => {
       expect(res.status, query).toBe(200);
       expect(await titles(res), query).toEqual(['Truyện Mười Tám', 'Truyện Thường']);
     }
+  });
+
+  it('lists completed stories, 18+ ones only for an account that turned them on', async () => {
+    const on = await makeUser('nguoi_lon', true);
+    expect(await titles(await app.request('/api/v1/stories?list=completed'))).toEqual([]);
+    await db.update(stories).set({ status: 'completed' });
+    const guest = await app.request('/api/v1/stories?list=completed&includeMature=true');
+    expect(guest.status).toBe(200);
+    expect(guest.headers.get('cache-control')).toBe('no-store');
+    expect(await titles(guest)).toEqual(['Truyện Thường']);
+    const res = await app.request('/api/v1/stories?list=completed', {
+      headers: { cookie: `session=${on.id}` },
+    });
+    expect(await titles(res)).toEqual(['Truyện Mười Tám', 'Truyện Thường']);
+  });
+
+  it('gives the recently updated list the latest chapter of every story, and only that list', async () => {
+    type Listed = { stories: { title: string; latestChapter?: unknown }[] };
+    const recent = (await (await app.request('/api/v1/stories?list=recent')).json()) as Listed;
+    expect(recent.stories).toEqual([
+      expect.objectContaining({
+        title: 'Truyện Thường',
+        latestChapter: { number: 3, title: null },
+      }),
+    ]);
+    const tag = (await (
+      await app.request('/api/v1/stories?list=tag&tag=tien-hiep')
+    ).json()) as Listed;
+    expect(tag.stories[0]).not.toHaveProperty('latestChapter');
   });
 
   it('returns pages and no internal ids', async () => {

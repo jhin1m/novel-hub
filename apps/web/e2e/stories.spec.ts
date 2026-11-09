@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { gotoHydrated, signUp, signUpVerified } from './helpers/accounts';
+import { createChapter, createStory, publishChapterViaApi } from './helpers/stories';
 
 test('a verified writer creates a story, finds it as a draft and renames it', async ({ page }) => {
   await signUpVerified(page);
@@ -71,4 +72,37 @@ test('guests are asked to sign in; writing pages are not indexed', async ({ page
   await expect(page.getByText('Đăng nhập để viết và quản lý truyện của bạn.')).toBeVisible();
   const html = await (await request.get('/write')).text();
   expect(html).toMatch(/<meta name="robots" content="noindex"/);
+});
+
+test('the management page sums up the story and puts the cover beside the chapters', async ({
+  page,
+}) => {
+  await signUpVerified(page);
+  const title = 'Truyện Quản Lý Thử';
+  const publicId = await createStory(page, title);
+  await gotoHydrated(page, `/write/stories/${publicId}`);
+  const number = await createChapter(page, publicId);
+  const text = Array.from({ length: 320 }, (_, i) => `chữ${i}`).join(' ');
+  await publishChapterViaApi(page, publicId, number, text);
+  await page.reload();
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Sửa truyện' })).toBeVisible();
+  // The default cover also prints the title, inside its `img`.
+  await expect(page.getByRole('paragraph').filter({ hasText: title })).toBeVisible();
+  const band = page.locator('section').filter({ hasText: 'chương đã đăng' });
+  await expect(band.getByText('Đang ra', { exact: true })).toBeVisible();
+  const terms = page.getByRole('term');
+  await expect(terms.filter({ hasText: 'chương đã đăng' })).toBeVisible();
+  await expect(terms.filter({ hasText: 'cập nhật' })).toBeVisible();
+  await expect(page.getByRole('definition').filter({ hasText: /^1$/ })).toBeVisible();
+  await expect(page.getByRole('definition').filter({ hasText: /^320$/ })).toBeVisible();
+
+  // From 1024px the cover card sits to the right of the chapter list, not under it.
+  const chapters = await page.getByRole('heading', { name: 'Danh sách chương' }).boundingBox();
+  const cover = await page.getByRole('heading', { name: 'Bìa truyện', exact: true }).boundingBox();
+  expect(cover?.x ?? 0).toBeGreaterThan((chapters?.x ?? 0) + 300);
+  expect(Math.abs((cover?.y ?? 0) - (chapters?.y ?? 0))).toBeLessThan(80);
+
+  await page.getByRole('link', { name: 'Số liệu', exact: true }).click();
+  await expect(page).toHaveURL(`/write/stories/${publicId}/stats`);
 });

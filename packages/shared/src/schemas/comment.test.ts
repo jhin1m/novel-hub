@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   commentCreateSchema,
+  commentEditSchema,
   commentIdParamSchema,
+  commentPinSchema,
+  discussionCreateSchema,
+  discussionListQuerySchema,
   commentListQuerySchema,
   commentRepliesQuerySchema,
   paragraphCountsQuerySchema,
@@ -74,5 +78,58 @@ describe('comment queries', () => {
     }
     expect(commentIdParamSchema.safeParse({ id: 'nope' }).success).toBe(false);
     expect(commentIdParamSchema.safeParse({ id }).success).toBe(true);
+  });
+});
+
+describe('commentEditSchema', () => {
+  it('normalises the body like a new comment', () => {
+    expect(commentEditSchema.parse({ body: '  Sửa lại\r\n\n\n\n\nnhé ' })).toEqual({
+      body: 'Sửa lại\n\n\nnhé',
+    });
+  });
+
+  it('rejects empty, too long and extra keys', () => {
+    for (const input of [
+      { body: ' ' },
+      { body: 'x'.repeat(2_001) },
+      { body: 'ok', paragraphId: 'ab3k9xq2' },
+    ]) {
+      expect(commentEditSchema.safeParse(input).success).toBe(false);
+    }
+  });
+});
+
+describe('commentPinSchema', () => {
+  it('takes a boolean only', () => {
+    expect(commentPinSchema.parse({ pinned: true })).toEqual({ pinned: true });
+    for (const input of [{ pinned: 'true' }, {}, { pinned: false, id }]) {
+      expect(commentPinSchema.safeParse(input).success).toBe(false);
+    }
+  });
+});
+
+describe('discussion schemas', () => {
+  it('creates a discussion comment without any chapter', () => {
+    expect(discussionCreateSchema.parse({ publicId: 'k7m2xq9p', body: ' Hay ' })).toEqual({
+      publicId: 'k7m2xq9p',
+      body: 'Hay',
+    });
+    expect(
+      discussionCreateSchema.parse({ publicId: 'k7m2xq9p', parentId: id, body: 'ừ' }).parentId,
+    ).toBe(id);
+    expect(
+      discussionCreateSchema.safeParse({ publicId: 'k7m2xq9p', chapterNumber: 1, body: 'x' })
+        .success,
+    ).toBe(false);
+  });
+
+  it('lists by story with an optional cursor', () => {
+    expect(discussionListQuerySchema.parse({ story: 'k7m2xq9p', cursor })).toEqual({
+      story: 'k7m2xq9p',
+      cursor,
+    });
+    expect(discussionListQuerySchema.safeParse({ story: 'k7m2xq9p', cursor: 'x' }).success).toBe(
+      false,
+    );
   });
 });

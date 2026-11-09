@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { forgetAccount, rememberAccount } from './account-hint';
 import { createApiClient } from './api-client';
 import { authClient } from './auth-client';
 import { syncMatureFlag } from './boot-script';
@@ -13,6 +14,7 @@ async function fetchMe() {
   if (res.status === 200) {
     const { user } = await res.json();
     syncMatureFlag(user.preferences.showMature);
+    rememberAccount(user.displayName);
     return user;
   }
   // Release unread bodies: an unconsumed chunked response stays open in the browser and
@@ -20,6 +22,7 @@ async function fetchMe() {
   await res.body?.cancel();
   if (res.status === 401) {
     syncMatureFlag(false);
+    forgetAccount();
     return null;
   }
   throw new Error('GET /api/v1/me failed');
@@ -51,6 +54,7 @@ export function useSignOut() {
     },
     onSuccess: () => {
       syncMatureFlag(false);
+      forgetAccount();
       // Drop every per-account cache (my stories...) so the next account never sees them. The
       // account itself is set, not removed: a removed query leaves every mounted `useMe()` that
       // did not re-render on its own still showing the signed-out account.

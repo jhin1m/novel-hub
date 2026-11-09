@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { AUTH_PATH_ACTIONS, RATE_LIMITS, type RateLimitAction } from './rate-limits';
+import {
+  AUTH_PATH_ACTIONS,
+  NEW_ACCOUNT_DAYS,
+  RATE_LIMITS,
+  type RateLimitAction,
+  TRUSTED_ACCOUNT_DAYS,
+} from './rate-limits';
 
 const actions = Object.keys(RATE_LIMITS) as RateLimitAction[];
 
@@ -32,5 +38,22 @@ describe('AUTH_PATH_ACTIONS', () => {
     for (const action of ['signUp', 'signIn', 'forgotPassword', 'sendVerification'] as const) {
       expect(mapped.has(action)).toBe(true);
     }
+  });
+});
+
+describe('buckets of announcements, nominations and chapter imports', () => {
+  it.each(['announce', 'nominate', 'importChapters'] as const)(
+    '%s limits per user (both tiers) and per IP, failing open',
+    (action) => {
+      const rule = RATE_LIMITS[action];
+      expect(rule.user?.normal).toBeDefined();
+      expect(rule.user?.newAccount).toBeDefined();
+      expect(rule.ip).toBeDefined();
+      expect(rule.onStoreError).toBe('open');
+    },
+  );
+
+  it('trusted features start after the new-account tier ends', () => {
+    expect(TRUSTED_ACCOUNT_DAYS).toBeGreaterThan(NEW_ACCOUNT_DAYS);
   });
 });

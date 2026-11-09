@@ -1,9 +1,9 @@
 #!/bin/sh
-# Dump the compose Postgres database, keep the newest BACKUP_KEEP copies on
-# this host and copy every local dump missing offsite to the rclone remote.
+# Dump the compose Postgres database and keep the newest BACKUP_KEEP copies on
+# this host. The offsite copy is pulled from another machine
+# (pull-offsite-backup.sh), so this host holds no credentials for it.
 #
-# Usage: pg-backup.sh [--local-only] [--keep N]
-#   --local-only  skip the offsite copy on purpose
+# Usage: pg-backup.sh [--keep N]
 #   --keep N      keep N local dumps for this run, overriding BACKUP_KEEP
 #                 (an emergency snapshot uses a large N to prune nothing)
 # BACKUP_ACCEPT_SHRINK=1 accepts a dump that failed the shrink check (see
@@ -14,15 +14,13 @@
 set -eu
 
 usage() {
-  echo "usage: $0 [--local-only] [--keep N]" >&2
+  echo "usage: $0 [--keep N]" >&2
   exit 2
 }
 
-LOCAL_ONLY=0
 KEEP_ARG=''
 while [ $# -gt 0 ]; do
   case "$1" in
-    --local-only) LOCAL_ONLY=1 ;;
     --keep)
       [ $# -ge 2 ] || usage
       KEEP_ARG=$2
@@ -50,15 +48,8 @@ BACKUP_KEEP="${BACKUP_KEEP:-14}"
 [ -z "$KEEP_ARG" ] || BACKUP_KEEP=$KEEP_ARG
 BACKUP_MIN_RATIO="${BACKUP_MIN_RATIO:-0.5}"
 BACKUP_ACCEPT_SHRINK="${BACKUP_ACCEPT_SHRINK:-0}"
-RCLONE_REMOTE="${RCLONE_REMOTE:-}"
+BACKUP_GROUP="${BACKUP_GROUP:-}"
 HEALTHCHECK_URL="${HEALTHCHECK_URL:-}"
-
-# Joining "remote:" and "/daily" would give "remote:/daily", which some
-# backends read as an absolute path.
-case "$RCLONE_REMOTE" in
-  *:) REMOTE_DAILY="${RCLONE_REMOTE}daily" ;;
-  *) REMOTE_DAILY="${RCLONE_REMOTE%/}/daily" ;;
-esac
 
 log() {
   printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*"
@@ -80,11 +71,6 @@ ping_healthcheck() {
 
 compose() {
   docker compose -f "$COMPOSE_FILE" "$@"
-}
-
-# Bounded network waits, so a stalled remote fails the run instead of hanging it.
-rc() {
-  rclone --contimeout 30s --timeout 5m "$@"
 }
 
 # require_free DIR BYTES: die unless the filesystem of DIR has BYTES free.
@@ -130,15 +116,12 @@ case "$BACKUP_ACCEPT_SHRINK" in
   0 | 1) ;;
   *) die "BACKUP_ACCEPT_SHRINK must be 0 or 1" ;;
 esac
-if [ "$LOCAL_ONLY" -eq 0 ] && [ -z "$RCLONE_REMOTE" ]; then
-  die "RCLONE_REMOTE is not set; pass --local-only to skip the offsite copy on purpose"
-fi
+case "$BACKUP_GROUP" in
+  *[!A-Za-z0-9._-]*) die "BACKUP_GROUP must be a plain group name" ;;
+esac
 [ -f "$COMPOSE_FILE" ] || die "compose file not found: $COMPOSE_FILE"
 
 command -v docker >/dev/null 2>&1 || die "docker not found"
-if [ "$LOCAL_ONLY" -eq 0 ]; then
-  command -v rclone >/dev/null 2>&1 || die "rclone not found"
-fi
 if [ -n "$HEALTHCHECK_URL" ]; then
   command -v curl >/dev/null 2>&1 || die "curl not found"
 fi
@@ -153,7 +136,14 @@ fi
 # Dumps hold password hashes and session tokens: owner-only from the start.
 umask 077
 mkdir -p "$BACKUP_DIR"
-chmod 700 "$BACKUP_DIR"
+if [ -n "$BACKUP_GROUP" ]; then
+  # The pulling user is in this group and reads through a read-only forced
+  # command; the folder stays closed to everyone else.
+  chgrp "$BACKUP_GROUP" "$BACKUP_DIR" || die "cannot set group $BACKUP_GROUP on $BACKUP_DIR"
+  chmod 750 "$BACKUP_DIR"
+else
+  chmod 700 "$BACKUP_DIR"
+fi
 
 # flock (util-linux) is released by the kernel when the process dies, so it can
 # never go stale. macOS has no flock: fall back to an atomic mkdir holding the
@@ -244,6 +234,11 @@ compose exec -T postgres pg_restore --file=/dev/null <"$PARTIAL" ||
 # shellcheck disable=SC2086
 sum=$($SHA256 <"$PARTIAL" | awk '{ print $1 }')
 printf '%s  %s\n' "$sum" "$NAME" >"$FILE.sha256"
+if [ -n "$BACKUP_GROUP" ]; then
+  # Before the final name appears, so a reader never sees a file it cannot open.
+  chgrp "$BACKUP_GROUP" "$PARTIAL" "$FILE.sha256" || die "cannot set group $BACKUP_GROUP on the dump"
+  chmod 640 "$PARTIAL" "$FILE.sha256"
+fi
 mv "$PARTIAL" "$FILE"
 PARTIAL=''
 
@@ -275,22 +270,6 @@ if [ "$SHRUNK" -eq 0 ]; then
       rm -f "$BACKUP_DIR/$old" "$BACKUP_DIR/$old.sha256"
       log "pruned $old"
     done
-fi
-
-if [ "$LOCAL_ONLY" -eq 0 ]; then
-  # Copying the whole folder also uploads dumps from days whose upload failed;
-  # files already offsite are never rewritten (the bucket lock would refuse).
-  log "uploading to offsite remote"
-  rc copy "$BACKUP_DIR" "$REMOTE_DAILY" --ignore-existing \
-    --include 'novel_hub-*.dump' --include 'novel_hub-*.dump.sha256' ||
-    die "upload to the offsite remote failed"
-  remote_size=$(rc lsjson "$REMOTE_DAILY/$NAME" | tr -d ' \n' |
-    sed -n 's/.*"Size":\([0-9]*\).*/\1/p')
-  [ "$remote_size" = "$size" ] ||
-    die "remote size '${remote_size:-missing}' does not match local size $size"
-  log "offsite copy ok"
-else
-  log "skipping offsite copy (--local-only)"
 fi
 
 [ "$SHRUNK" -eq 0 ] ||

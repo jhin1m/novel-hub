@@ -32,4 +32,13 @@ describe('workerEnvSchema', () => {
     const env = { ...base, NODE_ENV: 'production', SMTP_HOST: 'smtp.x', SMTP_FROM: 'a@x' };
     expect(load(env)).toMatchObject(env);
   });
+
+  it('accepts an optional heartbeat file; an empty value counts as unset', () => {
+    expect(load({ ...base, WORKER_HEARTBEAT_FILE: '/tmp/beat' })).toMatchObject({
+      WORKER_HEARTBEAT_FILE: '/tmp/beat',
+    });
+    expect(load({ ...base, WORKER_HEARTBEAT_FILE: '' })).not.toHaveProperty(
+      'WORKER_HEARTBEAT_FILE',
+    );
+  });
 });

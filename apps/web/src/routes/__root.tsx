@@ -6,6 +6,7 @@ import plusJakartaSansLatin from '@fontsource-variable/plus-jakarta-sans/files/p
 import plusJakartaSansVietnamese from '@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-vietnamese-wght-normal.woff2?url';
 import sourceSerif4Latin from '@fontsource-variable/source-serif-4/files/source-serif-4-latin-wght-normal.woff2?url';
 import sourceSerif4Vietnamese from '@fontsource-variable/source-serif-4/files/source-serif-4-vietnamese-wght-normal.woff2?url';
+import { SiteThemeSync } from '../components/site-theme-sync';
 import { BOOT_SCRIPT } from '../lib/boot-script';
 import { rootSeo } from '../lib/seo';
 import { getSiteConfig } from '../server-fns/site-config';
@@ -32,7 +33,7 @@ export const Route = createRootRoute({
     return {
       meta: [
         { charSet: 'utf-8' },
-        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
         ...defaults.meta,
         { property: 'og:site_name', content: m.app_name() },
         { property: 'og:locale', content: 'vi_VN' },
@@ -68,7 +69,10 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        <QueryClientProvider client={queryClient}>
+          <SiteThemeSync />
+          {children}
+        </QueryClientProvider>
         <Scripts />
       </body>
     </html>

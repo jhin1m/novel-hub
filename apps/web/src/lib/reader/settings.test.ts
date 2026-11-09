@@ -73,4 +73,10 @@ describe('pickNewer', () => {
   it('equal times → none', () => {
     expect(pickNewer(at(3), at(3))).toBe('none');
   });
+
+  it('works for any synced setting with an updatedAt', () => {
+    const theme = (updatedAt: number) => ({ choice: 'dark', updatedAt });
+    expect(pickNewer(theme(2), theme(1))).toBe('local');
+    expect(pickNewer(null, theme(1))).toBe('server');
+  });
 });

@@ -1,35 +1,21 @@
 import { m } from '@novel-hub/shared/messages';
-import { Link, useNavigate } from '@tanstack/react-router';
-import { Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import { apiErrorMessage } from '@/lib/api-errors';
-import {
-  type AuthorChapterView,
-  useCreateChapter,
-  useDeleteChapter,
-  useMyChapters,
-} from '@/lib/chapters';
+import { useCreateChapter, useMyChapters } from '@/lib/chapters';
 import { FormMessage } from './auth-ui';
-import { ChapterStatusBadge } from './status-badges';
-
-const dateFormat = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' });
+import { ChapterImportDialog } from './chapter-import/chapter-import-dialog';
+import { ChapterListItem } from './write/chapter-list-item';
 
 /** Chapters of a story in the writing area, with the button that starts the next one. */
 export function ChapterList({ publicId }: { publicId: string }) {
   const chapters = useMyChapters(publicId);
   const create = useCreateChapter(publicId);
   const navigate = useNavigate();
+  // Deleted chapters are not listed but keep their numbers, so this is a best guess for the
+  // preview; the server assigns the real numbers.
+  const nextNumber = Math.max(0, ...(chapters.data ?? []).map((chapter) => chapter.number)) + 1;
 
   const addChapter = () =>
     create.mutate(undefined, {
@@ -47,10 +33,13 @@ export function ChapterList({ publicId }: { publicId: string }) {
         <h2 id="chapter-list-title" className="text-xl leading-tight font-extrabold tracking-tight">
           {m.chapter_list_title()}
         </h2>
-        <Button type="button" onClick={addChapter} disabled={create.isPending}>
-          <Plus />
-          {m.chapter_add()}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <ChapterImportDialog publicId={publicId} nextNumber={nextNumber} />
+          <Button type="button" size="sm" onClick={addChapter} disabled={create.isPending}>
+            <Plus />
+            {m.chapter_add()}
+          </Button>
+        </div>
       </div>
       {create.isError ? <FormMessage>{apiErrorMessage(create.error)}</FormMessage> : null}
       {chapters.isPending ? (
@@ -58,105 +47,16 @@ export function ChapterList({ publicId }: { publicId: string }) {
       ) : chapters.isError ? (
         <FormMessage>{m.error_generic()}</FormMessage>
       ) : chapters.data.length === 0 ? (
-        <p className="text-muted-foreground">{m.chapter_list_empty()}</p>
+        <p className="rounded-[18px] bg-secondary px-5 py-10 text-center text-muted-foreground">
+          {m.chapter_list_empty()}
+        </p>
       ) : (
-        <ol className="divide-y divide-border rounded-lg border border-border bg-card">
+        <ol className="flex flex-col gap-3">
           {chapters.data.map((chapter) => (
-            <li
-              key={chapter.number}
-              className="relative flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3"
-            >
-              <Link
-                to="/write/stories/$publicId/chapters/$number"
-                params={{ publicId, number: String(chapter.number) }}
-                className="font-bold underline-offset-4 after:absolute after:inset-0 after:rounded-lg hover:underline"
-              >
-                {m.chapter_number({ number: String(chapter.number) })}
-                {': '}
-                <span className={chapter.title ? undefined : 'text-muted-foreground'}>
-                  {chapter.title ?? m.chapter_untitled()}
-                </span>
-              </Link>
-              <ChapterStatusBadge status={chapter.status} />
-              <span className="ml-auto text-sm text-muted-foreground">
-                {m.chapter_updated_at({
-                  date: dateFormat.format(new Date(chapter.draftUpdatedAt ?? chapter.updatedAt)),
-                })}
-              </span>
-              {/* The API refuses to delete a chapter a moderator hid. */}
-              {chapter.status === 'hidden_by_mod' ? null : (
-                <DeleteChapterButton publicId={publicId} chapter={chapter} />
-              )}
-            </li>
+            <ChapterListItem key={chapter.number} publicId={publicId} chapter={chapter} />
           ))}
         </ol>
       )}
     </section>
-  );
-}
-
-/**
- * Soft delete behind a confirmation. Deleting a published chapter leaves its number as a gap in
- * the story, which the warning spells out.
- */
-function DeleteChapterButton({
-  publicId,
-  chapter,
-}: {
-  publicId: string;
-  chapter: AuthorChapterView;
-}) {
-  const [open, setOpen] = useState(false);
-  const remove = useDeleteChapter(publicId);
-  const number = String(chapter.number);
-
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        if (remove.isPending) return;
-        remove.reset();
-        setOpen(next);
-      }}
-    >
-      <DialogTrigger asChild>
-        {/* Above the row link, which covers the whole item. */}
-        <Button
-          type="button"
-          size="icon-sm"
-          variant="ghost"
-          className="relative z-10"
-          aria-label={m.chapter_delete({ number })}
-        >
-          <Trash2 />
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{m.chapter_delete_title({ number })}</DialogTitle>
-          <DialogDescription>
-            {chapter.status === 'published'
-              ? m.chapter_delete_published_warning({ number })
-              : m.chapter_delete_draft_warning()}
-          </DialogDescription>
-        </DialogHeader>
-        {remove.isError ? <FormMessage>{apiErrorMessage(remove.error)}</FormMessage> : null}
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="outline" disabled={remove.isPending}>
-              {m.publish_cancel()}
-            </Button>
-          </DialogClose>
-          <Button
-            type="button"
-            variant="destructive"
-            disabled={remove.isPending}
-            onClick={() => remove.mutate(chapter.number, { onSuccess: () => setOpen(false) })}
-          >
-            {m.chapter_delete_confirm()}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }

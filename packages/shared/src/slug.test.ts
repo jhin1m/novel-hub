@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { slugify } from './slug';
+import { foldVietnamese, slugify } from './slug';
 
 describe('slugify', () => {
   it('bỏ dấu tiếng Việt và nối bằng gạch ngang', () => {
@@ -49,5 +49,16 @@ describe('slugify', () => {
 
   it('cắt cứng khi một từ dài hơn 60 ký tự', () => {
     expect(slugify('x'.repeat(80))).toBe('x'.repeat(60));
+  });
+});
+
+describe('foldVietnamese', () => {
+  it('lowercases and removes diacritics, đ and its look-alike ð included', () => {
+    expect(foldVietnamese('KIẾM ĐẠO')).toBe('kiem dao');
+    expect(foldVietnamese('Ðế')).toBe('de');
+  });
+
+  it('keeps spaces and punctuation', () => {
+    expect(foldVietnamese('Chương 12: Mưa!')).toBe('chuong 12: mua!');
   });
 });

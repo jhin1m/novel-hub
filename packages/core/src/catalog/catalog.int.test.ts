@@ -9,7 +9,7 @@ import {
 } from '@novel-hub/db';
 import { seedTags } from '@novel-hub/db/seed';
 import { createTestDb, truncateAll } from '@novel-hub/db/testing';
-import { STORY_VISIBILITIES } from '@novel-hub/shared';
+import { HOME_DEDUPE_SLACK, NOTABLE_LIMIT, STORY_VISIBILITIES } from '@novel-hub/shared';
 import { desc, eq } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { isStoryPubliclyVisible } from '../access/can-read-chapter';
@@ -20,6 +20,8 @@ import { updateStory } from '../stories/update-story';
 import { addChapter, makeAuthor, makePublishedStory } from '../testing/story-fixture';
 import { getAuthorPage } from './author-page';
 import { listNotable, listRecentlyUpdated } from './home';
+import { getHomePage } from './home-page';
+import { listStories } from './lists';
 import { publicStoryWhere, selectStoryCards } from './story-card';
 import { getStoryPage } from './story-page';
 import { getTagPage } from './tag-page';
@@ -42,6 +44,9 @@ const daysAgo = (n: number) => new Date(NOW.getTime() - n * 24 * 60 * 60 * 1000)
 async function setStory(storyId: string, values: Partial<typeof stories.$inferInsert>) {
   await db.update(stories).set(values).where(eq(stories.id, storyId));
 }
+
+/** Counters of a story just past the home listing threshold (3 chapters, 5,000 words). */
+const LISTED = { chapterCount: 3, wordCount: 5_000 };
 
 async function tagId(slug: string): Promise<string> {
   const [row] = await db.select({ id: tags.id }).from(tags).where(eq(tags.slug, slug));
@@ -108,11 +113,11 @@ describe('listRecentlyUpdated', () => {
     await draftStory(author, 'Bản Nháp');
     // Published but every chapter deleted: no `last_chapter_at`.
     const empty = await makePublishedStory(db, author, 1, 'Không Chương');
-    await setStory(older.storyId, { lastChapterAt: daysAgo(3) });
-    await setStory(newer.storyId, { lastChapterAt: daysAgo(1) });
-    await setStory(mature.storyId, { lastChapterAt: daysAgo(2), isMature: true });
-    await setStory(hidden.storyId, { visibility: 'hidden_by_mod' });
-    await setStory(empty.storyId, { lastChapterAt: null });
+    await setStory(older.storyId, { ...LISTED, lastChapterAt: daysAgo(3) });
+    await setStory(newer.storyId, { ...LISTED, lastChapterAt: daysAgo(1) });
+    await setStory(mature.storyId, { ...LISTED, lastChapterAt: daysAgo(2), isMature: true });
+    await setStory(hidden.storyId, { ...LISTED, visibility: 'hidden_by_mod' });
+    await setStory(empty.storyId, { ...LISTED, lastChapterAt: null });
 
     const guest = await listRecentlyUpdated(db, { includeMature: false });
     expect(guest.items.map((s) => s.title)).toEqual(['Mới Hơn', 'Cũ Hơn']);
@@ -127,24 +132,90 @@ describe('listRecentlyUpdated', () => {
 
   it('hides every story of a banned author', async () => {
     const author = await makeAuthor(db);
-    await makePublishedStory(db, author, 1);
+    const s = await makePublishedStory(db, author, 1);
+    await setStory(s.storyId, LISTED);
+    expect((await listRecentlyUpdated(db, { includeMature: true })).items).toHaveLength(1);
     await db.update(users).set({ status: 'banned' }).where(eq(users.id, author.id));
     expect((await listRecentlyUpdated(db, { includeMature: true })).items).toEqual([]);
   });
 
+  it('lists only stories with at least 3 published chapters and 5,000 words', async () => {
+    const author = await makeAuthor(db);
+    // Real counters: 3 published chapters of 320 words, plus a draft that does not count.
+    const real = await makePublishedStory(db, author, 3, 'Ba Chương Ngắn');
+    await addChapter(db, author, real.publicId, true);
+    const cases: [string, Partial<typeof stories.$inferInsert>][] = [
+      ['Hai Chương', { chapterCount: 2, wordCount: 6_000 }],
+      ['Thiếu Chữ', { chapterCount: 3, wordCount: 4_999 }],
+      ['Vừa Đủ', LISTED],
+    ];
+    for (const [title, counters] of cases) {
+      const s = await makePublishedStory(db, author, 1, title);
+      await setStory(s.storyId, counters);
+    }
+    const [row] = await db
+      .select({ chapterCount: stories.chapterCount, wordCount: stories.wordCount })
+      .from(stories)
+      .where(eq(stories.id, real.storyId));
+    expect(row).toEqual({ chapterCount: 3, wordCount: 960 });
+
+    const listed = await listRecentlyUpdated(db, { includeMature: true });
+    expect(listed.items.map((s) => s.title)).toEqual(['Vừa Đủ']);
+    const notable = await listNotable(db, { includeMature: true, now: NOW });
+    expect(notable.map((s) => s.title)).toEqual(['Vừa Đủ']);
+  });
+
   it('returns cards without internal ids', async () => {
     const author = await makeAuthor(db);
-    await makePublishedStory(db, author, 2);
+    const s = await makePublishedStory(db, author, 3);
+    await setStory(s.storyId, { wordCount: 5_000 });
     const [card] = (await listRecentlyUpdated(db, { includeMature: false })).items;
     expect(card).toMatchObject({
       title: 'Kiếm Đạo Độc Tôn',
       author: { username: 'author', displayName: 'Lâm Phong' },
       mainTag: { slug: 'tien-hiep', name: 'Tiên hiệp' },
-      chapterCount: 2,
-      wordCount: 640,
+      chapterCount: 3,
+      wordCount: 5_000,
       status: 'ongoing',
     });
     expect(card).not.toHaveProperty('id');
+  });
+
+  it('gives every card its latest readable chapter, on the API list and the home page', async () => {
+    const author = await makeAuthor(db);
+    const s = await makePublishedStory(db, author, 3);
+    await setStory(s.storyId, { wordCount: 5_000 });
+    // A draft after the published chapters is never the latest one.
+    await addChapter(db, author, s.publicId, true);
+    const expected = { number: 3, title: null };
+    const [card] = (await listRecentlyUpdated(db, { includeMature: false })).items;
+    expect(card?.latestChapter).toEqual(expected);
+    const [home] = (await getHomePage(db, NOW)).recent;
+    expect(home?.latestChapter).toEqual(expected);
+  });
+});
+
+describe('getHomePage', () => {
+  it('shows the contests running now on the home page, never an ended one', async () => {
+    const mod = await makeAuthor(db, 'contest_mod');
+    const contest = (slug: string, startsAt: Date, endsAt: Date) => ({
+      slug,
+      title: slug,
+      description: 'Chủ đề.',
+      startsAt,
+      endsAt,
+      createdBy: mod.id,
+    });
+    await db
+      .insert(contests)
+      .values([
+        contest('dang-mo', daysAgo(1), new Date(NOW.getTime() + 3 * 24 * 60 * 60 * 1000)),
+        contest('da-qua', daysAgo(10), daysAgo(2)),
+      ]);
+    const home = await getHomePage(db, NOW);
+    expect(home.contests.map((c) => [c.slug, c.status, c.entryCount])).toEqual([
+      ['dang-mo', 'open', 0],
+    ]);
   });
 });
 
@@ -157,11 +228,39 @@ describe('listNotable', () => {
     const strongBig = { chapterCount: 3, wordCount: 12_000 };
     await setStory(strong.storyId, { ...strongBig, createdAt: daysAgo(5) });
     await setStory(tooOld.storyId, { ...strongBig, createdAt: daysAgo(40) });
-    await setStory(tooShort.storyId, { chapterCount: 3, wordCount: 900, createdAt: daysAgo(2) });
+    await setStory(tooShort.storyId, { chapterCount: 3, wordCount: 6_000, createdAt: daysAgo(2) });
 
     const notable = await listNotable(db, { includeMature: false, limit: 2, now: NOW });
     // The only qualifying story, then the newest other one.
     expect(notable.map((s) => s.title)).toEqual(['Đủ Chuẩn', 'Quá Ngắn']);
+  });
+
+  it('fills only with stories past the home listing threshold, never one without chapters', async () => {
+    const author = await makeAuthor(db);
+    const strong = await makePublishedStory(db, author, 1, 'Đủ Chuẩn');
+    await setStory(strong.storyId, { chapterCount: 3, wordCount: 12_000, createdAt: daysAgo(5) });
+    const listed = await makePublishedStory(db, author, 1, 'Đạt Ngưỡng');
+    await setStory(listed.storyId, { ...LISTED, createdAt: daysAgo(60) });
+    const below = await makePublishedStory(db, author, 1, 'Dưới Ngưỡng');
+    await setStory(below.storyId, { chapterCount: 3, wordCount: 4_900, createdAt: daysAgo(1) });
+    // Published, every chapter since deleted: newest of all, but nothing to read.
+    const empty = await makePublishedStory(db, author, 1, 'Không Chương');
+    await setStory(empty.storyId, { chapterCount: 0, wordCount: 0, lastChapterAt: null });
+
+    const notable = await listNotable(db, { includeMature: false, limit: 4, now: NOW });
+    expect(notable.map((s) => s.title)).toEqual(['Đủ Chuẩn', 'Đạt Ngưỡng']);
+  });
+
+  it('loads extra stories on the home page and the API, for sections that drop repeats', async () => {
+    const author = await makeAuthor(db);
+    const extra = NOTABLE_LIMIT + HOME_DEDUPE_SLACK;
+    for (let i = 0; i <= extra; i++) {
+      const s = await makePublishedStory(db, author, 0, `Truyện ${i}`);
+      await setStory(s.storyId, { ...LISTED, visibility: 'published', lastChapterAt: daysAgo(1) });
+    }
+    expect((await getHomePage(db, NOW)).notable).toHaveLength(extra);
+    const api = await listStories(db, { list: 'notable' }, { includeMature: false });
+    expect(api?.stories).toHaveLength(extra);
   });
 });
 
@@ -291,9 +390,10 @@ describe('getStoryPage', () => {
 });
 
 const RANKING_PATHS = ['/rankings/day', '/rankings/week', '/rankings/month', '/rankings/rising'];
+const TIEN_HIEP_PATHS = ['/tags/tien-hiep', '/tags/tien-hiep?noAi=1'];
 
 describe('catalogUrls', () => {
-  it('a chapter change lists the home, author, canonical tag and ranking pages', async () => {
+  it('a chapter change lists the home, explore, author, canonical tag and ranking pages', async () => {
     const author = await makeAuthor(db);
     const s = await makePublishedStory(db, author, 1);
     await linkTag(s.storyId, 'tu-tien');
@@ -307,9 +407,12 @@ describe('catalogUrls', () => {
     };
     expect(await catalogUrls(db, change)).toEqual([
       '/',
+      '/search',
       '/authors/author',
       '/tags/bao-luc',
+      '/tags/bao-luc?noAi=1',
       '/tags/tien-hiep',
+      '/tags/tien-hiep?noAi=1',
       '/rankings/day',
       '/rankings/week',
       '/rankings/month',
@@ -330,9 +433,12 @@ describe('catalogUrls', () => {
     const change = contentChangeSchema.parse(event?.payload);
     expect(await catalogUrls(db, change)).toEqual([
       '/',
+      '/search',
       '/authors/author',
       '/tags/do-thi',
+      '/tags/do-thi?noAi=1',
       '/tags/tien-hiep',
+      '/tags/tien-hiep?noAi=1',
       '/rankings/day',
       '/rankings/week',
       '/rankings/month',
@@ -346,12 +452,13 @@ describe('catalogUrls', () => {
     await setStory(s.storyId, { visibility: 'hidden_by_mod' });
     expect(
       await catalogUrls(db, { entity: 'story', action: 'hidden', storyId: s.storyId }),
-    ).toEqual(['/', '/authors/author', '/tags/tien-hiep', ...RANKING_PATHS]);
+    ).toEqual(['/', '/search', '/authors/author', ...TIEN_HIEP_PATHS, ...RANKING_PATHS]);
 
     await db.update(users).set({ status: 'banned' }).where(eq(users.id, author.id));
     expect(await catalogUrls(db, { entity: 'user', action: 'banned', userId: author.id })).toEqual([
       '/',
-      '/tags/tien-hiep',
+      '/search',
+      ...TIEN_HIEP_PATHS,
       ...RANKING_PATHS,
     ]);
   });

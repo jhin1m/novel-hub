@@ -35,6 +35,12 @@ export {
 } from './policies/user';
 export type { CurrentUser } from './users/current-user';
 export { markEmailVerified } from './users/mark-email-verified';
+export {
+  type SetUserRoleInput,
+  type SetUserRoleOutput,
+  type UserRoleValue,
+  setUserRole,
+} from './users/set-user-role';
 export { revokeUnprovenAccess } from './users/revoke-unproven-access';
 export { generateUsername, isUsernameTaken } from './users/username';
 export type { Db } from '@novel-hub/db';
@@ -143,7 +149,9 @@ export {
   createRankingReader,
   readRanking,
 } from './rankings/ranking-reader';
+export { type HomeRankings, readHomeRankings } from './rankings/home-rankings';
 export {
+  type LatestChapterDto,
   type ListOptions,
   type Paged,
   type StoryCardDto,
@@ -160,13 +168,10 @@ export { ensureBadgeCatalog } from './badges/badge-catalog';
 export { awardMilestoneBadges, badgeRuleQuery } from './badges/award-badges';
 export { type UserBadgeDto, listUserBadges } from './badges/user-badges';
 export { type TagPageResult, canonicalTagSlug, getTagPage } from './catalog/tag-page';
-export {
-  type HomePageData,
-  getHomePage,
-  listGenres,
-  listNotable,
-  listRecentlyUpdated,
-} from './catalog/home';
+export { listGenres, listNotable, listRecentlyUpdated } from './catalog/home';
+export { type HomePageData, getHomePage } from './catalog/home-page';
+export { listRecentlyCompleted } from './catalog/recently-completed';
+export { type ExploreEntry, getExploreEntry } from './catalog/explore-entry';
 export { catalogUrls } from './catalog/urls';
 export {
   type FeaturedSlotError,
@@ -191,6 +196,7 @@ export {
   withdrawEntry,
 } from './contests/contest-entries';
 export { type ContestPageDto, getContestPage, listContestsPage } from './contests/read-contests';
+export { listOpenContests } from './contests/open-contests';
 export { listContestEntriesForMods, listContestsForMods } from './contests/contest-admin-list';
 export { type StoryList, listStories } from './catalog/lists';
 export {
@@ -327,11 +333,21 @@ export {
   notificationVisibleWhere,
 } from './notifications/notification-visibility';
 export {
+  ANNOUNCEMENT_EXCERPT_MAX,
   type ChapterPublishedNotificationDto,
   type NotificationDto,
   type NotificationPage,
+  type StoryAnnouncementNotificationDto,
+  type UserWarnedNotificationDto,
   listNotifications,
 } from './notifications/list-notifications';
 export { countUnreadNotifications } from './notifications/unread-count';
 export { markNotificationsRead } from './notifications/mark-read';
 export { PRUNE_BATCH_SIZE, pruneNotifications } from './notifications/prune-notifications';
+// Domain barrels: new exports of these modules go in their own `index.ts`.
+export * from './comments/index';
+export * from './announcements/index';
+export * from './nominations/index';
+export * from './moderation/index';
+export * from './chapter-import/index';
+export * from './related-stories/index';

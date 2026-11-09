@@ -3,7 +3,7 @@ import { seedTags } from '@novel-hub/db/seed';
 import { createTestDb, truncateAll } from '@novel-hub/db/testing';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
-import { getHomePage } from '../catalog/home';
+import { getHomePage } from '../catalog/home-page';
 import { makeUser } from '../testing/moderation-fixture';
 import { makeAuthor, makePublishedStory } from '../testing/story-fixture';
 import { listActiveFeatured } from './active-featured';

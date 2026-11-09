@@ -1,18 +1,30 @@
-import { FEATURED_RULES, canonicalPath } from '@novel-hub/shared';
+import {
+  FEATURED_RULES,
+  HOME_COMPLETED_LIMIT,
+  NEW_STORY_SPOTLIGHT,
+  NOTABLE_LIMIT,
+  canonicalPath,
+} from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { createFileRoute } from '@tanstack/react-router';
-import { ClockIcon, SparklesIcon } from 'lucide-react';
+import { SparklesIcon } from 'lucide-react';
 import { HomeContinueReading } from '../components/home/home-continue-reading';
 import { HomeFeaturedHero } from '../components/home/home-featured-hero';
 import { HomeFeaturedPicks } from '../components/home/home-featured-picks';
 import { HomeGenreChips } from '../components/home/home-genre-chips';
+import { HomeNewSpotlight } from '../components/home/home-new-spotlight';
+import { HomeRankings } from '../components/home/home-rankings';
+import { HomeRecentlyCompleted } from '../components/home/home-recently-completed';
+import { HomeRecentUpdates } from '../components/home/home-recent-updates';
+import { HomeWriteBand } from '../components/home/home-write-band';
 import { SectionHeading } from '../components/section-heading';
 import { SiteLayout } from '../components/site-layout';
 import { StoryGrid } from '../components/story/story-grid';
-import { StoryRowList } from '../components/story/story-row-list';
 import { publicPageHeaders } from '../lib/cache-headers';
 import { assertCanonical, requestLocation } from '../lib/canonical';
-import { pickHero, withoutStory } from '../lib/home';
+import { pickHero } from '../lib/home';
+import { pickDefaultPeriod } from '../lib/home-rankings';
+import { claimSections } from '../lib/home-sections';
 import { seo, siteConfig } from '../lib/seo';
 import { useMatureAwareList } from '../lib/use-mature-aware-list';
 import { getHomePage } from '../server-fns/catalog';
@@ -24,7 +36,12 @@ export const Route = createFileRoute('/')({
     assertCanonical(requestLocation(location), canonicalPath({ kind: 'home' }));
     return getHomePage();
   },
-  headers: ({ match }) => publicPageHeaders(match.status, { list: true }),
+  // Rankings unreadable (Redis down): the section is left out and the page cached a minute only.
+  headers: ({ match, loaderData }) =>
+    publicPageHeaders(match.status, {
+      list: true,
+      degraded: loaderData?.rankings.available === false,
+    }),
   head: ({ matches }) =>
     seo({
       appUrl: siteConfig(matches)?.appUrl,
@@ -35,52 +52,72 @@ export const Route = createFileRoute('/')({
 });
 
 function HomePage() {
-  const { recent, notable, picks, genres } = Route.useLoaderData();
+  const { recent, notable, picks, genres, spotlight, completed, contests, rankings } =
+    Route.useLoaderData();
   const recentList = useMatureAwareList(
     { stories: recent, page: 1, totalPages: 1 },
     { list: 'recent' },
+  );
+  const completedList = useMatureAwareList(
+    { stories: completed, page: 1, totalPages: 1 },
+    { list: 'completed' },
   );
   const notableList = useMatureAwareList(
     { stories: notable, page: 1, totalPages: 1 },
     { list: 'notable' },
   );
   // From the server-rendered list, so the hero is the same in the HTML and after hydration and
-  // is never an 18+ story; the band below leaves it out, whichever list it shows.
+  // is never an 18+ story.
   const hero = pickHero(notable);
-  const notableStories = withoutStory(notableList.stories, hero?.publicId ?? null);
-  // Never 18+ (refused when picked, filtered when read), so no client top-up as for the lists.
-  const pickedStories = withoutStory(picks, hero?.publicId ?? null).slice(
-    0,
-    FEATURED_RULES.homeLimit,
-  );
+  // One story, one section, in this order ("recently updated" is a timeline and may repeat). The
+  // rankings stay true to their order and only keep the stories of the period shown first out of
+  // the sections after them. The completed and notable lists may swap in their 18+ variant once
+  // hydrated, so they claim their server-rendered list too: a section after them would keep what
+  // the HTML showed.
+  const [
+    ,
+    pickedStories = [],
+    ,
+    completedStories = [],
+    spotlightStories = [],
+    notableStories = [],
+  ] = claimSections([
+    { stories: hero ? [hero] : [], limit: 1, filtered: true },
+    // Never 18+ (refused when picked, filtered when read), so no client top-up as for the lists.
+    { stories: picks, limit: FEATURED_RULES.homeLimit, filtered: true },
+    {
+      stories: rankings.available ? rankings.periods[pickDefaultPeriod(rankings.periods)] : [],
+      limit: Number.POSITIVE_INFINITY,
+      filtered: false,
+    },
+    {
+      stories: completedList.stories,
+      limit: HOME_COMPLETED_LIMIT,
+      filtered: true,
+      alsoClaim: completed,
+    },
+    { stories: spotlight, limit: NEW_STORY_SPOTLIGHT.size, filtered: true },
+    { stories: notableList.stories, limit: NOTABLE_LIMIT, filtered: true, alsoClaim: notable },
+  ]);
   return (
     <SiteLayout>
       <h1 className="sr-only">{m.app_name()}</h1>
       <div className="flex flex-col gap-[52px] py-8 md:py-10">
-        <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-[52px] px-4 md:px-8">
+        <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-[52px] px-safe-4 md:px-safe-8">
           {genres.length > 0 ? <HomeGenreChips genres={genres} /> : null}
           <div className="flex flex-wrap gap-6 empty:hidden">
             {hero ? <HomeFeaturedHero story={hero} /> : null}
             <HomeContinueReading />
           </div>
           {pickedStories.length > 0 ? <HomeFeaturedPicks stories={pickedStories} /> : null}
-          <section aria-labelledby="recent-title" className="flex flex-col gap-5">
-            <SectionHeading
-              id="recent-title"
-              icon={ClockIcon}
-              title={m.home_recent()}
-              subtitle={m.home_recent_subtitle()}
-            />
-            {recentList.stories.length > 0 ? (
-              <StoryRowList stories={recentList.stories} priorityCount={4} />
-            ) : (
-              <p className="text-muted-foreground">{m.home_empty()}</p>
-            )}
-          </section>
+          <HomeRankings rankings={rankings} />
+          <HomeRecentUpdates stories={recentList.stories} />
+          <HomeRecentlyCompleted stories={completedStories} />
+          <HomeNewSpotlight stories={spotlightStories} />
         </div>
         {notableStories.length > 0 ? (
           <section aria-labelledby="notable-title" className="bg-band py-11">
-            <div className="mx-auto flex max-w-[1240px] flex-col gap-5 px-4 md:px-8">
+            <div className="mx-auto flex max-w-[1240px] flex-col gap-5 px-safe-4 md:px-safe-8">
               <SectionHeading
                 id="notable-title"
                 icon={SparklesIcon}
@@ -92,6 +129,7 @@ function HomePage() {
             </div>
           </section>
         ) : null}
+        <HomeWriteBand contests={contests} />
       </div>
     </SiteLayout>
   );

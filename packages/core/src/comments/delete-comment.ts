@@ -5,7 +5,7 @@ import type { CurrentUser } from '../users/current-user';
 
 /**
  * The writer deletes their own visible comment (soft: `status = 'deleted'`, its thread goes with
- * it). Someone else's comment is `FORBIDDEN`: moderators hide comments through the moderation
+ * it; a pin is dropped so it frees its place). Someone else's comment is `FORBIDDEN`: moderators hide comments through the moderation
  * actions instead. A comment already deleted or hidden is `NOT_FOUND`.
  */
 export async function deleteComment(
@@ -15,7 +15,7 @@ export async function deleteComment(
 ): Promise<Result<void, 'NOT_FOUND' | 'FORBIDDEN'>> {
   const deleted = await db
     .update(comments)
-    .set({ status: 'deleted' })
+    .set({ status: 'deleted', pinnedAt: null })
     .where(
       and(
         eq(comments.id, commentId),

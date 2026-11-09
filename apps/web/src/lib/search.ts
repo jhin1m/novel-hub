@@ -8,6 +8,8 @@ export function searchParams(query: SearchQuery): Record<string, string> {
   if (query.status !== undefined) params.status = query.status;
   if (query.minWords !== undefined) params.minWords = String(query.minWords);
   if (query.maxWords !== undefined) params.maxWords = String(query.maxWords);
+  if (query.noAi) params.noAi = '1';
+  if (query.sort !== undefined) params.sort = query.sort;
   if (query.page > 1) params.page = String(query.page);
   return params;
 }
@@ -45,9 +47,38 @@ export function apiSearchQuery(query: SearchQuery) {
   return {
     q: query.q,
     page: String(query.page),
+    noAi: query.noAi ? '1' : '0',
     ...(query.tag !== undefined && { tag: query.tag }),
     ...(query.status !== undefined && { status: query.status }),
     ...(query.minWords !== undefined && { minWords: String(query.minWords) }),
     ...(query.maxWords !== undefined && { maxWords: String(query.maxWords) }),
+    ...(query.sort !== undefined && { sort: query.sort }),
   };
+}
+
+/**
+ * Nothing picked yet: no text, filter or order, first page. Only then does the explore page open
+ * with its entry rows.
+ */
+export function isUnfiltered(query: SearchQuery): boolean {
+  return (
+    query.q === '' &&
+    query.tag === undefined &&
+    query.status === undefined &&
+    query.minWords === undefined &&
+    query.maxWords === undefined &&
+    !query.noAi &&
+    query.sort === undefined &&
+    query.page === 1
+  );
+}
+
+/** Whether any filter (not the text, the order or the page) narrows the results. */
+export function hasFilters(query: SearchQuery): boolean {
+  return !isUnfiltered({ ...query, q: '', sort: undefined, page: 1 });
+}
+
+/** `query` with `patch` applied, back on the first page (a new filter starts the results over). */
+export function withFilters(query: SearchQuery, patch: Partial<SearchQuery>): SearchQuery {
+  return { ...query, ...patch, page: 1 };
 }

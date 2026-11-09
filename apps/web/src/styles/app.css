@@ -18,6 +18,18 @@
 @import './tokens.css';
 @import './reader.css';
 
+/* `dark:` follows the effective site theme (`data-theme` on `<html>`, see `tokens.css`), not only the OS. */
+@custom-variant dark {
+  &:where([data-theme='dark'], [data-theme='dark'] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme='ivory']), :root:not([data-theme='ivory']) *) {
+      @slot;
+    }
+  }
+}
+
 /* Map tokens to Tailwind utilities (`bg-background`, `text-primary`, `font-serif`, ...). */
 @theme inline {
   --color-background: var(--background);
@@ -70,6 +82,32 @@
 
   body {
     @apply bg-background font-sans text-[15px] font-medium text-foreground antialiased;
+  }
+}
+
+/*
+ * Horizontal padding that also clears a landscape notch (`viewport-fit=cover` lets the page run under
+ * it): `px-safe-4` is 1rem or the safe-area inset on that side, whichever is larger. Used by the
+ * content frames and fixed bars, never by `body`, so full-bleed backgrounds still reach the edges.
+ */
+@utility px-safe-* {
+  padding-left: max(--spacing(--value(integer)), env(safe-area-inset-left));
+  padding-right: max(--spacing(--value(integer)), env(safe-area-inset-right));
+}
+
+/*
+ * Keyboard focus and in-page jumps stop above whatever is fixed to the bottom of a narrow screen.
+ * `data-bottom-bar` names the breakpoint at which the bar goes away (`md` or `lg`).
+ */
+@media (max-width: 47.98rem) {
+  :root:has([data-bottom-bar]) {
+    scroll-padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 63.98rem) {
+  :root:has([data-bottom-bar='lg']) {
+    scroll-padding-bottom: calc(72px + env(safe-area-inset-bottom));
   }
 }
 
@@ -133,4 +171,22 @@
   & hr.ProseMirror-selectednode::after {
     color: var(--primary);
   }
+}
+
+/*
+ * Account placeholders, rendered while `useMe()` loads (server HTML and the first client render).
+ * `BOOT_SCRIPT` marks `<html>` before paint from the "last signed in" hint (`account-hint.ts`), so a
+ * browser last signed in shows the signed-in header at once, and a guest's the guest one. Unlayered,
+ * so it wins over the `md:flex`-style utilities of the same element.
+ */
+:root:not([data-signed-in]) .signed-in-hint,
+:root[data-signed-in] .guest-hint,
+:root:not([data-continue-rows]) .continue-hint,
+:root[data-continue-rows='1'] .continue-hint-row:nth-child(n + 2),
+:root[data-continue-rows='2'] .continue-hint-row:nth-child(n + 3) {
+  display: none;
+}
+
+.account-initial-hint::before {
+  content: var(--account-initial, '');
 }

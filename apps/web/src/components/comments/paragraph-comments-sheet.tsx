@@ -56,14 +56,15 @@ export function ParagraphCommentsSheet({
       }}
     >
       {/*
-       * No dimming and a lower sheet on phones, so the marked paragraph stays in sight (the page
-       * moves the text column left of the panel on wide screens). Focus goes to the panel, not the
-       * comment box: a phone keyboard would cover the comments the reader came for.
+       * No dimming and a lower sheet on phones, so the marked paragraph stays in sight. On wide
+       * screens the panel lies over the right of the page; the text column neither moves nor
+       * changes width. Focus goes to the panel, not the comment box: a phone keyboard would cover
+       * the comments the reader came for.
        */}
       <SheetContent
         side="adaptive-right"
         overlayClassName="bg-transparent"
-        className="site-comment-colors gap-0 max-lg:max-h-[60dvh]"
+        className="site-comment-colors gap-0 max-lg:max-h-[60dvh] lg:max-w-(--reader-panel-width)"
         onOpenAutoFocus={(event) => {
           event.preventDefault();
           (event.currentTarget as HTMLElement | null)?.focus();
@@ -101,9 +102,9 @@ function ParagraphThreads({
         </SheetDescription>
       </SheetHeader>
       <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-4 pb-6 font-sans">
-        <CommentComposer chapter={chapter} paragraphId={paragraph.pid} />
+        <CommentComposer scope={chapter} paragraphId={paragraph.pid} />
         <CommentFeed
-          chapter={chapter}
+          scope={chapter}
           viewer={viewer}
           comments={comments}
           active

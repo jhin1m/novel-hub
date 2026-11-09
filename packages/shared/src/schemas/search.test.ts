@@ -18,6 +18,7 @@ describe('searchQuerySchema', () => {
       status: 'completed',
       minWords: 50_000,
       maxWords: 199_999,
+      noAi: false,
       page: 3,
     });
   });
@@ -26,13 +27,14 @@ describe('searchQuerySchema', () => {
     expect(searchQuerySchema.parse({ q: 1984, tag: 2024 })).toEqual({
       q: '1984',
       tag: '2024',
+      noAi: false,
       page: 1,
     });
     expect(searchQuerySchema.parse({ q: true }).q).toBe('true');
   });
 
   it('fills defaults for an empty query', () => {
-    expect(searchQuerySchema.parse({})).toEqual({ q: '', page: 1 });
+    expect(searchQuerySchema.parse({})).toEqual({ q: '', noAi: false, page: 1 });
   });
 
   it.each([
@@ -48,6 +50,20 @@ describe('searchQuerySchema', () => {
     expect(searchQuerySchema.parse(input)).toMatchObject(expected);
   });
 
+  it.each([
+    ['1', true],
+    [1, true],
+    [true, true],
+    ['true', true],
+    ['0', false],
+    [0, false],
+    ['x', false],
+    [false, false],
+    [undefined, false],
+  ])('reads noAi %j as %s', (noAi, expected) => {
+    expect(searchQuerySchema.parse({ noAi }).noAi).toBe(expected);
+  });
+
   it('offers ranges that do not overlap', () => {
     for (let i = 1; i < WORD_RANGES.length; i += 1) {
       const prev = WORD_RANGES[i - 1];
@@ -56,6 +72,21 @@ describe('searchQuerySchema', () => {
         next && 'minWords' in next ? next.minWords : NaN,
       );
     }
+  });
+});
+
+describe('searchQuerySchema sort', () => {
+  it('keeps a known order and drops anything else', () => {
+    for (const sort of ['updated', 'newest', 'longest'] as const) {
+      expect(searchQuerySchema.parse({ sort }).sort).toBe(sort);
+    }
+    expect(searchQuerySchema.parse({}).sort).toBeUndefined();
+    expect(searchQuerySchema.parse({ sort: 'views' }).sort).toBeUndefined();
+    expect(searchQuerySchema.parse({ sort: 3 }).sort).toBeUndefined();
+    expect(searchQuerySchema.parse({ sort: 'longest', page: 'x' })).toMatchObject({
+      sort: 'longest',
+      page: 1,
+    });
   });
 });
 

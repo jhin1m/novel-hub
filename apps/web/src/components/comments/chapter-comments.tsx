@@ -79,9 +79,9 @@ export function ChapterComments({
         />
       ) : (
         <>
-          {near ? <CommentComposer chapter={chapter} /> : null}
+          {near ? <CommentComposer scope={chapter} /> : null}
           <CommentFeed
-            chapter={chapter}
+            scope={chapter}
             viewer={viewer}
             comments={comments}
             active={near}

@@ -2,10 +2,11 @@ import { chapterDailyStats, chapters, storyDailyStats } from '@novel-hub/db';
 import { seedTags } from '@novel-hub/db/seed';
 import { createTestDb, truncateAll } from '@novel-hub/db/testing';
 import { loadServerEnv, testEnvSchema } from '@novel-hub/shared/env';
+import { VIEW_RULES } from '@novel-hub/shared';
 import { and, eq, sql } from 'drizzle-orm';
 import { Redis } from 'ioredis';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { addChapter, makeAuthor, makePublishedStory } from '../testing/story-fixture';
+import { makeAuthor, makePublishedStory } from '../testing/story-fixture';
 import { flushViewCounters } from './flush';
 import { flushStoryReaders } from './flush-story-readers';
 import { recordChapterView } from './record-chapter-view';
@@ -56,20 +57,25 @@ describe('view counting (real Redis and Postgres)', () => {
     const s = await makePublishedStory(db, author, 1);
     const id = await chapterId(s.storyId, 1);
 
+    const { perViewerPerDay, perIpPerDay } = VIEW_RULES;
     const counted: boolean[] = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < perViewerPerDay + 2; i++) {
       const result = await view(s.publicId, 'u:same');
       if (result.ok) counted.push(result.value.counted);
     }
-    expect(counted).toEqual([true, true, true, false, false]);
+    expect(counted).toEqual([
+      ...Array<boolean>(perViewerPerDay).fill(true),
+      ...Array<boolean>(2).fill(false),
+    ]);
 
-    // Eleven anonymous viewers behind one IP: the IP already has 3 reads, so 7 more count.
+    // One more anonymous viewer than the IP cap behind one IP: the IP already spent
+    // `perViewerPerDay` reads, so only the rest of the cap counts.
     let fromIp = 0;
-    for (let i = 0; i < 11; i++) {
+    for (let i = 0; i < perIpPerDay + 1; i++) {
       const result = await view(s.publicId, `a:${i}`);
       if (result.ok && result.value.counted) fromIp++;
     }
-    expect(fromIp).toBe(7);
+    expect(fromIp).toBe(perIpPerDay - perViewerPerDay);
     // Past the IP cap, fresh viewer ids (a client dropping its cookie) create no keys.
     const keysAtCap = (await redis.keys(`${PREFIX}:*`)).length;
     for (let i = 0; i < 20; i++) await view(s.publicId, `a:fresh-${i}`);
@@ -79,9 +85,17 @@ describe('view counting (real Redis and Postgres)', () => {
 
     expect(await flushViewCounters(redis, db, PREFIX, [DATE])).toEqual({ chapters: 1 });
     const [row] = await db.select().from(chapterDailyStats);
-    expect(row).toMatchObject({ chapterId: id, date: DATE, views: 11, completions: 0 });
-    // HyperLogLog: 1 + 7 + 1 distinct viewers were counted (approximate, exact at this size).
-    expect(row?.uniqueReaders).toBe(9);
+    expect(row).toMatchObject({
+      chapterId: id,
+      date: DATE,
+      views: perIpPerDay + 1,
+      completions: 0,
+    });
+    // HyperLogLog: 1 + (perIpPerDay - perViewerPerDay) + 1 distinct viewers were counted; the
+    // estimate may be off by one at this size.
+    const unique = 1 + (perIpPerDay - perViewerPerDay) + 1;
+    expect(row?.uniqueReaders).toBeGreaterThanOrEqual(unique - 1);
+    expect(row?.uniqueReaders).toBeLessThanOrEqual(unique + 1);
 
     // Nothing left to flush: running again adds nothing.
     expect(await flushViewCounters(redis, db, PREFIX, [DATE])).toEqual({ chapters: 0 });
@@ -89,7 +103,21 @@ describe('view counting (real Redis and Postgres)', () => {
     expect(await view(s.publicId, 'a:late', '198.51.100.7')).toMatchObject({ ok: true });
     await flushViewCounters(redis, db, PREFIX, [DATE]);
     const [after] = await db.select().from(chapterDailyStats);
-    expect(after).toMatchObject({ views: 12, uniqueReaders: 10 });
+    expect(after?.views).toBe(perIpPerDay + 2);
+    expect(after?.uniqueReaders).toBeGreaterThanOrEqual(row?.uniqueReaders ?? 0);
+  });
+
+  it('still stops counting a cookie-less client at the IP cap', async () => {
+    const author = await makeAuthor(db);
+    const s = await makePublishedStory(db, author, 1);
+    // Every request without a cookie gets a fresh anonymous id, so only the IP cap holds it.
+    const counted: boolean[] = [];
+    for (let i = 0; i <= VIEW_RULES.perIpPerDay; i++) {
+      const result = await view(s.publicId, `a:no-cookie-${i}`, '192.0.2.44');
+      if (result.ok) counted.push(result.value.counted);
+    }
+    expect(counted.filter(Boolean)).toHaveLength(VIEW_RULES.perIpPerDay);
+    expect(counted.at(-1)).toBe(false);
   });
 
   it('gives the counters back when the database write fails, and flushes them next time', async () => {
@@ -165,20 +193,30 @@ describe('view counting (real Redis and Postgres)', () => {
   });
 
   it('caps the readers one IP adds to a story per day, across chapters', async () => {
+    const { perIpPerStoryPerDay } = VIEW_RULES;
     const author = await makeAuthor(db);
-    const s = await makePublishedStory(db, author, 1);
-    for (let i = 2; i <= 30; i++) await addChapter(db, author, s.publicId);
-    // One IP rotating its cookie on every chapter: every chapter read counts (under the chapter
-    // caps), but the story gains at most `perIpPerStoryPerDay` readers.
+    const s = await makePublishedStory(db, author, 2);
+    // One IP rotating its cookie over two chapters, each kept under the per-chapter IP cap: every
+    // read counts, but the story gains at most `perIpPerStoryPerDay` readers.
+    const perChapter = Math.ceil((perIpPerStoryPerDay + 20) / 2);
+    expect(perChapter).toBeLessThanOrEqual(VIEW_RULES.perIpPerDay);
     let counted = 0;
-    for (let number = 1; number <= 30; number++) {
-      const result = await recordChapterView(
-        { db, viewCounter },
-        { publicId: s.publicId, number, viewer: `a:bot-${number}`, ip: '198.51.100.1', now: NOW },
-      );
-      if (result.ok && result.value.counted) counted++;
+    for (let number = 1; number <= 2; number++) {
+      for (let i = 0; i < perChapter; i++) {
+        const result = await recordChapterView(
+          { db, viewCounter },
+          {
+            publicId: s.publicId,
+            number,
+            viewer: `a:bot-${number}-${i}`,
+            ip: '198.51.100.1',
+            now: NOW,
+          },
+        );
+        if (result.ok && result.value.counted) counted++;
+      }
     }
-    expect(counted).toBe(30);
+    expect(counted).toBe(perChapter * 2);
     // Readers without a known IP are not capped per IP.
     await recordChapterView(
       { db, viewCounter },
@@ -186,7 +224,9 @@ describe('view counting (real Redis and Postgres)', () => {
     );
     await flushStoryReaders(redis, db, PREFIX, [DATE]);
     const [row] = await db.select().from(storyDailyStats);
-    expect(row?.uniqueReaders).toBe(11);
+    // The capped readers plus the one without an IP; HyperLogLog may be off by one at this size.
+    expect(row?.uniqueReaders).toBeGreaterThanOrEqual(perIpPerStoryPerDay);
+    expect(row?.uniqueReaders).toBeLessThanOrEqual(perIpPerStoryPerDay + 2);
   });
 
   it('marks the stories again when the database write fails', async () => {

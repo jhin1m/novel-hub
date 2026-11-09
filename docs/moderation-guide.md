@@ -5,8 +5,9 @@ Dành cho tài khoản `mod` và `admin`. Trang hàng chờ: `/moderation` (link
 ## Hàng chờ báo cáo
 
 - Lọc theo trạng thái (Đang chờ / Đã xử lý / Đã bỏ qua) và theo lý do. Mới nhất lên trước, 20 báo cáo mỗi trang.
-- Mỗi báo cáo hiện mục bị báo cáo (truyện, chương, tài khoản, bình luận hoặc đánh giá) kèm link tới trang thật, trạng thái hiện tại (đã ẩn, tác giả đã xoá, tác giả đang bị khoá...), mô tả của người báo, người báo ("Hệ thống" với báo cáo tự động) và số báo cáo đang chờ cho cùng mục.
-- Người dùng báo cáo được truyện, chương, tài khoản, bình luận, review (đánh giá) với 5 lý do: vi phạm bản quyền, đạo văn, spam, nội dung cấm, gắn nhãn sai. Mỗi người chỉ có một báo cáo đang chờ cho mỗi mục; có giới hạn tần suất (`RATE_LIMITS.report` trong `packages/shared/src/rate-limits.ts`).
+- Mỗi báo cáo hiện mục bị báo cáo (truyện, chương, tài khoản, bình luận, đánh giá hoặc thông báo của tác giả) kèm link tới trang thật, trạng thái hiện tại (đã ẩn, tác giả đã xoá, tác giả đang bị khoá...), mô tả của người báo, người báo ("Hệ thống" với báo cáo tự động) và số báo cáo đang chờ cho cùng mục.
+- Thẻ báo cáo còn hiện số cảnh cáo trong 90 ngày của người liên quan (người bị báo cáo, người viết bình luận/đánh giá, hoặc tác giả truyện/chương/thông báo); xem mục "Cảnh cáo".
+- Người dùng báo cáo được truyện, chương, tài khoản, bình luận (cả bình luận ở khu thảo luận của truyện), review (đánh giá), thông báo của tác giả với 5 lý do: vi phạm bản quyền, đạo văn, spam, nội dung cấm, gắn nhãn sai. Mỗi người chỉ có một báo cáo đang chờ cho mỗi mục; có giới hạn tần suất (`RATE_LIMITS.report` trong `packages/shared/src/rate-limits.ts`).
 - Báo cáo không bao giờ tự ẩn nội dung; mod quyết định.
 
 ## Hành động
@@ -19,18 +20,30 @@ Mọi hành động ghi vào `moderation_actions` (ai, lúc nào, mục nào, gh
 | Ẩn chương | Chương trả 404, bộ đếm chương/chữ của truyện tính lại; tác giả không đăng lại được chương này | Khôi phục chương |
 | Ẩn bình luận | Bình luận và cả nhánh trả lời của nó (nếu là bình luận gốc) biến mất khỏi khu bình luận; không báo cáo thêm được | Khôi phục bình luận |
 | Ẩn đánh giá | Điểm của đánh giá ra khỏi điểm trung bình và số lượt, review biến mất khỏi danh sách; người viết thấy "đang bị ẩn", không sửa hay xoá được; không báo cáo thêm được | Khôi phục đánh giá |
+| Bỏ ghim bình luận | Bình luận đang được tác giả ghim thôi nằm trên đầu chương hoặc khu thảo luận, nội dung giữ nguyên | Tác giả ghim lại (nếu còn chỗ) |
+| Ẩn thông báo | Thông báo của tác giả biến mất khỏi trang truyện, trang tác giả và khỏi thông báo trong app của người theo dõi; tác giả không xoá được thông báo đang bị ẩn | Khôi phục thông báo |
+| Cảnh cáo | Người dùng nhận thông báo trong app với ghi chú của mod làm lý do; không đổi gì khác | — (cảnh cáo ở lại nhật ký) |
 | Cấm bình luận | Tài khoản vẫn đọc, theo dõi được nhưng không đăng bình luận hay đánh giá (ô nhập thay bằng thông báo bị hạn chế) | Bỏ cấm bình luận |
 | Khoá tài khoản | Đăng xuất ngay mọi phiên, không đăng nhập lại được; mọi truyện, chương, trang tác giả biến mất khỏi trang và tìm kiếm. Không sửa dữ liệu truyện | Mở khoá tài khoản |
 | Gộp tag | Tab "Gộp tag": mọi truyện gắn tag cũ chuyển sang tag mới, URL tag cũ chuyển hướng 301 sang tag mới | Không có nút hoàn tác; sửa tay theo mục "Hoàn tác gộp tag thủ công" |
 | Bỏ qua / Đánh dấu đã xử lý | Đóng một báo cáo mà không đổi nội dung | — |
 
-Quyền: mod tác động lên reader và author; admin thêm cả mod. Không ai khoá được admin hay tự xử mình. Luật này áp cả cho nội dung: mod không ẩn/khôi phục truyện, chương, bình luận, đánh giá của mod khác hay của admin (để admin làm), không ai xử truyện của chính mình. Báo cáo về nội dung của mod/admin khác vẫn đóng được (bỏ qua, đánh dấu đã xử lý); báo cáo về chính mình hoặc nội dung của mình thì không. Mod bị cấm bình luận hoặc bị khoá thì mất quyền kiểm duyệt. Trang chỉ hiện các nút được phép.
+Quyền: mod tác động lên reader và author; admin thêm cả mod. Không ai khoá, cảnh cáo được admin hay tự xử mình. Luật này áp cả cho nội dung: mod không ẩn/khôi phục/bỏ ghim truyện, chương, bình luận, đánh giá, thông báo của mod khác hay của admin (để admin làm), không ai xử truyện của chính mình. Báo cáo về nội dung của mod/admin khác vẫn đóng được (bỏ qua, đánh dấu đã xử lý); báo cáo về chính mình hoặc nội dung của mình thì không. Mod bị cấm bình luận hoặc bị khoá thì mất quyền kiểm duyệt. Trang chỉ hiện các nút được phép.
 
 Trang công khai được Cloudflare cache: sau khi ẩn hoặc khoá, worker purge cache và đồng bộ tìm kiếm qua outbox, thường trong vòng một phút. Worker dừng thì nội dung cũ còn trên CDN tới khi worker chạy lại.
 
+## Cảnh cáo
+
+- Nút "Cảnh cáo" có ở mọi thẻ báo cáo khi người liên quan chưa bị khoá. Cảnh cáo **bắt buộc có ghi chú** (ô ghi chú của thẻ): người dùng đọc nguyên văn ghi chú đó trong thông báo "Bạn nhận một cảnh cáo từ ban kiểm duyệt: …", nên viết rõ vi phạm, lịch sự, không lộ người báo cáo. Bấm xong phải xác nhận.
+- Cảnh cáo không tự cấm bình luận hay khoá tài khoản. Khi người đó có từ 3 cảnh cáo trong 90 ngày, thẻ báo cáo hiện gợi ý cân nhắc cấm bình luận hoặc khoá; mod vẫn tự quyết.
+- Số cảnh cáo đếm từ nhật ký kiểm duyệt (`moderation_actions`, action `warn_user`), không từ thông báo (thông báo cũ bị dọn theo tuổi). Cảnh cáo không gỡ được; muốn bỏ thì ghi chú lại trong nhật ký.
+- Cảnh cáo từ một báo cáo đang chờ thì báo cáo chuyển "Đã xử lý"; bấm lại (hay mạng gửi lại) trên báo cáo đã xử lý bị từ chối, nên không cảnh cáo trùng. Cảnh cáo không gắn báo cáo thì nút chỉ khoá trong lúc đang gửi.
+
 ## Bình luận
 
-- Bình luận chương hai cấp: bình luận gốc và một cấp trả lời (trả lời một trả lời được gắn vào bình luận gốc). Văn bản thuần, tối đa 2.000 ký tự, không sửa được; người viết tự xoá được bình luận của mình.
+- Bình luận chương hai cấp: bình luận gốc và một cấp trả lời (trả lời một trả lời được gắn vào bình luận gốc). Văn bản thuần, tối đa 2.000 ký tự; người viết sửa được (hiện nhãn "đã sửa", không sửa được khi bình luận đang bị báo cáo) và tự xoá được bình luận của mình.
+- Khu thảo luận của truyện: bình luận không gắn chương, cùng luật đăng, ẩn, báo cáo (kể cả luật 18+). Hàng chờ ghi "Thảo luận của truyện" thay cho tên chương.
+- Ghim: tác giả ghim tối đa 3 bình luận gốc mỗi chương hoặc khu thảo luận. Mod ẩn một bình luận đang ghim, hoặc khoá người viết, thì ghim bị gỡ luôn (để không chiếm chỗ); khôi phục hay mở khoá không ghim lại. Mod cũng gỡ ghim riêng được bằng "Bỏ ghim bình luận" (thẻ báo cáo ghi "Đã ghim"); bỏ ghim không đóng báo cáo, vì nội dung bị báo cáo vẫn còn: xử lý tiếp (ẩn, cảnh cáo) hoặc đóng tay.
 - Bình luận theo đoạn: người đọc bôi chọn chữ trong một đoạn (hoặc tiêu đề mục) rồi bấm "Bình luận đoạn này"; cuối chương có tab "Theo đoạn" liệt kê các đoạn có bình luận. Cùng luật đăng, ẩn, báo cáo như bình luận chương. Tác giả sửa chương làm mất đoạn thì bình luận của đoạn đó chuyển về danh sách bình luận chương, kèm nhãn "Bình luận về đoạn đã sửa"; không mất bình luận nào.
 - Người đăng phải đã xác thực email và không bị cấm bình luận; có giới hạn tần suất (`RATE_LIMITS.comment`, tài khoản mới chặt hơn).
 - Bình luận của tài khoản bị khoá không hiện (không xoá dữ liệu, mở khoá là hiện lại). Bình luận gốc bị ẩn hoặc bị xoá thì cả nhánh trả lời không hiện.
@@ -54,6 +67,17 @@ Trang công khai được Cloudflare cache: sau khi ẩn hoặc khoá, worker pu
 - Danh sách chia ba nhóm: đang trong thời gian nổi bật ("Kết thúc ngay" đặt giờ kết thúc là bây giờ; nhóm này xếp theo thời gian, nên vẫn liệt kê truyện đã bị ẩn/khoá dù trang chủ không hiện), sắp tới ("Xoá" xoá hẳn), đã kết thúc trong 30 ngày gần nhất. Lượt đã bắt đầu không xoá được, chỉ kết thúc.
 - Mọi lần thêm, kết thúc, xoá ghi vào nhật ký kiểm duyệt (`feature_story` / `unfeature_story`, ghi chú là khoảng thời gian).
 - **Cache:** thêm hoặc kết thúc không purge CDN; trang chủ thật cập nhật sau tối đa 10 phút (tới khoảng 70 phút nếu Cloudflare còn phục vụ bản cũ trong lúc làm mới). Muốn có hiệu lực ngay thì purge URL trang chủ trên dashboard Cloudflare (`pnpm cdn:purge` hiện chỉ purge theo truyện). Ẩn truyện hay khoá tác giả thì trang chủ đã được purge sẵn.
+
+### Gợi ý từ xếp hạng tháng
+
+- Phía trên form trong tab "Nổi bật": top 10 truyện nhiều người đọc nhất **tháng lịch trước** theo giờ Việt Nam (tổng số người đọc khác nhau mỗi ngày), kèm số người đọc. Không phải bảng "tháng" công khai (30 ngày cuộn).
+- Bỏ khỏi gợi ý: truyện 18+, truyện bị ẩn hoặc tác giả bị khoá, truyện đang hoặc sắp nổi bật (lượt đã kết thúc thì được gợi ý lại), truyện của chính mod.
+- "Đưa vào nổi bật" chỉ điền sẵn truyện vào form (`?tab=featured&story=…`); mod vẫn chọn thời gian và bấm "Thêm vào nổi bật". Không có gì tự thêm.
+
+## Thông báo của tác giả
+
+- Tác giả gửi thông báo ngắn (văn bản thuần) tới người theo dõi truyện; hiện trên trang truyện và trang tác giả. Người đọc báo cáo được thông báo đang hiện.
+- "Ẩn thông báo" gỡ nó khỏi các trang (worker purge CDN qua outbox) và khỏi danh sách thông báo của người theo dõi; "Khôi phục thông báo" làm ngược lại. Thông báo tác giả đã tự xoá thì không ẩn/khôi phục được.
 
 ## Cuộc thi theo chủ đề
 

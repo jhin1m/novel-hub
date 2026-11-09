@@ -40,6 +40,12 @@ describe('job routers', () => {
     ).rejects.toBeInstanceOf(UnrecoverableError);
   });
 
+  it('routes notify-announcement and never retries it without an announcement id', async () => {
+    await expect(
+      routeContentJob({ name: 'notify-announcement', data: { announcementId: 'x' } }, contentDeps),
+    ).rejects.toBeInstanceOf(UnrecoverableError);
+  });
+
   it('never retries a purge job whose payload is not a content change', async () => {
     const purge = vi.fn<CdnPurger['purge']>();
     await expect(

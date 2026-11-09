@@ -2,6 +2,7 @@ import type { ChapterContext, ReportDto, StoryContext } from '@novel-hub/core';
 import { canonicalPath } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { Badge } from '@/components/ui/badge';
+import { formatDate } from '@/lib/format';
 import { textLinkClass } from '../auth-ui';
 
 export function StoryLine({ story }: { story: StoryContext }) {
@@ -126,9 +127,14 @@ export function TargetContext({ report }: { report: ReportDto }) {
             {comment.status === 'deleted' ? (
               <Badge variant="muted">{m.moderation_comment_deleted()}</Badge>
             ) : null}
+            {comment.pinnedAt ? <Badge variant="muted">{m.comment_pinned()}</Badge> : null}
             <UserStatusBadge status={comment.writer.status} />
           </p>
-          <ChapterLine story={target.story} chapter={target.chapter} />
+          {target.chapter ? (
+            <ChapterLine story={target.story} chapter={target.chapter} />
+          ) : (
+            <p className="text-sm text-muted-foreground">{m.moderation_target_discussion()}</p>
+          )}
           <StoryLine story={target.story} />
         </div>
       );
@@ -161,6 +167,28 @@ export function TargetContext({ report }: { report: ReportDto }) {
               <Badge variant="destructive">{m.moderation_state_hidden()}</Badge>
             ) : null}
             <UserStatusBadge status={rating.writer.status} />
+          </p>
+          <StoryLine story={target.story} />
+        </div>
+      );
+    }
+    case 'announcement': {
+      const { announcement } = target;
+      return (
+        <div className="flex flex-col gap-1">
+          <TargetLabel>{m.moderation_target_announcement()}</TargetLabel>
+          {/* Plain text from the author: React escapes it. */}
+          <blockquote className="border-l-2 border-border pl-3 whitespace-pre-line">
+            {announcement.truncated ? `${announcement.excerpt}…` : announcement.excerpt}
+          </blockquote>
+          <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <span>{m.announcement_posted_at({ date: formatDate(announcement.createdAt) })}</span>
+            {announcement.status === 'hidden_by_mod' ? (
+              <Badge variant="destructive">{m.moderation_state_hidden()}</Badge>
+            ) : null}
+            {announcement.status === 'deleted' ? (
+              <Badge variant="muted">{m.moderation_state_deleted()}</Badge>
+            ) : null}
           </p>
           <StoryLine story={target.story} />
         </div>

@@ -16,11 +16,19 @@ import type { ContentChange } from '../content/hooks';
 const canonical = alias(tags, 'canonical');
 
 /**
- * Canonical paths of the cached list pages a change may have altered: the home page, the author
- * page, page 1 of every tag page the story appears on and every ranking page (cheap: four URLs, and
- * a hidden story must leave them before the next recompute), plus the contest pages the stories
- * entered. Later tag pages are left to their short TTL. Read from the current state without any visibility filter, so a story that was just hidden,
- * or an author who was just banned, still yields the lists they must disappear from.
+ * The bare explore page: its entry rows (weekly ranking, recently completed, new stories) are the
+ * only story lists in `/search` HTML; filtered URLs load their results in the browser.
+ */
+const EXPLORE_PATH = '/search';
+
+/**
+ * Canonical paths of the cached list pages a change may have altered: the home and bare explore
+ * pages, the author page, page 1 of every tag page the story appears on (with and without the "hide AI-assisted"
+ * filter) and every ranking page (cheap: four URLs, and a hidden story must leave them before the
+ * next recompute), plus the contest pages the stories entered. Later tag pages are left to their
+ * short TTL. Read from the current state without any visibility filter, so a story that was just
+ * hidden, or an author who was just banned, still yields the lists they must disappear from. An
+ * announcement shows on no list: its own pages are all `urlsFor` purges.
  */
 export async function catalogUrls(db: Db, change: ContentChange): Promise<string[]> {
   switch (change.entity) {
@@ -37,6 +45,7 @@ export async function catalogUrls(db: Db, change: ContentChange): Promise<string
       if (change.entity === 'story') slugs.push(...(change.previousTagSlugs ?? []));
       return [
         canonicalPath({ kind: 'home' }),
+        EXPLORE_PATH,
         canonicalPath({ kind: 'author', username: story.username }),
         ...tagPaths(slugs),
         ...rankingPaths(),
@@ -52,6 +61,7 @@ export async function catalogUrls(db: Db, change: ContentChange): Promise<string
       if (owned.length === 0) return [];
       return [
         canonicalPath({ kind: 'home' }),
+        EXPLORE_PATH,
         ...tagPaths(
           await storyTagSlugs(
             db,
@@ -65,6 +75,8 @@ export async function catalogUrls(db: Db, change: ContentChange): Promise<string
         )),
       ];
     }
+    case 'announcement':
+      return [];
     default: {
       const unhandled: never = change;
       throw new Error(`Unhandled content change ${JSON.stringify(unhandled)}`);
@@ -83,9 +95,14 @@ export async function storyTagSlugs(db: Db | Tx, storyIds: string[]): Promise<st
   return rows.map((r) => r.slug);
 }
 
-/** Page 1 of each tag page, deduplicated and sorted. */
+/** Page 1 of each tag page, unfiltered then without AI-assisted stories; deduplicated, sorted. */
 function tagPaths(slugs: string[]): string[] {
-  return [...new Set(slugs)].sort().map((slug) => canonicalPath({ kind: 'tag', slug }));
+  return [...new Set(slugs)]
+    .sort()
+    .flatMap((slug) => [
+      canonicalPath({ kind: 'tag', slug }),
+      canonicalPath({ kind: 'tag', slug, noAi: true }),
+    ]);
 }
 
 /**

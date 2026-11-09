@@ -1,8 +1,17 @@
-import { type Db, chapters, comments, ratings, reports, stories, users } from '@novel-hub/db';
+import {
+  type Db,
+  chapters,
+  comments,
+  ratings,
+  reports,
+  stories,
+  storyAnnouncements,
+  users,
+} from '@novel-hub/db';
 import type { ReportCreateInput, ReportTarget, ReportTargetType } from '@novel-hub/shared';
 import { and, eq, isNull, ne, or, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
-import { canReadChapter } from '../access/can-read-chapter';
+import { canReadChapter, isStoryPubliclyVisible } from '../access/can-read-chapter';
 import { publicStoryWhere } from '../catalog/story-card';
 import { type Result, err, ok } from '../lib/result';
 import type { CurrentUser } from '../users/current-user';
@@ -14,8 +23,9 @@ export interface ResolvedTarget {
 
 /**
  * The internal id of a target anyone can see: a public story (18+ included), a readable chapter, a
- * user who is not banned, a shown comment under a readable chapter, a shown rating of a public
- * story. Anything else is "not found", so a report never confirms that hidden content exists.
+ * user who is not banned, a shown comment under a readable chapter or in the discussion of a public
+ * story with a published chapter, a shown rating of a public story, a visible announcement of a
+ * public story. Anything else is "not found", so a report never confirms that hidden content exists.
  */
 async function resolveVisibleTarget(db: Db, target: ReportTarget): Promise<ResolvedTarget | null> {
   switch (target.type) {
@@ -55,6 +65,7 @@ async function resolveVisibleTarget(db: Db, target: ReportTarget): Promise<Resol
     }
     case 'comment': {
       // A reply is shown only while its thread is: a reply under a hidden thread is hidden too.
+      // The story is reached through the comment itself: a discussion comment has no chapter.
       const writer = alias(users, 'writer');
       const thread = alias(comments, 'thread');
       const threadWriter = alias(users, 'thread_writer');
@@ -63,16 +74,18 @@ async function resolveVisibleTarget(db: Db, target: ReportTarget): Promise<Resol
           id: comments.id,
           commentStatus: comments.status,
           writerStatus: writer.status,
+          chapterId: comments.chapterId,
           status: chapters.status,
           deletedAt: chapters.deletedAt,
           visibility: stories.visibility,
+          lastChapterAt: stories.lastChapterAt,
           authorStatus: users.status,
         })
         .from(comments)
         .innerJoin(writer, eq(writer.id, comments.userId))
-        .innerJoin(chapters, eq(chapters.id, comments.chapterId))
-        .innerJoin(stories, eq(stories.id, chapters.storyId))
+        .innerJoin(stories, eq(stories.id, comments.storyId))
         .innerJoin(users, eq(users.id, stories.authorId))
+        .leftJoin(chapters, eq(chapters.id, comments.chapterId))
         .leftJoin(thread, eq(thread.id, comments.parentId))
         .leftJoin(threadWriter, eq(threadWriter.id, thread.userId))
         .where(
@@ -85,10 +98,18 @@ async function resolveVisibleTarget(db: Db, target: ReportTarget): Promise<Resol
           ),
         );
       if (!row || row.commentStatus !== 'visible' || row.writerStatus === 'banned') return null;
+      const story = { visibility: row.visibility, authorStatus: row.authorStatus };
+      if (row.chapterId === null) {
+        // The discussion is open on the stories whose ratings are (`findRateableStory`).
+        const readable = isStoryPubliclyVisible(story) && row.lastChapterAt !== null;
+        return readable ? { type: 'comment', id: row.id } : null;
+      }
+      // Joined by id, so the chapter columns are set whenever `chapterId` is.
+      if (row.status === null) return null;
       const decision = canReadChapter(null, {
         status: row.status,
         deletedAt: row.deletedAt,
-        story: { visibility: row.visibility, authorStatus: row.authorStatus },
+        story,
       });
       return decision.readable ? { type: 'comment', id: row.id } : null;
     }
@@ -109,6 +130,21 @@ async function resolveVisibleTarget(db: Db, target: ReportTarget): Promise<Resol
           ),
         );
       return row ? { type: 'rating', id: row.id } : null;
+    }
+    case 'announcement': {
+      const [row] = await db
+        .select({ id: storyAnnouncements.id })
+        .from(storyAnnouncements)
+        .innerJoin(stories, eq(stories.id, storyAnnouncements.storyId))
+        .innerJoin(users, eq(users.id, stories.authorId))
+        .where(
+          and(
+            eq(storyAnnouncements.id, target.announcementId),
+            eq(storyAnnouncements.status, 'visible'),
+            publicStoryWhere({ includeMature: true }),
+          ),
+        );
+      return row ? { type: 'announcement', id: row.id } : null;
     }
     case 'user': {
       const [row] = await db

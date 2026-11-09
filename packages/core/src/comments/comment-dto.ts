@@ -1,5 +1,6 @@
 import { comments, type users } from '@novel-hub/db';
 import { type AnyColumn, type SQL, and, eq, ne } from 'drizzle-orm';
+import type { UserStatus } from '../policies/user';
 import { commentCreatedAtMicros } from './comment-cursor';
 
 /** A comment as readers get it: no user id, no email; `isOwn` is decided on the server. */
@@ -10,6 +11,10 @@ export interface CommentDto {
   createdAt: string;
   author: { username: string; displayName: string };
   isOwn: boolean;
+  /** When the story's author pinned it on top; `null` when not pinned. */
+  pinnedAt: string | null;
+  /** When its writer last edited the text; `null` when never edited. */
+  editedAt: string | null;
 }
 
 /** A top-level comment with the size of its thread and its oldest replies. */
@@ -22,8 +27,11 @@ export interface CommentThreadDto extends CommentDto {
   moreRepliesCursor: string | null;
 }
 
-/** Who is reading: the session's user id, or `null` for a guest. */
-export type CommentViewer = { id: string } | null;
+/**
+ * Who is reading: the session's user (id and account status, enough to tell whether they may pin),
+ * or `null` for a guest.
+ */
+export type CommentViewer = { id: string; status: UserStatus } | null;
 
 /** Columns every comment list selects, with the writer joined as `author`. */
 export function commentColumns(author: typeof users) {
@@ -35,6 +43,8 @@ export function commentColumns(author: typeof users) {
     userId: comments.userId,
     username: author.username,
     displayName: author.displayName,
+    pinnedAt: comments.pinnedAt,
+    editedAt: comments.editedAt,
   };
 }
 
@@ -46,6 +56,8 @@ export interface CommentRow {
   userId: string;
   username: string;
   displayName: string;
+  pinnedAt: Date | null;
+  editedAt: Date | null;
 }
 
 /**
@@ -66,5 +78,7 @@ export function toCommentDto(row: CommentRow, viewer: CommentViewer): CommentDto
     createdAt: row.createdAt.toISOString(),
     author: { username: row.username, displayName: row.displayName },
     isOwn: viewer?.id === row.userId,
+    pinnedAt: row.pinnedAt?.toISOString() ?? null,
+    editedAt: row.editedAt?.toISOString() ?? null,
   };
 }

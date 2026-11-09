@@ -1,6 +1,9 @@
 import { canonicalPath, parseStoryKey } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { createFileRoute } from '@tanstack/react-router';
+import { StoryAnnouncement } from '../components/announcements/story-announcement';
+import { StoryDiscussion } from '../components/comments/story-discussion';
+import { TopReaders } from '../components/nominations/top-readers';
 import { ReportButton } from '../components/report/report-button';
 import { NotFoundPage } from '../components/not-found';
 import { MatureGate, useMatureAllowed } from '../components/reader/mature-gate';
@@ -9,6 +12,7 @@ import { SiteLayout } from '../components/site-layout';
 import { StoryAuthorCard } from '../components/story/story-author-card';
 import { StoryChapterList } from '../components/story/story-chapter-list';
 import { StoryHero } from '../components/story/story-hero';
+import { RelatedStories } from '../components/story/related-stories';
 import { TAG_KIND_LABELS } from '../components/story/story-labels';
 import { StoryStickyCta } from '../components/story/story-sticky-cta';
 import { StorySynopsis } from '../components/story/story-synopsis';
@@ -52,7 +56,7 @@ export const Route = createFileRoute('/stories/$storyKey/')({
 });
 
 function StoryPage() {
-  const { story, chapters, chaptersPerWeek } = Route.useLoaderData();
+  const { story, chapters, chaptersPerWeek, announcement } = Route.useLoaderData();
   const matureAllowed = useMatureAllowed();
   const gated = story.isMature && !matureAllowed;
   const first = chapters[0];
@@ -73,8 +77,16 @@ function StoryPage() {
             chaptersPerWeek={chaptersPerWeek}
             firstChapterNumber={first?.number ?? null}
           />
-          <div className="relative mx-auto -mt-7 flex max-w-[1240px] flex-wrap items-start gap-6 rounded-t-[28px] bg-background px-4 pt-4 pb-12 md:-mt-14 md:rounded-none md:bg-transparent md:px-8">
+          <div className="relative mx-auto -mt-7 flex max-w-[1240px] flex-wrap items-start gap-6 rounded-t-[28px] bg-background pt-4 px-safe-4 pb-12 md:-mt-14 md:rounded-none md:bg-transparent md:px-safe-8">
             <article className="flex min-w-0 flex-[999_1_560px] flex-col gap-8 rounded-[18px] border border-border bg-card p-5 md:rounded-[28px] md:p-8">
+              {announcement ? (
+                <StoryAnnouncement announcement={announcement}>
+                  <ReportButton
+                    target={{ type: 'announcement', announcementId: announcement.id }}
+                  />
+                </StoryAnnouncement>
+              ) : null}
+
               {story.synopsis ? (
                 <section aria-labelledby="synopsis-title" className="flex flex-col gap-3">
                   <h2 id="synopsis-title" className="text-xl font-extrabold tracking-tight">
@@ -93,7 +105,7 @@ function StoryPage() {
                       </dt>
                       {group.tags.map((tag) => (
                         <dd key={tag.slug}>
-                          <TagChip slug={tag.slug} name={tag.name} />
+                          <TagChip slug={tag.slug} name={tag.name} kind={group.kind} />
                         </dd>
                       ))}
                     </div>
@@ -123,9 +135,18 @@ function StoryPage() {
                   enabled={!gated}
                 />
               ) : null}
+
+              {/* Like ratings and chapter comments, a discussion needs something to have read. */}
+              {first ? <StoryDiscussion publicId={story.publicId} enabled={!gated} /> : null}
             </article>
-            <aside className="flex min-w-0 flex-[1_1_300px] flex-col gap-3">
+            <aside className="flex min-w-0 flex-[1_1_300px] flex-col gap-6">
               <StoryAuthorCard author={story.author} />
+              <RelatedStories
+                publicId={story.publicId}
+                mainTagName={story.mainTag.name}
+                enabled={!gated}
+              />
+              <TopReaders publicId={story.publicId} isMature={story.isMature} />
               <ReportButton
                 target={{ type: 'story', storyPublicId: story.publicId }}
                 className="self-start"

@@ -35,9 +35,11 @@ describe('storyListQuery', () => {
       page: 3,
     });
     expect(storyListQuery.parse({ list: 'notable' })).toEqual({ list: 'notable' });
+    expect(storyListQuery.parse({ list: 'completed' })).toEqual({ list: 'completed' });
     expect(storyListQuery.parse({ list: 'tag', tag: 'tien-hiep' })).toEqual({
       list: 'tag',
       tag: 'tien-hiep',
+      noAi: false,
     });
     expect(storyListQuery.parse({ list: 'author', author: 'lam_phong' })).toEqual({
       list: 'author',
@@ -46,6 +48,21 @@ describe('storyListQuery', () => {
     expect(storyListQuery.parse({ list: 'ranking', period: 'rising' })).toEqual({
       list: 'ranking',
       period: 'rising',
+    });
+  });
+
+  it('reads the tag list AI filter from its query string form only', () => {
+    expect(storyListQuery.parse({ list: 'tag', tag: 'tien-hiep', noAi: '1', page: '2' })).toEqual({
+      list: 'tag',
+      tag: 'tien-hiep',
+      page: 2,
+      noAi: true,
+    });
+    expect(storyListQuery.safeParse({ list: 'tag', tag: 'tien-hiep', noAi: 'true' }).success).toBe(
+      false,
+    );
+    expect(storyListQuery.parse({ list: 'tag', tag: 'tien-hiep', noAi: '0' })).toMatchObject({
+      noAi: false,
     });
   });
 

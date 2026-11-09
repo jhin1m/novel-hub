@@ -71,11 +71,12 @@ test('finds a story without diacritics and links to its page; 18+ stays hidden f
   await expect(page.getByText(mature.title)).toHaveCount(0);
 });
 
-test('filters by status from the form, keeping the query in the URL', async ({ page }) => {
+test('filters by status from a chip, keeping the query in the URL', async ({ page }) => {
   await gotoHydrated(page, `/search?q=${run}`);
-  await page.getByLabel('Tình trạng').click();
-  await page.getByRole('option', { name: 'Hoàn thành' }).click();
-  await page.getByRole('button', { name: 'Tìm', exact: true }).click();
+  await page
+    .getByRole('group', { name: 'Tình trạng' })
+    .getByRole('link', { name: 'Hoàn thành', exact: true })
+    .click();
 
   await expect(page).toHaveURL(`/search?q=${run}&status=completed`);
   const results = page.getByRole('region', { name: 'Truyện' });

@@ -45,8 +45,15 @@ test.describe('library and reading history', () => {
 
     // Read chapter 2 down to about the middle, until the position is saved.
     await gotoHydrated(page, story.chapterPath(2));
+    // A late font swap reflows the text and moves the position the scroll aims for.
+    await page.evaluate(() => document.fonts.ready);
+    // Skip any save sent before the scroll (e.g. the top of the page): wait for the middle one.
     const saved = page.waitForResponse(
-      (res) => new URL(res.url()).pathname === PROGRESS && res.request().method() === 'PUT',
+      (res) =>
+        new URL(res.url()).pathname === PROGRESS &&
+        res.request().method() === 'PUT' &&
+        ((res.request().postDataJSON() as { scrollPct?: number } | null)?.scrollPct ?? 0) > 35,
+      { timeout: 15_000 },
     );
     await page.evaluate(() => {
       const el = document.querySelector('.reader-content');

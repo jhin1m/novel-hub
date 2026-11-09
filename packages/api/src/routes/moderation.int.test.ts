@@ -256,4 +256,18 @@ describe('featured stories over HTTP', () => {
     expect(res.status).toBe(422);
     expect(await res.json()).toMatchObject({ error: { code: 'FEATURED_MATURE' } });
   });
+
+  it('suggests last month’s most read stories to moderators only', async () => {
+    const mod = await makeUser('mod_one', 'mod');
+    const reader = await makeUser('reader_one');
+    const res = await appAs(mod).request('/api/v1/moderation/featured/suggestions');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('cache-control')).toBe('no-store');
+    const body = (await res.json()) as { month: unknown; items: unknown };
+    expect(typeof body.month).toBe('string');
+    expect(body.items).toEqual([]);
+    const forbidden = await appAs(reader).request('/api/v1/moderation/featured/suggestions');
+    expect(forbidden.status).toBe(403);
+    expect(await forbidden.json()).toMatchObject({ error: { code: 'FORBIDDEN' } });
+  });
 });

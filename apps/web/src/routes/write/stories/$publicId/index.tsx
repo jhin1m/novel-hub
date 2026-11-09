@@ -1,5 +1,6 @@
 import { m } from '@novel-hub/shared/messages';
 import { Link, createFileRoute } from '@tanstack/react-router';
+import { AnnouncementManager } from '../../../../components/announcements/announcement-manager';
 import { FormMessage, textLinkClass } from '../../../../components/auth-ui';
 import { ChapterList } from '../../../../components/chapter-list';
 import { ContestEntryPanel } from '../../../../components/contests/contest-entry-panel';
@@ -7,6 +8,7 @@ import { CoverUpload } from '../../../../components/cover-upload';
 import { PageShell, PageTitle, pageCardClass } from '../../../../components/page-shell';
 import { SiteLayout } from '../../../../components/site-layout';
 import { StoryForm } from '../../../../components/story-form';
+import { StoryManageHeader } from '../../../../components/write/story-manage-header';
 import { WriterGate } from '../../../../components/writer-gate';
 import { ApiError, apiErrorMessage } from '../../../../lib/api-errors';
 import { useMe } from '../../../../lib/me';
@@ -28,7 +30,7 @@ export const Route = createFileRoute('/write/stories/$publicId/')({
 function EditStoryPage() {
   return (
     <SiteLayout>
-      <PageShell width="narrow" className="max-w-[720px]">
+      <PageShell>
         <Link to="/write" className={textLinkClass}>
           {m.writer_back()}
         </Link>
@@ -58,22 +60,39 @@ function EditStory() {
   }
   if (tags.isError) return <FormMessage>{m.error_generic()}</FormMessage>;
 
+  // DOM order is the phone order (band, chapters, contests, cover, announcements, form); from `lg` the cover
+  // card moves up beside the chapters and the rest flows, full width, into the rows under them.
   return (
-    <div className="flex flex-col gap-10">
-      <Link
-        to="/write/stories/$publicId/stats"
-        params={{ publicId: story.data.publicId }}
-        className={cn(textLinkClass, 'self-start')}
-      >
-        {m.writer_stats_link()}
-      </Link>
-      <ChapterList publicId={story.data.publicId} />
-      <ContestEntryPanel publicId={story.data.publicId} />
-      <div className={pageCardClass}>
-        <CoverUpload story={story.data} authorName={me.data?.displayName ?? ''} />
-      </div>
-      <div className={pageCardClass}>
-        <EditStoryForm key={story.data.publicId} story={story.data} tags={tags.data} />
+    <div className="flex flex-col gap-8">
+      <StoryManageHeader story={story.data} />
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+          <ChapterList publicId={story.data.publicId} />
+        </div>
+        {/* Empty when no contest is open: hidden, so it takes no row and no gap. */}
+        <div className="empty:hidden lg:col-span-2">
+          <ContestEntryPanel publicId={story.data.publicId} />
+        </div>
+        {/* The cover card's row layout needs more than 340px, so it stacks there. */}
+        <div
+          className={cn(
+            pageCardClass,
+            'self-start lg:col-start-2 lg:row-start-1 lg:p-6 lg:[&_section>div]:flex-col',
+          )}
+        >
+          <CoverUpload story={story.data} authorName={me.data?.displayName ?? ''} />
+        </div>
+        <div className="empty:hidden lg:col-span-2">
+          <AnnouncementManager
+            publicId={story.data.publicId}
+            canPost={story.data.visibility === 'published' && story.data.lastChapterAt !== null}
+          />
+        </div>
+        <div className={cn(pageCardClass, 'lg:col-span-2')}>
+          <div className="max-w-[720px]">
+            <EditStoryForm key={story.data.publicId} story={story.data} tags={tags.data} />
+          </div>
+        </div>
       </div>
     </div>
   );

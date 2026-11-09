@@ -64,6 +64,13 @@
       "when": 1791275767483,
       "tag": "0008_contests",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791377897011,
+      "tag": "0009_story_community",
+      "breakpoints": true
     }
   ]
 }

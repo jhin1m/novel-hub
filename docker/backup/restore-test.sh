@@ -2,18 +2,22 @@
 # Restore a dump into a throwaway Postgres container and check that it is
 # usable: migrations match the repo and the main tables are not empty.
 #
-# Usage: restore-test.sh [--no-live] [--remote | FILE]
-#   (no source)  newest local dump in BACKUP_DIR
-#   --remote     newest dump in RCLONE_REMOTE/daily/; fails when it is older
-#                than MAX_AGE_H hours (default 36)
-#   FILE         a specific dump file
-#   --no-live    do not compare with the live database (when it is down)
-# Config: same variables and BACKUP_ENV_FILE as pg-backup.sh. ALLOW_EMPTY=1
-# accepts a restore whose users or stories table is empty (a fresh install).
+# Usage: restore-test.sh [--no-live] [FILE]
+#   (no FILE)    newest dump in BACKUP_DIR: its .sha256 is required and it
+#                fails when the dump is older than MAX_AGE_H hours (default
+#                36; ALLOW_STALE=1 skips this on purpose)
+#   FILE         a specific dump file (checksum used when present, no age check)
+#   --no-live    do not compare with the live database (when it is down, or on
+#                a machine that only holds pulled copies)
+# Config: same variables and BACKUP_ENV_FILE as pg-backup.sh. The postgres image
+# is RESTORE_IMAGE when set, else the `image: postgres:...` line of COMPOSE_FILE
+# (read as text, so no production .env is needed). COMPOSE_FILE is also used to
+# reach the live database unless --no-live. ALLOW_EMPTY=1 accepts a restore
+# whose users or stories table is empty (a fresh install).
 set -eu
 
 usage() {
-  echo "usage: $0 [--no-live] [--remote | FILE]" >&2
+  echo "usage: $0 [--no-live] [FILE]" >&2
   exit 2
 }
 
@@ -22,7 +26,7 @@ SOURCE=''
 for arg do
   case "$arg" in
     --no-live) NO_LIVE=1 ;;
-    --remote | [!-]*)
+    [!-]*)
       [ -z "$SOURCE" ] || usage
       SOURCE=$arg
       ;;
@@ -45,16 +49,10 @@ fi
 
 COMPOSE_FILE="${COMPOSE_FILE:-$REPO_ROOT/docker-compose.yml}"
 BACKUP_DIR="${BACKUP_DIR:-/var/backups/novel-hub/postgres}"
-RCLONE_REMOTE="${RCLONE_REMOTE:-}"
 MAX_AGE_H="${MAX_AGE_H:-36}"
 ALLOW_EMPTY="${ALLOW_EMPTY:-0}"
-
-# Joining "remote:" and "/daily" would give "remote:/daily", which some
-# backends read as an absolute path.
-case "$RCLONE_REMOTE" in
-  *:) REMOTE_DAILY="${RCLONE_REMOTE}daily" ;;
-  *) REMOTE_DAILY="${RCLONE_REMOTE%/}/daily" ;;
-esac
+ALLOW_STALE="${ALLOW_STALE:-0}"
+RESTORE_COMPOSE_FILE="$SCRIPT_DIR/restore-test.compose.yml"
 
 log() {
   printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*"
@@ -67,11 +65,6 @@ die() {
 
 compose() {
   docker compose -f "$COMPOSE_FILE" "$@"
-}
-
-# Bounded network waits, so a stalled remote fails the run instead of hanging it.
-rc() {
-  rclone --contimeout 30s --timeout 5m "$@"
 }
 
 # require_free DIR BYTES: die unless the filesystem of DIR has BYTES free.
@@ -88,13 +81,22 @@ utc_stamp() {
   date -u -d "@$1" +%Y%m%dT%H%M%SZ 2>/dev/null || date -u -r "$1" +%Y%m%dT%H%M%SZ
 }
 
-CONTAINER="novel-hub-restore-test-$$"
+RESTORE_PROJECT="novel-hub-restore-test-$$"
+RESTORE_STARTED=0
 TMP_DIR=''
+
+# Only ever the throwaway project; the real stack is never addressed here.
+restore_compose() {
+  RESTORE_IMAGE="$IMAGE" RESTORE_PASSWORD="$RESTORE_PASSWORD" \
+    docker compose --progress quiet -p "$RESTORE_PROJECT" -f "$RESTORE_COMPOSE_FILE" "$@"
+}
 
 on_exit() {
   status=$?
   # -v also drops the anonymous data volume holding the restored database.
-  docker rm -f -v "$CONTAINER" >/dev/null 2>&1 || true
+  if [ "$RESTORE_STARTED" -eq 1 ]; then
+    restore_compose down -v --timeout 5 >/dev/null 2>&1 || true
+  fi
   if [ -n "$TMP_DIR" ]; then
     rm -rf "$TMP_DIR"
   fi
@@ -114,7 +116,10 @@ case "$MAX_AGE_H" in
 esac
 
 command -v docker >/dev/null 2>&1 || die "docker not found"
-[ -f "$COMPOSE_FILE" ] || die "compose file not found: $COMPOSE_FILE"
+if [ -z "${RESTORE_IMAGE:-}" ] || [ "$NO_LIVE" -eq 0 ]; then
+  [ -f "$COMPOSE_FILE" ] || die "compose file not found: $COMPOSE_FILE"
+fi
+[ -f "$RESTORE_COMPOSE_FILE" ] || die "compose file not found: $RESTORE_COMPOSE_FILE"
 [ -f "$JOURNAL" ] || die "migration journal not found: $JOURNAL"
 if command -v sha256sum >/dev/null 2>&1; then
   SHA256='sha256sum'
@@ -149,29 +154,16 @@ case "$SOURCE" in
     name=$(find "$BACKUP_DIR" -maxdepth 1 -name 'novel_hub-*.dump' -exec basename {} \; |
       newest_dump)
     [ -n "$name" ] || die "no dump found in $BACKUP_DIR"
-    DUMP="$BACKUP_DIR/$name"
-    verify_sha256 "$DUMP" optional
-    ;;
-  --remote)
-    [ -n "$RCLONE_REMOTE" ] || die "RCLONE_REMOTE is not set"
-    command -v rclone >/dev/null 2>&1 || die "rclone not found"
-    name=$(rc lsf --files-only "$REMOTE_DAILY/" | newest_dump)
-    [ -n "$name" ] || die "no dump found in the remote daily/ folder"
-    # Names carry the UTC dump time, and fixed-width stamps compare as strings.
-    stamp=${name#novel_hub-}
-    stamp=${stamp%.dump}
-    cutoff=$(utc_stamp $(($(date -u +%s) - MAX_AGE_H * 3600)))
-    if awk -v a="$stamp" -v b="$cutoff" 'BEGIN { exit !(a < b) }'; then
-      die "newest offsite dump $name is older than $MAX_AGE_H hours; are backups running?"
+    if [ "$ALLOW_STALE" != 1 ]; then
+      # Names carry the UTC dump time, and fixed-width stamps compare as strings.
+      stamp=${name#novel_hub-}
+      stamp=${stamp%.dump}
+      cutoff=$(utc_stamp $(($(date -u +%s) - MAX_AGE_H * 3600)))
+      if awk -v a="$stamp" -v b="$cutoff" 'BEGIN { exit !(a < b) }'; then
+        die "newest dump $name is older than $MAX_AGE_H hours; are backups arriving? (ALLOW_STALE=1 to test it anyway)"
+      fi
     fi
-    remote_size=$(rc lsjson "$REMOTE_DAILY/$name" | tr -d ' \n' |
-      sed -n 's/.*"Size":\([0-9]*\).*/\1/p')
-    [ -n "$remote_size" ] || die "cannot read the size of $name on the remote"
-    require_free "$TMP_DIR" "$remote_size"
-    log "downloading $name from offsite remote"
-    rc copyto "$REMOTE_DAILY/$name" "$TMP_DIR/$name"
-    rc copyto "$REMOTE_DAILY/$name.sha256" "$TMP_DIR/$name.sha256"
-    DUMP="$TMP_DIR/$name"
+    DUMP="$BACKUP_DIR/$name"
     verify_sha256 "$DUMP" required
     ;;
   *)
@@ -192,33 +184,38 @@ else
 fi
 
 # Same image as the running stack, so the restore uses the production major.
-IMAGE=$(compose config --images | grep '^postgres:' | head -n 1)
-[ -n "$IMAGE" ] || die "cannot read the postgres image from $COMPOSE_FILE"
+# `compose config` would need the production .env (required variables), which a
+# backup machine does not have, so the image line is read from the file.
+IMAGE="${RESTORE_IMAGE:-}"
+if [ -z "$IMAGE" ]; then
+  IMAGE=$(sed -n "s/^[[:space:]]*image:[[:space:]]*['\"]\{0,1\}\(postgres:[^[:space:]'\"]*\).*/\1/p" \
+    "$COMPOSE_FILE" | head -n 1)
+fi
+[ -n "$IMAGE" ] || die "cannot read the postgres image from $COMPOSE_FILE; set RESTORE_IMAGE"
 
 started=$(date -u +%s)
-log "starting $IMAGE as $CONTAINER"
-docker run -d --rm --network none --name "$CONTAINER" \
-  -e POSTGRES_PASSWORD="$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')" \
-  -e POSTGRES_DB=restore_test \
-  "$IMAGE" >/dev/null
+log "starting $IMAGE as project $RESTORE_PROJECT"
+RESTORE_PASSWORD=$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')
+RESTORE_STARTED=1
+restore_compose up -d --quiet-pull >/dev/null
 
 # Probe over TCP: during initdb the temporary server only listens on the unix
 # socket and is restarted afterwards, which would cut a restore in half.
 tries=0
-until docker exec "$CONTAINER" pg_isready -q -h 127.0.0.1 -U postgres -d restore_test; do
+until restore_compose exec -T restore pg_isready -q -h 127.0.0.1 -U postgres -d restore_test; do
   tries=$((tries + 1))
   [ "$tries" -lt 60 ] || die "temporary postgres not ready after 60s"
   sleep 1
 done
 
 log "restoring $(basename "$DUMP")"
-docker exec -i "$CONTAINER" pg_restore -U postgres -d restore_test \
+restore_compose exec -T restore pg_restore -U postgres -d restore_test \
   --no-owner --no-privileges --exit-on-error <"$DUMP" ||
   die "pg_restore failed"
 log "restore took $(($(date -u +%s) - started))s"
 
 restored_count() {
-  docker exec "$CONTAINER" psql -U postgres -d restore_test -At -v ON_ERROR_STOP=1 -c "$1"
+  restore_compose exec -T restore psql -U postgres -d restore_test -At -v ON_ERROR_STOP=1 -c "$1"
 }
 
 # shellcheck disable=SC2016

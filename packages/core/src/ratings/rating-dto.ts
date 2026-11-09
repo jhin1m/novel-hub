@@ -67,9 +67,9 @@ export function visibleRatingWhere(): SQL {
 export async function findRateableStory(
   db: Db,
   publicId: string,
-): Promise<{ id: string; authorId: string } | null> {
+): Promise<{ id: string; authorId: string; isMature: boolean } | null> {
   const [story] = await db
-    .select({ id: stories.id, authorId: stories.authorId })
+    .select({ id: stories.id, authorId: stories.authorId, isMature: stories.isMature })
     .from(stories)
     .innerJoin(users, eq(users.id, stories.authorId))
     .where(

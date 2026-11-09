@@ -9,7 +9,9 @@ import { type ModerationError, type ModerationTarget, logModerationAction } from
  * Hides a visible comment (`visible → hidden_by_mod`, its thread goes with it) or restores a hidden
  * one, with the comment row locked. The rules for users apply to what they wrote: nobody moderates
  * their own comments, and a moderator leaves those of moderators and admins to an admin. A comment
- * its writer deleted stays deleted. Comments are never in cached HTML, so nothing is purged.
+ * its writer deleted stays deleted. Hiding drops its pin, so a hidden comment never holds one of
+ * the scope's few pinned places (restoring does not pin it again). Comments are never in cached
+ * HTML, so nothing is purged.
  */
 export async function setCommentHidden(
   tx: Tx,
@@ -37,7 +39,7 @@ export async function setCommentHidden(
 
   await tx
     .update(comments)
-    .set({ status: hide ? 'hidden_by_mod' : 'visible' })
+    .set(hide ? { status: 'hidden_by_mod', pinnedAt: null } : { status: 'visible' })
     .where(eq(comments.id, comment.id));
   const target: ModerationTarget = { type: 'comment', id: comment.id };
   await logModerationAction(tx, actor, target, hide ? 'hide_comment' : 'restore_comment', note);

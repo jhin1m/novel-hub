@@ -1,8 +1,8 @@
 import { type Db, stories, tags } from '@novel-hub/db';
-import { CATALOG_PAGE_SIZE, FEATURED_RULES, NOTABLE_LIMIT } from '@novel-hub/shared';
+import { CATALOG_PAGE_SIZE, HOME_LISTING_RULES, NOTABLE_LIMIT } from '@novel-hub/shared';
 import { type SQL, and, desc, eq, gte, isNotNull, isNull, notInArray } from 'drizzle-orm';
-import { listActiveFeatured } from '../featured/active-featured';
 import { type TagView, compareTags } from '../stories/story-view';
+import { withLatestChapters } from './latest-chapters';
 import {
   type ListOptions,
   type Paged,
@@ -20,11 +20,27 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 /** What a "notable new story" needs until reading numbers exist (stage 2 replaces this). */
 const NOTABLE_RULE = { maxAgeDays: 30, minChapters: 3, minWords: 10_000 };
 
-function recentlyUpdatedWhere(o: ListOptions): SQL {
-  return and(publicStoryWhere(o), isNotNull(stories.lastChapterAt)) as SQL;
+/**
+ * Enough published text to show in the home page lists. Both counters only count published,
+ * undeleted chapters (`recomputeStoryCounters`), so a story with 3+ chapters also has
+ * `last_chapter_at`.
+ */
+export function homeListingWhere(): SQL {
+  return and(
+    gte(stories.chapterCount, HOME_LISTING_RULES.minChapters),
+    gte(stories.wordCount, HOME_LISTING_RULES.minWords),
+  ) as SQL;
 }
 
-/** Public stories with at least one chapter, most recently updated first. */
+export function recentlyUpdatedWhere(o: ListOptions): SQL {
+  return and(publicStoryWhere(o), isNotNull(stories.lastChapterAt), homeListingWhere()) as SQL;
+}
+
+/**
+ * Public stories past the home listing threshold, most recently updated first, each with its
+ * latest chapter: the home page's "recently updated" list (and its 18+ variant, loaded in the
+ * browser).
+ */
 export async function listRecentlyUpdated(
   db: Db,
   o: ListOptions & { page?: number; pageSize?: number },
@@ -40,13 +56,17 @@ export async function listRecentlyUpdated(
       .offset((page - 1) * pageSize),
     countStories(db, where),
   ]);
-  return { items: rows.map(toStoryCard), page, totalPages: totalPagesFor(total, pageSize) };
+  return {
+    items: await withLatestChapters(db, rows),
+    page,
+    totalPages: totalPagesFor(total, pageSize),
+  };
 }
 
 /**
  * "Notable new stories": public stories created in the last 30 days with at least 3 chapters and
- * 10,000 words, most recently updated first. When fewer qualify, the newest public stories fill
- * the remaining places.
+ * 10,000 words, most recently updated first. When fewer qualify, the newest public stories past
+ * the home listing threshold fill the remaining places.
  */
 export async function listNotable(
   db: Db,
@@ -70,7 +90,13 @@ export async function listNotable(
 
   const taken = qualifying.map((r) => r.id);
   const filler = await selectStoryCards(db)
-    .where(and(publicStoryWhere(o), taken.length > 0 ? notInArray(stories.id, taken) : undefined))
+    .where(
+      and(
+        publicStoryWhere(o),
+        homeListingWhere(),
+        taken.length > 0 ? notInArray(stories.id, taken) : undefined,
+      ),
+    )
     .orderBy(desc(stories.createdAt), desc(stories.id))
     .limit(limit - qualifying.length);
   return [...qualifying, ...filler].map(toStoryCard);
@@ -83,31 +109,4 @@ export async function listGenres(db: Db): Promise<TagView[]> {
     .from(tags)
     .where(and(eq(tags.kind, 'genre'), isNull(tags.canonicalId)));
   return rows.sort(compareTags);
-}
-
-export interface HomePageData {
-  recent: StoryCardDto[];
-  notable: StoryCardDto[];
-  /**
-   * Moderator picks running now, one more than the block shows: the page drops the hero story from
-   * them and still has a full block.
-   */
-  picks: StoryCardDto[];
-  genres: TagView[];
-}
-
-/** The server-rendered home page: never any 18+ story, so the HTML can be cached publicly. */
-export async function getHomePage(db: Db, now: Date = new Date()): Promise<HomePageData> {
-  const o = { includeMature: false };
-  // Only the first page shows, so no total is counted.
-  const [recent, notable, picks, genres] = await Promise.all([
-    selectStoryCards(db)
-      .where(recentlyUpdatedWhere(o))
-      .orderBy(...recentlyUpdatedOrder)
-      .limit(CATALOG_PAGE_SIZE),
-    listNotable(db, { ...o, now }),
-    listActiveFeatured(db, now, FEATURED_RULES.homeLimit + 1),
-    listGenres(db),
-  ]);
-  return { recent: recent.map(toStoryCard), notable, picks, genres };
 }

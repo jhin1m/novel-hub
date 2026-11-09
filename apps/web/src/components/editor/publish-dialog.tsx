@@ -13,17 +13,26 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { toLocalInputValue } from '@/lib/local-datetime';
 import { cn } from '@/lib/utils';
+import { type PublishBlockReason, publishBlockReason } from './publish-block-reason';
 import { type PublishMode, PublishWhenFieldset } from './publish-when-fieldset';
 import { wordMeter } from './word-meter';
 
 const HOUR_MS = 3_600_000;
 
-/** A centred 520px dialog from `md` up; below that the same node becomes a bottom sheet. */
+/**
+ * A centred 520px dialog from `md` up; below that the same node becomes a bottom sheet, whose
+ * bottom padding keeps the buttons above the home indicator.
+ */
 const SHEET_ON_PHONE =
   'max-w-none sm:max-w-none md:max-w-[520px] max-md:top-auto max-md:bottom-0 max-md:left-0 ' +
   'max-md:max-h-[90dvh] max-md:translate-x-0 max-md:translate-y-0 max-md:overflow-y-auto ' +
-  'max-md:rounded-none max-md:rounded-t-[28px] max-md:border-x-0 max-md:border-b-0';
+  'max-md:rounded-none max-md:rounded-t-[28px] max-md:border-x-0 max-md:border-b-0 ' +
+  'max-md:pb-[calc(1.5rem+env(safe-area-inset-bottom))]';
+
+/** Looks like a disabled button but stays focusable, so its `aria-describedby` reason is read. */
+const LOCKED_BUTTON = 'aria-disabled:pointer-events-none aria-disabled:opacity-60';
 const MINUTE_MS = 60_000;
 
 /**
@@ -35,20 +44,29 @@ function earliestScheduleTime(now: number): Date {
   return new Date(Math.ceil(at / MINUTE_MS) * MINUTE_MS);
 }
 
-/** `datetime-local` value (local wall-clock time, minute precision) for a date. */
-export function toLocalInputValue(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return (
-    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
-    `T${pad(date.getHours())}:${pad(date.getMinutes())}`
-  );
-}
-
 export function wordCountInRange(words: number): boolean {
   return words >= LIMITS.chapterWords.min && words <= LIMITS.chapterWords.max;
 }
 
 const formatCount = (n: number) => n.toLocaleString('vi-VN');
+
+/** The sentence shown next to a locked publish button. */
+export function publishBlockReasonText(reason: PublishBlockReason): string {
+  switch (reason.kind) {
+    case 'hidden_by_mod':
+      return m.publish_blocked_hidden();
+    case 'too_short':
+      return m.publish_blocked_too_short({
+        min: formatCount(LIMITS.chapterWords.min),
+        missing: formatCount(reason.missing),
+      });
+    case 'too_long':
+      return m.publish_blocked_too_long({
+        max: formatCount(LIMITS.chapterWords.max),
+        extra: formatCount(reason.extra),
+      });
+  }
+}
 
 /** Decorative bar under the word-count sentence, which already says everything in words. */
 function WordMeter({ words, inRange }: { words: number; inRange: boolean }) {
@@ -71,7 +89,8 @@ function WordMeter({ words, inRange }: { words: number; inRange: boolean }) {
 /**
  * Publish (or update) button with its confirmation dialog. A chapter that was never published can
  * also be scheduled. The work itself (pausing autosave, the request) belongs to the editor; the
- * callbacks resolve true on success, which closes the dialog.
+ * callbacks resolve true on success, which closes the dialog. `describedBy` points the button at
+ * the sentence saying why it is locked, which the header renders.
  */
 export function PublishDialog({
   number,
@@ -81,6 +100,7 @@ export function PublishDialog({
   error,
   onPublish,
   onSchedule,
+  describedBy,
 }: {
   number: number;
   status: ChapterStatus;
@@ -89,6 +109,7 @@ export function PublishDialog({
   error: string | null;
   onPublish: () => Promise<boolean>;
   onSchedule: (at: Date) => Promise<boolean>;
+  describedBy?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<PublishMode>('now');
@@ -96,6 +117,7 @@ export function PublishDialog({
   const [earliest, setEarliest] = useState('');
   const isUpdate = status === 'published';
   const inRange = wordCountInRange(words);
+  const locked = publishBlockReason(words, status) !== null || pending;
 
   const onOpenChange = (next: boolean) => {
     if (pending) return;
@@ -121,7 +143,13 @@ export function PublishDialog({
         <Button
           type="button"
           size="sm"
-          disabled={!inRange || status === 'hidden_by_mod' || pending}
+          aria-disabled={locked || undefined}
+          aria-describedby={describedBy}
+          className={LOCKED_BUTTON}
+          onClick={(e) => {
+            // Radix skips opening when the click was cancelled; Enter and Space land here too.
+            if (locked) e.preventDefault();
+          }}
         >
           {isUpdate ? m.publish_update_button() : m.publish_button()}
         </Button>

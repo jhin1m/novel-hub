@@ -50,12 +50,12 @@ test('a story page reached through a stale slug has full meta for its canonical 
   expect(metaContent(html, 'og:title')).toContain(normal.title);
   expect(metaContent(html, 'og:type')).toBe('book');
   expect(metaContent(html, 'og:image')).toBe(`${baseURL}/og-default.png`);
-  expect(metaContent(html, 'og:site_name')).toBe('Novel Hub');
+  expect(metaContent(html, 'og:site_name')).toBe('SayNovel');
   expect(metaContent(html, 'og:locale')).toBe('vi_VN');
   expect(metaContent(html, 'twitter:card')).toBe('summary_large_image');
   expect(metaContent(html, 'description')).toBeTruthy();
   expect(metaContent(html, 'robots')).toBeNull();
-  expect(html).toMatch(/<title>[^<]* · Novel Hub<\/title>/);
+  expect(html).toMatch(/<title>[^<]* · SayNovel<\/title>/);
 });
 
 test('a chapter page has a description built from its story', async ({ request, baseURL }) => {
@@ -82,20 +82,20 @@ test('an 18+ chapter shows no cover or synopsis in its link preview', async ({
 }) => {
   const path = mature.chapterPath(1);
   const html = await ok(await request.get(path), path);
-  const neutral = 'Truyện có nội dung 18+ trên Novel Hub.';
+  const neutral = 'Truyện có nội dung 18+ trên SayNovel.';
   expect(metaContent(html, 'description')).toBe(neutral);
   expect(metaContent(html, 'og:description')).toBe(neutral);
   expect(metaContent(html, 'og:image')).toBe(`${baseURL}/og-default.png`);
   expect(metaContent(html, 'twitter:card')).toBe('summary_large_image');
   expect(metaContent(html, 'og:title')).toContain(mature.title);
-  expect(html).toMatch(new RegExp(`<title>[^<]*${mature.title}[^<]* · Novel Hub</title>`));
+  expect(html).toMatch(new RegExp(`<title>[^<]*${mature.title}[^<]* · SayNovel</title>`));
 });
 
 test('pages and static pages have canonical links; private ones are noindex', async ({
   request,
   baseURL,
 }) => {
-  for (const path of ['/', '/terms', '/content-policy', '/tags/tien-hiep']) {
+  for (const path of ['/', '/terms', '/content-policy', '/privacy', '/tags/tien-hiep']) {
     const html = await ok(await request.get(path), path);
     expect(canonicalHref(html), path).toBe(`${baseURL}${path}`);
     expect(metaContent(html, 'description'), path).toBeTruthy();
@@ -179,6 +179,6 @@ test.describe('without JavaScript', () => {
       'content',
       `${baseURL}/og-default.png`,
     );
-    await expect(page).toHaveTitle(`${normal.title} – Tác Giả Đọc · Novel Hub`);
+    await expect(page).toHaveTitle(`${normal.title} – Tác Giả Đọc · SayNovel`);
   });
 });

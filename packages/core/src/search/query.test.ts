@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildAuthorFilter, buildStoryFilter, toAuthorHit } from './query';
+import { buildAuthorFilter, buildStoryFilter, storySort, toAuthorHit } from './query';
 
 describe('buildStoryFilter', () => {
   it('always leaves 18+ stories out unless the reader allowed them', () => {
@@ -24,6 +24,26 @@ describe('buildStoryFilter', () => {
 
   it('keeps a zero bound', () => {
     expect(buildStoryFilter({ minWords: 0 }, { includeMature: true })).toEqual(['wordCount >= 0']);
+  });
+
+  it('leaves out stories written with AI only when asked to', () => {
+    expect(buildStoryFilter({ noAi: true }, { includeMature: true })).toEqual([
+      'isAiAssisted = false',
+    ]);
+    expect(buildStoryFilter({ noAi: false }, { includeMature: true })).toEqual([]);
+  });
+});
+
+describe('storySort', () => {
+  it('maps each explicit order to one rule, with or without text', () => {
+    expect(storySort({ q: '', sort: 'updated' })).toEqual(['lastChapterAt:desc']);
+    expect(storySort({ q: '', sort: 'newest' })).toEqual(['createdAt:desc']);
+    expect(storySort({ q: 'kiếm', sort: 'longest' })).toEqual(['wordCount:desc']);
+  });
+
+  it('lists an empty query most recently updated first and keeps relevance for text', () => {
+    expect(storySort({ q: '' })).toEqual(['lastChapterAt:desc']);
+    expect(storySort({ q: 'kiếm' })).toBeUndefined();
   });
 });
 

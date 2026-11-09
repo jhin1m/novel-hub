@@ -34,6 +34,20 @@ describe('userPreferencesSchema', () => {
       reader: undefined,
     });
   });
+
+  it('keeps a valid site theme', () => {
+    const siteTheme = { choice: 'dark', updatedAt: 7 };
+    expect(userPreferencesSchema.parse({ siteTheme })).toEqual({ showMature: false, siteTheme });
+  });
+
+  it('drops a stored site theme that no longer parses, keeping the rest', () => {
+    expect(
+      userPreferencesSchema.parse({
+        showMature: true,
+        siteTheme: { choice: 'neon', updatedAt: 1 },
+      }),
+    ).toEqual({ showMature: true, siteTheme: undefined });
+  });
 });
 
 describe('preferencesPatchSchema', () => {
@@ -45,6 +59,9 @@ describe('preferencesPatchSchema', () => {
     expect(preferencesPatchSchema.safeParse({ reader: DEFAULT_READER_SETTINGS }).success).toBe(
       true,
     );
+    expect(
+      preferencesPatchSchema.safeParse({ siteTheme: { choice: 'ivory', updatedAt: 3 } }).success,
+    ).toBe(true);
   });
 
   it('rejects unknown fields and invalid reader settings', () => {
@@ -53,5 +70,12 @@ describe('preferencesPatchSchema', () => {
       preferencesPatchSchema.safeParse({ reader: { ...DEFAULT_READER_SETTINGS, fontSize: 40 } })
         .success,
     ).toBe(false);
+  });
+
+  it('rejects an invalid site theme', () => {
+    expect(
+      preferencesPatchSchema.safeParse({ siteTheme: { choice: 'neon', updatedAt: 3 } }).success,
+    ).toBe(false);
+    expect(preferencesPatchSchema.safeParse({ siteTheme: { choice: 'dark' } }).success).toBe(false);
   });
 });

@@ -58,7 +58,8 @@ export function MobileTabBar() {
   return (
     <nav
       aria-label={m.layout_main_nav()}
-      className="fixed inset-x-0 bottom-0 z-30 border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
+      data-bottom-bar="md"
+      className="fixed inset-x-0 bottom-0 z-30 border-t bg-card pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] md:hidden"
     >
       <ul className="grid h-[72px] grid-cols-5">
         <li>

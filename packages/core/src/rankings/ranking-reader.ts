@@ -57,19 +57,20 @@ export interface RankingPage {
 /**
  * A ranking as cards, in ranking order. Every story goes through `publicStoryWhere` again, so one
  * hidden or banned since the last recompute is left out right away. `reader` is `null` where
- * Redis is not wired (tests): the ranking is then unavailable.
+ * Redis is not wired (tests): the ranking is then unavailable. `scan` = ids read from the ranking
+ * (default: all it keeps, never fewer than `limit`).
  */
 export async function readRanking(
   db: Db,
   reader: RankingReader | null,
   period: RankingPeriod,
-  o: { includeMature: boolean; limit?: number },
+  o: { includeMature: boolean; limit?: number; scan?: number },
 ): Promise<RankingPage> {
   const limit = o.limit ?? RANKING_RULES.pageSize;
-  // The whole kept ranking, so stories hidden since the recompute leave no hole at the bottom.
-  const ids = reader
-    ? await reader.top(period, o.includeMature ? 'all' : 'general', RANKING_RULES.keep)
-    : null;
+  // The whole kept ranking by default, so stories hidden since the recompute leave no hole at the
+  // bottom; a short list (home page) reads fewer, still a margin above `limit`.
+  const scan = Math.max(limit, o.scan ?? RANKING_RULES.keep);
+  const ids = reader ? await reader.top(period, o.includeMature ? 'all' : 'general', scan) : null;
   if (ids === null) return { stories: [], available: false };
   if (ids.length === 0) return { stories: [], available: true };
   const rows = await selectStoryCards(db).where(

@@ -3,14 +3,17 @@ import { m } from '@novel-hub/shared/messages';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  type CommentChapter,
+  type CommentScope,
   commentErrorMessage,
   useDeleteComment,
   useMoreReplies,
+  usePinComment,
 } from '@/lib/comments';
+import { useMe } from '@/lib/me';
 import { ReportButton } from '../report/report-button';
 import { CommentComposer } from './comment-composer';
 import { CommentItem, commentActionClass } from './comment-item';
+import { composerView } from './comment-views';
 
 /** The comment being answered: its id (the server finds the thread) and who wrote it. */
 interface ReplyTarget {
@@ -18,35 +21,56 @@ interface ReplyTarget {
   name: string;
 }
 
-/** Threads newest first; each with its replies, oldest first. */
+/**
+ * Threads as listed: the pinned ones first, then the others newest first; each with its replies,
+ * oldest first. `canPin`: the viewer is the story's author, so top-level comments get a pin button.
+ */
 export function CommentList({
-  chapter,
+  scope,
   viewer,
   threads,
+  canPin = false,
 }: {
-  chapter: CommentChapter;
+  scope: CommentScope;
   viewer: string | null;
   threads: CommentThreadDto[];
+  canPin?: boolean;
 }) {
-  const remove = useDeleteComment(chapter);
+  const remove = useDeleteComment(scope);
+  const pin = usePinComment(scope);
+  // Each action clears the other's error, so only the latest failure shows.
+  const failed = remove.isError ? remove.error : pin.isError ? pin.error : null;
   return (
     <div className="flex flex-col gap-2">
       <ol className="flex flex-col gap-6">
         {threads.map((thread) => (
           <li key={thread.id}>
             <CommentThread
-              chapter={chapter}
+              scope={scope}
               viewer={viewer}
               thread={thread}
-              onDelete={(id) => remove.mutate(id)}
+              onDelete={(id) => {
+                pin.reset();
+                remove.mutate(id);
+              }}
               deleting={remove.isPending}
+              // A thread kept for a paragraph edited out of the text is not the chapter's to pin.
+              onTogglePin={
+                canPin && !thread.orphanedParagraph
+                  ? () => {
+                      remove.reset();
+                      pin.mutate({ id: thread.id, pinned: thread.pinnedAt === null });
+                    }
+                  : undefined
+              }
+              pinning={pin.isPending}
             />
           </li>
         ))}
       </ol>
-      {remove.isError ? (
+      {failed ? (
         <p role="alert" className="text-sm text-destructive">
-          {commentErrorMessage(remove.error)}
+          {commentErrorMessage(failed)}
         </p>
       ) : null}
     </div>
@@ -54,21 +78,30 @@ export function CommentList({
 }
 
 function CommentThread({
-  chapter,
+  scope,
   viewer,
   thread,
   onDelete,
   deleting,
+  onTogglePin,
+  pinning,
 }: {
-  chapter: CommentChapter;
+  scope: CommentScope;
   viewer: string | null;
   thread: CommentThreadDto;
   onDelete: (id: string) => void;
   deleting: boolean;
+  onTogglePin: (() => void) | undefined;
+  pinning: boolean;
 }) {
   const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
+  const me = useMe();
+  // Editing is posting again: a muted or unverified writer gets no edit box (it would only show
+  // the notice, in place of the comment).
+  const canWrite = composerView(me.isPending, me.data) === 'form';
   const [showMore, setShowMore] = useState(false);
-  const more = useMoreReplies(chapter, viewer, thread.id, thread.moreRepliesCursor, showMore);
+  const more = useMoreReplies(scope, viewer, thread.id, thread.moreRepliesCursor, showMore);
   // The pages after the preview may repeat a reply once the preview moved (a reply deleted).
   const shown = new Set(thread.replies.map((reply) => reply.id));
   const loaded = (more.data?.pages.flatMap((page) => page.items) ?? []).filter(
@@ -84,8 +117,21 @@ function CommentThread({
       compact={compact}
       orphanedParagraph={!compact && thread.orphanedParagraph}
       onReply={() => setReplyTo({ id: comment.id, name: comment.author.displayName })}
+      onEdit={canWrite ? () => setEditing(comment.id) : undefined}
       onDelete={() => onDelete(comment.id)}
       deleting={deleting}
+      onTogglePin={compact ? undefined : onTogglePin}
+      pinning={pinning}
+      editor={
+        canWrite && editing === comment.id ? (
+          <CommentComposer
+            scope={scope}
+            edit={{ id: comment.id, body: comment.body }}
+            onCancel={() => setEditing(null)}
+            onPosted={() => setEditing(null)}
+          />
+        ) : undefined
+      }
       report={
         <ReportButton
           target={{ type: 'comment', commentId: comment.id }}
@@ -126,7 +172,7 @@ function CommentThread({
           {replyTo ? (
             <CommentComposer
               key={replyTo.id}
-              chapter={chapter}
+              scope={scope}
               parentId={replyTo.id}
               replyTo={replyTo.name}
               onCancel={() => setReplyTo(null)}

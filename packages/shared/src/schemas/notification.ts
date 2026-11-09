@@ -1,7 +1,12 @@
 import { z } from 'zod';
+import { LIMITS } from '../limits';
 
 /** Values of `notifications.type`. Adding one means extending `notificationVisibleWhere` in core. */
-export const NOTIFICATION_TYPES = ['chapter_published'] as const;
+export const NOTIFICATION_TYPES = [
+  'chapter_published',
+  'story_announcement',
+  'user_warned',
+] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
 /** Notifications per page of `/notifications`. */
@@ -25,9 +30,27 @@ export const chapterPublishedPayload = z.object({
 });
 export type ChapterPublishedPayload = z.infer<typeof chapterPublishedPayload>;
 
+/**
+ * Payload of `story_announcement`: an author posted a notice to the story's followers. Ids only:
+ * the list joins the current announcement, so one deleted or hidden later drops out.
+ */
+export const storyAnnouncementPayload = z.object({
+  storyId: z.uuid(),
+  announcementId: z.uuid(),
+});
+export type StoryAnnouncementPayload = z.infer<typeof storyAnnouncementPayload>;
+
+/** Payload of `user_warned`: the moderator's note, shown to the warned user as plain text. */
+export const userWarnedPayload = z.object({
+  reason: z.string().min(1).max(LIMITS.modNoteMax),
+});
+export type UserWarnedPayload = z.infer<typeof userWarnedPayload>;
+
 /** A stored notification by its `type`; `parseNotification` drops anything else. */
 const storedNotification = z.discriminatedUnion('type', [
   z.object({ type: z.literal('chapter_published'), payload: chapterPublishedPayload }),
+  z.object({ type: z.literal('story_announcement'), payload: storyAnnouncementPayload }),
+  z.object({ type: z.literal('user_warned'), payload: userWarnedPayload }),
 ]);
 export type StoredNotification = z.infer<typeof storedNotification>;
 

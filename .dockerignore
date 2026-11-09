@@ -1,0 +1,15 @@
+**/node_modules
+**/.output
+**/.nitro
+**/.tanstack
+**/test-results
+**/playwright-report
+.git
+# Secrets never enter the build context, at any depth; the build reads no env file.
+**/.env*
+plans
+docs
+.claude
+**/.claude
+apps/web/e2e
+**/*.log

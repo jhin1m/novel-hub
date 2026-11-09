@@ -17,6 +17,7 @@ describe('reportCreateSchema', () => {
       { type: 'user', username: 'lam_phong' },
       { type: 'comment', commentId: reportId },
       { type: 'rating', ratingId: reportId },
+      { type: 'announcement', announcementId: reportId },
     ]) {
       expect(reportCreateSchema.safeParse({ target, reason: 'spam' }).success).toBe(true);
     }
@@ -29,6 +30,7 @@ describe('reportCreateSchema', () => {
       { target: { type: 'chapter', storyPublicId: 'k7m2xq9p' }, reason: 'spam' },
       { target: { type: 'comment', id: reportId }, reason: 'spam' },
       { target: { type: 'rating', id: reportId }, reason: 'spam' },
+      { target: { type: 'announcement', announcementId: 'x' }, reason: 'spam' },
       { target: story, reason: 'duplicate' },
       { target: story },
       { target: story, reason: 'spam', detail: 'x'.repeat(1_001) },
@@ -55,6 +57,10 @@ describe('moderationActionSchema', () => {
       { action: 'restore_comment', commentId: reportId },
       { action: 'hide_rating', ratingId: reportId, reportId },
       { action: 'restore_rating', ratingId: reportId },
+      { action: 'hide_announcement', announcementId: reportId, reportId },
+      { action: 'restore_announcement', announcementId: reportId },
+      { action: 'unpin_comment', commentId: reportId },
+      { action: 'warn_user', username: 'lam_phong', note: 'spam links', reportId },
       { action: 'mute_user', username: 'lam_phong' },
       { action: 'unmute_user', username: 'lam_phong' },
       { action: 'ban_user', username: 'lam_phong' },
@@ -79,9 +85,22 @@ describe('moderationActionSchema', () => {
       { action: 'merge_tag', sourceSlug: 'a' },
       { action: 'dismiss_report', reportId: 'not-a-uuid' },
       { action: 'ban_user', username: 'lam_phong', note: 'x'.repeat(501) },
+      { action: 'warn_user', username: 'lam_phong' },
+      { action: 'warn_user', username: 'lam_phong', note: '   ' },
+      { action: 'warn_user', username: 'lam_phong', note: 'x'.repeat(501) },
+      { action: 'hide_announcement', commentId: reportId },
+      { action: 'unpin_comment', commentId: 'not-a-uuid' },
     ]) {
       expect(moderationActionSchema.safeParse(body).success, JSON.stringify(body)).toBe(false);
     }
+  });
+});
+
+describe('warn_user', () => {
+  it('trims the note it requires', () => {
+    expect(
+      moderationActionSchema.parse({ action: 'warn_user', username: 'lam_phong', note: ' spam ' }),
+    ).toEqual({ action: 'warn_user', username: 'lam_phong', note: 'spam' });
   });
 });
 

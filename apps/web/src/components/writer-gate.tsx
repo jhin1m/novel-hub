@@ -7,6 +7,7 @@ import { authClient } from '@/lib/auth-client';
 import { authErrorMessage, throwIfAuthError } from '@/lib/auth-errors';
 import { useMe } from '@/lib/me';
 import { FormMessage, textLinkClass } from './auth-ui';
+import { SignInPromptLink } from './sign-in-prompt-link';
 
 /**
  * Shows the writing area only to signed-in users with a verified email (the API requires it for
@@ -23,7 +24,7 @@ export function WriterGate({ children }: { children: ReactNode }) {
       <div className="flex flex-col items-start gap-4 rounded-3xl border border-border bg-card p-6 md:p-8">
         <p>{m.writer_sign_in_required()}</p>
         <Button asChild>
-          <Link to="/sign-in">{m.writer_sign_in()}</Link>
+          <SignInPromptLink>{m.writer_sign_in()}</SignInPromptLink>
         </Button>
       </div>
     );

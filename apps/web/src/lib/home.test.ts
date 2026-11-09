@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { continueRows, pickHero, withoutStory } from './home';
+import { continueRows, pickHero } from './home';
 
 const story = (publicId: string, chapterCount = 1) => ({ publicId, chapterCount });
 const item = (publicId: string, isMature = false) => ({ story: { publicId, isMature } });
@@ -13,20 +13,6 @@ describe('pickHero', () => {
   it('skips stories without chapters and takes the first one with some', () => {
     const list = [story('a', 0), story('b', 3), story('c', 5)];
     expect(pickHero(list)).toBe(list[1]);
-  });
-});
-
-describe('withoutStory', () => {
-  it('drops only the given story and keeps the order', () => {
-    const list = [story('a'), story('b'), story('c')];
-    expect(withoutStory(list, 'b').map((s) => s.publicId)).toEqual(['a', 'c']);
-  });
-
-  it('returns the whole list for a null id, as a copy', () => {
-    const list = [story('a'), story('b')];
-    const result = withoutStory(list, null);
-    expect(result).toEqual(list);
-    expect(result).not.toBe(list);
   });
 });
 

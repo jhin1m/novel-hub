@@ -1,8 +1,9 @@
 import type { Db } from '@novel-hub/db';
-import type { storyListQuery } from '@novel-hub/shared';
+import { HOME_DEDUPE_SLACK, NOTABLE_LIMIT, type storyListQuery } from '@novel-hub/shared';
 import type { z } from 'zod';
 import { getAuthorPage } from './author-page';
 import { listNotable, listRecentlyUpdated } from './home';
+import { listRecentlyCompleted } from './recently-completed';
 import type { ListOptions, StoryCardDto } from './story-card';
 import { getTagPage } from './tag-page';
 
@@ -32,9 +33,21 @@ export async function listStories(
       return { stories: items, page, totalPages };
     }
     case 'notable':
-      return { stories: await listNotable(db, o), page: 1, totalPages: 1 };
+      // As many as the home page loads, so it still has a full band once it drops stories shown
+      // higher up.
+      return {
+        stories: await listNotable(db, { ...o, limit: NOTABLE_LIMIT + HOME_DEDUPE_SLACK }),
+        page: 1,
+        totalPages: 1,
+      };
+    case 'completed':
+      return { stories: await listRecentlyCompleted(db, o), page: 1, totalPages: 1 };
     case 'tag': {
-      const result = await getTagPage(db, query.tag, { ...o, page: query.page ?? 1 });
+      const result = await getTagPage(db, query.tag, {
+        ...o,
+        page: query.page ?? 1,
+        noAi: query.noAi,
+      });
       if (result?.kind !== 'ok') return null;
       const { items, page, totalPages } = result.stories;
       return { stories: items, page, totalPages };

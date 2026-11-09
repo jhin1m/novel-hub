@@ -20,7 +20,7 @@ export function PageShell({
   return (
     <div
       className={cn(
-        'mx-auto flex w-full flex-col gap-6 px-4 py-8 md:px-8 md:py-10',
+        'mx-auto flex w-full flex-col gap-6 py-8 px-safe-4 md:py-10 md:px-safe-8',
         width === 'narrow' ? 'max-w-[560px]' : 'max-w-[1240px]',
         className,
       )}

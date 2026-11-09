@@ -1,6 +1,13 @@
 import type { ReportDto, StoryContext, UserContext } from '@novel-hub/core';
 import { describe, expect, it } from 'vitest';
-import { actionsFor, canActOn, storyActions, userActions } from './report-actions';
+import {
+  actionsFor,
+  canActOn,
+  needsNote,
+  reportOwner,
+  storyActions,
+  userActions,
+} from './report-actions';
 
 const author: StoryContext['author'] = {
   username: 'lao_mac',
@@ -49,8 +56,8 @@ describe('storyActions', () => {
 
 describe('userActions', () => {
   it('follows the account status', () => {
-    expect(names(userActions('x', 'active'))).toEqual(['mute_user', 'ban_user']);
-    expect(names(userActions('x', 'muted'))).toEqual(['unmute_user', 'ban_user']);
+    expect(names(userActions('x', 'active'))).toEqual(['warn_user', 'mute_user', 'ban_user']);
+    expect(names(userActions('x', 'muted'))).toEqual(['warn_user', 'unmute_user', 'ban_user']);
     expect(names(userActions('x', 'banned'))).toEqual(['unban_user']);
     expect(userActions('x', 'banned')).toEqual([{ action: 'unban_user', username: 'x' }]);
   });
@@ -82,6 +89,7 @@ describe('actionsFor', () => {
     expect(names(actions)).toEqual([
       'hide_chapter',
       'hide_story',
+      'warn_user',
       'mute_user',
       'ban_user',
       'resolve_report',
@@ -106,6 +114,7 @@ describe('actionsFor', () => {
   it('drops the closing actions once the report is handled', () => {
     expect(names(actionsFor(report({ type: 'story', story }, 'resolved'), mod))).toEqual([
       'hide_story',
+      'warn_user',
       'mute_user',
       'ban_user',
     ]);
@@ -114,6 +123,7 @@ describe('actionsFor', () => {
   it('acts on the user directly for a user report', () => {
     const target = { type: 'user', user: { ...author, displayName: 'Lão Mặc' } } as const;
     expect(names(actionsFor(report(target), mod))).toEqual([
+      'warn_user',
       'mute_user',
       'ban_user',
       'resolve_report',
@@ -144,6 +154,7 @@ describe('actionsFor', () => {
       truncated: false,
       status: 'visible',
       isReply: false,
+      pinnedAt: null,
       writer: { ...author, username: 'spammer', role: 'reader' },
     } as const;
     const target = { type: 'comment', story, chapter, comment } as const;
@@ -151,6 +162,7 @@ describe('actionsFor', () => {
     expect(visible[0]).toEqual({ action: 'hide_comment', commentId: comment.id });
     expect(names(visible)).toEqual([
       'hide_comment',
+      'warn_user',
       'mute_user',
       'ban_user',
       'resolve_report',
@@ -160,6 +172,7 @@ describe('actionsFor', () => {
     expect(names(actionsFor(report(hidden), mod))[0]).toBe('restore_comment');
     const deleted = { ...target, comment: { ...comment, status: 'deleted' as const } };
     expect(names(actionsFor(report(deleted), mod))).toEqual([
+      'warn_user',
       'mute_user',
       'ban_user',
       'resolve_report',
@@ -174,6 +187,7 @@ describe('actionsFor', () => {
       truncated: false,
       status: 'visible',
       isReply: true,
+      pinnedAt: null,
       writer: { ...author, username: 'mod_one', role: 'mod' },
     } as const;
     expect(actionsFor(report({ type: 'comment', story, chapter, comment }), mod)).toEqual([]);
@@ -193,6 +207,7 @@ describe('actionsFor', () => {
     expect(visible[0]).toEqual({ action: 'hide_rating', ratingId: rating.id });
     expect(names(visible)).toEqual([
       'hide_rating',
+      'warn_user',
       'mute_user',
       'ban_user',
       'resolve_report',
@@ -209,5 +224,71 @@ describe('actionsFor', () => {
       'resolve_report',
       'dismiss_report',
     ]);
+  });
+
+  it('unpins a pinned comment, in a chapter or in the story discussion', () => {
+    const comment = {
+      id: '01920000-0000-7000-8000-000000000001',
+      excerpt: 'Ghim',
+      truncated: false,
+      status: 'visible',
+      isReply: false,
+      pinnedAt: '2026-10-06T00:00:00.000Z',
+      writer: { ...author, username: 'reader_one', role: 'reader' },
+    } as const;
+    const inDiscussion = actionsFor(
+      report({ type: 'comment', story, chapter: null, comment }),
+      mod,
+    );
+    expect(names(inDiscussion).slice(0, 2)).toEqual(['hide_comment', 'unpin_comment']);
+    expect(inDiscussion[1]).toEqual({ action: 'unpin_comment', commentId: comment.id });
+    const unpinned = { ...comment, pinnedAt: null };
+    expect(
+      names(actionsFor(report({ type: 'comment', story, chapter, comment: unpinned }), mod)),
+    ).not.toContain('unpin_comment');
+  });
+
+  it('hides or restores a reported announcement and acts on the story author', () => {
+    const announcement = {
+      id: '01920000-0000-7000-8000-000000000003',
+      excerpt: 'Ghé trang khác đọc nhanh hơn',
+      truncated: false,
+      status: 'visible',
+      createdAt: '2026-10-06T00:00:00.000Z',
+    } as const;
+    const target = { type: 'announcement', story, announcement } as const;
+    const visible = actionsFor(report(target), mod);
+    expect(visible[0]).toEqual({ action: 'hide_announcement', announcementId: announcement.id });
+    expect(names(visible)).toEqual([
+      'hide_announcement',
+      'warn_user',
+      'mute_user',
+      'ban_user',
+      'resolve_report',
+      'dismiss_report',
+    ]);
+    const hidden = {
+      ...target,
+      announcement: { ...announcement, status: 'hidden_by_mod' as const },
+    };
+    expect(names(actionsFor(report(hidden), mod))[0]).toBe('restore_announcement');
+    const deleted = { ...target, announcement: { ...announcement, status: 'deleted' as const } };
+    expect(names(actionsFor(report(deleted), mod))[0]).toBe('warn_user');
+    expect(reportOwner(target)).toBe(author);
+  });
+});
+
+describe('needsNote', () => {
+  it('holds a warning until there is a note, and nothing else', () => {
+    expect(needsNote({ action: 'warn_user', username: 'x' })).toBe(true);
+    expect(needsNote({ action: 'mute_user', username: 'x' })).toBe(false);
+    expect(needsNote({ action: 'resolve_report' })).toBe(false);
+  });
+});
+
+describe('reportOwner', () => {
+  it('names the account each target belongs to', () => {
+    expect(reportOwner({ type: 'story', story })).toBe(author);
+    expect(reportOwner({ type: 'missing' })).toBeNull();
   });
 });

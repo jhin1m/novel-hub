@@ -3,6 +3,12 @@ import type { StoryStatus } from '@novel-hub/shared';
 import { type SQL, and, count, desc, eq, ne, sql } from 'drizzle-orm';
 import { type SelectedFields, alias } from 'drizzle-orm/pg-core';
 
+/** The readable chapter a story published last; `title` is `null` when the chapter has none. */
+export interface LatestChapterDto {
+  number: number;
+  title: string | null;
+}
+
 /** A story as every public list shows it (spec section 8). No internal ids. */
 export interface StoryCardDto {
   publicId: string;
@@ -17,6 +23,11 @@ export interface StoryCardDto {
   lastChapterAt: string | null;
   isAiAssisted: boolean;
   isMature: boolean;
+  /**
+   * Only on the "recently updated" lists, which show it under the title; `null` when the story has
+   * no readable chapter left.
+   */
+  latestChapter?: LatestChapterDto | null;
 }
 
 export interface ListOptions {

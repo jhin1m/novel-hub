@@ -4,6 +4,7 @@ import { Link } from '@tanstack/react-router';
 import { BellIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useMe } from '@/lib/me';
+import { cn } from '@/lib/utils';
 import { useUnreadCount } from '@/lib/notifications';
 
 /** `99+` above the badge limit. */
@@ -13,19 +14,30 @@ export function unreadBadgeText(count: number): string {
 
 /**
  * The header bell, for signed-in accounts only; links to `/notifications` with the unread count as
- * a badge. While the account is unknown (SSR, first load) it holds its 42px so the header does not
- * shift; guests get nothing, as with the account menu.
+ * a badge. Guests get an empty 42px slot, so the header keeps one width whatever the account state.
+ * While the account loads (SSR, first load) the slot holds the bell as `.signed-in-hint`, shown
+ * before paint when the browser was last signed in.
  */
 export function NotificationBell() {
   const me = useMe();
   const unread = useUnreadCount(!!me.data);
 
-  if (me.isPending) return <div aria-hidden className="size-[42px] shrink-0" />;
-  if (!me.data) return null;
-
-  const count = unread.data ?? 0;
+  if (me.data) return <BellLink count={unread.data ?? 0} />;
   return (
-    <Button asChild variant="ghost" size="icon" className="relative size-[42px] shrink-0">
+    <div className="size-[42px] shrink-0">
+      {me.isPending ? <BellLink count={0} className="signed-in-hint" /> : null}
+    </div>
+  );
+}
+
+function BellLink({ count, className }: { count: number; className?: string }) {
+  return (
+    <Button
+      asChild
+      variant="ghost"
+      size="icon"
+      className={cn('relative size-[42px] shrink-0', className)}
+    >
       <Link to="/notifications">
         <BellIcon aria-hidden className="size-5" />
         <span className="sr-only">

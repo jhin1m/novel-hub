@@ -7,11 +7,12 @@ export type CanonicalTarget =
   | { kind: 'story'; slug: string; publicId: string }
   | { kind: 'chapter'; slug: string; publicId: string; number: number }
   | { kind: 'author'; username: string }
-  | { kind: 'tag'; slug: string; page?: number }
+  | { kind: 'tag'; slug: string; page?: number; noAi?: boolean }
   | { kind: 'ranking'; period: RankingPeriod }
+  | { kind: 'nominations' }
   | { kind: 'contests' }
   | { kind: 'contest'; slug: string; page?: number }
-  | { kind: 'static'; path: '/terms' | '/content-policy' };
+  | { kind: 'static'; path: '/terms' | '/content-policy' | '/privacy' };
 
 /**
  * The single builder of canonical public URLs (relative path, lowercase, no trailing slash).
@@ -28,12 +29,18 @@ export function canonicalPath(target: CanonicalTarget): string {
       return `/stories/${storyKey(target)}/chapter-${target.number}`;
     case 'author':
       return `/authors/${target.username}`;
-    case 'tag':
-      return target.page !== undefined && target.page > 1
-        ? `/tags/${target.slug}?page=${target.page}`
-        : `/tags/${target.slug}`;
+    case 'tag': {
+      // Fixed order (`noAi` first) so each filtered page has exactly one URL.
+      const query = [
+        ...(target.noAi === true ? ['noAi=1'] : []),
+        ...(target.page !== undefined && target.page > 1 ? [`page=${target.page}`] : []),
+      ];
+      return query.length > 0 ? `/tags/${target.slug}?${query.join('&')}` : `/tags/${target.slug}`;
+    }
     case 'ranking':
       return `/rankings/${target.period}`;
+    case 'nominations':
+      return '/rankings/nominations';
     case 'contests':
       return '/contests';
     case 'contest':

@@ -15,6 +15,7 @@ import { useLibraryShelf } from '../lib/library';
 import { useMe } from '../lib/me';
 import { seo } from '../lib/seo';
 import { cn } from '../lib/utils';
+import { SignInPromptLink } from '../components/sign-in-prompt-link';
 
 const librarySearchSchema = z.object({
   shelf: libraryTabSchema.catch('reading'),
@@ -135,9 +136,7 @@ function GuestInvite() {
     <section className={cn(pageCardClass, 'flex flex-col gap-2')}>
       <p>{m.library_sign_in()}</p>
       <nav className="flex gap-4">
-        <Link to="/sign-in" className={textLinkClass}>
-          {m.home_sign_in()}
-        </Link>
+        <SignInPromptLink className={textLinkClass}>{m.home_sign_in()}</SignInPromptLink>
         <Link to="/sign-up" className={textLinkClass}>
           {m.home_sign_up()}
         </Link>

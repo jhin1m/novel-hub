@@ -1,6 +1,5 @@
 import type { ReportTarget } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
-import { Link } from '@tanstack/react-router';
 import { FlagIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { useMe } from '@/lib/me';
 import { cn } from '@/lib/utils';
 import { ReportDialogContent } from './report-dialog';
+import { SignInPromptLink } from '../sign-in-prompt-link';
 
 /**
  * "Report" on the story, chapter and author pages. The server renders the same button for everyone
@@ -36,7 +36,7 @@ export function ReportButton({ target, className }: { target: ReportTarget; clas
   if (!me.data) {
     return (
       <Button asChild variant="ghost" size="sm" className={classes}>
-        <Link to="/sign-in">{label}</Link>
+        <SignInPromptLink reason="report">{label}</SignInPromptLink>
       </Button>
     );
   }

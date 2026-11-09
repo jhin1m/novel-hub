@@ -19,6 +19,7 @@ import {
 } from '@novel-hub/shared/env';
 import { createContentWorker } from './content-worker';
 import { workerEnvSchema } from './env';
+import { startHeartbeat } from './heartbeat';
 import { createMailWorker } from './mail-worker';
 import {
   createMaintenanceQueue,
@@ -114,9 +115,18 @@ function main(): void {
   void applySearchSettingsAtBoot(search);
   void ensureBadgeCatalogAtBoot(db);
 
+  // Healthy while the worker's Redis connection is usable; the file goes stale otherwise.
+  const stopHeartbeat = env.WORKER_HEARTBEAT_FILE
+    ? startHeartbeat({
+        file: env.WORKER_HEARTBEAT_FILE,
+        isHealthy: () => connection.status === 'ready',
+      })
+    : () => {};
+
   // Workers first (running jobs finish and may still use the queues and the pool), then the rest.
   registerShutdown(
     [
+      () => Promise.resolve(stopHeartbeat()),
       () => publishingWorker.close(),
       () => contentWorker.close(),
       () => mailWorker.close(),

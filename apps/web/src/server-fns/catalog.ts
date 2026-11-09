@@ -5,10 +5,12 @@
  */
 import {
   getAuthorPage as loadAuthorPage,
+  getExploreEntry,
   getHomePage as loadHomePage,
   getStoryPage as loadStoryPage,
   getTagPage as loadTagPage,
   listGenres,
+  readHomeRankings,
 } from '@novel-hub/core';
 import { isValidPublicId, tagSlugSchema, usernameParamSchema } from '@novel-hub/shared';
 import { createServerFn } from '@tanstack/react-start';
@@ -32,19 +34,39 @@ export const getAuthorPage = createServerFn({ method: 'GET' })
   });
 
 export const getTagPage = createServerFn({ method: 'GET' })
-  .validator(z.object({ slug: tagSlugSchema, page: z.number().int().positive().max(100_000) }))
+  .validator(
+    z.object({
+      slug: tagSlugSchema,
+      page: z.number().int().positive().max(100_000),
+      noAi: z.boolean(),
+    }),
+  )
   .handler(async ({ data }) => {
     const { db } = await getInfra();
-    return loadTagPage(db, data.slug, { ...SSR_LISTS, page: data.page });
+    return loadTagPage(db, data.slug, { ...SSR_LISTS, page: data.page, noAi: data.noAi });
   });
 
+/** The home lists (Postgres) and its short rankings (Redis), read side by side. */
 export const getHomePage = createServerFn({ method: 'GET' }).handler(async () => {
-  const { db } = await getInfra();
-  return loadHomePage(db);
+  const { db, rankings } = await getInfra();
+  const [home, homeRankings] = await Promise.all([
+    loadHomePage(db),
+    readHomeRankings(db, rankings),
+  ]);
+  return { ...home, rankings: homeRankings };
 });
 
-/** Filters of the search page: the genres to pick from (results load in the browser). */
-export const getSearchFilters = createServerFn({ method: 'GET' }).handler(async () => {
-  const { db } = await getInfra();
-  return { genres: await listGenres(db) };
-});
+/**
+ * The explore page (`/search`): the genres for its chips and, only before any filter is picked,
+ * its entry rows (Postgres and the weekly ranking in Redis). Results load in the browser.
+ */
+export const getExplorePage = createServerFn({ method: 'GET' })
+  .validator(z.object({ unfiltered: z.boolean() }))
+  .handler(async ({ data }) => {
+    const { db, rankings } = await getInfra();
+    const [genres, entry] = await Promise.all([
+      listGenres(db),
+      data.unfiltered ? getExploreEntry(db, rankings) : null,
+    ]);
+    return { genres, entry };
+  });

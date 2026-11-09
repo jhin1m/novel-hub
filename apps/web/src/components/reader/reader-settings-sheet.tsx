@@ -33,10 +33,10 @@ const ALIGN_LABELS: Record<ReaderAlign, () => string> = {
 /**
  * Display settings panel: a bottom sheet on small screens, a right-hand panel from `lg` up. Modal
  * (focus trapped, page scroll locked, a click outside closes it) but over a transparent overlay,
- * so every change previews on the chapter text right away; on wide screens the route moves the
- * text column left so the panel never covers it (below ~1280px that also narrows the column, so a
- * wider column setting only shows once the panel closes). Opened from the reading controls
- * (`trigger`), which hold the open state.
+ * so every change previews on the chapter text right away. Opening it never moves the text column
+ * or changes its width: the panel lies over the right of the page, over the column's right edge
+ * on narrower screens, so a column width picked here shows at once.
+ * Opened from the reading controls (`trigger`), which hold the open state.
  */
 export function ReaderSettingsSheet({
   open,
@@ -55,7 +55,7 @@ export function ReaderSettingsSheet({
       <SheetContent
         side="adaptive-right"
         overlayClassName="bg-transparent"
-        className="gap-0 overflow-y-auto"
+        className="gap-0 overflow-y-auto lg:max-w-(--reader-panel-width)"
         {...panelFocus}
       >
         <SheetHeader className="pr-12">

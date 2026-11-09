@@ -61,3 +61,32 @@ describe('StoryCard layouts', () => {
     expect(html).not.toContain('Đang ra');
   });
 });
+
+describe('StoryCard latest chapter (row)', () => {
+  const row = (latestChapter: StoryCardDto['latestChapter']) =>
+    renderToStaticMarkup(<StoryCard story={{ ...story, latestChapter }} layout="row" />);
+
+  it('shows the latest chapter number and title as plain text, keeping a single link', () => {
+    const html = row({ number: 12, title: 'Kiếm khí' });
+    expect(html).toContain('Chương 12 · Kiếm khí');
+    expect(links(html)).toHaveLength(1);
+  });
+
+  it('shows only the number when the chapter has no title', () => {
+    const html = row({ number: 12, title: null });
+    expect(html).toContain('>Chương 12</p>');
+    expect(html).not.toContain('Chương 12 ·');
+  });
+
+  it('shows no chapter line without a latest chapter', () => {
+    expect(row(null)).not.toContain('Chương 12');
+    expect(row(undefined)).not.toContain('Chương 12');
+  });
+
+  it('is not shown on grid cards', () => {
+    const html = renderToStaticMarkup(
+      <StoryCard story={{ ...story, latestChapter: { number: 12, title: 'Kiếm khí' } }} />,
+    );
+    expect(html).not.toContain('Kiếm khí');
+  });
+});

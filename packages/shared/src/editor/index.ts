@@ -18,3 +18,4 @@ export {
   docToText,
 } from './doc-json';
 export { PID_PATTERN, generatePid, isValidPid } from './pid';
+export { paragraphsToDoc } from './paragraphs-to-doc';

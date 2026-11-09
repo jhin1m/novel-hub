@@ -149,7 +149,7 @@ export function ChapterEditor({
         onRestore={restoreRevision}
       />
 
-      <main className="mx-auto flex w-full max-w-[680px] grow flex-col gap-6 px-4 pt-8 pb-20 md:pb-16">
+      <main className="mx-auto flex w-full max-w-[680px] grow flex-col gap-6 pt-8 px-safe-4 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-16">
         <EditorBanners
           status={status}
           resolving={resolving}

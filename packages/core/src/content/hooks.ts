@@ -2,6 +2,7 @@ import {
   CONTENT_JOBS,
   type ContentJobName,
   type FingerprintChapterPayload,
+  type NotifyAnnouncementPayload,
   type NotifyFollowersPayload,
   type SearchSyncPayload,
 } from '@novel-hub/shared';
@@ -30,7 +31,14 @@ export type ContentChange =
       chapterNumber: number;
       contentHash?: string;
     }
-  | { entity: 'user'; action: 'updated' | 'banned' | 'unbanned'; userId: string };
+  | { entity: 'user'; action: 'updated' | 'banned' | 'unbanned'; userId: string }
+  | {
+      /** An author's announcement to a story's followers; `hidden`/`restored` by a moderator. */
+      entity: 'announcement';
+      action: 'posted' | 'deleted' | 'hidden' | 'restored';
+      announcementId: string;
+      storyId: string;
+    };
 
 export const contentChangeSchema: z.ZodType<ContentChange> = z.discriminatedUnion('entity', [
   z.object({
@@ -52,6 +60,12 @@ export const contentChangeSchema: z.ZodType<ContentChange> = z.discriminatedUnio
     entity: z.literal('user'),
     action: z.enum(['updated', 'banned', 'unbanned']),
     userId: z.uuid(),
+  }),
+  z.object({
+    entity: z.literal('announcement'),
+    action: z.enum(['posted', 'deleted', 'hidden', 'restored']),
+    announcementId: z.uuid(),
+    storyId: z.uuid(),
   }),
 ]);
 
@@ -90,7 +104,8 @@ const searchSync = (data: SearchSyncPayload): ContentJob => ({
  * search: a chapter moves its story's counters, a user change their name or ban. Chapter content
  * that went public (first publish or republish) is fingerprinted; a missed run is caught by the
  * hourly backfill, so the default retries are enough. A chapter's first publish notifies the
- * followers of its story and author.
+ * followers of its story and author. An announcement only shows on the story and author pages
+ * (no search field), so it only purges; a new one also notifies the story's followers.
  */
 export function jobsForChange(change: ContentChange): ContentJob[] {
   const purge: ContentJob = { name: CONTENT_JOBS.purgeUrls, data: change, opts: OUTAGE_RETRY };
@@ -112,6 +127,11 @@ export function jobsForChange(change: ContentChange): ContentJob[] {
     }
     case 'user':
       return [purge, searchSync({ kind: 'user', userId: change.userId })];
+    case 'announcement': {
+      if (change.action !== 'posted') return [purge];
+      const data: NotifyAnnouncementPayload = { announcementId: change.announcementId };
+      return [purge, { name: CONTENT_JOBS.notifyAnnouncement, data }];
+    }
     default: {
       const unhandled: never = change;
       throw new Error(`Unhandled content change ${JSON.stringify(unhandled)}`);

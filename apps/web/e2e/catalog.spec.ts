@@ -12,16 +12,44 @@ let normal: PublishedStory;
 let other: PublishedStory;
 let mature: PublishedStory;
 let draft: PublishedStory;
+let latest: PublishedStory;
+let completed: PublishedStory;
+let matureCompleted: PublishedStory;
+
+/** Past the home listing threshold: 3 published chapters, 5,100 words. */
+const LISTED = { published: 3, wordsPerChapter: 1_700 };
 
 test.beforeAll(async () => {
-  normal = await createPublishedStory({ title: `Truyện Thường ${run}`, published: 2 });
+  normal = await createPublishedStory({ title: `Truyện Thường ${run}`, ...LISTED });
+  // One short chapter: on the tag and author pages, never in the home lists.
   other = await createPublishedStory({ title: `Truyện Khác ${run}` });
   mature = await createPublishedStory({
     title: `Truyện Người Lớn ${run}`,
     isMature: true,
     warningTags: ['noi-dung-18'],
+    ...LISTED,
   });
   draft = await createPublishedStory({ title: `Truyện Nháp ${run}`, published: 0, drafts: 1 });
+  // Three titled chapters and a draft after them: the home rows show the third one.
+  latest = await createPublishedStory({
+    title: `Truyện Có Tên Chương ${run}`,
+    ...LISTED,
+    drafts: 1,
+    chapterTitles: ['Khởi đầu', 'Gặp gỡ', `Đỉnh núi ${run}`, `Bản nháp ${run}`],
+  });
+  completed = await createPublishedStory({
+    title: `Truyện Hoàn Thành ${run}`,
+    ...LISTED,
+    status: 'completed',
+  });
+  matureCompleted = await createPublishedStory({
+    title: `Truyện Hoàn Thành Người Lớn ${run}`,
+    isMature: true,
+    ...LISTED,
+    status: 'completed',
+  });
+  // A second new story past the threshold: one becomes the hero, the spotlight keeps the other.
+  await createPublishedStory({ title: `Truyện Mới ${run}`, ...LISTED });
 });
 
 const storyPath = (s: PublishedStory) => canonicalPath({ kind: 'story', ...s });
@@ -40,11 +68,81 @@ test('home, tag and author pages list public stories, never 18+ or drafts, and a
     expect(html, path).not.toContain(draft.title);
   }
   const home = await (await request.get('/')).text();
-  expect(home).toContain(other.title);
+  expect(home).not.toContain(other.title);
   expect(home).toContain('Mới cập nhật');
   expect(home).not.toContain('Biên tập chọn');
   // Loaded in the browser for signed-in readers only.
   expect(home).not.toContain('id="continue-title"');
+});
+
+test('"new stories that need readers" lists new stories past the threshold, never the hero', async ({
+  page,
+}) => {
+  await gotoHydrated(page, '/');
+  const heroTitle = (await page.locator('#featured-title').textContent()) ?? '';
+  expect(heroTitle).not.toBe('');
+  const spotlight = page.getByRole('region', { name: 'Truyện mới cần độc giả' });
+  await expect(spotlight.getByText('Truyện mới ra, đổi mỗi giờ')).toBeVisible();
+  // Which qualifying stories make the 8 depends on the hour; the int tests pin the selection.
+  const cards = spotlight.getByRole('listitem');
+  await expect(cards.first()).toBeVisible();
+  for (const title of [heroTitle, other.title, mature.title]) {
+    await expect(cards.filter({ hasText: title })).toHaveCount(0);
+  }
+});
+
+test('"recently updated" rows show the latest readable chapter and link to the full list', async ({
+  request,
+}) => {
+  const html = await (await request.get('/')).text();
+  expect(html).toContain(`Chương 3 · Đỉnh núi ${run}`);
+  expect(html).not.toContain(`Bản nháp ${run}`);
+  expect(html).toMatch(
+    /<a [^>]*href="\/search\?sort=updated"[^>]*>Xem thêm truyện mới cập nhật<\/a>/,
+  );
+});
+
+test('"recently completed" lists completed stories, never 18+, and links to all of them', async ({
+  page,
+  request,
+}) => {
+  const html = await (await request.get('/')).text();
+  expect(html).not.toContain(matureCompleted.title);
+  expect(html).toMatch(
+    /<a [^>]*href="\/search\?status=completed"[^>]*>Xem truyện đã hoàn thành<\/a>/,
+  );
+
+  await gotoHydrated(page, '/');
+  const section = page.getByRole('region', { name: 'Vừa hoàn thành' });
+  await expect(section.getByText('Truyện đã ra đủ, đọc một mạch')).toBeVisible();
+  const link = (id: string) =>
+    page
+      .locator(`section[aria-labelledby="${id}"]`)
+      .getByRole('link', { name: completed.title, exact: true });
+  // The hero comes first: a section never repeats it (the notable list may pick any new story).
+  const isHero = (await page.locator('#featured-title').textContent()) === completed.title;
+  await expect(link('completed-title')).toHaveCount(isHero ? 0 : 1);
+  for (const id of ['spotlight-title', 'notable-title']) await expect(link(id)).toHaveCount(0);
+});
+
+test('a story shows in at most one of the hero, picks, completed, "need readers" and notable sections', async ({
+  page,
+}) => {
+  await gotoHydrated(page, '/');
+  const sections = [
+    'featured-title',
+    'picks-title',
+    'completed-title',
+    'spotlight-title',
+    'notable-title',
+  ].map((id) => page.locator(`section[aria-labelledby="${id}"]`));
+  for (const title of [normal.title, latest.title, completed.title, `Truyện Mới ${run}`]) {
+    let shownIn = 0;
+    for (const section of sections) {
+      if ((await section.getByRole('link', { name: title, exact: true }).count()) > 0) shownIn += 1;
+    }
+    expect(shownIn, title).toBeLessThanOrEqual(1);
+  }
 });
 
 test('the story page is cached and shows the story; drafts are 404', async ({ request }) => {
@@ -209,7 +307,7 @@ test('terms and content policy are public pages linked from the footer', async (
   page,
   request,
 }) => {
-  for (const path of ['/terms', '/content-policy']) {
+  for (const path of ['/terms', '/content-policy', '/privacy']) {
     const res = await request.get(path, { maxRedirects: 0 });
     expect(res.status(), path).toBe(200);
     expect(res.headers()['cache-control'], path).toBe(PAGE_CACHE);
@@ -221,5 +319,9 @@ test('terms and content policy are public pages linked from the footer', async (
   await expect(footer.getByRole('link', { name: 'Quy định nội dung' })).toHaveAttribute(
     'href',
     '/content-policy',
+  );
+  await expect(footer.getByRole('link', { name: 'Chính sách bảo mật' })).toHaveAttribute(
+    'href',
+    '/privacy',
   );
 });

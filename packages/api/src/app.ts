@@ -12,6 +12,7 @@ import { createHealthRoutes } from './routes/health';
 import { createLibraryRoutes } from './routes/library';
 import { createMeRoutes } from './routes/me';
 import { createModerationRoutes } from './routes/moderation';
+import { createNominationRoutes } from './routes/nominations';
 import { createNotificationRoutes } from './routes/notifications';
 import { createRatingRoutes } from './routes/ratings';
 import { createReadingRoutes } from './routes/reading';
@@ -32,6 +33,7 @@ function createV1Routes(deps: ApiDeps) {
     .route('/library', createLibraryRoutes(deps))
     .route('/me', createMeRoutes(deps))
     .route('/moderation', createModerationRoutes(deps))
+    .route('/nominations', createNominationRoutes(deps))
     .route('/notifications', createNotificationRoutes(deps))
     .route('/ratings', createRatingRoutes(deps))
     .route('/reading', createReadingRoutes(deps))

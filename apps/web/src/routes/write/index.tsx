@@ -19,7 +19,7 @@ export const Route = createFileRoute('/write/')({
 function WriterHomePage() {
   return (
     <SiteLayout>
-      <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-6 px-4 py-8 md:px-8 md:py-10">
+      <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-6 py-8 px-safe-4 md:py-10 md:px-safe-8">
         {/* Outside the gate, so the sign-in and verify-email states keep the page heading. */}
         <h1 className="text-[28px] leading-tight font-extrabold">{m.writer_title()}</h1>
         <WriterGate>

@@ -45,10 +45,15 @@ export interface CommentContext {
   truncated: boolean;
   status: CommentStatus;
   isReply: boolean;
+  /** Pinned by the story's author (ISO); a moderator may unpin it. */
+  pinnedAt: string | null;
   writer: UserContext;
 }
 
-export interface CommentWithChapter extends ChapterWithStory {
+/** A reported comment with its story, and its chapter (`null`: the story's discussion). */
+export interface CommentWithChapter {
+  story: StoryContext;
+  chapter: ChapterContext | null;
   comment: CommentContext;
 }
 
@@ -139,7 +144,10 @@ export async function loadChapterContexts(
   );
 }
 
-/** Comments by internal id with their chapter and story, whatever their state. */
+/**
+ * Comments by internal id with their story and chapter (none for the story's discussion), whatever
+ * their state.
+ */
 export async function loadCommentContexts(
   db: Db,
   ids: readonly string[],
@@ -152,6 +160,8 @@ export async function loadCommentContexts(
       body: comments.body,
       status: comments.status,
       parentId: comments.parentId,
+      pinnedAt: comments.pinnedAt,
+      chapterId: comments.chapterId,
       writerUsername: writer.username,
       writerDisplayName: writer.displayName,
       writerRole: writer.role,
@@ -164,9 +174,9 @@ export async function loadCommentContexts(
     })
     .from(comments)
     .innerJoin(writer, eq(writer.id, comments.userId))
-    .innerJoin(chapters, eq(chapters.id, comments.chapterId))
-    .innerJoin(stories, eq(stories.id, chapters.storyId))
+    .innerJoin(stories, eq(stories.id, comments.storyId))
     .innerJoin(users, eq(users.id, stories.authorId))
+    .leftJoin(chapters, eq(chapters.id, comments.chapterId))
     .where(inArray(comments.id, [...ids]));
   return new Map(
     rows.map((row) => {
@@ -175,18 +185,23 @@ export async function loadCommentContexts(
         row.id,
         {
           story: toStoryContext(row),
-          chapter: {
-            number: row.number,
-            title: row.title,
-            status: row.chapterStatus,
-            deleted: row.deletedAt !== null,
-          },
+          // Joined by id, so the chapter columns are set whenever `chapterId` is.
+          chapter:
+            row.chapterId === null || row.number === null || row.chapterStatus === null
+              ? null
+              : {
+                  number: row.number,
+                  title: row.title,
+                  status: row.chapterStatus,
+                  deleted: row.deletedAt !== null,
+                },
           comment: {
             id: row.id,
             excerpt: chars.slice(0, COMMENT_EXCERPT_MAX).join(''),
             truncated: chars.length > COMMENT_EXCERPT_MAX,
             status: row.status as CommentStatus,
             isReply: row.parentId !== null,
+            pinnedAt: row.pinnedAt?.toISOString() ?? null,
             writer: {
               username: row.writerUsername,
               displayName: row.writerDisplayName,

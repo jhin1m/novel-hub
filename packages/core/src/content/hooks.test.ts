@@ -133,3 +133,43 @@ describe('jobsForChange follower notifications', () => {
     expect(notifyJobs({ entity: 'user', action: 'updated', userId: STORY })).toEqual([]);
   });
 });
+
+describe('jobsForChange announcements', () => {
+  const ANNOUNCEMENT = '01920000-0000-7000-8000-000000000003';
+  const change = (action: 'posted' | 'deleted' | 'hidden' | 'restored'): ContentChange => ({
+    entity: 'announcement',
+    action,
+    announcementId: ANNOUNCEMENT,
+    storyId: STORY,
+  });
+
+  it.each(['posted', 'deleted', 'hidden', 'restored'] as const)(
+    'accepts announcement.%s in the outbox schema',
+    (action) => {
+      expect(contentChangeSchema.parse(change(action))).toEqual(change(action));
+    },
+  );
+
+  it('rejects an announcement change without a valid announcement id', () => {
+    expect(
+      contentChangeSchema.safeParse({ ...change('posted'), announcementId: 'x' }).success,
+    ).toBe(false);
+    expect(
+      contentChangeSchema.safeParse({ entity: 'announcement', action: 'edited', storyId: STORY })
+        .success,
+    ).toBe(false);
+  });
+
+  it('purges and notifies the story followers of a new announcement, without a search sync', () => {
+    expect(jobsForChange(change('posted'))).toEqual([
+      { name: 'purge-urls', data: change('posted'), opts: RETRY_OPTS },
+      { name: 'notify-announcement', data: { announcementId: ANNOUNCEMENT } },
+    ]);
+  });
+
+  it.each(['deleted', 'hidden', 'restored'] as const)('only purges a %s announcement', (action) => {
+    expect(jobsForChange(change(action))).toEqual([
+      { name: 'purge-urls', data: change(action), opts: RETRY_OPTS },
+    ]);
+  });
+});

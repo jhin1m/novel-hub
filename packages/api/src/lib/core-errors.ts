@@ -24,12 +24,20 @@ const CORE_ERROR_STATUS = {
   ADULT_CONFIRMATION_REQUIRED: 400,
   INVALID_STATE: 409,
   USER_MUTED: 403,
+  MATURE_CONTENT_DISABLED: 403,
   COMMENT_PARAGRAPH_INVALID: 422,
   RATING_HIDDEN: 409,
   FEATURED_MATURE: 422,
   CONTEST_NOT_OPEN: 409,
   CONTEST_STORY_INELIGIBLE: 422,
   CONTEST_PLACEMENT_TAKEN: 409,
+  COMMENT_PIN_LIMIT: 409,
+  COMMENT_UNDER_REVIEW: 409,
+  ANNOUNCEMENT_DAILY_LIMIT: 429,
+  NOMINATION_WEEKLY_LIMIT: 409,
+  ALREADY_NOMINATED: 409,
+  ACCOUNT_TOO_NEW: 403,
+  CHAPTER_IMPORT_INVALID: 422,
 } as const;
 
 export type CoreErrorCode = keyof typeof CORE_ERROR_STATUS;
@@ -57,12 +65,20 @@ const CORE_ERROR_MESSAGES: Record<CoreErrorCode, string> = {
   ADULT_CONFIRMATION_REQUIRED: 'Turning 18+ content on requires confirming you are 18 or older',
   INVALID_STATE: 'The target is not in a state this action applies to',
   USER_MUTED: 'This account is muted and cannot post',
+  MATURE_CONTENT_DISABLED: 'Enable mature content to view or post comments on this story',
   COMMENT_PARAGRAPH_INVALID: 'The paragraph is not in the published chapter',
   RATING_HIDDEN: 'The rating was hidden by a moderator',
   FEATURED_MATURE: 'An 18+ story cannot be featured',
   CONTEST_NOT_OPEN: 'The contest is not open',
   CONTEST_STORY_INELIGIBLE: 'The story may not enter this contest',
   CONTEST_PLACEMENT_TAKEN: 'Another entry already holds this place',
+  COMMENT_PIN_LIMIT: 'At most 3 comments can be pinned in one chapter or discussion',
+  COMMENT_UNDER_REVIEW: 'The comment is under moderator review and cannot be edited',
+  ANNOUNCEMENT_DAILY_LIMIT: 'A story can post at most 3 announcements per day',
+  NOMINATION_WEEKLY_LIMIT: 'All nominations of this week are used',
+  ALREADY_NOMINATED: 'The story was already nominated this week',
+  ACCOUNT_TOO_NEW: 'The account must be at least 7 days old',
+  CHAPTER_IMPORT_INVALID: 'A chapter has an invalid word count or publish time',
 };
 
 export function coreError<C extends CoreErrorCode>(c: Context, code: C) {

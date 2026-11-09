@@ -98,11 +98,13 @@ const ACTIONS: ToolbarAction[][] = [
 
 /*
  * Phones: a bar fixed to the bottom, lifted above the on-screen keyboard; formatting scrolls
- * sideways while undo/redo stay pinned right. From `md` up: a floating pill under the header.
+ * sideways while undo/redo stay pinned right. It clears the home indicator only while the keyboard
+ * is closed (the keyboard already covers it). From `md` up: a floating pill under the header.
  */
 const TOOLBAR_CLASS =
-  'fixed inset-x-0 bottom-[var(--keyboard-offset,0px)] z-20 flex items-center border-t bg-card px-2 py-1.5 ' +
-  'md:sticky md:inset-x-auto md:top-[76px] md:bottom-auto md:mx-auto md:mt-2 md:w-fit md:rounded-full md:border md:px-3';
+  'fixed inset-x-0 bottom-[var(--keyboard-offset,0px)] z-20 flex items-center border-t bg-card px-safe-2 pt-1.5 ' +
+  'pb-[max(0.375rem,calc(env(safe-area-inset-bottom)-var(--keyboard-offset,0px)))] ' +
+  'md:sticky md:inset-x-auto md:top-[76px] md:bottom-auto md:mx-auto md:mt-2 md:w-fit md:rounded-full md:border md:px-3 md:pb-1.5';
 
 export function EditorToolbar({ editor }: { editor: Editor }) {
   useKeyboardOffset();
@@ -149,7 +151,12 @@ export function EditorToolbar({ editor }: { editor: Editor }) {
   const formatting = ACTIONS.slice(0, -1);
   const history = ACTIONS.at(-1) ?? [];
   return (
-    <div role="toolbar" aria-label={m.editor_toolbar_label()} className={TOOLBAR_CLASS}>
+    <div
+      role="toolbar"
+      aria-label={m.editor_toolbar_label()}
+      data-bottom-bar="md"
+      className={TOOLBAR_CLASS}
+    >
       <div className="flex min-w-0 grow items-center gap-1 overflow-x-auto border-r pr-1 md:overflow-visible">
         {formatting.map(renderGroup)}
       </div>

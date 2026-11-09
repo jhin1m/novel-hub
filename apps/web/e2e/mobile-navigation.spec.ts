@@ -333,20 +333,24 @@ test.describe('chapter reading controls', () => {
       await expect(settings).toBeFocused();
     });
 
-    test('settings open on the right beside the text; the contents open on the left', async ({
+    test('settings open on the right over the text; the contents open on the left', async ({
       page,
     }) => {
       await gotoHydrated(page, book.chapterPath(1));
+      const firstParagraph = page.locator('.reader-content p').first();
+      const before = await firstParagraph.boundingBox();
+      if (!before) throw new Error('chapter text not laid out');
       const nav = page.getByRole('navigation', CHAPTER_NAV);
       await nav.getByRole('button', { name: 'Cài đặt hiển thị' }).click();
       const settings = page.getByRole('dialog', { name: 'Cài đặt hiển thị' });
       await expect(settings).toBeVisible();
       const panel = await settledBox(settings);
       expect(panel.x).toBeGreaterThan(640);
-      // The text column moved left: the panel covers none of it.
-      const paragraph = await page.locator('.reader-content p').first().boundingBox();
+      // The text column stays where it was; the panel lies over its right side.
+      const paragraph = await firstParagraph.boundingBox();
       if (!paragraph) throw new Error('chapter text not laid out');
-      expect(paragraph.x + paragraph.width).toBeLessThanOrEqual(panel.x);
+      expect(Math.abs(paragraph.x - before.x)).toBeLessThanOrEqual(1);
+      expect(Math.abs(paragraph.width - before.width)).toBeLessThanOrEqual(1);
       await page.keyboard.press('Escape');
       await expect(page.getByRole('dialog')).toHaveCount(0);
 

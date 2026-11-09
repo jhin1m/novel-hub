@@ -93,4 +93,13 @@ describe('GET /api/v1/search (real Postgres, fake Meilisearch)', () => {
       'tagSlugs = "tien-hiep"',
     ]);
   });
+
+  it('passes the AI filter from the query string', async () => {
+    expect(await storyFilter('/api/v1/search?tag=tien-hiep&noAi=1')).toEqual([
+      'isMature = false',
+      'tagSlugs = "tien-hiep"',
+      'isAiAssisted = false',
+    ]);
+    expect(await storyFilter('/api/v1/search?noAi=0')).toEqual(['isMature = false']);
+  });
 });

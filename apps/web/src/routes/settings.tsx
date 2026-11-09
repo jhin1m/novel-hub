@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { FormMessage, textLinkClass } from '../components/auth-ui';
 import { PageShell, PageTitle, pageCardClass } from '../components/page-shell';
 import { MatureSetting, SETTINGS_HEADING_CLASS } from '../components/settings/mature-setting';
+import { ThemeSetting } from '../components/settings/theme-setting';
 import { SiteLayout } from '../components/site-layout';
 import { authClient } from '../lib/auth-client';
 import { authErrorMessage, throwIfAuthError } from '../lib/auth-errors';
@@ -12,6 +13,7 @@ import { NO_STORE } from '../lib/cache-headers';
 import { type MeUser, useMe, useSignOut } from '../lib/me';
 import { seo } from '../lib/seo';
 import { cn } from '../lib/utils';
+import { SignInPromptLink } from '../components/sign-in-prompt-link';
 
 export const Route = createFileRoute('/settings')({
   // Everything here is personal and loaded in the browser; the page itself is never stored.
@@ -38,6 +40,8 @@ function SettingsPage() {
         ) : (
           <GuestInvite />
         )}
+        {/* Not tied to the account: guests choose too, and it works while the account loads. */}
+        <ThemeSetting />
       </PageShell>
     </SiteLayout>
   );
@@ -48,9 +52,7 @@ function GuestInvite() {
     <section className={cn(pageCardClass, 'flex flex-col gap-2')}>
       <p>{m.home_guest()}</p>
       <nav className="flex gap-4">
-        <Link to="/sign-in" className={textLinkClass}>
-          {m.home_sign_in()}
-        </Link>
+        <SignInPromptLink className={textLinkClass}>{m.home_sign_in()}</SignInPromptLink>
         <Link to="/sign-up" className={textLinkClass}>
           {m.home_sign_up()}
         </Link>

@@ -43,3 +43,16 @@ export async function signUpVerified(page: Page) {
   }
   return account;
 }
+
+/** Moves the account's creation date `days` days back in the test database (account-age rules). */
+export async function ageAccount(email: string, days: number) {
+  const { pool } = createTestDb();
+  try {
+    await pool.query(
+      'update users set created_at = created_at - make_interval(days => $2) where email = $1',
+      [email, days],
+    );
+  } finally {
+    await pool.end();
+  }
+}

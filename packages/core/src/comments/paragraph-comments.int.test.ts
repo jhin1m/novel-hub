@@ -69,7 +69,7 @@ async function page(publicId: string, paragraphId?: string) {
 }
 
 async function counts(publicId: string) {
-  const result = await countParagraphComments(db, { publicId, number: 1 });
+  const result = await countParagraphComments(db, null, { publicId, number: 1 });
   if (!result.ok) throw new Error(result.error);
   return result.value;
 }
@@ -162,9 +162,11 @@ describe('paragraph comments', () => {
 
   it('answers NOT_FOUND for the counts of a chapter nobody may read', async () => {
     const { story } = await setup();
-    expect(await countParagraphComments(db, { publicId: story.publicId, number: 9 })).toEqual({
-      ok: false,
-      error: 'NOT_FOUND',
-    });
+    expect(await countParagraphComments(db, null, { publicId: story.publicId, number: 9 })).toEqual(
+      {
+        ok: false,
+        error: 'NOT_FOUND',
+      },
+    );
   });
 });

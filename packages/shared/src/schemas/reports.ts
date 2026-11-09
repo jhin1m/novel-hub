@@ -21,7 +21,14 @@ export const REPORT_STATUSES = ['open', 'resolved', 'dismissed'] as const;
 export type ReportStatus = (typeof REPORT_STATUSES)[number];
 
 /** `reports.target_type` values. */
-export const REPORT_TARGET_TYPES = ['story', 'chapter', 'user', 'comment', 'rating'] as const;
+export const REPORT_TARGET_TYPES = [
+  'story',
+  'chapter',
+  'user',
+  'comment',
+  'rating',
+  'announcement',
+] as const;
 export type ReportTargetType = (typeof REPORT_TARGET_TYPES)[number];
 
 /** One-click moderator actions (spec section 7): the bodies of `POST /moderation/actions`. */
@@ -34,6 +41,10 @@ export const MODERATION_ACTIONS = [
   'restore_comment',
   'hide_rating',
   'restore_rating',
+  'hide_announcement',
+  'restore_announcement',
+  'unpin_comment',
+  'warn_user',
   'mute_user',
   'unmute_user',
   'ban_user',
@@ -65,8 +76,8 @@ const storyPublicId = z.string().refine(isValidPublicId);
 const chapterNumber = z.number().int().positive().max(2_147_483_647);
 
 /**
- * What a report points at, by public keys. A comment and a rating have no public key, so they are
- * named by their id: the deliberate exceptions, and the UI never shows those ids.
+ * What a report points at, by public keys. A comment, a rating and an announcement have no public
+ * key, so they are named by their id: the deliberate exceptions, and the UI never shows those ids.
  */
 export const reportTargetSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('story'), storyPublicId }),
@@ -74,6 +85,7 @@ export const reportTargetSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('user'), username: usernameParamSchema }),
   z.object({ type: z.literal('comment'), commentId: z.uuid() }),
   z.object({ type: z.literal('rating'), ratingId: z.uuid() }),
+  z.object({ type: z.literal('announcement'), announcementId: z.uuid() }),
 ]);
 export type ReportTarget = z.infer<typeof reportTargetSchema>;
 
@@ -110,6 +122,8 @@ const commentAction = <A extends string>(action: A) =>
   z.object({ action: z.literal(action), commentId: z.uuid(), ...actionCommon });
 const ratingAction = <A extends string>(action: A) =>
   z.object({ action: z.literal(action), ratingId: z.uuid(), ...actionCommon });
+const announcementAction = <A extends string>(action: A) =>
+  z.object({ action: z.literal(action), announcementId: z.uuid(), ...actionCommon });
 const userAction = <A extends string>(action: A) =>
   z.object({ action: z.literal(action), username: usernameParamSchema, ...actionCommon });
 const reportAction = <A extends string>(action: A) =>
@@ -125,6 +139,16 @@ export const moderationActionSchema = z.discriminatedUnion('action', [
   commentAction('restore_comment'),
   ratingAction('hide_rating'),
   ratingAction('restore_rating'),
+  announcementAction('hide_announcement'),
+  announcementAction('restore_announcement'),
+  commentAction('unpin_comment'),
+  // The warned user reads the note in their notification, so a warning needs one.
+  z.object({
+    action: z.literal('warn_user'),
+    username: usernameParamSchema,
+    note: z.string().trim().min(1).max(LIMITS.modNoteMax),
+    reportId: z.uuid().optional(),
+  }),
   userAction('mute_user'),
   userAction('unmute_user'),
   userAction('ban_user'),

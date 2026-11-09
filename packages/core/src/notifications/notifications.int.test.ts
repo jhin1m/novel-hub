@@ -6,7 +6,11 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { followAuthor, followStory } from '../follows/follows';
 import { makeUser } from '../testing/moderation-fixture';
 import { addChapter, makeAuthor, makePublishedStory } from '../testing/story-fixture';
-import { listNotifications } from './list-notifications';
+import {
+  type ChapterPublishedNotificationDto,
+  type NotificationPage,
+  listNotifications,
+} from './list-notifications';
 import { markNotificationsRead } from './mark-read';
 import { notifyFollowersOfChapter } from './notify-followers';
 import { pruneNotifications } from './prune-notifications';
@@ -48,6 +52,10 @@ async function publishAndNotify(
   const id = await chapterId(story.storyId, number);
   return { number, id, result: await notifyFollowersOfChapter(db, id) };
 }
+
+/** The "new chapters" items of a page; every notification these tests create is one. */
+const chapterItems = (page: NotificationPage) =>
+  page.items.filter((n): n is ChapterPublishedNotificationDto => n.type === 'chapter_published');
 
 const rowsOf = (userId: string) =>
   db.select().from(notifications).where(eq(notifications.userId, userId));
@@ -103,7 +111,7 @@ describe('notifyFollowersOfChapter', () => {
     expect((await notifyFollowersOfChapter(db, third.id)).affected).toBe(0);
     const fourth = await publishAndNotify(author, story);
     const after = await listNotifications(db, reader.id);
-    expect(after.items.map((n) => [n.count, n.chapter.number, n.read])).toEqual([
+    expect(chapterItems(after).map((n) => [n.count, n.chapter.number, n.read])).toEqual([
       [1, fourth.number, false],
       [3, third.number, true],
     ]);
@@ -175,7 +183,7 @@ describe('listing notifications', () => {
     const second = await publishAndNotify(author, story);
     const third = await publishAndNotify(author, story);
     await db.update(chapters).set({ deletedAt: new Date() }).where(eq(chapters.id, third.id));
-    const [item] = (await listNotifications(db, reader.id)).items;
+    const [item] = chapterItems(await listNotifications(db, reader.id));
     expect(item?.chapter.number).toBe(second.number);
 
     await db.update(chapters).set({ status: 'hidden_by_mod' }).where(eq(chapters.id, second.id));
@@ -215,10 +223,10 @@ describe('listing notifications', () => {
       await notifyFollowersOfChapter(db, await chapterId(story.storyId, number));
     }
     const first = await listNotifications(db, reader.id, undefined, 2);
-    expect(first.items.map((n) => n.story.title)).toEqual(['Truyện 2', 'Truyện 1']);
+    expect(chapterItems(first).map((n) => n.story.title)).toEqual(['Truyện 2', 'Truyện 1']);
     expect(first.nextCursor).not.toBeNull();
     const second = await listNotifications(db, reader.id, first.nextCursor ?? undefined, 2);
-    expect(second.items.map((n) => n.story.title)).toEqual(['Truyện 0']);
+    expect(chapterItems(second).map((n) => n.story.title)).toEqual(['Truyện 0']);
     expect(second.nextCursor).toBeNull();
   });
 });

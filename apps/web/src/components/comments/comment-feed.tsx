@@ -1,28 +1,40 @@
 import { m } from '@novel-hub/shared/messages';
 import { Button } from '@/components/ui/button';
-import type { CommentChapter, useChapterComments } from '@/lib/comments';
+import { ApiError } from '@/lib/api-errors';
+import { type CommentScope, type CommentThreadsQuery, commentErrorMessage } from '@/lib/comments';
 import { CommentList } from './comment-list';
 import { commentActionClass } from './comment-item';
+import { feedThreads } from './comment-views';
+
+/**
+ * Why the list failed: a refusal from the server (4xx, e.g. 18+ turned off) in its own words, any
+ * other failure (network, server) as the generic "could not load".
+ */
+function loadErrorMessage(error: unknown): string {
+  return error instanceof ApiError && error.status < 500
+    ? commentErrorMessage(error)
+    : m.comment_load_error();
+}
 
 /**
  * A list of threads in each of its states: loading (only once `active`, i.e. asked for), failed
- * with a retry, empty, or the threads with a "more" button. Shared by the chapter's list and a
- * paragraph's.
+ * with a retry, empty, or the threads (pinned ones first) with a "more" button. Shared by the
+ * chapter's list, a paragraph's and the story discussion.
  */
 export function CommentFeed({
-  chapter,
+  scope,
   viewer,
   comments,
   active,
   emptyText,
 }: {
-  chapter: CommentChapter;
+  scope: CommentScope;
   viewer: string | null;
-  comments: ReturnType<typeof useChapterComments>;
+  comments: CommentThreadsQuery;
   active: boolean;
   emptyText: string;
 }) {
-  const threads = comments.data?.pages.flatMap((page) => page.items) ?? [];
+  const { threads, canPin } = feedThreads(comments.data?.pages ?? []);
   return (
     <>
       {comments.isPending ? (
@@ -33,7 +45,7 @@ export function CommentFeed({
         ) : null
       ) : comments.isError ? (
         <p role="alert" className="flex items-center gap-2 text-sm text-reader-muted">
-          {m.comment_load_error()}
+          {loadErrorMessage(comments.error)}
           <Button
             variant="ghost"
             size="sm"
@@ -46,7 +58,7 @@ export function CommentFeed({
       ) : threads.length === 0 ? (
         <p className="text-sm text-reader-muted">{emptyText}</p>
       ) : (
-        <CommentList chapter={chapter} viewer={viewer} threads={threads} />
+        <CommentList scope={scope} viewer={viewer} threads={threads} canPin={canPin} />
       )}
       {comments.hasNextPage ? (
         <Button

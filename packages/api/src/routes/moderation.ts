@@ -6,6 +6,7 @@ import {
   endFeaturedSlot,
   listContestEntriesForMods,
   listContestsForMods,
+  listFeatureSuggestions,
   listFeaturedSlotsForMods,
   listReports,
   setPlacement,
@@ -48,6 +49,11 @@ export function createModerationRoutes(deps: Pick<ApiDeps, 'auth' | 'db'>) {
     })
     .get('/featured', async (c) => {
       const result = await listFeaturedSlotsForMods(deps.db, c.var.authUser);
+      if (!result.ok) return coreError(c, result.error);
+      return c.json(result.value, 200);
+    })
+    .get('/featured/suggestions', async (c) => {
+      const result = await listFeatureSuggestions(deps.db, c.var.authUser);
       if (!result.ok) return coreError(c, result.error);
       return c.json(result.value, 200);
     })

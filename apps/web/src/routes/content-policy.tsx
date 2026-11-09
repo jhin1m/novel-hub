@@ -34,6 +34,10 @@ function ContentPolicyPage() {
         { heading: m.rules_copyright_heading(), paragraphs: [m.rules_copyright_body()] },
         { heading: m.rules_mature_heading(), paragraphs: [m.rules_mature_body()] },
         { heading: m.rules_tags_heading(), paragraphs: [m.rules_tags_body()] },
+        { heading: m.rules_chapters_heading(), paragraphs: [m.rules_chapters_body()] },
+        { heading: m.rules_external_heading(), paragraphs: [m.rules_external_body()] },
+        { heading: m.rules_ai_heading(), paragraphs: [m.rules_ai_body()] },
+        { heading: m.rules_warnings_heading(), paragraphs: [m.rules_warnings_body()] },
         { heading: m.rules_report_heading(), paragraphs: [m.rules_report_body()] },
       ]}
     />

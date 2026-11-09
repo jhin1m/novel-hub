@@ -4,6 +4,7 @@ import {
   SEARCH_MAX_PAGE,
   SEARCH_PAGE_SIZE,
   type SearchQuery,
+  type SearchSort,
 } from '@novel-hub/shared';
 import type { MultiSearchQuery } from 'meilisearch';
 import type { ListOptions, StoryCardDto } from '../catalog/story-card';
@@ -31,7 +32,7 @@ export interface SearchResult {
  * as free text. 18+ stories are left out unless the server decided the reader allowed them.
  */
 export function buildStoryFilter(
-  q: Pick<SearchQuery, 'tag' | 'status' | 'minWords' | 'maxWords'>,
+  q: Pick<SearchQuery, 'tag' | 'status' | 'minWords' | 'maxWords'> & { noAi?: boolean },
   o: ListOptions,
 ): string[] {
   const filter: string[] = [];
@@ -40,7 +41,24 @@ export function buildStoryFilter(
   if (q.status !== undefined) filter.push(`status = "${q.status}"`);
   if (q.minWords !== undefined) filter.push(`wordCount >= ${q.minWords}`);
   if (q.maxWords !== undefined) filter.push(`wordCount <= ${q.maxWords}`);
+  if (q.noAi) filter.push('isAiAssisted = false');
   return filter;
+}
+
+const SORT_RULES: Record<SearchSort, string[]> = {
+  updated: ['lastChapterAt:desc'],
+  newest: ['createdAt:desc'],
+  longest: ['wordCount:desc'],
+};
+
+/**
+ * Meilisearch sort for a query: an explicit order always applies, with or without text. Without
+ * one, an empty text lists the most recently updated first and a text search keeps relevance
+ * (`undefined`). Only fixed rules for enum values reach Meilisearch.
+ */
+export function storySort(query: Pick<SearchQuery, 'q' | 'sort'>): string[] | undefined {
+  if (query.sort !== undefined) return SORT_RULES[query.sort];
+  return query.q === '' ? SORT_RULES.updated : undefined;
 }
 
 /**
@@ -52,8 +70,8 @@ export function buildAuthorFilter(o: ListOptions): string[] {
 }
 
 /**
- * Stories (and, for a text search, authors) matching `query`, in one `multiSearch` request. An
- * empty text browses the filtered stories, most recently updated first. Throws when Meilisearch
+ * Stories (and, for a text search, authors) matching `query`, in one `multiSearch` request, in the
+ * order of `storySort`. Throws when Meilisearch
  * fails or times out; the caller answers 503.
  */
 export async function searchCatalog(
@@ -66,6 +84,7 @@ export async function searchCatalog(
   const tag =
     query.tag === undefined ? undefined : ((await canonicalTagSlug(db, query.tag)) ?? query.tag);
   const withAuthors = query.q !== '' && query.page === 1;
+  const sort = storySort(query);
   const queries: MultiSearchQuery[] = [
     {
       indexUid: ctx.names.stories,
@@ -73,7 +92,7 @@ export async function searchCatalog(
       filter: buildStoryFilter({ ...query, tag }, o),
       page: query.page,
       hitsPerPage: SEARCH_PAGE_SIZE,
-      ...(query.q === '' && { sort: ['lastChapterAt:desc'] }),
+      ...(sort !== undefined && { sort }),
     },
   ];
   if (withAuthors) {

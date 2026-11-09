@@ -6,7 +6,7 @@ const FOOTER_LINK = 'rounded-sm underline-offset-4 hover:text-foreground hover:u
 export function SiteFooter() {
   return (
     <footer className="border-t">
-      <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-6 text-[13px] text-muted-foreground md:px-8">
+      <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-x-6 gap-y-2 py-6 px-safe-4 text-[13px] text-muted-foreground md:px-safe-8">
         {/* CDN-cached HTML can hydrate after New Year, or in a different time zone than the server. */}
         <p suppressHydrationWarning>
           {m.layout_footer_copyright({
@@ -29,6 +29,9 @@ export function SiteFooter() {
             className={FOOTER_LINK}
           >
             {m.layout_content_policy()}
+          </a>
+          <a href={canonicalPath({ kind: 'static', path: '/privacy' })} className={FOOTER_LINK}>
+            {m.layout_privacy()}
           </a>
         </nav>
       </div>

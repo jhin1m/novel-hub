@@ -1,5 +1,4 @@
 import { m } from '@novel-hub/shared/messages';
-import { Link } from '@tanstack/react-router';
 import { BellPlusIcon, BellRingIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type FollowTarget, useFollowing, useSetFollowing } from '@/lib/follows';
@@ -7,6 +6,7 @@ import { useMe } from '@/lib/me';
 import { cn } from '@/lib/utils';
 import { ON_COVER_OUTLINE, ON_COVER_SOLID } from '../story/on-cover-classes';
 import { followButtonView } from './follow-button-view';
+import { SignInPromptLink } from '../sign-in-prompt-link';
 
 /**
  * "Follow" for a story or an author. The server renders the neutral, disabled button (the page is
@@ -56,10 +56,10 @@ export function FollowButton({
     case 'guest':
       return (
         <Button asChild variant="outline" className={off}>
-          <Link to="/sign-in">
+          <SignInPromptLink reason="follow">
             <BellPlusIcon aria-hidden />
             {label}
-          </Link>
+          </SignInPromptLink>
         </Button>
       );
     case 'on':

@@ -24,11 +24,26 @@ function defaultPeriod(): { startsAt: string; endsAt: string } {
 /**
  * Features a story on the home page: a story link or public id and a period in Vietnam time. The
  * story and the period are checked here for a clear message; the server checks everything again.
+ * `initialStory` fills the story in whenever a suggestion above is picked; the page drops it from
+ * the URL on `onCreated`, so a reload starts empty and picking the same suggestion fills it again.
  */
-export function FeaturedSlotForm() {
+export function FeaturedSlotForm({
+  initialStory = '',
+  onCreated,
+}: {
+  initialStory?: string | undefined;
+  /** After a slot is created (the page drops the prefilled story from its URL). */
+  onCreated?: () => void;
+}) {
   const id = useId();
   const create = useCreateFeaturedSlot();
-  const [story, setStory] = useState('');
+  const [story, setStory] = useState(initialStory);
+  // A newly picked suggestion replaces what was typed (state adjusted while rendering, no effect).
+  const [picked, setPicked] = useState(initialStory);
+  if (initialStory !== picked) {
+    setPicked(initialStory);
+    if (initialStory) setStory(initialStory);
+  }
   const [period, setPeriod] = useState(defaultPeriod);
   const [problem, setProblem] = useState<string | null>(null);
 
@@ -47,6 +62,7 @@ export function FeaturedSlotForm() {
       onSuccess: () => {
         setStory('');
         setPeriod(defaultPeriod());
+        onCreated?.();
       },
     });
   }

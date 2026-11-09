@@ -1,7 +1,7 @@
 import { canonicalPath } from '@novel-hub/shared';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { StoryChapterList } from './story-chapter-list';
+import { StoryChapterList, StoryChapterListView } from './story-chapter-list';
 
 const story = { slug: 'kiem-dao-doc-ton', publicId: 'k7m2xq9p' };
 const chapters = [
@@ -45,5 +45,46 @@ describe('StoryChapterList', () => {
     );
     expect(html.match(/Đang đọc/g)).toHaveLength(1);
     expect(html).toMatch(new RegExp(`href="${path(2)}"[^>]*>(?:(?!</a>).)*Đang đọc`));
+  });
+
+  it('gives every chapter link a stable id and renders no controls on the server', () => {
+    const html = renderToStaticMarkup(
+      <StoryChapterList story={story} chapters={chapters} currentNumber={null} />,
+    );
+    expect(html).toContain('id="toc-chapter-1"');
+    expect(html).toContain('id="toc-chapter-4"');
+    expect(html).not.toContain('Số hoặc tên chương');
+  });
+});
+
+describe('StoryChapterListView', () => {
+  const view = (props: { visible: typeof chapters; filtering: boolean }) =>
+    renderToStaticMarkup(
+      <StoryChapterListView
+        story={story}
+        chapters={chapters}
+        currentNumber={null}
+        controls={<p>controls</p>}
+        {...props}
+      />,
+    );
+
+  it('hides the pinned newest chapter while a search is typed', () => {
+    const html = view({ visible: chapters.slice(1, 2), filtering: true });
+    expect(html).toContain('<p>controls</p>');
+    expect(html).not.toContain('Mới nhất');
+    expect(hrefs(html)).toEqual([path(2)]);
+  });
+
+  it('lists chapters in the order given, keeping the newest pinned', () => {
+    const html = view({ visible: [...chapters].reverse(), filtering: false });
+    expect(html).toContain('Mới nhất');
+    expect(hrefs(html)).toEqual([path(4), path(4), path(2), path(1)]);
+  });
+
+  it('lists nothing when no chapter matches', () => {
+    const html = view({ visible: [], filtering: true });
+    expect(html).not.toContain('<ol');
+    expect(html).not.toContain('<a');
   });
 });

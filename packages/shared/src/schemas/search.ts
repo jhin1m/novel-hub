@@ -24,6 +24,17 @@ export const WORD_RANGES = [
 export type WordRangeKey = (typeof WORD_RANGES)[number]['key'];
 
 /**
+ * Explicit orders of the search results. Without one, a text search ranks by relevance and an
+ * empty one lists the most recently updated first.
+ */
+export const SEARCH_SORTS = ['updated', 'newest', 'longest'] as const;
+
+export type SearchSort = (typeof SEARCH_SORTS)[number];
+
+/** Stories per row of the explore page's entry rows (shown before any filter is picked). */
+export const EXPLORE_ENTRY_SIZE = 6;
+
+/**
  * The router parses query values as JSON, so `?q=1984` arrives as a number; turn it back into the
  * text the reader typed instead of dropping it.
  */
@@ -31,6 +42,17 @@ const asText = (value: unknown) =>
   typeof value === 'number' || typeof value === 'boolean' ? String(value) : value;
 
 const wordBound = z.coerce.number().int().min(0).max(100_000_000).optional().catch(undefined);
+
+/**
+ * "Hide stories written with AI": on for `1` (the URL form, which the router parses as a number)
+ * and for `true`; anything else, or nothing, leaves it off.
+ */
+const flag = z
+  .preprocess(
+    (value) => value === 1 || value === '1' || value === true || value === 'true',
+    z.boolean(),
+  )
+  .catch(false);
 
 /**
  * Query of `/search` and `GET /api/v1/search`. Every field falls back instead of failing, so a
@@ -51,6 +73,8 @@ export const searchQuerySchema = z.object({
   status: z.enum(STORY_STATUSES).optional().catch(undefined),
   minWords: wordBound,
   maxWords: wordBound,
+  noAi: flag,
+  sort: z.enum(SEARCH_SORTS).optional().catch(undefined),
   page: z.coerce.number().int().min(1).max(SEARCH_MAX_PAGE).catch(1),
 });
 

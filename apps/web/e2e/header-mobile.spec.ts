@@ -45,10 +45,17 @@ for (const viewport of VIEWPORTS) {
     }) => {
       await gotoHydrated(page, '/');
       const header = page.getByRole('banner');
-      await expect(header.getByRole('link', { name: 'Đăng nhập' })).toBeVisible();
+      const account = header.getByRole('button', { name: 'Tài khoản', exact: true });
+      await expect(account).toBeVisible();
       await expectNoHorizontalScroll(page);
 
-      await expect(header.getByRole('link', { name: 'Đăng ký' })).toBeVisible();
+      await account.click();
+      const menu = page.getByRole('menu');
+      await expect(menu.getByRole('menuitem', { name: 'Đăng nhập' })).toBeVisible();
+      await expect(menu.getByRole('menuitem', { name: 'Đăng ký' })).toBeVisible();
+      await expectNoHorizontalScroll(page);
+      await page.keyboard.press('Escape');
+
       await expect(header.getByRole('link', { name: 'Tìm kiếm' })).toHaveAttribute(
         'href',
         '/search',

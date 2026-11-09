@@ -1,6 +1,6 @@
 import { m } from '@novel-hub/shared/messages';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
+import { Link, createFileRoute, useRouter } from '@tanstack/react-router';
 import {
   AuthPage,
   FormMessage,
@@ -8,20 +8,26 @@ import {
   TextField,
   textLinkClass,
 } from '../components/auth-ui';
+import { SignInReasonNotice } from '../components/sign-in-prompt-link';
 import { Button } from '@/components/ui/button';
 import { authClient } from '../lib/auth-client';
 import { authErrorMessage, throwIfAuthError } from '../lib/auth-errors';
 import { formText } from '../lib/form-text';
 import { meQueryKey } from '../lib/me';
+import { safeRedirectPath, signInSearchSchema } from '../lib/safe-redirect';
 import { seo } from '../lib/seo';
 
 export const Route = createFileRoute('/sign-in')({
+  // `?redirect=` is where to go back to after signing in, `?reason=` why sign-in was asked for.
+  validateSearch: signInSearchSchema,
   head: () => seo({ title: m.sign_in_title(), noindex: true }),
   component: SignInPage,
 });
 
 function SignInPage() {
-  const navigate = useNavigate();
+  const search = Route.useSearch();
+  const target = safeRedirectPath(search.redirect);
+  const router = useRouter();
   const queryClient = useQueryClient();
   const signIn = useMutation({
     mutationFn: async (form: FormData) => {
@@ -34,13 +40,13 @@ function SignInPage() {
     onSuccess: async () => {
       // Reset rather than invalidate: data cached for a previous account must not show at all.
       await queryClient.resetQueries({ queryKey: meQueryKey });
-      await navigate({ to: '/' });
+      router.history.push(target);
     },
   });
   // On success the browser leaves for Google, so only errors need handling.
   const google = useMutation({
     mutationFn: async () => {
-      const { error } = await authClient.signIn.social({ provider: 'google', callbackURL: '/' });
+      const { error } = await authClient.signIn.social({ provider: 'google', callbackURL: target });
       throwIfAuthError(error);
     },
   });
@@ -48,6 +54,7 @@ function SignInPage() {
 
   return (
     <AuthPage title={m.sign_in_title()}>
+      <SignInReasonNotice reason={search.reason} />
       <form
         method="post"
         className="flex flex-col gap-4"
@@ -79,7 +86,7 @@ function SignInPage() {
         <Link to="/forgot-password" className={textLinkClass}>
           {m.sign_in_forgot()}
         </Link>
-        <Link to="/sign-up" className={textLinkClass}>
+        <Link to="/sign-up" search={search} className={textLinkClass}>
           {m.sign_in_no_account()}
         </Link>
       </nav>

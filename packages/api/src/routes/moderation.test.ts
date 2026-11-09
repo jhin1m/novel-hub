@@ -37,6 +37,7 @@ const send = (method: string, body?: unknown) => ({
 const MODERATION_ROUTES: [string, string, unknown?][] = [
   ['GET', '/api/v1/moderation/reports'],
   ['POST', '/api/v1/moderation/actions', { action: 'ban_user', username: 'author' }],
+  ['GET', '/api/v1/moderation/featured/suggestions'],
 ];
 
 describe('/api/v1/moderation (no database)', () => {
@@ -59,6 +60,9 @@ describe('/api/v1/moderation (no database)', () => {
       { action: 'delete_everything' },
       { action: 'hide_chapter', storyPublicId: 'k7m2xq9p' },
       { action: 'ban_user', username: 'Not Valid' },
+      // A warning is sent to the user with its note, so the note is required.
+      { action: 'warn_user', username: 'author' },
+      { action: 'warn_user', username: 'author', note: '  ' },
     ]) {
       const res = await appAs(user('mod')).request(
         '/api/v1/moderation/actions',

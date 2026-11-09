@@ -1,4 +1,4 @@
-import type { ReportDto } from '@novel-hub/core';
+import type { ReportDto, WarningSummary } from '@novel-hub/core';
 import { LIMITS } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { useId, useState } from 'react';
@@ -11,7 +11,14 @@ import { formatDate } from '@/lib/format';
 import { useModerationAction } from '@/lib/moderation';
 import { REASON_LABELS } from '../report/reason-labels';
 import { ConfirmDialog } from './confirm-dialog';
-import { ACTION_LABELS, type CardAction, type Viewer, actionsFor } from './report-actions';
+import {
+  ACTION_LABELS,
+  type CardAction,
+  type Viewer,
+  actionsFor,
+  needsNote,
+  reportOwner,
+} from './report-actions';
 import { ChapterLine, StoryLine, TargetContext } from './report-target-context';
 
 export const REPORT_STATUS_LABELS: Record<ReportDto['status'], () => string> = {
@@ -21,13 +28,26 @@ export const REPORT_STATUS_LABELS: Record<ReportDto['status'], () => string> = {
 };
 
 /**
- * A report in the queue: what was reported (with links to the live pages), why, by whom, and the
- * one-click actions for the target's current state. Banning asks for confirmation first.
+ * A report in the queue: what was reported (with links to the live pages), why, by whom, the
+ * recent warnings of the account it belongs to, and the one-click actions for the target's current
+ * state. Banning and warning ask for confirmation first; a warning sends the note to the user, so
+ * it waits for one.
  */
-export function ReportCard({ report, viewer }: { report: ReportDto; viewer: Viewer }) {
+export function ReportCard({
+  report,
+  viewer,
+  warnings,
+}: {
+  report: ReportDto;
+  viewer: Viewer;
+  /** Recent warnings by username, of the page's target accounts (none: absent). */
+  warnings: Record<string, WarningSummary>;
+}) {
   const id = useId();
   const [note, setNote] = useState('');
   const act = useModerationAction();
+  const owner = reportOwner(report.target);
+  const ownerWarnings = owner ? warnings[owner.username] : undefined;
 
   const run = (action: CardAction) => {
     const common = { note: note.trim() || undefined };
@@ -35,35 +55,60 @@ export function ReportCard({ report, viewer }: { report: ReportDto; viewer: View
       act.mutate({ ...action, ...common, reportId: report.reportId });
       return;
     }
-    // Taken from an open report: it and the target's other open reports become resolved.
-    const reportId = report.status === 'open' ? report.reportId : undefined;
+    // Taken from an open report: it and the target's other open reports become resolved. Unpinning
+    // answers no report (what was reported in the comment is still there), so it leaves them open.
+    const reportId =
+      report.status === 'open' && action.action !== 'unpin_comment' ? report.reportId : undefined;
+    if (action.action === 'warn_user') {
+      act.mutate({ ...action, note: note.trim(), reportId });
+      return;
+    }
     act.mutate({ ...action, ...common, reportId });
   };
 
+  const confirmation = (action: CardAction) => {
+    if (action.action === 'ban_user') {
+      return {
+        title: m.moderation_confirm_ban_title({ username: action.username }),
+        description: m.moderation_confirm_ban_description(),
+      };
+    }
+    // The user will read the note as the reason: it is what is being confirmed.
+    if (action.action === 'warn_user') {
+      return { title: m.moderation_warn_title({ username: action.username }), description: note };
+    }
+    return null;
+  };
+
   const button = (action: CardAction) => {
-    const ban = action.action === 'ban_user';
+    const confirm = confirmation(action);
     const trigger = (
       <Button
-        key={ban ? undefined : action.action}
+        key={confirm ? undefined : action.action}
         size="sm"
-        variant={ban || action.action.startsWith('hide') ? 'destructive' : 'outline'}
-        disabled={act.isPending}
-        onClick={ban ? undefined : () => run(action)}
+        variant={
+          action.action === 'ban_user' || action.action.startsWith('hide')
+            ? 'destructive'
+            : 'outline'
+        }
+        disabled={act.isPending || (needsNote(action) && note.trim() === '')}
+        onClick={confirm ? undefined : () => run(action)}
       >
         {ACTION_LABELS[action.action]()}
       </Button>
     );
-    if (!ban) return trigger;
+    if (!confirm) return trigger;
     return (
       <ConfirmDialog
         key={action.action}
         trigger={trigger}
-        title={m.moderation_confirm_ban_title({ username: action.username })}
-        description={m.moderation_confirm_ban_description()}
+        title={confirm.title}
+        description={confirm.description}
         onConfirm={() => run(action)}
       />
     );
   };
+  const actions = actionsFor(report, viewer);
 
   return (
     <article
@@ -121,7 +166,23 @@ export function ReportCard({ report, viewer }: { report: ReportDto; viewer: View
           className="min-h-10"
         />
       </div>
-      <div className="flex flex-wrap gap-2">{actionsFor(report, viewer).map(button)}</div>
+      {owner && ownerWarnings ? (
+        <div className="flex flex-col gap-2">
+          <p className="flex flex-wrap gap-x-2 text-sm text-muted-foreground">
+            <span>@{owner.username}</span>
+            <span>{m.moderation_warnings_count({ count: ownerWarnings.count })}</span>
+          </p>
+          {ownerWarnings.suggest ? (
+            <p className="rounded-md bg-secondary p-3 text-sm font-bold">
+              {m.moderation_warnings_suggest()}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+      <div className="flex flex-wrap gap-2">{actions.map(button)}</div>
+      {actions.some(needsNote) && note.trim() === '' ? (
+        <p className="text-sm text-muted-foreground">{m.moderation_warn_note_hint()}</p>
+      ) : null}
       {act.isError ? (
         <p role="alert" className="text-sm text-destructive">
           {apiErrorMessage(act.error)}

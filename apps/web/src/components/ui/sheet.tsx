@@ -39,10 +39,11 @@ function SheetOverlay({
 /*
  * `adaptive-*` sides are a bottom sheet below `lg` and a side panel from `lg` up, using CSS only so
  * one dialog node serves both layouts (server-rendered routes cannot branch on matchMedia). Each
- * edge pins its own side at `lg`: two `auto` insets would pin the panel to the left edge.
+ * edge pins its own side at `lg`: two `auto` insets would pin the panel to the left edge. A bottom
+ * sheet keeps its content above the home indicator.
  */
 const ADAPTIVE_BASE =
-  'inset-x-0 bottom-0 max-h-[90dvh] rounded-t-[28px] border-t max-lg:data-[state=closed]:slide-out-to-bottom max-lg:data-[state=open]:slide-in-from-bottom lg:inset-y-0 lg:bottom-auto lg:h-full lg:max-h-none lg:w-full lg:max-w-sm lg:rounded-none lg:border-t-0';
+  'inset-x-0 bottom-0 max-h-[90dvh] rounded-t-[28px] border-t pb-[env(safe-area-inset-bottom)] lg:pb-0 max-lg:data-[state=closed]:slide-out-to-bottom max-lg:data-[state=open]:slide-in-from-bottom lg:inset-y-0 lg:bottom-auto lg:h-full lg:max-h-none lg:w-full lg:max-w-sm lg:rounded-none lg:border-t-0';
 
 function SheetContent({
   className,
@@ -71,7 +72,7 @@ function SheetContent({
           side === 'top' &&
             'inset-x-0 top-0 h-auto border-b data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top',
           side === 'bottom' &&
-            'inset-x-0 bottom-0 h-auto border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom',
+            'inset-x-0 bottom-0 h-auto border-t pb-[env(safe-area-inset-bottom)] data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom',
           adaptive && ADAPTIVE_BASE,
           side === 'adaptive-right' &&
             'lg:right-0 lg:left-auto lg:border-l lg:data-[state=closed]:slide-out-to-right lg:data-[state=open]:slide-in-from-right',
@@ -89,7 +90,7 @@ function SheetContent({
         ) : null}
         {children}
         {showCloseButton && (
-          <SheetPrimitive.Close className="absolute top-4 right-4 rounded-xs opacity-70 ring-offset-card transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none data-[state=open]:bg-secondary">
+          <SheetPrimitive.Close className="absolute top-3 right-3 rounded-sm p-1 opacity-70 ring-offset-card transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none data-[state=open]:bg-secondary">
             <XIcon className="size-4" />
             <span className="sr-only">{m.layout_close()}</span>
           </SheetPrimitive.Close>

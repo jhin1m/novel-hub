@@ -420,6 +420,14 @@ describe('email verification', () => {
     expect((await userByEmail('lp@example.com')).emailVerified).toBe(true);
   });
 
+  it('a deep callbackURL with a query (the page a guest signed up from) survives the mail link', async () => {
+    await signUp({ username: 'lam_phong', callbackURL: '/stories/x-abc23456?a=1' });
+    const mail = await waitForMail('verify', 'lp@example.com');
+    const res = await call(mail.url, { method: 'GET' });
+    expect(res.status).toBe(302);
+    expect(res.headers.get('location')).toMatch(/\/stories\/x-abc23456\?a=1$/);
+  });
+
   it('email registered first by someone else: owner clicks verification link → squatter loses session and password', async () => {
     const squatter = await signUp({ username: 'ke_chiem', email: 'victim@example.com' });
     const mail = await waitForMail('verify', 'victim@example.com');

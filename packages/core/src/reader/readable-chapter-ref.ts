@@ -7,6 +7,10 @@ import { canReadChapter } from '../access/can-read-chapter';
 export interface ReadableChapterRef {
   storyId: string;
   chapterId: string;
+  /** The story is 18+: comments under it are only for viewers who turned 18+ on. */
+  isMature: boolean;
+  /** The story's author, who may always comment under their own 18+ story. */
+  authorId: string;
 }
 
 /**
@@ -24,6 +28,8 @@ export async function findReadableChapterRef(
     .select({
       storyId: stories.id,
       chapterId: chapters.id,
+      isMature: stories.isMature,
+      authorId: stories.authorId,
       status: chapters.status,
       deletedAt: chapters.deletedAt,
       visibility: stories.visibility,
@@ -40,5 +46,12 @@ export async function findReadableChapterRef(
     deletedAt: row.deletedAt,
     story: { visibility: row.visibility, authorStatus: row.authorStatus },
   });
-  return decision.readable ? { storyId: row.storyId, chapterId: row.chapterId } : null;
+  return decision.readable
+    ? {
+        storyId: row.storyId,
+        chapterId: row.chapterId,
+        isMature: row.isMature,
+        authorId: row.authorId,
+      }
+    : null;
 }

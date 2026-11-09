@@ -63,6 +63,56 @@ test('the weekly ranking lists stories by readers, without 18+, and is cached pu
   await expect.poll(() => rankedTitles(page)).toEqual([first.title, second.title]);
 });
 
+test('the home page shows the top of every period, without 18+, switching in the browser', async ({
+  page,
+  request,
+}) => {
+  const res = await request.get('/', { maxRedirects: 0 });
+  expect(res.status()).toBe(200);
+  expect(res.headers()['cache-control']).toBe(LIST_CACHE);
+  expect(res.headers()['set-cookie']).toBeUndefined();
+  const html = await res.text();
+  expect(html).toContain(first.title);
+  expect(html).not.toContain(mature.title);
+
+  await gotoHydrated(page, '/');
+  const section = page.getByRole('region', { name: 'Bảng xếp hạng' });
+  const titles = () => section.getByRole('list').getByRole('heading').allTextContents();
+  await expect(section.getByRole('button', { name: 'Tuần' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect.poll(titles).toEqual([first.title, second.title, third.title]);
+  await expect(section.getByRole('link', { name: 'Xem đủ bảng tuần' })).toHaveAttribute(
+    'href',
+    '/rankings/week',
+  );
+  await expect(section.getByRole('link', { name: 'Được đề cử nhiều' })).toHaveAttribute(
+    'href',
+    '/rankings/nominations',
+  );
+
+  // Every period is in the page already: switching sends no request.
+  const requests: string[] = [];
+  page.on('request', (req) => {
+    if (req.resourceType() === 'fetch' || req.resourceType() === 'document')
+      requests.push(req.url());
+  });
+  await section.getByRole('button', { name: 'Đang lên' }).click();
+  await expect(section.getByRole('button', { name: 'Đang lên' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect.poll(titles).toEqual([first.title, second.title]);
+  await section.getByRole('button', { name: 'Ngày' }).click();
+  await expect.poll(titles).toEqual([first.title, second.title, third.title]);
+  const viewAll = section.getByRole('link', { name: 'Xem đủ bảng ngày' });
+  await expect(viewAll).toHaveAttribute('href', '/rankings/day');
+  expect(requests).toEqual([]);
+  await viewAll.click();
+  await expect(page).toHaveURL('/rankings/day');
+});
+
 test('/rankings redirects to the weekly ranking; an unknown period is a 404', async ({
   request,
 }) => {

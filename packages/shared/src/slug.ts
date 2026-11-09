@@ -4,16 +4,26 @@ const MAX_SLUG_LENGTH = 60;
 const FALLBACK_SLUG = 'truyen';
 
 /**
+ * Lowercase with Vietnamese diacritics removed (`đ` → `d`), nothing else replaced: for matching
+ * text without accents, such as finding a chapter by title on the client.
+ */
+export function foldVietnamese(text: string): string {
+  return (
+    text
+      .normalize('NFKD')
+      .replace(/\p{M}/gu, '')
+      // `ð`/`Ð` (U+00F0/U+00D0) look exactly like `đ`/`Đ`, so they fold to `d` as well.
+      .replace(/[đĐðÐ]/g, 'd')
+      .toLowerCase()
+  );
+}
+
+/**
  * Sinh slug từ tiêu đề tiếng Việt: bỏ dấu (gồm `đ` → `d`), chữ thường, nối bằng `-`,
  * cắt tối đa 60 ký tự tại ranh giới `-` gần nhất. Slug không cần duy nhất.
  */
 export function slugify(input: string): string {
-  const slug = input
-    .normalize('NFKD')
-    .replace(/\p{M}/gu, '')
-    // `ð`/`Ð` (U+00F0/U+00D0) trông giống hệt `đ`/`Đ` nên cũng quy về `d`.
-    .replace(/[đĐðÐ]/g, 'd')
-    .toLowerCase()
+  const slug = foldVietnamese(input)
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 

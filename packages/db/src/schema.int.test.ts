@@ -1,4 +1,3 @@
-import { dbEnvSchema, loadServerEnv } from '@novel-hub/shared/env';
 import { arrayOverlaps, eq, sql } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDb } from './client';
@@ -6,17 +5,20 @@ import {
   chapterContents,
   chapterFingerprints,
   chapters,
+  comments,
   contentEvents,
   featuredSlots,
   ratings,
   readingProgress,
   reports,
   stories,
+  storyAnnouncements,
+  storyNominations,
   storyTags,
   tags,
   users,
 } from './schema/index';
-import { catchPgError, createTestDb, truncateAll } from './testing/index';
+import { catchPgError, createTestDb, testDatabaseUrl, truncateAll } from './testing/index';
 
 const { db, pool } = createTestDb();
 
@@ -72,12 +74,12 @@ async function insertStoryGraph() {
 }
 
 describe('migration', () => {
-  it('creates all 28 tables in the public schema', async () => {
+  it('creates all 30 tables in the public schema', async () => {
     const { rows } = await db.execute<{ count: number }>(sql`
       select count(*)::int as count from information_schema.tables
       where table_schema = 'public' and table_type = 'BASE TABLE'
     `);
-    expect(rows[0]?.count).toBe(28);
+    expect(rows[0]?.count).toBe(30);
   });
 
   it('insert không truyền id → UUID version 7', async () => {
@@ -225,6 +227,42 @@ describe('ràng buộc', () => {
   });
 });
 
+describe('story community', () => {
+  it('comments: chapter_id null is a story discussion; pinned_at, edited_at default null', async () => {
+    const { user, story } = await insertStoryGraph();
+    const [row] = await db
+      .insert(comments)
+      .values({ storyId: story.id, userId: user.id, body: 'Bàn về cả truyện' })
+      .returning();
+    expect(row).toMatchObject({ chapterId: null, pinnedAt: null, editedAt: null });
+  });
+
+  it('story_announcements: body 1..1000 characters, visible by default', async () => {
+    const { user, story } = await insertStoryGraph();
+    const base = { storyId: story.id, authorId: user.id };
+    for (const body of ['', 'a'.repeat(1001)]) {
+      const err = await catchPgError(db.insert(storyAnnouncements).values({ ...base, body }));
+      expect(err.constraint).toBe('story_announcements_body_length');
+    }
+    const [row] = await db
+      .insert(storyAnnouncements)
+      .values({ ...base, body: 'Tạm nghỉ hết tuần' })
+      .returning();
+    expect(row?.status).toBe('visible');
+    expect(row?.id).toMatch(UUID_V7);
+  });
+
+  it('story_nominations: one per user, story and week', async () => {
+    const { user, story } = await insertStoryGraph();
+    const row = { userId: user.id, storyId: story.id, weekStart: '2026-10-05' };
+    await db.insert(storyNominations).values(row);
+    const err = await catchPgError(db.insert(storyNominations).values(row));
+    expect(err.constraint).toBe('story_nominations_pkey');
+    await db.insert(storyNominations).values({ ...row, weekStart: '2026-10-12' });
+    expect(await db.$count(storyNominations)).toBe(2);
+  });
+});
+
 describe('duplicate check', () => {
   it('finds overlapping LSH keys through the GIN index', async () => {
     const { chapter } = await insertStoryGraph();
@@ -305,9 +343,11 @@ describe('truncateAll', () => {
     expect(calls).toHaveLength(1);
   });
 
-  it('trỏ vào DB dev thật → throw', async () => {
-    const { DATABASE_URL } = loadServerEnv(dbEnvSchema);
-    const dev = createDb(DATABASE_URL, { max: 1 });
+  it('trỏ vào DB không đuôi _test → throw', async () => {
+    // Maintenance database `postgres` exists on every server, so the test needs no dev DATABASE_URL.
+    const nonTestUrl = new URL(testDatabaseUrl());
+    nonTestUrl.pathname = '/postgres';
+    const dev = createDb(nonTestUrl.toString(), { max: 1 });
     try {
       await expect(truncateAll(dev.db)).rejects.toThrow(/Từ chối truncate/);
     } finally {

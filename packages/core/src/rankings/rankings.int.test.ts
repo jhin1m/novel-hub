@@ -140,6 +140,32 @@ describe('rankings (real Redis and Postgres)', () => {
     expect(await redis.exists(rankingKey(PREFIX, 'day', 'general'))).toBe(0);
   });
 
+  it('reads only `scan` ids, never fewer than `limit`, still skipping hidden stories', async () => {
+    const { a, b, c } = await threeStories();
+    await stats(a.storyId, { 0: 5 });
+    await stats(b.storyId, { 0: 9 });
+    await stats(c.storyId, { 0: 7 });
+    await recomputeAllRankings(db, redis, PREFIX, NOW);
+    await db.update(stories).set({ visibility: 'hidden_by_mod' }).where(eq(stories.id, b.storyId));
+
+    const asked: number[] = [];
+    const counting = {
+      top: (...args: Parameters<typeof reader.top>) => {
+        asked.push(args[2]);
+        return reader.top(...args);
+      },
+    };
+    const page = await readRanking(db, counting, 'day', {
+      includeMature: false,
+      limit: 1,
+      scan: 2,
+    });
+    expect(titles(page.stories)).toEqual(['Truyện C']);
+    await readRanking(db, counting, 'day', { includeMature: false, limit: 3, scan: 2 });
+    await readRanking(db, counting, 'day', { includeMature: false, limit: 3 });
+    expect(asked).toEqual([2, 3, 100]);
+  });
+
   it('an empty recompute deletes the old ranking instead of keeping it', async () => {
     const { a } = await threeStories();
     await stats(a.storyId, { 0: 5 });

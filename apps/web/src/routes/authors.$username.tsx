@@ -2,6 +2,7 @@ import { canonicalPath, usernameParamSchema } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
 import { createFileRoute } from '@tanstack/react-router';
 import { BookOpenIcon } from 'lucide-react';
+import { AuthorAnnouncements } from '../components/announcements/author-announcements';
 import { BadgeList } from '../components/badges/badge-list';
 import { FollowButton } from '../components/follow/follow-button';
 import { NotFoundPage } from '../components/not-found';
@@ -51,7 +52,7 @@ export const Route = createFileRoute('/authors/$username')({
 });
 
 function AuthorPage() {
-  const { author, stories, badges } = Route.useLoaderData();
+  const { author, stories, badges, announcements } = Route.useLoaderData();
   const list = useMatureAwareList(
     { stories, page: 1, totalPages: 1 },
     { list: 'author', author: author.username },
@@ -86,6 +87,7 @@ function AuthorPage() {
             </div>
           </div>
         </header>
+        <AuthorAnnouncements items={announcements} />
         <section aria-labelledby="author-stories" className="flex flex-col gap-5">
           <SectionHeading id="author-stories" icon={BookOpenIcon} title={m.author_page_stories()} />
           {list.stories.length > 0 ? (

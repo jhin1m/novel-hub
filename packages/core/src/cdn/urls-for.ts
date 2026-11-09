@@ -29,6 +29,8 @@ async function contentUrls(db: Db, change: ContentChange, appUrl: string): Promi
     }
     case 'user':
       return authorUrls(db, change.userId, appUrl);
+    case 'announcement':
+      return announcementUrls(db, change.storyId, appUrl);
     default: {
       const unhandled: never = change;
       throw new Error(`Unhandled content change ${JSON.stringify(unhandled)}`);
@@ -126,6 +128,24 @@ async function authorUrls(db: Db, userId: string, appUrl: string): Promise<strin
     for (const url of await storyUrlsEverPublished(db, id, appUrl)) urls.add(url);
   }
   return [...urls];
+}
+
+/**
+ * The two pages showing an announcement: its story page (current slug; an old slug was purged at
+ * the rename) and its author's page. Not every chapter, as a story change would purge.
+ */
+async function announcementUrls(db: Db, storyId: string, appUrl: string): Promise<string[]> {
+  const [story] = await db
+    .select({ slug: stories.slug, publicId: stories.publicId, username: users.username })
+    .from(stories)
+    .innerJoin(users, eq(users.id, stories.authorId))
+    .where(eq(stories.id, storyId))
+    .limit(1);
+  if (!story) return [];
+  return [
+    absolute(canonicalPath({ kind: 'story', slug: story.slug, publicId: story.publicId }), appUrl),
+    absolute(canonicalPath({ kind: 'author', username: story.username }), appUrl),
+  ];
 }
 
 function absolute(path: string, appUrl: string): string {

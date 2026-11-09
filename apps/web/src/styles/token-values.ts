@@ -28,30 +28,31 @@ const darkReaderAccent: Scope = {
   '--reader-primary-soft': '#17332c',
 };
 
+/** Ivory, the default site theme. */
 const light: Scope = {
-  '--background': '#f5f4ef',
-  '--foreground': '#1c1d1b',
+  '--background': '#f8f3e8',
+  '--foreground': '#2b2722',
   '--card': '#ffffff',
-  '--card-foreground': '#1c1d1b',
+  '--card-foreground': '#2b2722',
   '--popover': '#ffffff',
-  '--popover-foreground': '#1c1d1b',
+  '--popover-foreground': '#2b2722',
   '--primary': '#0e6b5b',
   '--primary-foreground': '#ffffff',
   '--primary-soft': '#ddefea',
-  '--secondary': '#eceae3',
-  '--secondary-foreground': '#1c1d1b',
-  '--muted': '#eceae3',
-  '--muted-foreground': '#5d5f59',
-  '--accent': '#eceae3',
-  '--accent-foreground': '#1c1d1b',
+  '--secondary': '#efe8da',
+  '--secondary-foreground': '#2b2722',
+  '--muted': '#efe8da',
+  '--muted-foreground': '#675f55',
+  '--accent': '#efe8da',
+  '--accent-foreground': '#2b2722',
   '--destructive': '#b3261e',
   '--warning-soft': '#fff1dc',
   '--warning-foreground': '#8a4b00',
-  '--band': '#ece8df',
-  '--border': '#e3e1d9',
-  '--input': '#8a8c85',
+  '--band': '#efe6d4',
+  '--border': '#e6dece',
+  '--input': '#8c8377',
   '--ring': '#0e6b5b',
-  // No preset chosen on a light system: ivory.
+  // No preset chosen under the ivory site theme: values of the `ivory` reader preset.
   '--reader-bg': '#fbf6ec',
   '--reader-fg': '#2b2722',
   '--reader-muted': '#675f55',
@@ -59,6 +60,7 @@ const light: Scope = {
   ...lightReaderAccent,
 };
 
+/** Dark site theme: chosen with `data-theme="dark"`, or followed from a dark system. */
 const dark: Scope = {
   '--background': '#101312',
   '--foreground': '#e8ece9',
@@ -82,7 +84,7 @@ const dark: Scope = {
   '--border': '#2c322f',
   '--input': '#6e7771',
   '--ring': '#4fc2a8',
-  // No preset chosen on a dark system: dark grey.
+  // No preset chosen under the dark site theme: values of the `dark-gray` reader preset.
   '--reader-bg': '#2b2b2b',
   '--reader-fg': '#d6d3ce',
   '--reader-muted': '#a3a09b',

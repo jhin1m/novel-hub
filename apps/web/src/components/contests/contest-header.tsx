@@ -27,7 +27,7 @@ export function ContestHeader({
         <h2 id="contest-rules" className="mb-3 text-lg font-semibold">
           {m.contest_rules_title()}
         </h2>
-        <div className="flex flex-col gap-3 font-serif text-[17px] leading-relaxed">
+        <div className="flex flex-col gap-3 text-[17px] leading-relaxed">
           {paragraphs.map((text, index) => (
             // Paragraphs never reorder; the index is a stable key.
             <p key={index} className="whitespace-pre-line">

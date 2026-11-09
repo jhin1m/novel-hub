@@ -30,6 +30,7 @@ export function usePatchPreferences() {
                 ...user.preferences,
                 ...(patch.showMature !== undefined && { showMature: preferences.showMature }),
                 ...(patch.reader !== undefined && { reader: preferences.reader }),
+                ...(patch.siteTheme !== undefined && { siteTheme: preferences.siteTheme }),
               },
             }
           : user,

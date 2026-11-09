@@ -9,12 +9,12 @@ export interface StaticSection {
 
 /**
  * A text page (terms, content policy): one column of prose, marked as a draft until approved.
- * Headings use the UI face, the long-form body the reading serif.
+ * All in the UI face: serif is kept for story text.
  */
 export function StaticPage({ title, sections }: { title: string; sections: StaticSection[] }) {
   return (
     <SiteLayout>
-      <PageShell width="narrow" className="max-w-[720px]">
+      <PageShell className="max-w-[960px]">
         <article className="flex flex-col gap-8">
           <header className="flex flex-col gap-3">
             <PageTitle>{title}</PageTitle>
@@ -33,7 +33,7 @@ export function StaticPage({ title, sections }: { title: string; sections: Stati
                 </h2>
               ) : null}
               {section.paragraphs.map((paragraph) => (
-                <p key={paragraph} className="font-serif text-[17px] leading-[1.75]">
+                <p key={paragraph} className="text-[17px] leading-[1.75]">
                   {paragraph}
                 </p>
               ))}

@@ -49,3 +49,17 @@ describe('apiErrorMessage', () => {
     expect(apiErrorMessage(new Error('network'))).toBe('Có lỗi xảy ra, vui lòng thử lại.');
   });
 });
+
+describe('apiErrorMessage for pins, announcements, nominations and imports', () => {
+  it.each([
+    ['COMMENT_PIN_LIMIT', 409, 'Chỉ ghim được tối đa 3 bình luận'],
+    ['COMMENT_UNDER_REVIEW', 409, 'Bình luận đang được ban kiểm duyệt xem xét'],
+    ['ANNOUNCEMENT_DAILY_LIMIT', 429, 'Mỗi truyện chỉ đăng tối đa 3 thông báo mỗi ngày.'],
+    ['NOMINATION_WEEKLY_LIMIT', 409, 'Bạn đã dùng hết 3 phiếu đề cử tuần này.'],
+    ['ALREADY_NOMINATED', 409, 'Bạn đã đề cử truyện này trong tuần.'],
+    ['ACCOUNT_TOO_NEW', 403, 'Tài khoản cần ít nhất 7 ngày tuổi'],
+    ['CHAPTER_IMPORT_INVALID', 422, 'Có chương chưa hợp lệ'],
+  ])('%s has its own message', (code, status, text) => {
+    expect(apiErrorMessage(new ApiError(status, code))).toContain(text);
+  });
+});

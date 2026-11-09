@@ -1,7 +1,6 @@
 import type { MyRatingDto } from '@novel-hub/core';
 import { LIMITS, plainTextLength } from '@novel-hub/shared';
 import { m } from '@novel-hub/shared/messages';
-import { Link } from '@tanstack/react-router';
 import { useId, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,6 +9,7 @@ import { useMe } from '@/lib/me';
 import { useDeleteRating, useMyRating, useSaveRating } from '@/lib/ratings';
 import { ConfirmDialog } from '../moderation/confirm-dialog';
 import { StarInput } from './star-input';
+import { SignInPromptLink } from '../sign-in-prompt-link';
 
 /**
  * Where the reader rates the story. What shows depends on the account: guests get a sign-in link,
@@ -35,9 +35,9 @@ export function RatingForm({
   if (me.isPending || !me.data) {
     return me.isPending ? null : (
       <p className="text-sm text-muted-foreground">
-        <Link to="/sign-in" className="font-bold text-primary hover:underline">
+        <SignInPromptLink reason="rating" className="font-bold text-primary hover:underline">
           {m.rating_sign_in()}
-        </Link>{' '}
+        </SignInPromptLink>{' '}
         {m.rating_sign_in_prompt()}
       </p>
     );

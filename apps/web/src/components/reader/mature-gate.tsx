@@ -1,6 +1,7 @@
 import { m } from '@novel-hub/shared/messages';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
+import { SignInPromptLink } from '@/components/sign-in-prompt-link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -63,7 +64,7 @@ export function MatureGate({
             <ul className="flex flex-wrap gap-2">
               {warningTags.map((tag) => (
                 <li key={tag.slug}>
-                  <Badge variant="outline">{tag.name}</Badge>
+                  <Badge variant="warning">{tag.name}</Badge>
                 </li>
               ))}
             </ul>
@@ -73,7 +74,7 @@ export function MatureGate({
         {me.isSuccess ? (
           me.data === null ? (
             <Button asChild className="self-start">
-              <Link to="/sign-in">{m.mature_sign_in()}</Link>
+              <SignInPromptLink>{m.mature_sign_in()}</SignInPromptLink>
             </Button>
           ) : (
             <EnableMatureForm />
@@ -87,6 +88,21 @@ export function MatureGate({
       </div>
     </div>
   );
+}
+
+/** Frames to wait for the page to drop `inert`; the cached account reaches React a frame or two late. */
+const FOCUS_WAIT_FRAMES = 10;
+
+/**
+ * Focuses the page heading once the gate has left: `focus()` on an element inside `inert` (the
+ * page behind the gate) does nothing, so wait a few frames for the page to become interactive.
+ */
+function focusHeadingOnceInteractive(framesLeft = FOCUS_WAIT_FRAMES) {
+  requestAnimationFrame(() => {
+    const heading = document.querySelector<HTMLElement>('main h1[tabindex]');
+    if (heading && !heading.closest('[inert]')) heading.focus();
+    else if (framesLeft > 1) focusHeadingOnceInteractive(framesLeft - 1);
+  });
 }
 
 /**
@@ -106,12 +122,9 @@ function EnableMatureForm() {
         enable.mutate(
           { showMature: true, confirmAdult: true },
           {
-            // The screen (and the focus inside it) is gone after the next paint: move focus to
-            // the page heading so keyboard and screen reader users carry on from the content.
-            onSuccess: () =>
-              requestAnimationFrame(() =>
-                document.querySelector<HTMLElement>('main h1[tabindex]')?.focus(),
-              ),
+            // The screen (and the focus inside it) goes away: move focus to the page heading so
+            // keyboard and screen reader users carry on from the content.
+            onSuccess: () => focusHeadingOnceInteractive(),
           },
         );
       }}

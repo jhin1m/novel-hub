@@ -84,8 +84,12 @@ test.describe('follows and notifications', () => {
       canonicalPath({ kind: 'story', slug: story.slug, publicId: story.publicId }),
     );
     const header = page.getByRole('banner');
-    await expect(header.getByRole('link', { name: 'Đăng nhập' })).toBeVisible();
+    await expect(header.getByRole('button', { name: 'Tài khoản', exact: true })).toBeVisible();
     await expect(header.getByRole('link', { name: /^Thông báo/ })).toHaveCount(0);
-    await expect(page.getByRole('link', { name: 'Theo dõi' })).toHaveAttribute('href', '/sign-in');
+    // Back to this story after signing in (`auth-redirect.spec.ts` follows the whole flow).
+    await expect(page.getByRole('link', { name: 'Theo dõi' })).toHaveAttribute(
+      'href',
+      /^\/sign-in\?redirect=[^&]+&reason=follow$/,
+    );
   });
 });

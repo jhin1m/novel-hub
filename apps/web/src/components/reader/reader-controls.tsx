@@ -1,9 +1,23 @@
 import { m } from '@novel-hub/shared/messages';
-import { ChevronLeftIcon, ChevronRightIcon, ListIcon, Settings2Icon } from 'lucide-react';
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  HeadphonesIcon,
+  ListIcon,
+  Settings2Icon,
+} from 'lucide-react';
 import type { MouseEvent, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 export type ReaderPanel = 'toc' | 'settings';
+
+/** The "listen" control: only shown when the browser can read Vietnamese aloud. */
+export interface ListenControl {
+  supported: boolean;
+  /** The player is open. */
+  active: boolean;
+  onToggle: (trigger: HTMLButtonElement) => void;
+}
 
 interface ReaderControlsProps {
   /** `bar`: fixed to the bottom below `lg`. `rail`: vertical, on the right from `lg` up. */
@@ -15,10 +29,11 @@ interface ReaderControlsProps {
   hidden: boolean;
   /** Required so the 18+ screen can never be bypassed through these controls. */
   inert: boolean;
+  listen?: ListenControl;
 }
 
 /**
- * Table of contents, previous/next chapter and display settings. Both variants render; CSS shows
+ * Table of contents, previous/next chapter, listening and display settings. Both variants render; CSS shows
  * one per screen size (`display: none` on the other, so each control has a single visible copy).
  * Chapter links are plain anchors: every chapter view is a document load served from the CDN.
  */
@@ -30,6 +45,7 @@ export function ReaderControls({
   onOpen,
   hidden,
   inert,
+  listen,
 }: ReaderControlsProps) {
   const rail = variant === 'rail';
   const panelButton = (panel: ReaderPanel, label: string, short: string, icon: ReactNode) => (
@@ -50,6 +66,17 @@ export function ReaderControls({
     m.reader_settings_short(),
     <Settings2Icon />,
   );
+  const listenCell = listen?.supported ? (
+    <Cell
+      as="toggle"
+      label={m.reader_listen_open()}
+      short={m.reader_listen()}
+      active={listen.active}
+      onClick={(event) => listen.onToggle(event.currentTarget)}
+    >
+      <HeadphonesIcon />
+    </Cell>
+  ) : null;
   const prev = (
     <Cell href={prevHref} rel="prev" label={m.reader_prev()} short={m.reader_prev_short()}>
       <ChevronLeftIcon />
@@ -70,13 +97,17 @@ export function ReaderControls({
         'z-30 text-reader-fg',
         rail
           ? 'reader-rail fixed top-[180px] right-6 hidden flex-col gap-1 rounded-[20px] bg-reader-card p-1.5 opacity-60 focus-within:opacity-100 hover:opacity-100 lg:flex'
-          : 'reader-bottom-bar fixed inset-x-0 bottom-0 grid h-[calc(72px+env(safe-area-inset-bottom))] grid-cols-4 border-t border-reader-fg/10 bg-reader-bg px-2 pb-[env(safe-area-inset-bottom)] lg:hidden',
+          : cn(
+              'reader-bottom-bar fixed inset-x-0 bottom-0 grid h-[calc(72px+env(safe-area-inset-bottom))] border-t border-reader-fg/10 bg-reader-bg px-2 pb-[env(safe-area-inset-bottom)] lg:hidden',
+              listenCell ? 'grid-cols-5' : 'grid-cols-4',
+            ),
       )}
     >
       {rail ? (
         <>
           {toc}
           {settings}
+          {listenCell}
           {prev}
           {next}
         </>
@@ -85,6 +116,7 @@ export function ReaderControls({
           {toc}
           {prev}
           {next}
+          {listenCell}
           {settings}
         </>
       )}
@@ -97,7 +129,8 @@ const CELL =
 
 type CellProps = { label: string; short: string; children: ReactNode } & (
   | {
-      as: 'button';
+      /** `button` opens a panel; `toggle` switches something on or off. */
+      as: 'button' | 'toggle';
       active: boolean;
       onClick: (event: MouseEvent<HTMLButtonElement>) => void;
     }
@@ -112,13 +145,16 @@ function Cell(props: CellProps) {
       <span aria-hidden>{props.short}</span>
     </>
   );
-  if (props.as === 'button') {
+  if ('onClick' in props) {
+    const state =
+      props.as === 'toggle'
+        ? { 'aria-pressed': props.active }
+        : { 'aria-haspopup': 'dialog' as const, 'aria-expanded': props.active };
     return (
       <button
         type="button"
         aria-label={props.label}
-        aria-haspopup="dialog"
-        aria-expanded={props.active}
+        {...state}
         onClick={props.onClick}
         className={cn(CELL, props.active ? 'bg-primary-soft text-primary' : 'hover:bg-reader-fg/5')}
       >

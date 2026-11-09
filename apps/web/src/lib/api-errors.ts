@@ -66,12 +66,20 @@ const MESSAGES: Record<string, () => string> = {
   NOT_SCHEDULED: m.error_not_scheduled,
   INVALID_STATE: m.error_invalid_state,
   USER_MUTED: m.error_user_muted,
+  MATURE_CONTENT_DISABLED: m.error_mature_content_disabled,
   COMMENT_PARAGRAPH_INVALID: m.error_comment_paragraph_invalid,
   RATING_HIDDEN: m.error_rating_hidden,
   FEATURED_MATURE: m.error_featured_mature,
   CONTEST_NOT_OPEN: m.error_contest_not_open,
   CONTEST_STORY_INELIGIBLE: m.error_contest_story_ineligible,
   CONTEST_PLACEMENT_TAKEN: m.error_contest_placement_taken,
+  COMMENT_PIN_LIMIT: m.error_comment_pin_limit,
+  COMMENT_UNDER_REVIEW: m.error_comment_under_review,
+  ANNOUNCEMENT_DAILY_LIMIT: m.error_announcement_daily_limit,
+  NOMINATION_WEEKLY_LIMIT: m.error_nomination_weekly_limit,
+  ALREADY_NOMINATED: m.error_already_nominated,
+  ACCOUNT_TOO_NEW: m.error_account_too_new,
+  CHAPTER_IMPORT_INVALID: m.error_chapter_import_invalid,
 };
 
 /** User-facing message for an API error code; anything unknown gets the generic message. */

@@ -181,6 +181,20 @@ describe('filters and 18+', () => {
     expect(await titles({})).toEqual(['Alpha', 'Beta']);
   });
 
+  it('hides stories written with AI only when noAi is on', async () => {
+    const author = await makeAuthor(db);
+    const human = await makePublishedStory(db, author, 1, 'Người Viết');
+    const assisted = await makePublishedStory(db, author, 1, 'Máy Phụ');
+    await setStory(assisted.storyId, { isAiAssisted: true });
+    for (const s of [human, assisted]) await syncStory(db, ctx, s.storyId);
+
+    const titles = async (input: Partial<SearchQuery>) =>
+      (await query(input)).stories.hits.map((h) => h.title).sort();
+    expect(await titles({})).toEqual(['Máy Phụ', 'Người Viết']);
+    expect(await titles({ noAi: true })).toEqual(['Người Viết']);
+    expect(await titles({ noAi: true, tag: 'tien-hiep' })).toEqual(['Người Viết']);
+  });
+
   it('browses an empty query most recently updated first, with page counts', async () => {
     const author = await makeAuthor(db);
     const old = await makePublishedStory(db, author, 1, 'Cũ');
@@ -193,6 +207,37 @@ describe('filters and 18+', () => {
     expect(result.stories.hits.map((h) => h.title)).toEqual(['Mới', 'Cũ']);
     expect(result.stories).toMatchObject({ page: 1, totalPages: 1, totalHits: 2 });
     expect(result.stories.hits[0]?.lastChapterAt).toBe('2026-09-01T00:00:00.000Z');
+  });
+
+  it('sorts by creation, length or update on request, with or without text', async () => {
+    const author = await makeAuthor(db);
+    const first = await makePublishedStory(db, author, 1, 'Sắp Một');
+    const second = await makePublishedStory(db, author, 1, 'Sắp Hai');
+    const third = await makePublishedStory(db, author, 1, 'Sắp Ba');
+    // Three different orders: created Hai > Ba > Một, longest Một > Hai > Ba, updated Ba > Một > Hai.
+    await setStory(first.storyId, {
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+      lastChapterAt: new Date('2026-09-02T00:00:00Z'),
+      wordCount: 50_000,
+    });
+    await setStory(second.storyId, {
+      createdAt: new Date('2026-03-01T00:00:00Z'),
+      lastChapterAt: new Date('2026-09-01T00:00:00Z'),
+      wordCount: 20_000,
+    });
+    await setStory(third.storyId, {
+      createdAt: new Date('2026-02-01T00:00:00Z'),
+      lastChapterAt: new Date('2026-09-03T00:00:00Z'),
+      wordCount: 9_000,
+    });
+    for (const s of [first, second, third]) await syncStory(db, ctx, s.storyId);
+
+    const titles = async (input: Partial<SearchQuery>) =>
+      (await query(input)).stories.hits.map((h) => h.title);
+    expect(await titles({ sort: 'newest' })).toEqual(['Sắp Hai', 'Sắp Ba', 'Sắp Một']);
+    expect(await titles({ sort: 'longest' })).toEqual(['Sắp Một', 'Sắp Hai', 'Sắp Ba']);
+    expect(await titles({ sort: 'updated' })).toEqual(['Sắp Ba', 'Sắp Một', 'Sắp Hai']);
+    expect(await titles({ q: 'sap', sort: 'longest' })).toEqual(['Sắp Một', 'Sắp Hai', 'Sắp Ba']);
   });
 });
 

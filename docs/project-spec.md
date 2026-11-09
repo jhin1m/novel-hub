@@ -85,7 +85,7 @@ Nguyên tắc: metadata chương tách khỏi nội dung; bản nháp tách kh�
 
 | Bảng | Cột chính | Ghi chú |
 | --- | --- | --- |
-| `users` | id, username (unique), display\_name, email (unique), email\_verified, avatar\_url, bio, role, status, preferences, created\_at, updated\_at | Bảng auth do Better Auth quản lý (`email`, `email_verified` do Better Auth ghi; `display_name`/`avatar_url` là field `name`/`image` của Better Auth); `username` khớp `^[a-z0-9_]{3,30}$`; `role` = reader/author/mod/admin; `status` = active/muted/banned; `preferences` (jsonb, validate bằng Zod) chứa cài đặt trang đọc và tuỳ chọn NSFW |
+| `users` | id, username (unique), display\_name, email (unique), email\_verified, avatar\_url, bio, role, status, preferences, created\_at, updated\_at | Bảng auth do Better Auth quản lý (`email`, `email_verified` do Better Auth ghi; `display_name`/`avatar_url` là field `name`/`image` của Better Auth); `username` khớp `^[a-z0-9_]{3,30}$`; `role` = reader/author/mod/admin; `status` = active/muted/banned; `preferences` (jsonb, validate bằng Zod) chứa cài đặt trang đọc, theme giao diện và tuỳ chọn NSFW |
 | `sessions`, `accounts`, `verifications` | (do Better Auth quy định) | Bảng của Better Auth: phiên đăng nhập; liên kết OAuth và mật khẩu (hash); token xác thực email và đặt lại mật khẩu |
 | `stories` | id, public\_id, slug, author\_id, title, synopsis, cover\_url, main\_tag\_id, status, visibility, is\_ai\_assisted, is\_mature, word\_count, chapter\_count, last\_chapter\_at, created\_at, updated\_at | `public_id` = mã ngắn ngẫu nhiên, unique, dùng trong URL; `status` = ongoing/completed/hiatus; `visibility` = draft/published/hidden\_by\_mod; `main_tag_id` là tag chính (kind = genre), dùng cho thẻ truyện và màu bìa mặc định |
 | `tags`, `story_tags` | tag: id, slug, name, kind, canonical\_id | `canonical_id` để gộp tag trùng; `kind` = genre/theme/warning |
@@ -152,7 +152,7 @@ Làm tuần tự; mỗi mục chỉ coi là xong khi đạt tiêu chí và có t
 
 ### Giai đoạn 1: Đọc và viết
 
-- [ ] Tạo và sửa truyện: tiêu đề, giới thiệu, bìa (upload S3, resize), tag, cờ 18+, cờ có dùng AI.
+- [x] Tạo và sửa truyện: tiêu đề, giới thiệu, bìa (upload S3, resize), tag, cờ 18+, cờ có dùng AI.
 - [x] Bìa mặc định dạng chữ khi tác giả không có bìa.
 - [x] Editor Tiptap: autosave vào `chapter_drafts` (debounce \~2 giây), trạng thái đã lưu, chế độ tập trung.
 - [x] Đăng chương: sinh HTML đã sanitize, gắn `data-pid`, ghi revision, đếm số chữ, hẹn giờ đăng.
@@ -164,7 +164,7 @@ Làm tuần tự; mỗi mục chỉ coi là xong khi đạt tiêu chí và có t
 - [x] Rate limit Redis theo user và IP: đăng ký, đăng nhập, quên mật khẩu, tạo truyện, đăng chương, bình luận, báo cáo (mục 7).
 - [x] Kiểm tra trùng lặp khi đăng chương, báo cáo vi phạm, trang hàng chờ cho mod (mục 7).
 - [x] SEO: metadata, Open Graph, sitemap, canonical URL.
-- [ ] Trước khi mở public: backup Postgres ra ngoài VPS và thử restore thành công (mục 11).
+- [x] Trước khi mở public: backup Postgres ra ngoài VPS và thử restore thành công (mục 11).
 
 ### Giai đoạn 2: Cộng đồng
 
@@ -174,6 +174,47 @@ Làm tuần tự; mỗi mục chỉ coi là xong khi đạt tiêu chí và có t
 - [x] Xếp hạng ngày, tuần, tháng; xếp hạng theo tốc độ tăng trưởng.
 - [x] Dashboard tác giả: lượt đọc theo chương, tỷ lệ bỏ dở theo chương, lượt theo dõi mới.
 - [x] Huy hiệu và cột mốc; khu truyện nổi bật do mod chọn; công cụ tổ chức cuộc thi theo chủ đề.
+
+### Giai đoạn 2+: Mở rộng sau nghiên cứu (user chốt 2026-10-07)
+
+Nguồn và chi tiết: `plans/reports/decisions-261007-research-features-selection.md`.
+
+- [x] Lọc "ẩn truyện có dùng AI" ở tìm kiếm và trang tag; thẻ truyện hiện nhãn AI.
+- [x] Mục lục: tìm chương theo số/tên, đảo Cũ↔Mới, nhảy tới chương đang đọc (trang truyện và trang đọc).
+- [x] Truyện liên quan trên trang truyện (cùng tác giả, cùng tag chính; HTML không chứa 18+).
+- [x] Ngưỡng vào danh sách trang chủ (≥3 chương, ≥5.000 chữ) và khu "Truyện mới cần độc giả" xoay vòng theo giờ.
+- [x] Nghe truyện (TTS) bằng Web Speech API, tự sang chương tiếp.
+- [x] Ghim bình luận (tác giả, ≤3 mỗi chương) và sửa bình luận (nhãn "đã sửa").
+- [x] Thảo luận cấp truyện (không gắn chương, 2 cấp, theo quy tắc 18+).
+- [x] Thông báo của tác giả gửi người theo dõi, hiện trên trang truyện và trang tác giả.
+- [x] Phiếu đề cử miễn phí (3 phiếu/tuần, tài khoản ≥7 ngày) và bảng "Được đề cử nhiều" theo tuần.
+- [x] Độc giả gắn bó theo truyện (top 10).
+- [x] Cảnh cáo người dùng (`warn_user`), gợi ý mute/ban khi ≥3 cảnh cáo trong 90 ngày.
+- [x] Gợi ý vinh danh tháng từ xếp hạng tháng cho mod duyệt vào truyện nổi bật.
+- [x] Nhập nhiều chương một lần (dán văn bản/.txt), đăng ngay hoặc hẹn giờ cách đều.
+- [x] Bổ sung quy định nội dung (chương rác/chương thông báo, kéo người ra ngoài, tên chương, nhãn AI, cảnh cáo).
+- [x] Dọn dẹp: follow-up theme site, e2e chập chờn, lỗi UI nhỏ đã biết.
+
+### Giai đoạn 2++: Trang chủ và khám phá (user giao 2026-10-08, [auto])
+
+Nguồn: `plans/reports/research-261008-home-explore-vn-novel-sites.md`, quyết định `plans/reports/decisions-261008-home-explore.md`.
+
+- [x] Bảng xếp hạng trên trang chủ (tab Ngày/Tuần/Tháng/Đang lên, top 5, không 18+ trong HTML).
+- [x] Trang chủ: "Xem thêm" cho Mới cập nhật, chương mới nhất trên dòng cập nhật, không lặp truyện giữa các khu.
+- [x] Khu "Vừa hoàn thành" trên trang chủ.
+- [x] Trang khám phá: sắp xếp, lọc dạng chip, tên "Khám phá", mục "Khám phá" ở header desktop, lối vào khi chưa lọc.
+- [x] Trang chủ: cuộc thi đang diễn ra và khối mời viết.
+
+### Giai đoạn R: Ra mắt (user chốt 2026-10-09)
+
+Nguồn: `plans/reports/brainstorm-261009-direction-launch-first-report.md`. Ưu tiên trước mọi tính năng mới; hai checkbox còn mở của Giai đoạn 1 (bìa S3 thật, backup offsite) làm trong giai đoạn này. Sau khi ra mắt: tạm dừng tính năng mới 2–4 tuần, chọn việc tiếp theo theo số liệu thật.
+
+- [x] Thử upload bìa trên MinIO thật và đóng checkbox "Tạo và sửa truyện" của Giai đoạn 1.
+- [x] Đóng gói production: Dockerfile `web` và `worker`, compose production (healthcheck, giới hạn log, Redis AOF), hướng dẫn deploy lên VPS.
+- [x] Backup offsite thật: homelab kéo bản dump từ VPS qua Tailscale (rsync, user chỉ đọc), giữ 7 bản, cảnh báo healthchecks.io; thử restore; đóng checkbox backup của Giai đoạn 1.
+- [ ] Checklist ra mắt: SMTP thật, Cloudflare purge và cache rule, tài khoản mod, uptime monitor gọi `/api/v1/health`, rà trang điều khoản và quy định nội dung.
+- [ ] CI GitHub Actions chạy `pnpm typecheck`, `pnpm lint`, `pnpm test` cho mỗi PR (cần bật lại push).
+- [ ] Duyệt dồn các quyết định `[auto]` còn treo trong `plans/reports/`.
 
 ### Giai đoạn 3 (sau cùng)
 
@@ -238,6 +279,7 @@ Công cụ mod phải có trước khi mở cộng đồng.
 - Khi tắt (và với mọi khách): truyện `is_mature` không xuất hiện ở trang chủ, trang tag, tìm kiếm, bảng xếp hạng, khu truyện nổi bật.
 - Khi bật: các danh sách trên tải thêm truyện 18+ qua API không cache ở client. HTML render phía server của mọi danh sách luôn không chứa truyện 18+, nên vẫn cache công khai được.
 - Mở trực tiếp link truyện hoặc chương 18+ khi chưa bật: hiện màn cảnh báo kèm các tag `warning`, xử lý hoàn toàn ở client (HTML không phụ thuộc cookie). Khách phải đăng nhập và bật tuỳ chọn mới đọc được.
+- Bình luận (xem, đăng, trả lời, cả bình luận theo đoạn) ở chương của truyện 18+ cũng chỉ dành cho tài khoản đã bật tuỳ chọn; API trả 403 `MATURE_CONTENT_DISABLED` nếu chưa bật.
 - Truyện 18+ không vào sitemap; trang truyện và chương có `<meta name="robots" content="noindex">`.
 
 **Điều khoản:** tác giả giữ bản quyền, site được cấp quyền hiển thị miễn phí, mọi hình thức kiếm tiền sau này là opt-in. Trang điều khoản và quy định nội dung có từ giai đoạn 1.
@@ -248,7 +290,7 @@ Hướng "ấm, như một ứng dụng đọc", mobile-first. Khu đọc gần 
 
 **Nền tảng chung**
 
-- Màu: nền ngà ấm, nội dung đặt trên thẻ trắng, một màu nhấn duy nhất (mòng két) chỉ cho hành động chính, mục đang chọn, tiến độ, focus. Khai báo bằng CSS variables, light và dark theo hệ điều hành (không nút chuyển); khu đọc có 6 preset riêng.
+- Màu: nền ngà ấm, nội dung đặt trên thẻ trắng, một màu nhấn duy nhất (mòng két) chỉ cho hành động chính, mục đang chọn, tiến độ, focus. Khai báo bằng CSS variables. Hai theme site: Ngà (sáng, mặc định) và Tối; người dùng chọn Theo hệ thống (mặc định), Ngà hoặc Tối ở menu tài khoản và `/settings`; khách lưu localStorage, người đã đăng nhập đồng bộ thêm vào `users.preferences`. Theme áp bằng script inline trước khi vẽ, HTML không phụ thuộc cookie. Khu đọc vẫn có 6 preset riêng; không chọn preset thì theo theme site (user chốt 2026-10-07, [auto]).
 - Chữ: Source Serif 4 cho nội dung truyện, Plus Jakarta Sans cho giao diện. Self-host font, subset đủ tiếng Việt.
 - Nguồn chuẩn về thiết kế: `docs/design-guidelines.md` (ghi link Design System và mockup) và file tokens trong `apps/web/src/styles/`. Khi hai nơi lệch nhau, file tokens trong repo là chuẩn.
 - Nhiều khoảng trắng, bo góc mềm, nút và chip dạng viên, bóng đổ chỉ ở bìa nổi và lớp nổi (dialog), không gradient.
@@ -265,7 +307,7 @@ Hướng "ấm, như một ứng dụng đọc", mobile-first. Khu đọc gần 
   - Cỡ chữ 14–28px, khoảng cách dòng 1.5–2.2, khoảng cách đoạn, độ rộng cột chữ (hẹp/vừa/rộng, chỉ trên desktop), căn lề trái/đều.
   - Nút "Khôi phục mặc định".
 - Lưu cài đặt ở localStorage để script inline áp dụng trước khi vẽ trang; người đã đăng nhập đồng bộ thêm vào `users.preferences` để dùng chung trên nhiều thiết bị.
-- Thanh điều hướng ẩn khi cuộn xuống, hiện khi cuộn lên hoặc chạm giữa màn hình. Chỉ gồm: nút về trang truyện, tên truyện (nhỏ), tên chương, thanh tiến độ đọc mảnh, chương trước/sau, mục lục, cài đặt. Dưới 1024px: thanh trên + thanh dưới (Mục lục, Trước, Sau, Cài đặt); từ 1024px: thanh trên + rail dọc bên phải, bảng cài đặt là panel bên phải không che cột chữ.
+- Thanh điều hướng ẩn khi cuộn xuống, hiện khi cuộn lên hoặc chạm giữa màn hình. Chỉ gồm: nút về trang truyện, tên truyện (nhỏ), tên chương, thanh tiến độ đọc mảnh, chương trước/sau, mục lục, cài đặt, nghe truyện (chỉ hiện khi trình duyệt có giọng tiếng Việt). Dưới 1024px: thanh trên + thanh dưới (Mục lục, Trước, Sau, Nghe, Cài đặt); từ 1024px: thanh trên + rail dọc bên phải, bảng cài đặt và sheet bình luận theo đoạn là panel bên phải; mở panel không bao giờ đổi độ rộng hay vị trí cột chữ: cột vẫn căn giữa như khi đóng, panel đè lên phía phải (không phủ tối), màn hẹp thì đè cả mép phải cột, nên chọn Hẹp/Vừa/Rộng thấy ngay khi panel đang mở.
 - Không chèn gì vào giữa nội dung. Cuối chương, theo thứ tự: lời nhắn tác giả, nút "Chương tiếp" thật to, "Chương trước"; bình luận thêm ở Giai đoạn 2.
 - Bàn phím: mũi tên trái/phải để chuyển chương.
 
@@ -324,8 +366,8 @@ Một VPS, một người vận hành: mất dữ liệu là rủi ro lớn nh�
 
 - Hiện tại: `pg_dump` hằng ngày, nén, lưu vào một thư mục trên chính VPS (ngoài volume của Postgres), giữ 14 bản gần nhất.
 - Giới hạn đã biết: backup cùng VPS chỉ cứu được lỗi dữ liệu hoặc thao tác nhầm, không cứu được khi mất VPS hoặc hỏng đĩa.
-- Trước khi mở public: đẩy thêm bản sao ra ngoài VPS (bucket R2 riêng, không chung bucket ảnh). Đây là một mục trong checklist Giai đoạn 1.
-- Bản sao offsite được mã hoá phía VPS bằng rclone crypt trước khi đẩy lên (mã hoá nội dung và tên file; tên thư mục để rõ như `daily/` để bucket lock áp được). Mật khẩu crypt chỉ nằm trên VPS và một nơi lưu riêng ngoài VPS; mất mật khẩu là mất bản backup.
+- Trước khi mở public: có bản sao ngoài VPS. Homelab của user (khác vị trí với VPS) **kéo** bản dump về hằng ngày qua Tailscale bằng `rsync`, dùng một user trên VPS chỉ đọc được thư mục backup; VPS không có quyền gì trên homelab nên chiếm VPS cũng không xoá được bản sao (user chốt 2026-10-09, thay cho bucket R2 + rclone crypt). Đây là một mục trong checklist Giai đoạn 1.
+- Homelab giữ 7 bản (user chốt 2026-10-12), ping healthchecks.io sau mỗi lần kéo để báo khi lỡ một ngày. Thư mục backup trên homelab đặt quyền chặt (dump chứa email và hash mật khẩu). Cài Tailscale trên VPS và cron trên homelab do user làm.
 - Thử restore vào một database tạm ít nhất một lần trước khi mở public, sau đó mỗi tháng một lần.
 - Meilisearch không cần backup: dựng lại từ Postgres bằng job reindex của worker.
 - Redis bật AOF. Counter chưa ghi dồn có thể mất tối đa 5 phút, chấp nhận được.

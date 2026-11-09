@@ -69,7 +69,23 @@ export function useFeaturedSlots() {
   });
 }
 
-/** Features a story (a link or public id; times as ISO with offset), then reloads the list. */
+/** Most read stories of last month not featured yet, for moderators to consider. */
+export function useFeatureSuggestions() {
+  return useQuery({
+    queryKey: [...featuredSlotsQueryKey, 'suggestions'],
+    retry: false,
+    queryFn: async () => {
+      const res = await api.api.v1.moderation.featured.suggestions.$get();
+      if (!res.ok) throw await readApiError(res);
+      return res.json();
+    },
+  });
+}
+
+/**
+ * Features a story (a link or public id; times as ISO with offset), then reloads the list and the
+ * suggestions (both under `featuredSlotsQueryKey`): a featured story leaves the suggestions.
+ */
 export function useCreateFeaturedSlot() {
   const queryClient = useQueryClient();
   return useMutation({

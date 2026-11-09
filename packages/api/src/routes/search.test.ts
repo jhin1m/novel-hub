@@ -76,6 +76,16 @@ describe('GET /api/v1/search (no database)', () => {
     expect(authors).toMatchObject({ indexUid: NAMES.authors, q: 'kiem', limit: 5 });
   });
 
+  it('passes a known order to Meilisearch and drops an unknown one', async () => {
+    const { ctx, multiSearch } = fakeSearch();
+    const app = appWith(ctx);
+    expect((await app.request('/api/v1/search?q=kiem&sort=longest')).status).toBe(200);
+    expect((await app.request('/api/v1/search?q=kiem&sort=views')).status).toBe(200);
+    const [longest, unknown] = multiSearch.mock.calls.map((call) => call[0].queries[0]);
+    expect(longest).toMatchObject({ q: 'kiem', sort: ['wordCount:desc'] });
+    expect(unknown).not.toHaveProperty('sort');
+  });
+
   it('browses an empty query by last update, without authors, in one request', async () => {
     const { ctx, multiSearch } = fakeSearch();
     await appWith(ctx).request('/api/v1/search?status=completed&minWords=50000&page=2');

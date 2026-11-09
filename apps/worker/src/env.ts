@@ -5,6 +5,7 @@ import {
   redisEnvSchema,
   requireSmtpInProduction,
   smtpEnvSchema,
+  workerHeartbeatEnvSchema,
 } from '@novel-hub/shared/env';
 
 /**
@@ -16,5 +17,6 @@ export const workerEnvSchema = requireSmtpInProduction(
     .extend(dbEnvSchema.shape)
     .extend(redisEnvSchema.shape)
     .extend(queueEnvSchema.shape)
-    .extend(smtpEnvSchema.shape),
+    .extend(smtpEnvSchema.shape)
+    .extend(workerHeartbeatEnvSchema.shape),
 );

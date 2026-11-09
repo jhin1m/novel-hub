@@ -5,6 +5,7 @@ import {
   notificationCursorSchema,
   parseNotification,
 } from './notification';
+import { LIMITS } from '../limits';
 
 const STORY = '01920000-0000-7000-8000-000000000001';
 const CHAPTER = '01920000-0000-7000-8000-000000000002';
@@ -57,5 +58,34 @@ describe('notificationCursorSchema', () => {
   it('accepts only micros_uuid', () => {
     expect(notificationCursorSchema.safeParse(`1759700000000000_${CHAPTER}`).success).toBe(true);
     expect(notificationCursorSchema.safeParse('abc').success).toBe(false);
+  });
+});
+
+describe('parseNotification: story_announcement and user_warned', () => {
+  const ANNOUNCEMENT = '01920000-0000-7000-8000-000000000003';
+
+  it('parses both new types', () => {
+    const announcement = { storyId: STORY, announcementId: ANNOUNCEMENT };
+    expect(parseNotification({ type: 'story_announcement', payload: announcement })).toEqual({
+      type: 'story_announcement',
+      payload: announcement,
+    });
+    expect(parseNotification({ type: 'user_warned', payload: { reason: 'Spam' } })).toEqual({
+      type: 'user_warned',
+      payload: { reason: 'Spam' },
+    });
+  });
+
+  it('drops broken payloads', () => {
+    expect(
+      parseNotification({ type: 'story_announcement', payload: { storyId: STORY } }),
+    ).toBeNull();
+    expect(parseNotification({ type: 'user_warned', payload: { reason: '' } })).toBeNull();
+    expect(
+      parseNotification({
+        type: 'user_warned',
+        payload: { reason: 'x'.repeat(LIMITS.modNoteMax + 1) },
+      }),
+    ).toBeNull();
   });
 });

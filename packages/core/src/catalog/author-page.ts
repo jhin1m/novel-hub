@@ -1,5 +1,10 @@
 import { type Db, stories, users } from '@novel-hub/db';
+import { ANNOUNCEMENT_RULES } from '@novel-hub/shared';
 import { and, eq, isNotNull } from 'drizzle-orm';
+import {
+  type AuthorAnnouncementDto,
+  listAuthorAnnouncements,
+} from '../announcements/list-announcements';
 import { type UserBadgeDto, listUserBadges } from '../badges/user-badges';
 import {
   type ListOptions,
@@ -16,6 +21,8 @@ export interface AuthorPageData {
   stories: StoryCardDto[];
   /** Milestone badges of the author, in catalog order. */
   badges: UserBadgeDto[];
+  /** The author's latest announcements, newest first; never about an 18+ story (cached HTML). */
+  announcements: AuthorAnnouncementDto[];
 }
 
 /**
@@ -51,9 +58,14 @@ export async function getAuthorPage(
     )
     .orderBy(...recentlyUpdatedOrder);
   if (rows.length === 0) return null;
+  const [badges, announcements] = await Promise.all([
+    listUserBadges(db, author.id),
+    listAuthorAnnouncements(db, author.id, { limit: ANNOUNCEMENT_RULES.authorPageLimit }),
+  ]);
   return {
     author: { username: author.username, displayName: author.displayName, bio: author.bio },
     stories: rows.filter((r) => o.includeMature || !r.isMature).map(toStoryCard),
-    badges: await listUserBadges(db, author.id),
+    badges,
+    announcements,
   };
 }

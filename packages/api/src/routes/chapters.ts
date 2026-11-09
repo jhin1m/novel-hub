@@ -4,6 +4,7 @@ import {
   deleteChapter,
   getDraft,
   getRevisionPreview,
+  importChapters,
   listRevisions,
   publishChapter,
   restoreRevision,
@@ -13,7 +14,9 @@ import {
   updateChapterMeta,
 } from '@novel-hub/core';
 import {
+  CHAPTER_IMPORT_LIMITS,
   LIMITS,
+  chapterImportSchema,
   chapterMetaSchema,
   chapterNumberParamSchema,
   draftSaveSchema,
@@ -65,6 +68,29 @@ export function createChapterRoutes(deps: Pick<ApiDeps, 'db' | 'rateLimit' | 'cl
           );
           if (!result.ok) return coreError(c, result.error);
           return c.json({ chapter: result.value }, 201);
+        },
+      )
+      // One import is one `importChapters` budget, not one `createChapter`/`publishChapter` per
+      // chapter: core caps how many go public at once.
+      .post(
+        '/import',
+        bodyLimit({
+          maxSize: CHAPTER_IMPORT_LIMITS.bodyLimitBytes,
+          onError: (c) => c.json(errorBody('PAYLOAD_TOO_LARGE', 'Request body is too large'), 413),
+        }),
+        requireVerifiedEmail,
+        rateLimit(deps, 'importChapters'),
+        validate('param', storyParamSchema),
+        validate('json', chapterImportSchema),
+        async (c) => {
+          const result = await importChapters(
+            deps.db,
+            c.var.authUser,
+            c.req.valid('param').publicId,
+            c.req.valid('json'),
+          );
+          if (!result.ok) return coreError(c, result.error);
+          return c.json(result.value, 201);
         },
       )
       .patch(

@@ -12,7 +12,7 @@ import {
   UserRoundIcon,
 } from 'lucide-react';
 import { SITE_THEME_LABELS } from '@/components/settings/theme-setting';
-import { SignInPromptLink } from '@/components/sign-in-prompt-link';
+import { SignInPromptLink, useAuthPageSearch } from '@/components/sign-in-prompt-link';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -28,15 +28,25 @@ import { accountInitial } from '@/lib/account-hint';
 import { useMe, useSignOut } from '@/lib/me';
 import { isSiteThemeChoice } from '@/lib/site-theme/site-theme';
 import { useSiteTheme } from '@/lib/site-theme/use-site-theme';
+import { cn } from '@/lib/utils';
 
 // The placeholder, the guest button and the account button share one 42px slot, so the header
 // does not shift once the account is known.
 const ACCOUNT_SLOT = 'size-[42px] shrink-0';
+const ACCOUNT_PLACEHOLDER = cn(
+  ACCOUNT_SLOT,
+  'items-center justify-center rounded-full bg-secondary text-base font-extrabold text-secondary-foreground',
+);
+
+// The same key in both trees, so the links are not remounted (and do not lose focus) when the
+// account answer arrives.
+const GUEST_AUTH_LINKS_KEY = 'guest-auth-links';
 
 /**
- * Account state is only known once `useMe()` runs in the browser; SSR always renders a placeholder
- * that looks like either button: the avatar letter when the browser was last signed in (set before
- * paint from the account hint), the guest icon otherwise.
+ * Account state is only known once `useMe()` runs in the browser; SSR always renders placeholders
+ * that look like the final controls, the right one picked before paint from the account hint.
+ * Below `md` that is one slot holding the avatar letter or the guest icon. From `md` a guest has
+ * real sign-in and sign-up links instead, so they stay outside the `aria-hidden` placeholder.
  * Writing is offered to signed-in accounts only, the moderation queue to moderators and admins.
  */
 export function SiteAccountMenu() {
@@ -45,20 +55,33 @@ export function SiteAccountMenu() {
 
   if (me.isPending) {
     return (
-      <div
-        aria-hidden
-        data-account-slot
-        className={`${ACCOUNT_SLOT} flex items-center justify-center rounded-full bg-secondary text-base font-extrabold text-secondary-foreground`}
-      >
-        <span className="signed-in-hint account-initial-hint" />
-        <UserRoundIcon className="guest-hint size-5" />
-      </div>
+      <>
+        <div aria-hidden data-account-slot className={cn(ACCOUNT_PLACEHOLDER, 'flex md:hidden')}>
+          <span className="signed-in-hint account-initial-hint" />
+          <UserRoundIcon className="guest-hint size-5" />
+        </div>
+        <div
+          aria-hidden
+          data-account-slot
+          className={cn(ACCOUNT_PLACEHOLDER, 'signed-in-hint hidden md:flex')}
+        >
+          <span className="account-initial-hint" />
+        </div>
+        <GuestAuthLinks key={GUEST_AUTH_LINKS_KEY} className="guest-hint hidden md:flex" />
+      </>
     );
   }
 
   const user = me.data;
   const canModerate = user?.role === 'mod' || user?.role === 'admin';
-  if (!user) return <GuestAccountMenu />;
+  if (!user) {
+    return (
+      <>
+        <GuestAccountMenu />
+        <GuestAuthLinks key={GUEST_AUTH_LINKS_KEY} className="hidden md:flex" />
+      </>
+    );
+  }
 
   return (
     <DropdownMenu>
@@ -121,8 +144,26 @@ export function SiteAccountMenu() {
   );
 }
 
-/** A guest's account button: sign in (back to this page afterwards) or sign up. */
+/** A guest's links from `md` up: sign in (back to this page afterwards) or sign up. */
+function GuestAuthLinks({ className }: { className?: string }) {
+  const authPageSearch = useAuthPageSearch();
+  return (
+    <div className={cn('items-center gap-1', className)}>
+      <Button asChild variant="ghost" className="px-3 text-[15px] font-semibold">
+        <SignInPromptLink>{m.layout_sign_in()}</SignInPromptLink>
+      </Button>
+      <Button asChild className="text-[15px] font-semibold">
+        <Link to="/sign-up" search={authPageSearch}>
+          {m.layout_sign_up()}
+        </Link>
+      </Button>
+    </div>
+  );
+}
+
+/** A guest's account button below `md`, where the header has no room for the two links. */
 function GuestAccountMenu() {
+  const authPageSearch = useAuthPageSearch();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -131,7 +172,7 @@ function GuestAccountMenu() {
           size="icon"
           data-account-slot
           aria-label={m.layout_account_menu()}
-          className={ACCOUNT_SLOT}
+          className={cn(ACCOUNT_SLOT, 'md:hidden')}
         >
           <UserRoundIcon aria-hidden className="size-5" />
         </Button>
@@ -141,7 +182,9 @@ function GuestAccountMenu() {
           <SignInPromptLink>{m.layout_sign_in()}</SignInPromptLink>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link to="/sign-up">{m.layout_sign_up()}</Link>
+          <Link to="/sign-up" search={authPageSearch}>
+            {m.layout_sign_up()}
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <ThemeMenuItems />

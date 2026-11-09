@@ -1,7 +1,12 @@
 import { m } from '@novel-hub/shared/messages';
 import { Link, useRouterState } from '@tanstack/react-router';
 import type { ComponentProps, ReactNode } from 'react';
-import { type SignInReason, signInSearch } from '@/lib/safe-redirect';
+import {
+  type SignInReason,
+  type SignInSearch,
+  signInSearch,
+  signInSearchSchema,
+} from '@/lib/safe-redirect';
 
 const REASON_MESSAGES: Record<SignInReason, () => string> = {
   follow: m.sign_in_reason_follow,
@@ -12,10 +17,22 @@ const REASON_MESSAGES: Record<SignInReason, () => string> = {
   nominate: m.sign_in_reason_nominate,
 };
 
+const AUTH_PAGE = /^\/sign-(in|up)$/;
+
+/**
+ * On `/sign-in` and `/sign-up`: the current `?redirect=` and `?reason=`, which a link to the other
+ * page must keep. Elsewhere `undefined`.
+ */
+export function useAuthPageSearch(): SignInSearch | undefined {
+  const location = useRouterState({ select: (state) => state.location });
+  return AUTH_PAGE.test(location.pathname) ? signInSearchSchema.parse(location.search) : undefined;
+}
+
 /**
  * A guest's "sign in" link that comes back to the current page afterwards, optionally saying why
- * sign-in is needed. A real link, so it works before hydration; extra props (from `Button asChild`)
- * pass through to the anchor.
+ * sign-in is needed. On the auth pages it keeps their return path instead, since going back to one
+ * of those is refused. A real link, so it works before hydration; extra props (from `Button
+ * asChild`) pass through to the anchor.
  */
 export function SignInPromptLink({
   reason,
@@ -26,8 +43,9 @@ export function SignInPromptLink({
   'href' | 'children'
 >) {
   const currentHref = useRouterState({ select: (state) => state.location.href });
+  const authPageSearch = useAuthPageSearch();
   return (
-    <Link {...anchor} to="/sign-in" search={signInSearch(currentHref, reason)}>
+    <Link {...anchor} to="/sign-in" search={authPageSearch ?? signInSearch(currentHref, reason)}>
       {children}
     </Link>
   );

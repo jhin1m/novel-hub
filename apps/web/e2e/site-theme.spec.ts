@@ -49,36 +49,66 @@ async function chooseInSettings(page: Page, name: string) {
     .click();
 }
 
+/** Picks a choice in the footer's theme switch by clicking its visible label. */
+async function chooseInFooter(page: Page, name: string) {
+  await page
+    .getByRole('contentinfo')
+    .locator('label')
+    .filter({ has: page.getByRole('radio', { name, exact: true }) })
+    .click();
+}
+
 const isPreferencesPatch = (url: string, method: string) =>
   url.endsWith('/api/v1/me/preferences') && method === 'PATCH';
 
 test.describe('site theme on a light system', () => {
   test.use({ colorScheme: 'light' });
 
-  test('a guest picks Dark from the account menu; it is painted on reload before any script file', async ({
+  test('a guest picks Dark in the footer; it is painted on reload before any script file', async ({
     page,
   }) => {
     await gotoHydrated(page, '/');
     await expect(html(page)).not.toHaveAttribute('data-theme', /.*/);
     expect(await rootVar(page, '--background')).toBe(IVORY_BG);
 
-    const menu = await openAccountMenu(page);
-    await menu.getByRole('menuitemradio', { name: 'Tối', exact: true }).click();
+    await chooseInFooter(page, 'Tối');
     await expect(html(page)).toHaveAttribute('data-theme', 'dark');
     expect(await rootVar(page, '--background')).toBe(DARK_BG);
     expect(await storedChoice(page)).toBe('dark');
+
+    await gotoHydrated(page, '/');
+    await expect(html(page)).toHaveAttribute('data-theme', 'dark');
+    await expect(
+      page.getByRole('contentinfo').getByRole('radio', { name: 'Tối', exact: true }),
+    ).toBeChecked();
+
+    await blockScriptFiles(page);
+    await page.reload();
+    await expect(html(page)).toHaveAttribute('data-theme', 'dark');
+    expect(await rootVar(page, '--background')).toBe(DARK_BG);
+  });
+
+  test('on a phone a guest can also pick Dark from the account menu', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await gotoHydrated(page, '/');
+
+    const menu = await openAccountMenu(page);
+    await menu.getByRole('menuitemradio', { name: 'Tối', exact: true }).click();
+    await expect(html(page)).toHaveAttribute('data-theme', 'dark');
 
     const reopened = await openAccountMenu(page);
     await expect(reopened.getByRole('menuitemradio', { name: 'Tối', exact: true })).toHaveAttribute(
       'aria-checked',
       'true',
     );
-    await page.keyboard.press('Escape');
+  });
 
-    await blockScriptFiles(page);
-    await page.reload();
-    await expect(html(page)).toHaveAttribute('data-theme', 'dark');
-    expect(await rootVar(page, '--background')).toBe(DARK_BG);
+  test('the footer switch keeps its own name apart from the settings section', async ({ page }) => {
+    await gotoHydrated(page, '/settings');
+    await expect(page.getByRole('region', { name: 'Giao diện' })).toHaveCount(1);
+    await expect(
+      page.getByRole('contentinfo').getByRole('group', { name: 'Giao diện' }),
+    ).toHaveCount(1);
   });
 
   test('a signed-in reader gets their choice on another device', async ({ page, browser }) => {
@@ -121,8 +151,8 @@ test.describe('site theme on a light system', () => {
   });
 
   test('the server-rendered HTML never carries a theme', async ({ page }) => {
-    await gotoHydrated(page, '/settings');
-    await chooseInSettings(page, 'Tối');
+    await gotoHydrated(page, '/');
+    await chooseInFooter(page, 'Tối');
     await expect(html(page)).toHaveAttribute('data-theme', 'dark');
 
     const res = await page.request.get('/');

@@ -221,7 +221,7 @@ Nguồn: `plans/reports/brainstorm-261009-direction-launch-first-report.md`. Ưu
 Nguồn: `plans/reports/brief-261109-1347-redesign-design-chot-report.md`.
 
 - [x] Font và token màu
-- [ ] Header và footer
+- [x] Header và footer
 - [ ] Hero trang chủ và thanh Đọc tiếp của thành viên
 - [ ] Bốn ô thể loại
 - [ ] Kệ truyện, xếp hạng, khối mời viết

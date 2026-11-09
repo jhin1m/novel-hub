@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Header và footer"
-status: pending
+status: done
 priority: P1
 effort: "3h"
 dependencies: [1]
@@ -9,7 +9,7 @@ dependencies: [1]
 
 # Phase 2: Header và footer
 
-**Status:** pending
+**Status:** done
 
 ## Bối cảnh chung
 

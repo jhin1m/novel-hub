@@ -46,6 +46,21 @@ test.describe('guests sign in and come back', () => {
     await expect(page.getByRole('button', { name: 'Theo dõi' })).toBeVisible();
   });
 
+  test('the header links on the auth pages keep where the guest was heading', async ({ page }) => {
+    const query = 'redirect=%2Fterms&reason=follow';
+    await gotoHydrated(page, `/sign-in?${query}`);
+    const header = page.getByRole('banner');
+    const signUpLink = header.getByRole('link', { name: 'Đăng ký', exact: true });
+    await expect(signUpLink).toHaveAttribute('href', `/sign-up?${query}`);
+
+    await signUpLink.click();
+    await expect(page).toHaveURL(`/sign-up?${query}`);
+    await expect(header.getByRole('link', { name: 'Đăng nhập', exact: true })).toHaveAttribute(
+      'href',
+      `/sign-in?${query}`,
+    );
+  });
+
   test('a guest goes from sign-in to sign-up and still lands back on the story page', async ({
     page,
   }) => {

@@ -14,7 +14,8 @@ export function unreadBadgeText(count: number): string {
 
 /**
  * The header bell, for signed-in accounts only; links to `/notifications` with the unread count as
- * a badge. Guests get an empty 42px slot, so the header keeps one width whatever the account state.
+ * a badge. Below `md` guests get an empty 42px slot, so the icons keep their place whatever the
+ * account state; from `md` the slot takes no room, the guest links need it next to the search box.
  * While the account loads (SSR, first load) the slot holds the bell as `.signed-in-hint`, shown
  * before paint when the browser was last signed in.
  */
@@ -24,7 +25,7 @@ export function NotificationBell() {
 
   if (me.data) return <BellLink count={unread.data ?? 0} />;
   return (
-    <div className="size-[42px] shrink-0">
+    <div className="size-[42px] shrink-0 md:contents">
       {me.isPending ? <BellLink count={0} className="signed-in-hint" /> : null}
     </div>
   );

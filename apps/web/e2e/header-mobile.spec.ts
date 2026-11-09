@@ -65,6 +65,28 @@ for (const viewport of VIEWPORTS) {
       await expectNoHorizontalScroll(page);
     });
 
+    test('guest: the header icons stay put when the account answer arrives', async ({ page }) => {
+      let answer = () => {};
+      const answered = new Promise<void>((resolve) => {
+        answer = resolve;
+      });
+      await page.route('**/api/v1/me', async (route) => {
+        await answered;
+        await route.continue();
+      });
+      await page.goto('/');
+      const header = page.getByRole('banner');
+      const search = header.getByRole('link', { name: 'Tìm kiếm' });
+      const slot = header.locator('[data-account-slot]:visible');
+      const before = { search: await search.boundingBox(), slot: await slot.boundingBox() };
+      expect(before.slot?.width).toBe(42);
+
+      answer();
+      await expect(header.getByRole('button', { name: 'Tài khoản', exact: true })).toBeVisible();
+      expect(await search.boundingBox()).toEqual(before.search);
+      expect(await slot.boundingBox()).toEqual(before.slot);
+    });
+
     test('signed in with a long name: no horizontal scroll; every header item is reachable', async ({
       page,
     }) => {

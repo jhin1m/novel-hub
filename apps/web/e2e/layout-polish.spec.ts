@@ -6,6 +6,7 @@ import { type PublishedStory, createPublishedStory } from './helpers/content';
 import { createChapter, createStory } from './helpers/stories';
 
 type Box = { x: number; y: number; width: number; height: number };
+type Viewport = { width: number; height: number };
 
 const PHONE = { width: 360, height: 800 };
 const DESKTOP = { width: 1280, height: 800 };
@@ -29,63 +30,110 @@ async function box(page: Page, selector: string): Promise<Box> {
   return found;
 }
 
-/** The header's right-hand cluster and search box as the server renders them (account unknown). */
-async function serverHeader(browser: Browser, viewport: typeof PHONE) {
+/** Measures the header in a browser without JavaScript: exactly what the server renders. */
+async function asServerRendered<T>(
+  browser: Browser,
+  viewport: Viewport,
+  measure: (page: Page) => Promise<T>,
+): Promise<T> {
   const context = await browser.newContext({ javaScriptEnabled: false, viewport });
   try {
     const page = await context.newPage();
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    return await headerBoxes(page, viewport);
+    return await measure(page);
   } finally {
     await context.close();
   }
 }
 
-async function headerBoxes(page: Page, viewport: typeof PHONE) {
-  return {
-    account: await box(page, '[data-account-slot]'),
-    // The search link below `md`, the search box from `md` up (the "Khám phá" link also leads to
-    // `/search`, but has no `aria-label`).
-    search: await box(
-      page,
-      viewport.width < 768 ? 'a[href="/search"][aria-label]' : 'form[role="search"]',
-    ),
-  };
-}
+const phoneHeader = async (page: Page) => ({
+  account: await box(page, '[data-account-slot]:visible'),
+  // The search box takes this role from `md` up; here the link does (the "Khám phá" tab has no label).
+  search: await box(page, 'a[href="/search"][aria-label]'),
+});
+
+const desktopGuestHeader = async (page: Page) => ({
+  signIn: await box(page, 'a[href^="/sign-in"]:visible'),
+  signUp: await box(page, 'a[href="/sign-up"]:visible'),
+  search: await box(page, 'form[role="search"]'),
+});
+
+const desktopMemberHeader = async (page: Page) => ({
+  account: await box(page, '[data-account-slot]:visible'),
+  search: await box(page, 'form[role="search"]'),
+});
 
 function expectSameX(actual: Box, expected: Box) {
   expect(Math.abs(actual.x - expected.x)).toBeLessThanOrEqual(0.5);
 }
 
 test.describe('the header keeps its layout once the account is known', () => {
-  for (const viewport of [PHONE, DESKTOP]) {
-    test(`${viewport.width}px: guest and signed-in headers match the server render`, async ({
-      browser,
-      page,
-    }) => {
-      const server = await serverHeader(browser, viewport);
-      expect(server.account.width).toBe(42);
+  test(`${PHONE.width}px: guest and signed-in headers match the server render`, async ({
+    browser,
+    page,
+  }) => {
+    const server = await asServerRendered(browser, PHONE, phoneHeader);
+    expect(server.account.width).toBe(42);
 
-      await page.setViewportSize(viewport);
-      await gotoHydrated(page, '/');
-      await expect(page.getByRole('button', { name: 'Tài khoản', exact: true })).toBeVisible();
-      const guest = await headerBoxes(page, viewport);
-      expect(guest.account.width).toBe(42);
-      expectSameX(guest.account, server.account);
-      expectSameX(guest.search, server.search);
-      expect(guest.search.width).toBeCloseTo(server.search.width, 0);
+    await page.setViewportSize(PHONE);
+    await gotoHydrated(page, '/');
+    await expect(page.getByRole('button', { name: 'Tài khoản', exact: true })).toBeVisible();
+    const guest = await phoneHeader(page);
+    expect(guest.account.width).toBe(42);
+    expectSameX(guest.account, server.account);
+    expectSameX(guest.search, server.search);
 
-      await signUp(page);
-      await gotoHydrated(page, '/');
-      await expect(page.getByRole('button', { name: /^Tài khoản: / })).toBeVisible();
-      const signedIn = await headerBoxes(page, viewport);
-      expect(signedIn.account.width).toBe(42);
-      expectSameX(signedIn.account, server.account);
-      expectSameX(signedIn.search, server.search);
-      expect(signedIn.search.width).toBeCloseTo(server.search.width, 0);
-    });
-  }
+    await signUp(page);
+    await gotoHydrated(page, '/');
+    await expect(page.getByRole('button', { name: /^Tài khoản: / })).toBeVisible();
+    const signedIn = await phoneHeader(page);
+    expect(signedIn.account.width).toBe(42);
+    expectSameX(signedIn.account, server.account);
+    expectSameX(signedIn.search, server.search);
+  });
+
+  test(`${DESKTOP.width}px: a guest's header matches the server render`, async ({
+    browser,
+    page,
+  }) => {
+    const server = await asServerRendered(browser, DESKTOP, desktopGuestHeader);
+
+    await page.setViewportSize(DESKTOP);
+    await gotoHydrated(page, '/');
+    const guest = await desktopGuestHeader(page);
+    expect(guest.signUp.height).toBe(44);
+    expectSameX(guest.signIn, server.signIn);
+    expectSameX(guest.signUp, server.signUp);
+    expectSameX(guest.search, server.search);
+    expect(guest.search.width).toBeCloseTo(server.search.width, 0);
+  });
+
+  test(`${DESKTOP.width}px: a returning reader's placeholders match their header`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(DESKTOP);
+    await signUp(page);
+    await gotoHydrated(page, '/');
+    await expect(page.getByRole('button', { name: /^Tài khoản: / })).toBeVisible();
+    const signedIn = await desktopMemberHeader(page);
+    expect(signedIn.account.width).toBe(42);
+
+    // Without script files only the boot script runs: this is the header painted before hydration.
+    await page.route('**/*', (route) =>
+      route.request().resourceType() === 'script' ? route.abort() : route.continue(),
+    );
+    await page.reload();
+    const header = page.getByRole('banner');
+    await expect(header.getByRole('link', { name: 'Viết truyện' })).toBeVisible();
+    await expect(header.getByRole('link', { name: 'Đăng nhập', exact: true })).toHaveCount(0);
+    await page.evaluate(() => document.fonts.ready);
+    const hinted = await desktopMemberHeader(page);
+    expect(hinted.account.width).toBe(42);
+    expectSameX(hinted.account, signedIn.account);
+    expectSameX(hinted.search, signedIn.search);
+    expect(hinted.search.width).toBeCloseTo(signedIn.search.width, 0);
+  });
 
   test('a guest signs in from the account menu and is sent back to the page', async ({ page }) => {
     await page.setViewportSize(PHONE);
@@ -98,6 +146,23 @@ test.describe('the header keeps its layout once the account is known', () => {
     );
     await menu.getByRole('menuitem', { name: 'Đăng nhập' }).click();
     await expect(page).toHaveURL('/sign-in?redirect=%2Fterms');
+  });
+
+  test('from the desktop header a guest signs in and comes back to the page', async ({
+    page,
+    context,
+  }) => {
+    const account = await signUp(page);
+    await context.clearCookies();
+
+    await gotoHydrated(page, '/terms');
+    await page.getByRole('banner').getByRole('link', { name: 'Đăng nhập', exact: true }).click();
+    await expect(page).toHaveURL('/sign-in?redirect=%2Fterms');
+    await page.getByLabel('Email').fill(account.email);
+    await page.getByLabel('Mật khẩu').fill(account.password);
+    await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
+    await expect(page).toHaveURL('/terms');
+    await expect(page.getByRole('button', { name: /^Tài khoản: / })).toBeVisible();
   });
 });
 

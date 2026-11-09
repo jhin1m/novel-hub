@@ -1,18 +1,40 @@
-import { expect, test } from '@playwright/test';
-import { gotoHydrated, signUpVerified } from './helpers/accounts';
+import { createTestDb } from '@novel-hub/db/testing';
+import { type Locator, type Page, expect, test } from '@playwright/test';
+import { gotoHydrated, signUp, signUpVerified } from './helpers/accounts';
 import { createPublishedStory } from './helpers/content';
 
-test('home page has a header and footer; guests sign in from the account menu', async ({
+test('home page has a header and footer; guests get sign-in and sign-up links', async ({
   page,
 }) => {
   await page.goto('/');
   const header = page.getByRole('banner');
   await expect(header).toBeVisible();
   await expect(page.getByRole('contentinfo')).toContainText('SayNovel');
-  await header.getByRole('button', { name: 'Tài khoản', exact: true }).click();
-  const menu = page.getByRole('menu');
-  await expect(menu.getByRole('menuitem', { name: 'Đăng nhập' })).toBeVisible();
-  await expect(menu.getByRole('menuitem', { name: 'Đăng ký' })).toBeVisible();
+  await expect(header.getByRole('link', { name: 'SayNovel', exact: true })).toBeVisible();
+  await expect(header.getByRole('link', { name: 'Đăng nhập', exact: true })).toBeVisible();
+  await expect(header.getByRole('link', { name: 'Đăng ký', exact: true })).toHaveAttribute(
+    'href',
+    '/sign-up',
+  );
+});
+
+test('home page HTML does not depend on the session: no cookie, no account name', async ({
+  page,
+}) => {
+  const { email } = await signUp(page);
+  const name = `Tên Riêng ${Date.now().toString(36)}`;
+  const { pool } = createTestDb();
+  try {
+    await pool.query('update users set display_name = $1 where email = $2', [name, email]);
+  } finally {
+    await pool.end();
+  }
+
+  const res = await page.request.get('/');
+  expect(res.headers()['set-cookie']).toBeUndefined();
+  const html = await res.text();
+  expect(html).not.toContain(name);
+  expect(html).not.toContain(email);
 });
 
 test('unknown path returns 404 and renders the 404 page with a home link', async ({
@@ -81,25 +103,36 @@ test('regular pages do not download the optional reader fonts (Literata, Noto Se
   expect(fonts.filter((url) => /literata|noto-serif/.test(url))).toEqual([]);
 });
 
-test('at 768px the signed-in header (explore, rankings, library, write) fits without scrolling', async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 768, height: 900 });
-  await signUpVerified(page);
-  await gotoHydrated(page, '/');
-  const header = page.getByRole('banner');
-  await expect(header.getByRole('button', { name: /^Tài khoản: / })).toBeVisible();
-  for (const name of ['Khám phá', 'Bảng xếp hạng', 'Tủ truyện', 'Viết truyện']) {
-    await expect(header.getByRole('link', { name, exact: true }), name).toBeVisible();
-  }
+async function expectHeaderFits(page: Page, lastItem: Locator) {
   const { scrollWidth, clientWidth } = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth,
   }));
   expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
-  const headerBox = await header.boundingBox();
-  const lastLink = await header.getByRole('button', { name: /^Tài khoản: / }).boundingBox();
-  expect((lastLink?.x ?? Infinity) + (lastLink?.width ?? 0)).toBeLessThanOrEqual(
+  const headerBox = await page.getByRole('banner').boundingBox();
+  const lastBox = await lastItem.boundingBox();
+  expect((lastBox?.x ?? Infinity) + (lastBox?.width ?? 0)).toBeLessThanOrEqual(
     (headerBox?.x ?? 0) + (headerBox?.width ?? 0),
   );
-});
+}
+
+for (const width of [768, 1280]) {
+  test(`at ${width}px the guest and signed-in headers fit without scrolling`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await gotoHydrated(page, '/');
+    const header = page.getByRole('banner');
+    for (const name of ['Khám phá', 'Bảng xếp hạng', 'Tủ truyện', 'Đăng nhập', 'Đăng ký']) {
+      await expect(header.getByRole('link', { name, exact: true }), name).toBeVisible();
+    }
+    await expectHeaderFits(page, header.getByRole('link', { name: 'Đăng ký', exact: true }));
+
+    await signUpVerified(page);
+    await gotoHydrated(page, '/');
+    const account = header.getByRole('button', { name: /^Tài khoản: / });
+    await expect(account).toBeVisible();
+    for (const name of ['Khám phá', 'Bảng xếp hạng', 'Tủ truyện', 'Viết truyện']) {
+      await expect(header.getByRole('link', { name, exact: true }), name).toBeVisible();
+    }
+    await expectHeaderFits(page, account);
+  });
+}

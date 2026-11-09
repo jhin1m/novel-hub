@@ -228,7 +228,7 @@ Nguồn: `plans/reports/brief-261109-1347-redesign-design-chot-report.md`.
 - [x] Trang truyện
 - [x] Cập nhật docs
 - [x] Báo cáo so ảnh 1440px/390px sáng tối
-- [ ] Thanh Đọc tiếp cho khách
+- [x] Thanh Đọc tiếp cho khách
 
 ### Giai đoạn 3 (sau cùng)
 
@@ -331,6 +331,7 @@ Hướng "ấm, như một ứng dụng đọc", mobile-first. Khu đọc gần 
 - Bìa là trung tâm thị giác, tỷ lệ 2:3. Bìa mặc định dạng chữ (tên truyện, bút danh, màu nền sinh từ tag chính, gáy sách bên trái, chữ cái đầu lớn mờ) phải đủ đẹp để một lưới toàn bìa mặc định vẫn chỉnh tề.
 - Thẻ truyện hiện: tag chính, số chương, tổng số chữ, trạng thái, lần cập nhật gần nhất, nhãn có dùng AI nếu có. Riêng kệ trang chủ chỉ hiện bìa, tên truyện, một dòng meta ("Chương N · thể loại" ở kệ "Vừa có chương mới", "N chương · thể loại" ở các kệ còn lại) và nhãn AI, 18+.
 - Trang chủ, từ trên xuống: hero bìa mờ (truyện nổi bật mới; truyện chưa có bìa thì nền trang và bìa chữ), thanh "Đọc tiếp", 4 ô thể loại, kệ bìa "Vừa có chương mới" cạnh "Đang được đọc nhiều", "Truyện nổi bật" của mod, "Trọn bộ, đọc một mạch", "Truyện mới cần độc giả", khối "Có truyện muốn kể?" trên dải nền tông trơn (`--band`); mobile có thanh tab dưới 5 mục (Trang chủ, Khám phá, Tủ truyện, Viết, Tôi).
+- Thanh "Đọc tiếp" cho khách: cùng khung với thành viên, tải hoàn toàn ở client nên HTML không đổi. localStorage `nh:guest-progress` chỉ giữ `publicId`, số chương, vị trí của tối đa 5 truyện (không ghi truyện 18+); tên và bìa lấy từ server lúc hiện, nên truyện bị ẩn hoặc đổi thành 18+ tự biến mất. Từ 1024px có ghi chú "Lưu trên máy này. Đăng nhập để giữ khi đổi máy." Khi đăng nhập, vị trí vào `reading_progress` chỉ khi tài khoản chưa có hàng cho truyện đó hoặc số chương local lớn hơn, không bao giờ làm lùi tiến độ. Safari có thể xoá localStorage sau 7 ngày không tương tác; chấp nhận.
 - Trang truyện: nền bìa làm mờ (truyện chưa có bìa thì nền trang và bìa chữ) chứa bìa, tên, tác giả và hàng số liệu (số chương, số chữ, tần suất ra chương, lần cập nhật); nội dung đặt trên tấm nền chồng lên phần đầu trang, giới thiệu truyện đứng đầu nội dung; mobile có nút đọc dính đáy.
 
 **Khu viết**

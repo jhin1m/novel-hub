@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 /** Largest chapter number Postgres `integer` holds. */
-const MAX_CHAPTER_NUMBER = 2_147_483_647;
+export const MAX_CHAPTER_NUMBER = 2_147_483_647;
 
 /**
  * The chapter number in `chapter-{number}`. Only the canonical spelling is accepted (no leading
@@ -31,6 +31,18 @@ export type ReadingProgressInput = z.infer<typeof readingProgressInput>;
 export const chapterViewInput = z.object(chapterRefShape);
 
 export type ChapterViewInput = z.infer<typeof chapterViewInput>;
+
+/** A guest's position in one story, kept in localStorage; `updatedAt` is in milliseconds. */
+export const guestProgressItem = z.object({
+  ...chapterRefShape,
+  scrollPct: z.number().min(0).max(100),
+  updatedAt: z.number().int().nonnegative(),
+});
+
+export type GuestProgressItem = z.infer<typeof guestProgressItem>;
+
+/** The chapter a guest's "continue reading" bar asks the server about. */
+export const guestContinueInput = z.object(chapterRefShape);
 
 /** Parses a whole `chapter-{number}` path segment. */
 export function parseChapterSegment(segment: string): number | null {

@@ -1,7 +1,7 @@
 ---
 title: "Đưa design đã chốt của SayNovel vào code"
 description: "Font Be Vietnam Pro, hero bìa mờ, ô thể loại, kệ truyện, trang truyện mới, thanh Đọc tiếp cho khách"
-status: pending
+status: done
 priority: P1
 effort: "28h"
 branch: redesign/261109
@@ -39,7 +39,7 @@ Nghiên cứu: `research/researcher-01-font-and-blur-hero-report.md`, `research/
 | 6 | [Trang truyện](./phase-06-story-page.md) | mục 3 | Done |
 | 7 | [Cập nhật docs](./phase-07-update-docs.md) | mục 9 | Done |
 | 8 | [Báo cáo so ảnh 1440px/390px sáng tối](./phase-08-visual-comparison-report.md) | "Xong khi" | Done |
-| 9 | [Thanh Đọc tiếp cho khách](./phase-09-guest-continue-reading-bar.md) (phase cuối) | mục 8 | Pending |
+| 9 | [Thanh Đọc tiếp cho khách](./phase-09-guest-continue-reading-bar.md) (phase cuối) | mục 8 | Done |
 
 Thứ tự tuần tự. Phụ thuộc chính: 3 cần 1; 4 và 6 dùng `CoverBackdrop` của 3; 6 dùng `StoryShelfCard` của 5; 9 dùng thanh của 3 và nối thêm vào báo cáo của 8. Phase 9 đứng cuối theo yêu cầu, nên phase 7 và 8 làm trước nó, và phase 9 tự bổ sung docs và ảnh của mình.
 
@@ -58,10 +58,10 @@ Các dòng trên do plan chọn, không phải brief chốt. Phase 8 liệt kê 
 
 ## Success Criteria
 
-- [ ] Mọi phase có Status completed
-- [ ] `pnpm typecheck && pnpm lint && pnpm test && pnpm test:int && pnpm test:e2e` xanh ở commit cuối
-- [ ] Có báo cáo trong `plans/reports/` so ảnh 1440px và 390px, sáng và tối, với design
-- [ ] `docs/project-spec.md` mục 2, 5, 8 và `docs/design-guidelines.md` khớp code
+- [x] Mọi phase có Status done
+- [x] `pnpm typecheck && pnpm lint && pnpm test && pnpm test:int && pnpm test:e2e` xanh ở commit cuối
+- [x] Có báo cáo trong `plans/reports/` so ảnh 1440px và 390px, sáng và tối, với design
+- [x] `docs/project-spec.md` mục 2, 5, 8 và `docs/design-guidelines.md` khớp code
 
 ## Unresolved
 

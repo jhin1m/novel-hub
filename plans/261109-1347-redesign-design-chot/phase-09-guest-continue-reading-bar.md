@@ -1,7 +1,7 @@
 ---
 phase: 9
 title: "Thanh Đọc tiếp cho khách"
-status: pending
+status: done
 priority: P1
 effort: "5h"
 dependencies: [3, 7, 8]
@@ -9,7 +9,7 @@ dependencies: [3, 7, 8]
 
 # Phase 9: Thanh Đọc tiếp cho khách
 
-**Status:** pending
+**Status:** done
 
 <!-- Updated: Red Team - quy tắc đồng bộ theo số chương, hint riêng cho khách, bỏ route API và Web Locks -->
 

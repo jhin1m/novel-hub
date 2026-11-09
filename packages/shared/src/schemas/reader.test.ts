@@ -4,13 +4,41 @@ import {
   READER_FONTS,
   READER_RANGES,
   READER_THEMES,
+  MAX_CHAPTER_NUMBER,
   chapterViewInput,
+  guestContinueInput,
+  guestProgressItem,
   isInReaderRange,
   parseChapterNumber,
   parseChapterSegment,
   readerSettingsSchema,
   readingProgressInput,
 } from './reader';
+
+describe('guest progress', () => {
+  const item = { publicId: 'k7m2xq9p', number: 3, scrollPct: 42.5, updatedAt: 1_700_000_000_000 };
+
+  it('accepts a saved position and the chapter lookup', () => {
+    expect(guestProgressItem.parse(item)).toEqual(item);
+    expect(guestContinueInput.parse({ publicId: 'k7m2xq9p', number: MAX_CHAPTER_NUMBER })).toEqual({
+      publicId: 'k7m2xq9p',
+      number: MAX_CHAPTER_NUMBER,
+    });
+  });
+
+  it('refuses a chapter number Postgres cannot hold', () => {
+    const number = 2_147_483_648;
+    expect(guestProgressItem.safeParse({ ...item, number }).success).toBe(false);
+    expect(guestContinueInput.safeParse({ publicId: 'k7m2xq9p', number }).success).toBe(false);
+  });
+
+  it.each([{ scrollPct: 101 }, { scrollPct: -1 }, { updatedAt: -1 }, { updatedAt: 1.5 }])(
+    'refuses %o',
+    (override) => {
+      expect(guestProgressItem.safeParse({ ...item, ...override }).success).toBe(false);
+    },
+  );
+});
 
 describe('reading inputs', () => {
   it('accepts a chapter reference with a scroll position', () => {

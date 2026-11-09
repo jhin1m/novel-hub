@@ -30,6 +30,7 @@ import { useArrowKeys } from '../lib/reader/use-arrow-keys';
 import { useNavVisibility } from '../lib/reader/use-nav-visibility';
 import { findParagraph } from '../lib/reader/paragraph-elements';
 import { useParagraphSelection } from '../lib/reader/use-paragraph-selection';
+import { useGuestReadingProgress } from '../lib/reader/use-guest-reading-progress';
 import { useReadingProgress } from '../lib/reader/use-reading-progress';
 import { useResumeScroll } from '../lib/reader/use-resume-scroll';
 import { useChapterSpeech } from '../lib/reader/tts/use-chapter-speech';
@@ -109,6 +110,12 @@ function ReaderPage() {
   const resuming = useResumeScroll(contentRef, chapterRef);
   // Nothing is recorded while the 18+ screen hides the text, nor before the position is restored.
   useReadingProgress(contentRef, chapterRef, !!me.data && !gated && !resuming);
+  // Only a confirmed guest: a failed account request says nothing about who is reading.
+  useGuestReadingProgress(
+    contentRef,
+    chapterRef,
+    me.isSuccess && me.data === null && !gated && !resuming && !story.isMature,
+  );
   useViewBeacon(chapterRef, !gated);
   const [panel, setPanel] = useState<ReaderPanel | null>(null);
   // No panel opens over the 18+ screen: sheets sit above it.

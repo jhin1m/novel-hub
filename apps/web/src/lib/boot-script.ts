@@ -9,6 +9,7 @@ import {
   SITE_THEME_CHOICES,
 } from '@novel-hub/shared';
 import { ACCOUNT_HINT_KEY, CONTINUE_ROWS_MAX } from './account-hint';
+import { GUEST_CONTINUE_ATTRIBUTE, GUEST_PROGRESS_KEY } from './reader/guest-progress';
 import { READER_CSS_VARS, READER_SETTINGS_KEY } from './reader/settings';
 import { SITE_THEME_KEY } from './site-theme/site-theme';
 
@@ -47,6 +48,9 @@ const READER_NUMBERS = Object.fromEntries(
  * - applies the "last signed in" hint (`nh:account`, see `account-hint.ts`) the way
  *   `applyAccountHint` does, so the header placeholders show the right account state at once. The
  *   avatar letter is written as a hex escape only, so a tampered value can never inject CSS;
+ * - marks a guest with saved reading positions (`data-guest-continue`, see `guest-progress.ts`) so
+ *   the home page holds room for their "continue reading" bar. Its own `try`, before the reader
+ *   part, for the same reason as the theme. Nothing from the stored value reaches the DOM;
  * - applies the stored reader settings, the same way `applyReaderSettings` does: every field is
  *   checked against the allowlist and falls back to its default on its own, so a tampered value
  *   can never inject CSS. A font removed from the list is first mapped to its replacement
@@ -54,7 +58,7 @@ const READER_NUMBERS = Object.fromEntries(
  * A static string (ES2017, no modules), so server and client render the same markup. Must never
  * throw (storage can be blocked).
  */
-export const BOOT_SCRIPT = `(function(){try{var s=window.localStorage,d=document.documentElement;if(s.getItem('${MATURE_FLAG_KEY}')==='1'){d.setAttribute('data-mature-ok','')}try{var t=JSON.parse(s.getItem('${SITE_THEME_KEY}'));if(t&&${JSON.stringify(EXPLICIT_THEMES)}.indexOf(t.choice)>=0)d.setAttribute('data-theme',t.choice)}catch(e){}try{var a=JSON.parse(s.getItem('${ACCOUNT_HINT_KEY}')),c;if(a&&typeof a=='object'&&!Array.isArray(a)){d.setAttribute('data-signed-in','');c=a.initial;if(c===~~c&&c>32&&c<1114112)d.style.setProperty('--account-initial','"\\\\'+c.toString(16)+' "');c=a.continueRows;if(c===~~c&&c>0&&c<=${CONTINUE_ROWS_MAX})d.setAttribute('data-continue-rows',''+c)}}catch(e){}var r=JSON.parse(s.getItem('${READER_SETTINGS_KEY}'));if(!r||typeof r!=='object'||Array.isArray(r))return;var D=${JSON.stringify(DEFAULT_READER_SETTINGS)},E=${JSON.stringify(READER_ENUMS)},N=${JSON.stringify(READER_NUMBERS)},A=${JSON.stringify(LEGACY_READER_FONTS)},k,v,q,n;for(k in E){v=r[k];if(k==='font'&&typeof v==='string'&&A.hasOwnProperty(v))v=A[v];if(E[k].indexOf(v)<0)v=D[k];if(v===undefined)d.removeAttribute('data-reader-'+k);else d.setAttribute('data-reader-'+k,v)}for(k in N){q=N[k];v=r[k];n=(v-q[0])/q[2];if(typeof v!=='number'||!(v>=q[0]&&v<=q[1])||Math.abs(n-Math.round(n))>=1e-6)v=D[k];d.style.setProperty(q[3],v+q[4])}}catch(e){}})();`;
+export const BOOT_SCRIPT = `(function(){try{var s=window.localStorage,d=document.documentElement;if(s.getItem('${MATURE_FLAG_KEY}')==='1'){d.setAttribute('data-mature-ok','')}try{var t=JSON.parse(s.getItem('${SITE_THEME_KEY}'));if(t&&${JSON.stringify(EXPLICIT_THEMES)}.indexOf(t.choice)>=0)d.setAttribute('data-theme',t.choice)}catch(e){}try{var a=JSON.parse(s.getItem('${ACCOUNT_HINT_KEY}')),c;if(a&&typeof a=='object'&&!Array.isArray(a)){d.setAttribute('data-signed-in','');c=a.initial;if(c===~~c&&c>32&&c<1114112)d.style.setProperty('--account-initial','"\\\\'+c.toString(16)+' "');c=a.continueRows;if(c===~~c&&c>0&&c<=${CONTINUE_ROWS_MAX})d.setAttribute('data-continue-rows',''+c)}}catch(e){}try{if(!s.getItem('${ACCOUNT_HINT_KEY}')){var g=JSON.parse(s.getItem('${GUEST_PROGRESS_KEY}'));if(g&&g.v===1&&Array.isArray(g.items)&&g.items.length)d.setAttribute('${GUEST_CONTINUE_ATTRIBUTE}','')}}catch(e){}var r=JSON.parse(s.getItem('${READER_SETTINGS_KEY}'));if(!r||typeof r!=='object'||Array.isArray(r))return;var D=${JSON.stringify(DEFAULT_READER_SETTINGS)},E=${JSON.stringify(READER_ENUMS)},N=${JSON.stringify(READER_NUMBERS)},A=${JSON.stringify(LEGACY_READER_FONTS)},k,v,q,n;for(k in E){v=r[k];if(k==='font'&&typeof v==='string'&&A.hasOwnProperty(v))v=A[v];if(E[k].indexOf(v)<0)v=D[k];if(v===undefined)d.removeAttribute('data-reader-'+k);else d.setAttribute('data-reader-'+k,v)}for(k in N){q=N[k];v=r[k];n=(v-q[0])/q[2];if(typeof v!=='number'||!(v>=q[0]&&v<=q[1])||Math.abs(n-Math.round(n))>=1e-6)v=D[k];d.style.setProperty(q[3],v+q[4])}}catch(e){}})();`;
 
 /**
  * Stores the 18+ hint for the next page load and applies it to the current page. Browser only.

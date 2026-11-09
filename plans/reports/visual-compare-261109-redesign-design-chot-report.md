@@ -202,6 +202,8 @@ Không có board riêng. So với cách xử lý hero của `Mobile.dc.html` và
 | Ô thể loại dự phòng 390 | ![](../261109-1347-redesign-design-chot/visuals/tiles-fallback-390-light.png) | ![](../261109-1347-redesign-design-chot/visuals/tiles-fallback-390-dark.png) | Khớp |
 | Đọc tiếp thành viên 1440 | ![](../261109-1347-redesign-design-chot/visuals/member-continue-1440-light.png) | ![](../261109-1347-redesign-design-chot/visuals/member-continue-1440-dark.png) | Khớp: đè mép hero, tiến độ màu nhấn |
 | Đọc tiếp thành viên 390 | ![](../261109-1347-redesign-design-chot/visuals/member-continue-390-light.png) | ![](../261109-1347-redesign-design-chot/visuals/member-continue-390-dark.png) | Khớp |
+| Đọc tiếp khách 1440 | ![](../261109-1347-redesign-design-chot/visuals/guest-continue-1440-light.png) | ![](../261109-1347-redesign-design-chot/visuals/guest-continue-1440-dark.png) | Khớp board `Main` dòng 70-81: bo 22, đệm 16/22, ghi chú 13px rộng 200px, xuống 2 dòng |
+| Đọc tiếp khách 390 | ![](../261109-1347-redesign-design-chot/visuals/guest-continue-390-light.png) | ![](../261109-1347-redesign-design-chot/visuals/guest-continue-390-dark.png) | Khớp board `Mobile` dòng 46-56: bo 20, đệm 12/14, không có ghi chú |
 | Hero bìa trắng (chữ vẫn đọc được) | ![](../261109-1347-redesign-design-chot/visuals/probe-hero-story-white.png) | | Chữ thường đạt 5,09:1 |
 
 ## 5. Chế độ tối

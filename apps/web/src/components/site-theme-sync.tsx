@@ -2,11 +2,13 @@ import { hashKey, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useSyncExternalStore } from 'react';
 import { meQueryKey } from '@/lib/me';
 import { useSiteThemeSync } from '@/lib/site-theme/use-site-theme';
+import { useGuestProgressSync } from '@/lib/use-guest-progress-sync';
 
 const meQueryHash = hashKey(meQueryKey);
 
 /**
- * Reconciles the site theme with the account once per app; renders nothing.
+ * Reconciles what this browser keeps (site theme, a guest's reading positions) with the account,
+ * once per app; renders nothing.
  *
  * Mounted at the root, outside the router's Suspense boundaries, so it hydrates before the page.
  * Calling `useMe()` straight away would start the account request then, and the header could
@@ -35,10 +37,11 @@ export function SiteThemeSync() {
     () => queryClient.getQueryState(meQueryKey)?.data !== undefined,
     () => false,
   );
-  return accountLoaded ? <SiteThemeReconcile /> : null;
+  return accountLoaded ? <AccountReconcile /> : null;
 }
 
-function SiteThemeReconcile() {
+function AccountReconcile() {
   useSiteThemeSync();
+  useGuestProgressSync();
   return null;
 }

@@ -7,6 +7,7 @@ import {
   parseAccountHint,
 } from './account-hint';
 import { BOOT_SCRIPT, MATURE_FLAG_KEY } from './boot-script';
+import { GUEST_PROGRESS_KEY } from './reader/guest-progress';
 import {
   READER_SETTINGS_KEY,
   type ReaderRoot,
@@ -230,6 +231,40 @@ describe('BOOT_SCRIPT', () => {
       expect(runWithAccount(raw)).toEqual(appliedAccount(raw));
     },
   );
+
+  describe('guest reading positions', () => {
+    const saved = JSON.stringify({
+      v: 1,
+      items: [{ publicId: 'k7m2xq9p', number: 1, scrollPct: 10, updatedAt: 1 }],
+    });
+
+    it('marks a guest with saved positions, even without reader settings', () => {
+      const result = run((key) => (key === GUEST_PROGRESS_KEY ? saved : null));
+      expect(result.attributes).toEqual({ 'data-guest-continue': '' });
+    });
+
+    it('leaves a browser with an account hint to that hint', () => {
+      const result = run((key) =>
+        key === GUEST_PROGRESS_KEY ? saved : key === ACCOUNT_HINT_KEY ? account({}) : null,
+      );
+      expect(result.attributes).toEqual({ 'data-signed-in': '' });
+    });
+
+    it.each([
+      ['nothing stored', null],
+      ['broken JSON', '{broken'],
+      ['no positions', '{"v":1,"items":[]}'],
+      ['another version', '{"v":2,"items":[{}]}'],
+      ['items not a list', '{"v":1,"items":3}'],
+    ])('%s: no mark, and the rest of the script still runs', (_, raw) => {
+      const reader = json({ theme: 'sepia' });
+      const result = run((key) =>
+        key === GUEST_PROGRESS_KEY ? raw : key === READER_SETTINGS_KEY ? reader : null,
+      );
+      expect(result.attributes).not.toHaveProperty('data-guest-continue');
+      expect(result.attributes['data-reader-theme']).toBe('sepia');
+    });
+  });
 
   it('a broken account hint keeps the site theme', () => {
     const result = run((key) =>
